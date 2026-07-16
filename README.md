@@ -26,6 +26,7 @@ The ClickGUI currently provides:
 - reset buttons for individual settings and whole modules
 - a draggable, resizable, clamped window saved in `global.json`
 - three local ClickGUI palettes, selected from the Theme editor and saved in `global.json`
+- keyboard navigation: Left/Right changes categories, Up/Down selects module rows, and Enter/Space toggles the selected module
 - persistence of module state and settings when the screen closes
 
 The first HUD slice adds an **Active Modules** list. It renders enabled Helikon
@@ -65,6 +66,8 @@ Drag its bottom-right handle to resize it; the position and dimensions are
 restored locally when it is reopened.
 Select **Theme** in the header to choose Midnight, High Contrast, or Ocean;
 the client never downloads themes or contacts a service.
+With no text field focused, use Left/Right to switch categories, Up/Down to
+select a module, and Enter or Space to toggle it.
 
 ## Local commands
 

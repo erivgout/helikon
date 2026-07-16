@@ -99,6 +99,10 @@ view layer:
   persists the selected ID with the GUI layout. `HelikonThemeEditorScreen`
   only selects a palette and saves once when it closes; no remote themes,
   downloaded assets, or external requests are used.
+- `ClickGuiState` also owns category and visible-module keyboard selection,
+  including wraparound and clearing an invalid selection. The screen maps
+  arrow, Enter, and Space keys only when no text field is focused, then routes
+  toggles through `ModuleRegistry` and keeps the selected row in view.
 - GUI setting/module reset controls use `Setting.reset()` and
   `Module.resetSettings()`. Module lifecycle changes remain exclusively routed
   through `ModuleRegistry`.

@@ -14,7 +14,8 @@ command parsing and every built-in command (`CommandDispatcherTest`,
 `BuiltinCommandsTest`), keybind edge/hold/suppression behavior
 (`KeybindManagerTest`), and Active Modules selection, drag clamping, and HUD
 configuration recovery (`ActiveModulesTest`, `HudEditorStateTest`,
-`HudConfigurationManagerTest`).
+`HudConfigurationManagerTest`). `ClickGuiStateTest` also covers keyboard
+category/module wrapping and empty-search selection handling.
 
 ## Manual Active Modules HUD smoke test
 
@@ -77,6 +78,11 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     immediately, High Contrast remains legible, Escape returns to the ClickGUI,
     and the chosen theme is restored after relaunch. Replace the stored theme
     with an invalid value and verify Helikon safely returns to Midnight.
+14. Without clicking a text field, use Left/Right to change categories and
+    Up/Down to select module rows. Verify selection wraps and scrolls into
+    view, then use Enter and Space to toggle the selected module. Click the
+    search or a number field and verify its normal keyboard editing continues
+    to take priority.
 
 ## Manual command and keybind smoke test
 

@@ -22,6 +22,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -132,6 +133,15 @@ public final class HelikonClickGuiScreen extends Screen {
         addRenderableWidget(searchField);
 
         rebuildSettingWidgets();
+    }
+
+    /**
+     * Starts with no text field focused so the documented arrow-key navigation
+     * works immediately; clicking or tabbing to an editor still focuses it.
+     */
+    @Override
+    protected void setInitialFocus() {
+        clearFocus();
     }
 
     /** Applies a resolved window position and moves the existing vanilla widgets with the panel. */
@@ -275,6 +285,9 @@ public final class HelikonClickGuiScreen extends Screen {
                 keyCaptureSuppression.begin(event.key());
             }
             keybindStatus = keybindStatus(result);
+            return true;
+        }
+        if (getFocused() == null && handleKeyboardNavigation(event.key())) {
             return true;
         }
         return super.keyPressed(event);
@@ -589,6 +602,57 @@ public final class HelikonClickGuiScreen extends Screen {
             }
         }
         return false;
+    }
+
+    /** Handles ClickGUI navigation only while no text editor owns the keyboard. */
+    private boolean handleKeyboardNavigation(int key) {
+        if (key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT) {
+            searchField.setValue("");
+            state.selectAdjacentCategory(key == GLFW.GLFW_KEY_LEFT ? -1 : 1);
+            keybindAssignment.cancel();
+            keyCaptureSuppression.clear();
+            listScroll = 0;
+            rebuildSettingWidgets();
+            return true;
+        }
+        if (key == GLFW.GLFW_KEY_UP || key == GLFW.GLFW_KEY_DOWN) {
+            state.selectAdjacentModule(key == GLFW.GLFW_KEY_UP ? -1 : 1);
+            keybindAssignment.cancel();
+            keyCaptureSuppression.clear();
+            ensureSelectedModuleVisible();
+            rebuildSettingWidgets();
+            return true;
+        }
+        if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_SPACE) {
+            Module module = state.selectedModule().orElse(null);
+            if (module == null) {
+                return false;
+            }
+            modules.toggle(module);
+            return true;
+        }
+        return false;
+    }
+
+    /** Scrolls just enough to keep the keyboard-selected module row on-screen. */
+    private void ensureSelectedModuleVisible() {
+        Module module = state.selectedModule().orElse(null);
+        if (module == null) {
+            return;
+        }
+        int index = state.visibleModules().indexOf(module);
+        if (index < 0) {
+            return;
+        }
+        int rowTop = index * ROW_HEIGHT;
+        int rowBottom = rowTop + ROW_HEIGHT;
+        int viewHeight = contentBottom - contentTop;
+        if (rowTop < listScroll) {
+            listScroll = rowTop;
+        } else if (rowBottom > listScroll + viewHeight) {
+            listScroll = rowBottom - viewHeight;
+        }
+        listScroll = clampScroll(listScroll);
     }
 
     /** Removes and recreates the number-setting edit boxes for the selection. */

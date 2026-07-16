@@ -128,6 +128,43 @@ class ClickGuiStateTest {
         assertTrue(state.selectedModule().isEmpty());
     }
 
+    @Test
+    void adjacentCategorySelectionWrapsAndClearsModuleSelection() {
+        ClickGuiState state = new ClickGuiState(registry);
+        state.selectCategory(ModuleCategory.COMBAT);
+        state.selectModule(sprint);
+
+        state.selectAdjacentCategory(-1);
+
+        assertEquals(ModuleCategory.MISCELLANEOUS, state.selectedCategory());
+        assertTrue(state.selectedModule().isEmpty());
+
+        state.selectAdjacentCategory(1);
+        assertEquals(ModuleCategory.COMBAT, state.selectedCategory());
+    }
+
+    @Test
+    void adjacentModuleSelectionUsesVisibleRowsAndWraps() {
+        ClickGuiState state = new ClickGuiState(registry);
+        state.setSearchQuery("s");
+
+        assertEquals(fullbright, state.selectAdjacentModule(1).orElseThrow());
+        assertEquals(sprint, state.selectAdjacentModule(1).orElseThrow());
+        assertEquals(fullbright, state.selectAdjacentModule(-1).orElseThrow());
+        assertEquals(timestamps, state.selectAdjacentModule(-1).orElseThrow());
+        assertEquals(fullbright, state.selectAdjacentModule(1).orElseThrow());
+    }
+
+    @Test
+    void adjacentModuleSelectionClearsAnInvisibleSelectionForEmptyResults() {
+        ClickGuiState state = new ClickGuiState(registry);
+        state.selectModule(sprint);
+        state.setSearchQuery("not found");
+
+        assertTrue(state.selectAdjacentModule(1).isEmpty());
+        assertTrue(state.selectedModule().isEmpty());
+    }
+
     private static final class TestModule extends Module {
         private TestModule(String id, String name, String description, ModuleCategory category) {
             super(id, name, description, category, false, Keybind.unbound());

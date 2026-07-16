@@ -35,6 +35,11 @@ The initial themes are Midnight, High Contrast, and Ocean; selecting one
 changes the panel immediately and persists it locally. Custom colors and the
 color picker remain future work.
 
+When no text field is focused, the ClickGUI supports keyboard navigation:
+Left/Right changes the category (and exits search), Up/Down moves the selected
+module row with wrapping and automatic list scrolling, and Enter or Space
+toggles the selected module through `ModuleRegistry`.
+
 ## Commands and keybinds
 
 Modules can also be controlled through local chat commands (`.toggle`,

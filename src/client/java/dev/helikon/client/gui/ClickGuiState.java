@@ -34,6 +34,17 @@ public final class ClickGuiState {
         this.selectedCategory = Objects.requireNonNull(category, "category");
     }
 
+    /** Selects the next or previous category, wrapping at either end. */
+    public void selectAdjacentCategory(int direction) {
+        if (direction == 0) {
+            return;
+        }
+        ModuleCategory[] categories = ModuleCategory.values();
+        int next = Math.floorMod(selectedCategory.ordinal() + Integer.signum(direction), categories.length);
+        selectedCategory = categories[next];
+        selectedModule = null;
+    }
+
     public String searchQuery() {
         return searchQuery;
     }
@@ -68,6 +79,29 @@ public final class ClickGuiState {
     /** Selects the module whose settings the GUI shows; {@code null} clears it. */
     public void selectModule(Module module) {
         this.selectedModule = module;
+    }
+
+    /**
+     * Selects the next or previous visible module, wrapping at either end.
+     * If nothing is selected yet, forward navigation starts at the first row
+     * and backward navigation starts at the last row.
+     */
+    public Optional<Module> selectAdjacentModule(int direction) {
+        List<Module> visible = visibleModules();
+        if (visible.isEmpty()) {
+            selectedModule = null;
+            return Optional.empty();
+        }
+        if (direction == 0) {
+            return Optional.ofNullable(selectedModule);
+        }
+
+        int current = visible.indexOf(selectedModule);
+        int next = current < 0
+                ? direction > 0 ? 0 : visible.size() - 1
+                : Math.floorMod(current + Integer.signum(direction), visible.size());
+        selectedModule = visible.get(next);
+        return Optional.of(selectedModule);
     }
 
     private static ModuleCategory initialCategory(ModuleRegistry registry) {

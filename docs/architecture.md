@@ -79,6 +79,10 @@ configuration codec's non-mutating schema validation first.
 Profile import/export uses fixed local `imports/` and `exports/` directories
 below the Helikon configuration root, validates imported schema before copy,
 and never accepts an arbitrary chat-supplied filesystem path.
+The optional default profile is a separate recoverable `profiles.json`
+manifest, which also owns server and singleplayer-world profile associations.
+Profile rename/delete keeps every preference reference valid without requiring
+Minecraft classes in the storage layer.
 
 ## Rendering, GUI, and HUD
 

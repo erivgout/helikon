@@ -239,6 +239,72 @@ class ProfileManagerTest {
         assertTrue(Files.exists(profiles.importsDirectory().resolve("invalid.json")));
     }
 
+    @Test
+    void persistsDefaultProfileAndUpdatesItForRenameAndDelete() {
+        ProfileManager profiles = new ProfileManager(new ConfigurationManager(temporaryDirectory.resolve("helikon")));
+        ModuleRegistry registry = new ModuleRegistry();
+        registry.register(new ConfigurableModule());
+        profiles.save("builder", registry, new ClickGuiWindowState());
+
+        assertTrue(profiles.setDefault("builder"));
+        assertEquals("builder", profiles.defaultProfile().orElseThrow());
+        assertTrue(profiles.rename("builder", "renovated"));
+        assertEquals("renovated", profiles.defaultProfile().orElseThrow());
+        assertTrue(profiles.delete("renovated"));
+        assertTrue(profiles.defaultProfile().isEmpty());
+    }
+
+    @Test
+    void persistsServerAndSingleplayerAssociationsAndUpdatesReferences() {
+        ProfileManager profiles = new ProfileManager(new ConfigurationManager(temporaryDirectory.resolve("helikon")));
+        ModuleRegistry registry = new ModuleRegistry();
+        registry.register(new ConfigurableModule());
+        profiles.save("builder", registry, new ClickGuiWindowState());
+
+        assertTrue(profiles.setServerProfile("Example.Org:25565", "builder"));
+        assertTrue(profiles.setSingleplayerProfile("My World", "builder"));
+        assertEquals("builder", profiles.serverProfile("example.org:25565").orElseThrow());
+        assertEquals("builder", profiles.singleplayerProfile("My World").orElseThrow());
+
+        assertTrue(profiles.rename("builder", "renovated"));
+        assertEquals("renovated", profiles.serverProfile("EXAMPLE.ORG:25565").orElseThrow());
+        assertEquals("renovated", profiles.singleplayerProfile("My World").orElseThrow());
+        profiles.clearServerProfile("example.org:25565");
+        assertTrue(profiles.serverProfile("example.org:25565").isEmpty());
+        assertTrue(profiles.delete("renovated"));
+        assertTrue(profiles.singleplayerProfile("My World").isEmpty());
+    }
+
+    @Test
+    void refusesToRemoveAProfileWhenItsPreferenceManifestCannotBeUpdated() throws IOException {
+        ProfileManager profiles = new ProfileManager(new ConfigurationManager(temporaryDirectory.resolve("helikon")));
+        ModuleRegistry registry = new ModuleRegistry();
+        registry.register(new ConfigurableModule());
+        profiles.save("builder", registry, new ClickGuiWindowState());
+        profiles.setDefault("builder");
+        Path preferencesPath = temporaryDirectory.resolve("helikon").resolve("profiles.json");
+        Files.delete(preferencesPath);
+        Files.createDirectory(preferencesPath);
+
+        assertThrows(ConfigurationException.class, () -> profiles.rename("builder", "renovated"));
+        assertTrue(Files.exists(profiles.profilePath("builder")));
+    }
+
+    @Test
+    void malformedPreferenceAssociationKeyIsRecovered() throws IOException {
+        Path configurationDirectory = temporaryDirectory.resolve("helikon");
+        Files.createDirectories(configurationDirectory);
+        Files.writeString(configurationDirectory.resolve("profiles.json"), """
+                {"schemaVersion":1,"serverProfiles":{"bad\u0001key":"builder"}}
+                """);
+        ProfileManager profiles = new ProfileManager(new ConfigurationManager(configurationDirectory));
+
+        assertTrue(profiles.defaultProfile().isEmpty());
+        try (var files = Files.list(configurationDirectory)) {
+            assertTrue(files.anyMatch(path -> path.getFileName().toString().startsWith("profiles.corrupt-")));
+        }
+    }
+
     private static final class ConfigurableModule extends Module {
         private final NumberSetting amount;
 

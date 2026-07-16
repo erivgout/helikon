@@ -17,6 +17,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -34,12 +35,14 @@ public final class ProfileManager {
     private final Path profilesDirectory;
     private final Path importsDirectory;
     private final Path exportsDirectory;
+    private final Path preferencesPath;
 
     public ProfileManager(ConfigurationManager configuration) {
         this.configuration = Objects.requireNonNull(configuration, "configuration");
         profilesDirectory = configuration.configurationDirectory().resolve("profiles");
         importsDirectory = configuration.configurationDirectory().resolve("imports");
         exportsDirectory = configuration.configurationDirectory().resolve("exports");
+        preferencesPath = configuration.configurationDirectory().resolve("profiles.json");
     }
 
     public Path profilesDirectory() {
@@ -52,6 +55,56 @@ public final class ProfileManager {
 
     public Path exportsDirectory() {
         return exportsDirectory;
+    }
+
+    /** Returns the persisted default profile when its file still exists. */
+    public synchronized Optional<String> defaultProfile() {
+        return profileReference(readPreferences(), "defaultProfile");
+    }
+
+    /** Sets an existing profile as the persisted default. */
+    public synchronized boolean setDefault(String name) {
+        String normalizedName = normalizeName(name);
+        if (!Files.isRegularFile(profilePath(normalizedName))) {
+            return false;
+        }
+        JsonObject preferences = readPreferences();
+        preferences.addProperty("defaultProfile", normalizedName);
+        writePreferences(preferences);
+        return true;
+    }
+
+    /** Clears the optional default-profile choice. */
+    public synchronized void clearDefault() {
+        JsonObject preferences = readPreferences();
+        preferences.remove("defaultProfile");
+        writePreferences(preferences);
+    }
+
+    /** Associates a server address with an existing local profile. */
+    public synchronized boolean setServerProfile(String address, String profileName) {
+        return setAssociation("serverProfiles", normalizeServerAddress(address), profileName);
+    }
+
+    public synchronized Optional<String> serverProfile(String address) {
+        return associationProfile("serverProfiles", normalizeServerAddress(address));
+    }
+
+    /** Associates a singleplayer world identifier with an existing local profile. */
+    public synchronized boolean setSingleplayerProfile(String worldId, String profileName) {
+        return setAssociation("singleplayerProfiles", normalizeWorldId(worldId), profileName);
+    }
+
+    public synchronized Optional<String> singleplayerProfile(String worldId) {
+        return associationProfile("singleplayerProfiles", normalizeWorldId(worldId));
+    }
+
+    public synchronized void clearServerProfile(String address) {
+        clearAssociation("serverProfiles", normalizeServerAddress(address));
+    }
+
+    public synchronized void clearSingleplayerProfile(String worldId) {
+        clearAssociation("singleplayerProfiles", normalizeWorldId(worldId));
     }
 
     /** Lists saved profile names in stable case-insensitive order. */
@@ -107,6 +160,7 @@ public final class ProfileManager {
         writeSnapshot(target, snapshot, false);
 
         try {
+            updateProfileReferences(source, Optional.of(target));
             moveBackup(source, target);
             Files.delete(profilePath(source));
         } catch (IOException exception) {
@@ -181,6 +235,7 @@ public final class ProfileManager {
     public synchronized boolean delete(String name) {
         String normalizedName = normalizeName(name);
         try {
+            updateProfileReferences(normalizedName, Optional.empty());
             boolean deleted = Files.deleteIfExists(profilePath(normalizedName));
             Files.deleteIfExists(backupPath(normalizedName));
             return deleted;
@@ -195,6 +250,175 @@ public final class ProfileManager {
 
     private Path backupPath(String normalizedName) {
         return profilesDirectory.resolve(normalizedName + ".json.bak");
+    }
+
+    private JsonObject readPreferences() {
+        if (Files.notExists(preferencesPath)) {
+            return newPreferences();
+        }
+        try {
+            JsonElement parsed = JsonParser.parseString(Files.readString(preferencesPath, StandardCharsets.UTF_8));
+            if (!parsed.isJsonObject()) {
+                throw new IllegalArgumentException("Profile preferences root must be an object");
+            }
+            JsonObject root = parsed.getAsJsonObject();
+            if (requiredInt(root, "schemaVersion") != 1) {
+                throw new IllegalArgumentException("Unsupported profile preferences schema");
+            }
+            validateProfileReference(root, "defaultProfile");
+            validateAssociationObject(root, "serverProfiles");
+            validateAssociationObject(root, "singleplayerProfiles");
+            return root;
+        } catch (IOException exception) {
+            throw new ConfigurationException("Unable to read profile preferences", exception);
+        } catch (RuntimeException exception) {
+            LOGGER.log(Level.WARNING, "Invalid profile preferences; preserving them without use", exception);
+            preserveMalformedPreferences();
+            return newPreferences();
+        }
+    }
+
+    private void writePreferences(JsonObject root) {
+        root.addProperty("schemaVersion", 1);
+        try {
+            Files.createDirectories(configuration.configurationDirectory());
+            Path temporary = Files.createTempFile(configuration.configurationDirectory(), "profiles-", ".json.tmp");
+            Files.writeString(temporary, root.toString(), StandardCharsets.UTF_8);
+            if (Files.exists(preferencesPath)) {
+                Files.copy(preferencesPath, preferencesPath.resolveSibling("profiles.json.bak"),
+                        StandardCopyOption.REPLACE_EXISTING);
+            }
+            moveAtomically(temporary, preferencesPath);
+        } catch (IOException exception) {
+            throw new ConfigurationException("Unable to save profile preferences", exception);
+        }
+    }
+
+    private boolean setAssociation(String property, String key, String profileName) {
+        String normalizedProfile = normalizeName(profileName);
+        if (!Files.isRegularFile(profilePath(normalizedProfile))) {
+            return false;
+        }
+        JsonObject preferences = readPreferences();
+        associationObject(preferences, property).addProperty(key, normalizedProfile);
+        writePreferences(preferences);
+        return true;
+    }
+
+    private Optional<String> associationProfile(String property, String key) {
+        JsonObject preferences = readPreferences();
+        JsonElement value = associationObject(preferences, property).get(key);
+        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
+            return Optional.empty();
+        }
+        String profileName = normalizeName(value.getAsString());
+        return Files.isRegularFile(profilePath(profileName)) ? Optional.of(profileName) : Optional.empty();
+    }
+
+    private void clearAssociation(String property, String key) {
+        JsonObject preferences = readPreferences();
+        associationObject(preferences, property).remove(key);
+        writePreferences(preferences);
+    }
+
+    private void updateProfileReferences(String source, Optional<String> target) {
+        JsonObject preferences = readPreferences();
+        if (storedProfileReference(preferences, "defaultProfile").filter(source::equals).isPresent()) {
+            if (target.isPresent()) preferences.addProperty("defaultProfile", target.get()); else preferences.remove("defaultProfile");
+        }
+        for (String property : List.of("serverProfiles", "singleplayerProfiles")) {
+            JsonObject associations = associationObject(preferences, property);
+            for (String key : List.copyOf(associations.keySet())) {
+                if (source.equals(storedProfileReference(associations, key).orElse(null))) {
+                    if (target.isPresent()) associations.addProperty(key, target.get()); else associations.remove(key);
+                }
+            }
+        }
+        writePreferences(preferences);
+    }
+
+    private Optional<String> profileReference(JsonObject object, String property) {
+        return storedProfileReference(object, property)
+                .filter(profileName -> Files.isRegularFile(profilePath(profileName)));
+    }
+
+    private static Optional<String> storedProfileReference(JsonObject object, String property) {
+        JsonElement element = object.get(property);
+        if (element == null || !element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) return Optional.empty();
+        return Optional.of(normalizeName(element.getAsString()));
+    }
+
+    private static JsonObject newPreferences() {
+        JsonObject root = new JsonObject();
+        root.addProperty("schemaVersion", 1);
+        return root;
+    }
+
+    private static void validateAssociationObject(JsonObject root, String property) {
+        JsonElement element = root.get(property);
+        if (element != null && !element.isJsonObject()) throw new IllegalArgumentException("Invalid '" + property + "'");
+        if (element != null) {
+            for (var entry : element.getAsJsonObject().entrySet()) {
+                if (property.equals("serverProfiles")) normalizeServerAddress(entry.getKey());
+                else normalizeWorldId(entry.getKey());
+                validateProfileReference(element.getAsJsonObject(), entry.getKey());
+            }
+        }
+    }
+
+    private static void validateProfileReference(JsonObject object, String property) {
+        JsonElement element = object.get(property);
+        if (element == null) return;
+        if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
+            throw new IllegalArgumentException("Invalid profile reference '" + property + "'");
+        }
+        normalizeName(element.getAsString());
+    }
+
+    private static JsonObject associationObject(JsonObject root, String property) {
+        JsonElement element = root.get(property);
+        if (element == null) {
+            JsonObject created = new JsonObject(); root.add(property, created); return created;
+        }
+        return element.getAsJsonObject();
+    }
+
+    private static String normalizeServerAddress(String address) {
+        return normalizeAssociation(address).toLowerCase(Locale.ROOT);
+    }
+
+    private static String normalizeWorldId(String worldId) { return normalizeAssociation(worldId); }
+
+    private static String normalizeAssociation(String value) {
+        String normalized = value == null ? "" : value.trim();
+        if (normalized.isEmpty() || normalized.length() > 255 || normalized.chars().anyMatch(Character::isISOControl)) {
+            throw new IllegalArgumentException("Association identifiers must be 1-255 printable characters");
+        }
+        return normalized;
+    }
+
+    private void preserveMalformedPreferences() {
+        if (Files.notExists(preferencesPath)) {
+            return;
+        }
+        Path recoveryPath = preferencesPath.resolveSibling("profiles.corrupt-" + Instant.now().toEpochMilli() + ".json");
+        try {
+            Files.move(preferencesPath, recoveryPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException exception) {
+            LOGGER.log(Level.WARNING, "Unable to preserve malformed profile preferences", exception);
+        }
+    }
+
+    private static int requiredInt(JsonObject object, String property) {
+        JsonElement element = object.get(property);
+        if (element == null || !element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber()) {
+            throw new IllegalArgumentException("Missing or invalid '" + property + "'");
+        }
+        double value = element.getAsDouble();
+        if (!Double.isFinite(value) || value != Math.rint(value) || value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Missing or invalid '" + property + "'");
+        }
+        return (int) value;
     }
 
     private JsonObject readSnapshotForCopy(String normalizedName) {

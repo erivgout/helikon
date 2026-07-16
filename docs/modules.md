@@ -47,8 +47,10 @@ Modules can also be controlled through local chat commands (`.toggle`,
 per-module keybinds with `toggle`, `hold`, or `press_once` activation. Profile
 commands save/load/duplicate/rename the complete local module and ClickGUI
 snapshot without transmitting it. Import/export uses Helikon's local
-`imports/` and `exports/` folders rather than arbitrary paths. Keybinds never
-fire while a screen is open.
+`imports/` and `exports/` folders rather than arbitrary paths. A profile can
+also be marked as the persisted default. Keybinds never fire while a screen is
+open. Server and singleplayer associations are also local profile preferences;
+they neither inspect nor send server data beyond the user-provided identifier.
 
 ## HUD
 

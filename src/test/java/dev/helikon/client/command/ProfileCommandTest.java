@@ -35,6 +35,9 @@ class ProfileCommandTest {
 
         module.amount.set(8.0);
         dispatcher.dispatch(".profile save builder", feedback);
+        dispatcher.dispatch(".profile default builder", feedback);
+        dispatcher.dispatch(".profile server Example.Org:25565 builder", feedback);
+        dispatcher.dispatch(".profile world local-world builder", feedback);
         dispatcher.dispatch(".profile export builder portable", feedback);
         Files.createDirectories(profiles.importsDirectory());
         Files.copy(profiles.exportsDirectory().resolve("portable.json"), profiles.importsDirectory().resolve("incoming.json"));
@@ -52,6 +55,9 @@ class ProfileCommandTest {
         assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Renamed local profile 'copy' to 'renovated'")));
         assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Exported local profile 'builder' as 'portable'")));
         assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Imported local profile 'imported'")));
+        assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Set default local profile to 'builder'")));
+        assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Associated server 'Example.Org:25565'")));
+        assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Associated world 'local-world'")));
         assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Deleted local profile 'builder'")));
     }
 

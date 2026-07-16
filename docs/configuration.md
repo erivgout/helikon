@@ -44,6 +44,12 @@ To import, place `<file>.json` in `config/helikon/imports/` and run
 `config/helikon/exports/<file>.json` (with a `.bak` on replacement). Commands
 accept only safe file tokens, so chat input cannot read or write arbitrary
 paths.
+`profiles.json` stores the optional default profile with the same atomic write,
+backup, and corrupt-file recovery rules. Renaming or deleting the default
+updates or clears that local preference. The same manifest stores optional
+server-address and singleplayer-world associations. Addresses are normalized
+case-insensitively; world identifiers are trimmed but otherwise case-preserved. Renaming/deleting
+a profile updates or clears every association that points to it.
 
 Configuration is written when the ClickGUI closes and on normal client
 shutdown — never per frame or per tick. Writes use a temporary file followed
@@ -51,6 +57,6 @@ by atomic replacement when available. The previously saved valid file is copied 
 Malformed files are moved to `global.corrupt-<timestamp>.json`; Helikon then
 uses safe defaults. No configuration is synchronized remotely.
 
-Friends, waypoints, macros, remaining HUD layout, and server-specific data are
-planned future local stores. Imported data must be validated before activation
-and must never execute code or write outside the Helikon configuration folder.
+Friends, waypoints, macros, and remaining HUD layout are planned future local
+stores. Imported data must be validated before activation and must never
+execute code or write outside the Helikon configuration folder.

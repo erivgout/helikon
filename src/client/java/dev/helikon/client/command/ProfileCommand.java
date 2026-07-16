@@ -26,7 +26,7 @@ public final class ProfileCommand implements HelikonCommand {
 
     @Override
     public String usage() {
-        return CommandDispatcher.PREFIX + "profile list|save <name>|load <name>|duplicate <from> <to>|rename <from> <to>|import <file> <name>|export <name> <file>|delete <name>";
+        return CommandDispatcher.PREFIX + "profile list|save <name>|load <name>|default <name|clear>|server <address> <profile|clear>|world <id> <profile|clear>|duplicate <from> <to>|rename <from> <to>|import <file> <name>|export <name> <file>|delete <name>";
     }
 
     @Override
@@ -45,6 +45,9 @@ public final class ProfileCommand implements HelikonCommand {
                 case "list" -> list(arguments, feedback);
                 case "save" -> save(arguments, feedback);
                 case "load" -> load(arguments, feedback);
+                case "default" -> defaultProfile(arguments, feedback);
+                case "server" -> serverProfile(arguments, feedback);
+                case "world" -> worldProfile(arguments, feedback);
                 case "duplicate" -> duplicate(arguments, feedback);
                 case "rename" -> rename(arguments, feedback);
                 case "import" -> importProfile(arguments, feedback);
@@ -99,6 +102,39 @@ public final class ProfileCommand implements HelikonCommand {
         } else {
             feedback.error("No local profile named '" + arguments.get(1) + "'.");
         }
+    }
+
+    private void defaultProfile(List<String> arguments, CommandFeedback feedback) {
+        if (arguments.size() != 2) {
+            feedback.error("Usage: " + CommandDispatcher.PREFIX + "profile default <name|clear>");
+            return;
+        }
+        if (arguments.get(1).equalsIgnoreCase("clear")) {
+            profiles.clearDefault();
+            feedback.info("Cleared the default local profile.");
+        } else if (profiles.setDefault(arguments.get(1))) {
+            feedback.info("Set default local profile to '" + arguments.get(1) + "'.");
+        } else {
+            feedback.error("No local profile named '" + arguments.get(1) + "'.");
+        }
+    }
+
+    private void serverProfile(List<String> arguments, CommandFeedback feedback) {
+        if (arguments.size() != 3) { feedback.error("Usage: .profile server <address> <profile|clear>"); return; }
+        if (arguments.get(2).equalsIgnoreCase("clear")) {
+            profiles.clearServerProfile(arguments.get(1)); feedback.info("Cleared server profile association.");
+        } else if (profiles.setServerProfile(arguments.get(1), arguments.get(2))) {
+            feedback.info("Associated server '" + arguments.get(1) + "' with profile '" + arguments.get(2) + "'.");
+        } else feedback.error("No local profile named '" + arguments.get(2) + "'.");
+    }
+
+    private void worldProfile(List<String> arguments, CommandFeedback feedback) {
+        if (arguments.size() != 3) { feedback.error("Usage: .profile world <id> <profile|clear>"); return; }
+        if (arguments.get(2).equalsIgnoreCase("clear")) {
+            profiles.clearSingleplayerProfile(arguments.get(1)); feedback.info("Cleared singleplayer profile association.");
+        } else if (profiles.setSingleplayerProfile(arguments.get(1), arguments.get(2))) {
+            feedback.info("Associated world '" + arguments.get(1) + "' with profile '" + arguments.get(2) + "'.");
+        } else feedback.error("No local profile named '" + arguments.get(2) + "'.");
     }
 
     private void duplicate(List<String> arguments, CommandFeedback feedback) {

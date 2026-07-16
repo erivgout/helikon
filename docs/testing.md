@@ -115,6 +115,11 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
 10. Export `smoke` as `portable`, copy its file from `exports/` to `imports/`
     as `incoming.json`, and import it as `restored`. Verify it loads correctly;
     an unsupported-schema import must be rejected without creating a profile.
+11. Set `smoke` as default, rename it, then delete it. Verify `profiles.json`
+    follows the rename and its default entry is cleared after deletion.
+12. Associate `smoke` with a server address and a world ID. Verify the
+    associations survive a profile rename and are cleared when that profile is
+    deleted; case changes in the server address should still resolve it.
 
 ## Bootstrap smoke test
 

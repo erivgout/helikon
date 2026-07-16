@@ -129,6 +129,80 @@ class ProfileManagerTest {
         assertFalse(profiles.delete("missing"));
     }
 
+    @Test
+    void duplicatesAndRenamesProfilesWithMatchingStoredNames() {
+        ConfigurationManager configuration = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        ProfileManager profiles = new ProfileManager(configuration);
+        ModuleRegistry registry = new ModuleRegistry();
+        ConfigurableModule source = new ConfigurableModule();
+        registry.register(source);
+        source.amount.set(6.0);
+        profiles.save("builder", registry, new ClickGuiWindowState());
+
+        assertTrue(profiles.duplicate("builder", "copy"));
+        assertTrue(profiles.rename("copy", "renovated"));
+        assertEquals(java.util.List.of("builder", "renovated"), profiles.list());
+        assertFalse(Files.exists(profiles.profilePath("copy")));
+        assertThrows(IllegalArgumentException.class, () -> profiles.duplicate("builder", "renovated"));
+
+        ModuleRegistry targetRegistry = new ModuleRegistry();
+        ConfigurableModule target = new ConfigurableModule();
+        targetRegistry.register(target);
+        assertEquals(ProfileManager.LoadResult.LOADED,
+                profiles.load("renovated", targetRegistry, new ClickGuiWindowState()));
+        assertEquals(6.0, target.amount.value());
+    }
+
+    @Test
+    void renamePreservesTheSourceBackupUnderTheNewName() {
+        ConfigurationManager configuration = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        ProfileManager profiles = new ProfileManager(configuration);
+        ModuleRegistry registry = new ModuleRegistry();
+        ConfigurableModule module = new ConfigurableModule();
+        registry.register(module);
+
+        profiles.save("builder", registry, new ClickGuiWindowState());
+        module.amount.set(5.0);
+        profiles.save("builder", registry, new ClickGuiWindowState());
+        assertTrue(Files.exists(profiles.profilesDirectory().resolve("builder.json.bak")));
+
+        assertTrue(profiles.rename("builder", "renovated"));
+
+        assertFalse(Files.exists(profiles.profilePath("builder")));
+        assertFalse(Files.exists(profiles.profilesDirectory().resolve("builder.json.bak")));
+        assertTrue(Files.exists(profiles.profilesDirectory().resolve("renovated.json.bak")));
+    }
+
+    @Test
+    void copyAndRenameRejectBadSourcesAndUnsafeDestinationsWithoutWritingTargets() throws IOException {
+        ConfigurationManager configuration = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        ProfileManager profiles = new ProfileManager(configuration);
+        Files.createDirectories(profiles.profilesDirectory());
+        Files.writeString(profiles.profilePath("broken"), "not JSON");
+        Files.createDirectories(profiles.profilePath("unreadable"));
+
+        assertThrows(IllegalArgumentException.class, () -> profiles.duplicate("broken", "copy"));
+        assertTrue(Files.exists(profiles.profilePath("broken")));
+        assertFalse(Files.exists(profiles.profilePath("copy")));
+        assertThrows(ConfigurationException.class, () -> profiles.duplicate("unreadable", "copy"));
+        assertTrue(Files.isDirectory(profiles.profilePath("unreadable")));
+        assertFalse(Files.exists(profiles.profilePath("copy")));
+        Files.writeString(profiles.profilePath("unsupported"),
+                "{\"schemaVersion\": 99, \"profileName\": \"unsupported\", \"modules\": {}}");
+        assertThrows(IllegalArgumentException.class, () -> profiles.duplicate("unsupported", "copy"));
+        assertTrue(Files.exists(profiles.profilePath("unsupported")));
+        assertFalse(Files.exists(profiles.profilePath("copy")));
+
+        ModuleRegistry registry = new ModuleRegistry();
+        registry.register(new ConfigurableModule());
+        profiles.save("source", registry, new ClickGuiWindowState());
+        profiles.save("target", registry, new ClickGuiWindowState());
+        assertThrows(IllegalArgumentException.class, () -> profiles.rename("source", "target"));
+        assertThrows(IllegalArgumentException.class, () -> profiles.rename("source", "source"));
+        assertTrue(Files.exists(profiles.profilePath("source")));
+        assertTrue(Files.exists(profiles.profilePath("target")));
+    }
+
     private static final class ConfigurableModule extends Module {
         private final NumberSetting amount;
 

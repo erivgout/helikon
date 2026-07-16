@@ -33,13 +33,17 @@ class ProfileCommandTest {
 
         module.amount.set(8.0);
         dispatcher.dispatch(".profile save builder", feedback);
+        dispatcher.dispatch(".profile duplicate builder copy", feedback);
+        dispatcher.dispatch(".profile rename copy renovated", feedback);
         dispatcher.dispatch(".profile list", feedback);
         module.amount.set(1.0);
         dispatcher.dispatch(".profile load builder", feedback);
         dispatcher.dispatch(".profile delete builder", feedback);
 
         assertEquals(8.0, module.amount.value());
-        assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Profiles: builder")));
+        assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Profiles: builder, renovated")));
+        assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Duplicated local profile 'builder' as 'copy'")));
+        assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Renamed local profile 'copy' to 'renovated'")));
         assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Deleted local profile 'builder'")));
     }
 

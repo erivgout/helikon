@@ -26,12 +26,12 @@ public final class ProfileCommand implements HelikonCommand {
 
     @Override
     public String usage() {
-        return CommandDispatcher.PREFIX + "profile list|save <name>|load <name>|delete <name>";
+        return CommandDispatcher.PREFIX + "profile list|save <name>|load <name>|duplicate <from> <to>|rename <from> <to>|delete <name>";
     }
 
     @Override
     public String description() {
-        return "Lists, saves, loads, or deletes local profiles.";
+        return "Lists, saves, loads, duplicates, renames, or deletes local profiles.";
     }
 
     @Override
@@ -45,6 +45,8 @@ public final class ProfileCommand implements HelikonCommand {
                 case "list" -> list(arguments, feedback);
                 case "save" -> save(arguments, feedback);
                 case "load" -> load(arguments, feedback);
+                case "duplicate" -> duplicate(arguments, feedback);
+                case "rename" -> rename(arguments, feedback);
                 case "delete" -> delete(arguments, feedback);
                 default -> feedback.error("Usage: " + usage());
             }
@@ -92,6 +94,30 @@ public final class ProfileCommand implements HelikonCommand {
         }
         if (profiles.delete(arguments.get(1))) {
             feedback.info("Deleted local profile '" + arguments.get(1).trim().toLowerCase(java.util.Locale.ROOT) + "'.");
+        } else {
+            feedback.error("No local profile named '" + arguments.get(1) + "'.");
+        }
+    }
+
+    private void duplicate(List<String> arguments, CommandFeedback feedback) {
+        if (arguments.size() != 3) {
+            feedback.error("Usage: " + CommandDispatcher.PREFIX + "profile duplicate <from> <to>");
+            return;
+        }
+        if (profiles.duplicate(arguments.get(1), arguments.get(2))) {
+            feedback.info("Duplicated local profile '" + arguments.get(1) + "' as '" + arguments.get(2) + "'.");
+        } else {
+            feedback.error("No local profile named '" + arguments.get(1) + "'.");
+        }
+    }
+
+    private void rename(List<String> arguments, CommandFeedback feedback) {
+        if (arguments.size() != 3) {
+            feedback.error("Usage: " + CommandDispatcher.PREFIX + "profile rename <from> <to>");
+            return;
+        }
+        if (profiles.rename(arguments.get(1), arguments.get(2))) {
+            feedback.info("Renamed local profile '" + arguments.get(1) + "' to '" + arguments.get(2) + "'.");
         } else {
             feedback.error("No local profile named '" + arguments.get(1) + "'.");
         }

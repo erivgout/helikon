@@ -72,7 +72,10 @@ activation has the same schema and individual-setting validation. Names are
 restricted to safe lowercase file tokens, writes are atomic with per-profile
 backups, and a malformed profile is moved to
 `<name>.corrupt-<timestamp>.json` before it can activate. `ProfileCommand` is
-only local chat wiring around that Minecraft-free store.
+only local chat wiring around that Minecraft-free store. Duplicate and rename
+operations parse and rewrite the embedded profile name before atomically
+creating their destination, without activating a profile; they share the
+configuration codec's non-mutating schema validation first.
 
 ## Rendering, GUI, and HUD
 

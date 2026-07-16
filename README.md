@@ -87,6 +87,7 @@ sent to the server:
 | `.gui` | Opens the ClickGUI. |
 | `.profile list` | Lists saved local profiles. |
 | `.profile save\|load\|delete <name>` | Saves, loads, or deletes a local module/ClickGUI snapshot. |
+| `.profile duplicate\|rename <from> <to>` | Creates a named copy or renames a local profile. |
 | `.panic` | Disables all modules immediately. |
 
 Key names follow Minecraft's keyboard names, for example `r`, `f6`, or

@@ -33,6 +33,11 @@ profiles become `<name>.corrupt-<timestamp>.json` and are not activated.
 Missing module blocks, settings, or keybinds in an otherwise valid profile
 restore those values to their module defaults. Profiles that cannot be read are
 left in place rather than being treated as corrupt.
+Profiles can be duplicated or renamed locally; both operations rewrite the
+stored profile name before the new file is activated later, so a renamed file
+cannot fail validation due to a stale embedded name. Renaming also transfers
+the source profile's `.bak` file to the new name. The profile schema is
+validated before either operation writes a new file.
 
 Configuration is written when the ClickGUI closes and on normal client
 shutdown — never per frame or per tick. Writes use a temporary file followed

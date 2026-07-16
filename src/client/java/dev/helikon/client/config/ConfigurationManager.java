@@ -124,6 +124,11 @@ public final class ConfigurationManager {
                 Objects.requireNonNull(registry, "registry"), clickGuiWindow);
     }
 
+    /** Validates profile-level schema without changing module or GUI state. */
+    public synchronized void validateSnapshot(JsonObject snapshot) {
+        validateSnapshotStructure(Objects.requireNonNull(snapshot, "snapshot"));
+    }
+
     private JsonObject serializeConfiguration(ModuleRegistry registry, ClickGuiWindowState clickGuiWindow) {
         JsonObject root = new JsonObject();
         root.addProperty("schemaVersion", SCHEMA_VERSION);
@@ -150,12 +155,9 @@ public final class ConfigurationManager {
     }
 
     private void applyConfiguration(JsonObject root, ModuleRegistry registry, ClickGuiWindowState clickGuiWindow) {
-        int schemaVersion = getRequiredInt(root, "schemaVersion");
-        if (schemaVersion < 1 || schemaVersion > SCHEMA_VERSION) {
-            throw new IllegalArgumentException("Unsupported configuration schema " + schemaVersion);
-        }
+        validateSnapshotStructure(root);
 
-        JsonObject modules = getRequiredObject(root, "modules");
+        JsonObject modules = root.getAsJsonObject("modules");
         for (Module module : registry.all()) {
             JsonElement moduleElement = modules.get(module.id());
             if (moduleElement == null || !moduleElement.isJsonObject()) {
@@ -188,6 +190,14 @@ public final class ConfigurationManager {
         if (clickGuiWindow != null) {
             applyClickGuiWindow(root.get("clickGui"), clickGuiWindow);
         }
+    }
+
+    private static void validateSnapshotStructure(JsonObject root) {
+        int schemaVersion = getRequiredInt(root, "schemaVersion");
+        if (schemaVersion < 1 || schemaVersion > SCHEMA_VERSION) {
+            throw new IllegalArgumentException("Unsupported configuration schema " + schemaVersion);
+        }
+        getRequiredObject(root, "modules");
     }
 
     private void applySettings(Module module, JsonObject serializedSettings) {

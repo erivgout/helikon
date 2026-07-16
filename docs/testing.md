@@ -109,6 +109,9 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
    `.profile list` and `.profile delete smoke`; verify the profile is listed
    then removed. Replace a profile file with invalid JSON and verify it is
    renamed to `smoke.corrupt-<timestamp>.json` without changing live state.
+9. Save `smoke`, run `.profile duplicate smoke copy` and
+   `.profile rename copy renamed`, then verify `renamed` appears in
+   `.profile list`, loads correctly, and `copy` no longer exists.
 
 ## Bootstrap smoke test
 

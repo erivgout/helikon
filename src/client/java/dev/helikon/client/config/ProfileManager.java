@@ -65,18 +65,42 @@ public final class ProfileManager {
         JsonObject snapshot = configuration.snapshot(registry, clickGuiWindow);
         snapshot.addProperty("profileName", normalizedName);
 
-        try {
-            Files.createDirectories(profilesDirectory);
-            Path destination = profilePath(normalizedName);
-            Path temporary = Files.createTempFile(profilesDirectory, "profile-" + normalizedName + "-", ".json.tmp");
-            Files.writeString(temporary, snapshot.toString(), StandardCharsets.UTF_8);
-            if (Files.exists(destination)) {
-                Files.copy(destination, backupPath(normalizedName), StandardCopyOption.REPLACE_EXISTING);
-            }
-            moveAtomically(temporary, destination);
-        } catch (IOException exception) {
-            throw new ConfigurationException("Unable to save profile '" + normalizedName + "'", exception);
+        writeSnapshot(normalizedName, snapshot, true);
+    }
+
+    /** Duplicates a validated JSON profile under a new name without activating it. */
+    public synchronized boolean duplicate(String sourceName, String targetName) {
+        String source = normalizeName(sourceName);
+        String target = normalizeName(targetName);
+        rejectSameName(source, target);
+        JsonObject snapshot = readSnapshotForCopy(source);
+        if (snapshot == null) {
+            return false;
         }
+        snapshot.addProperty("profileName", target);
+        writeSnapshot(target, snapshot, false);
+        return true;
+    }
+
+    /** Renames a validated JSON profile without activating it. */
+    public synchronized boolean rename(String sourceName, String targetName) {
+        String source = normalizeName(sourceName);
+        String target = normalizeName(targetName);
+        rejectSameName(source, target);
+        JsonObject snapshot = readSnapshotForCopy(source);
+        if (snapshot == null) {
+            return false;
+        }
+        snapshot.addProperty("profileName", target);
+        writeSnapshot(target, snapshot, false);
+
+        try {
+            moveBackup(source, target);
+            Files.delete(profilePath(source));
+        } catch (IOException exception) {
+            throw new ConfigurationException("Unable to finish renaming profile '" + source + "'", exception);
+        }
+        return true;
     }
 
     /**
@@ -131,6 +155,58 @@ public final class ProfileManager {
 
     private Path backupPath(String normalizedName) {
         return profilesDirectory.resolve(normalizedName + ".json.bak");
+    }
+
+    private JsonObject readSnapshotForCopy(String normalizedName) {
+        Path source = profilePath(normalizedName);
+        if (Files.notExists(source)) {
+            return null;
+        }
+        try {
+            JsonElement parsed = JsonParser.parseString(Files.readString(source, StandardCharsets.UTF_8));
+            if (!parsed.isJsonObject()) {
+                throw new IllegalArgumentException("Profile root must be an object");
+            }
+            JsonObject snapshot = parsed.getAsJsonObject();
+            validateProfileName(snapshot, normalizedName);
+            configuration.validateSnapshot(snapshot);
+            return snapshot;
+        } catch (IOException exception) {
+            throw new ConfigurationException("Unable to read profile '" + normalizedName + "'", exception);
+        } catch (RuntimeException exception) {
+            throw new IllegalArgumentException("Profile '" + normalizedName + "' is not valid JSON", exception);
+        }
+    }
+
+    private void writeSnapshot(String normalizedName, JsonObject snapshot, boolean replaceExisting) {
+        try {
+            Files.createDirectories(profilesDirectory);
+            Path destination = profilePath(normalizedName);
+            if (!replaceExisting && (Files.exists(destination) || Files.exists(backupPath(normalizedName)))) {
+                throw new IllegalArgumentException("A profile named '" + normalizedName + "' already exists");
+            }
+            Path temporary = Files.createTempFile(profilesDirectory, "profile-" + normalizedName + "-", ".json.tmp");
+            Files.writeString(temporary, snapshot.toString(), StandardCharsets.UTF_8);
+            if (Files.exists(destination)) {
+                Files.copy(destination, backupPath(normalizedName), StandardCopyOption.REPLACE_EXISTING);
+            }
+            moveAtomically(temporary, destination);
+        } catch (IOException exception) {
+            throw new ConfigurationException("Unable to save profile '" + normalizedName + "'", exception);
+        }
+    }
+
+    private static void rejectSameName(String source, String target) {
+        if (source.equals(target)) {
+            throw new IllegalArgumentException("Source and target profile names must differ");
+        }
+    }
+
+    private void moveBackup(String source, String target) throws IOException {
+        Path sourceBackup = backupPath(source);
+        if (Files.exists(sourceBackup)) {
+            moveAtomically(sourceBackup, backupPath(target));
+        }
     }
 
     private void preserveMalformedProfile(String normalizedName) {

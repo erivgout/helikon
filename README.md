@@ -25,6 +25,7 @@ The ClickGUI currently provides:
 - in-GUI keyboard keybind assignment (Backspace/Delete unbinds; Escape cancels)
 - reset buttons for individual settings and whole modules
 - a draggable, resizable, clamped window saved in `global.json`
+- three local ClickGUI palettes, selected from the Theme editor and saved in `global.json`
 - persistence of module state and settings when the screen closes
 
 The first HUD slice adds an **Active Modules** list. It renders enabled Helikon
@@ -62,6 +63,8 @@ by an empty part of its header. In a selected module's settings panel, click
 **Bind** and press a key; Backspace/Delete removes the bind and Escape cancels.
 Drag its bottom-right handle to resize it; the position and dimensions are
 restored locally when it is reopened.
+Select **Theme** in the header to choose Midnight, High Contrast, or Ocean;
+the client never downloads themes or contacts a service.
 
 ## Local commands
 

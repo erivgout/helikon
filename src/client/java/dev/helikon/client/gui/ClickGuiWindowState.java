@@ -18,6 +18,7 @@ public final class ClickGuiWindowState {
     private boolean sized;
     private int width = DEFAULT_WIDTH;
     private int height = DEFAULT_HEIGHT;
+    private ClickGuiTheme theme = ClickGuiTheme.MIDNIGHT;
 
     public boolean isPositioned() {
         return positioned;
@@ -42,6 +43,10 @@ public final class ClickGuiWindowState {
     public int height() {
         return height;
     }
+
+    public ClickGuiTheme theme() { return theme; }
+
+    public void setTheme(ClickGuiTheme theme) { this.theme = java.util.Objects.requireNonNull(theme, "theme"); }
 
     /** Sets a user-selected top-left location if both persisted values are safe. */
     public boolean setPosition(int x, int y) {
@@ -69,6 +74,7 @@ public final class ClickGuiWindowState {
     public void reset() {
         resetPosition();
         resetSize();
+        theme = ClickGuiTheme.MIDNIGHT;
     }
 
     /** Clears only the saved position while retaining the selected dimensions. */

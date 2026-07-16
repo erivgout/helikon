@@ -30,6 +30,11 @@ preserved when rebinding. Drag an unused portion of the header to move the
 window, or its bottom-right handle to resize it. The clamped top-left position
 and custom dimensions persist in `global.json`.
 
+Select **Theme** from the ClickGUI header to open its local palette selector.
+The initial themes are Midnight, High Contrast, and Ocean; selecting one
+changes the panel immediately and persists it locally. Custom colors and the
+color picker remain future work.
+
 ## Commands and keybinds
 
 Modules can also be controlled through local chat commands (`.toggle`,

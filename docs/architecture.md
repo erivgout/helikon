@@ -95,6 +95,10 @@ view layer:
 - `ClickGuiWindowResizeState` owns the bottom-right drag-handle math. It keeps
   the panel's top-left fixed, clamps dimensions to the usable viewport, and
   relies on the same validated, persisted `ClickGuiWindowState` as movement.
+- `ClickGuiTheme` is a closed local palette list, while `ClickGuiWindowState`
+  persists the selected ID with the GUI layout. `HelikonThemeEditorScreen`
+  only selects a palette and saves once when it closes; no remote themes,
+  downloaded assets, or external requests are used.
 - GUI setting/module reset controls use `Setting.reset()` and
   `Module.resetSettings()`. Module lifecycle changes remain exclusively routed
   through `ModuleRegistry`.

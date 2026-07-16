@@ -73,6 +73,10 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
 12. Drag the bottom-right handle inward and outward. Verify the top-left corner
     remains fixed, the window cannot shrink below its usable minimum or grow
     beyond the screen, and its restored size remains valid after a relaunch.
+13. Select **Theme** and choose each palette. Verify the ClickGUI changes
+    immediately, High Contrast remains legible, Escape returns to the ClickGUI,
+    and the chosen theme is restored after relaunch. Replace the stored theme
+    with an invalid value and verify Helikon safely returns to Midnight.
 
 ## Manual command and keybind smoke test
 

@@ -52,19 +52,20 @@ public final class HelikonClickGuiScreen extends Screen {
     private static final int CHECKBOX_SIZE = 8;
     private static final int RESET_BUTTON_SIZE = 10;
     private static final int HUD_BUTTON_WIDTH = 30;
+    private static final int THEME_BUTTON_WIDTH = 42;
 
-    private static final int COLOR_PANEL = 0xF014161B;
-    private static final int COLOR_HEADER = 0xFF1C2027;
-    private static final int COLOR_SIDEBAR = 0xFF181B21;
-    private static final int COLOR_SETTINGS = 0xFF171A20;
-    private static final int COLOR_ROW_HOVER = 0x22FFFFFF;
-    private static final int COLOR_ROW_SELECTED = 0x33E8A33D;
-    private static final int COLOR_ACCENT = 0xFFE8A33D;
-    private static final int COLOR_TEXT = 0xFFE6E6E6;
-    private static final int COLOR_TEXT_DIM = 0xFF9AA1AB;
-    private static final int COLOR_OUTLINE = 0xFF2A2F38;
-    private static final int COLOR_INVALID = 0xFFFF6060;
-    private static final int COLOR_SCROLLBAR = 0xFF3A4150;
+    private int COLOR_PANEL;
+    private int COLOR_HEADER;
+    private int COLOR_SIDEBAR;
+    private int COLOR_SETTINGS;
+    private int COLOR_ROW_HOVER;
+    private int COLOR_ROW_SELECTED;
+    private int COLOR_ACCENT;
+    private int COLOR_TEXT;
+    private int COLOR_TEXT_DIM;
+    private int COLOR_OUTLINE;
+    private int COLOR_INVALID;
+    private int COLOR_SCROLLBAR;
 
     private final ModuleRegistry modules;
     private final ConfigurationManager configuration;
@@ -109,6 +110,7 @@ public final class HelikonClickGuiScreen extends Screen {
         this.hudConfiguration = Objects.requireNonNull(hudConfiguration, "hudConfiguration");
         this.state = new ClickGuiState(modules);
         this.keybindAssignment = new KeybindAssignment(HelikonKeybinds::isGuiKey);
+        refreshThemeColors();
     }
 
     @Override
@@ -184,11 +186,28 @@ public final class HelikonClickGuiScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        refreshThemeColors();
         drawPanel(graphics, mouseX, mouseY);
         drawSidebar(graphics, mouseX, mouseY);
         drawModuleList(graphics, mouseX, mouseY);
         drawSettingsPanel(graphics, mouseX, mouseY);
         super.extractRenderState(graphics, mouseX, mouseY, delta);
+    }
+
+    private void refreshThemeColors() {
+        ClickGuiTheme theme = windowState.theme();
+        COLOR_PANEL = theme.panel();
+        COLOR_HEADER = theme.header();
+        COLOR_SIDEBAR = theme.sidebar();
+        COLOR_SETTINGS = theme.settings();
+        COLOR_ROW_HOVER = theme.rowHover();
+        COLOR_ROW_SELECTED = theme.rowSelected();
+        COLOR_ACCENT = theme.accent();
+        COLOR_TEXT = theme.text();
+        COLOR_TEXT_DIM = theme.textDim();
+        COLOR_OUTLINE = theme.outline();
+        COLOR_INVALID = theme.invalid();
+        COLOR_SCROLLBAR = theme.scrollbar();
     }
 
     @Override
@@ -204,6 +223,7 @@ public final class HelikonClickGuiScreen extends Screen {
         int mouseX = (int) event.x();
         int mouseY = (int) event.y();
         return handleHudEditorClick(mouseX, mouseY)
+                || handleThemeEditorClick(mouseX, mouseY)
                 || handleCategoryClick(mouseX, mouseY)
                 || handleModuleListClick(mouseX, mouseY)
                 || handleSettingsClick(mouseX, mouseY)
@@ -304,6 +324,11 @@ public final class HelikonClickGuiScreen extends Screen {
         graphics.outline(hudButtonX(), panelY + 4, HUD_BUTTON_WIDTH, 14, buttonColor);
         graphics.centeredText(font, Component.translatable("screen.helikon.hud_button"),
                 hudButtonX() + HUD_BUTTON_WIDTH / 2, panelY + 7, COLOR_TEXT);
+        int themeButtonColor = isInside(mouseX, mouseY, themeButtonX(), panelY + 4, THEME_BUTTON_WIDTH, 14)
+                ? COLOR_ROW_HOVER : COLOR_OUTLINE;
+        graphics.outline(themeButtonX(), panelY + 4, THEME_BUTTON_WIDTH, 14, themeButtonColor);
+        graphics.centeredText(font, Component.translatable("screen.helikon.theme_button"),
+                themeButtonX() + THEME_BUTTON_WIDTH / 2, panelY + 7, COLOR_TEXT);
     }
 
     private void drawSidebar(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -489,6 +514,14 @@ public final class HelikonClickGuiScreen extends Screen {
         return true;
     }
 
+    private boolean handleThemeEditorClick(int mouseX, int mouseY) {
+        if (!isInside(mouseX, mouseY, themeButtonX(), panelY + 4, THEME_BUTTON_WIDTH, 14)) {
+            return false;
+        }
+        minecraft.setScreenAndShow(new HelikonThemeEditorScreen(this, modules, configuration, windowState));
+        return true;
+    }
+
     private boolean handleModuleListClick(int mouseX, int mouseY) {
         if (mouseX < listX || mouseX >= listX + listWidth || mouseY < contentTop || mouseY >= contentBottom) {
             return false;
@@ -620,6 +653,10 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private int hudButtonX() {
         return panelX + panelWidth - 150;
+    }
+
+    private int themeButtonX() {
+        return hudButtonX() - THEME_BUTTON_WIDTH - 4;
     }
 
     private int searchFieldX() {

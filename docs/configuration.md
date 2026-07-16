@@ -15,6 +15,8 @@ block with its saved top-left window position. Missing or invalid GUI layout
 data safely falls back to centered placement. The same block stores a custom
 window width and height when the user has resized it; invalid dimensions reset
 to the default size without affecting valid module data.
+It also stores the selected ClickGUI palette (`midnight`, `high_contrast`, or
+`ocean`). Unknown or malformed palette values safely fall back to Midnight.
 
 The Active Modules HUD has its own schema-versioned `hud.json` in the same
 directory. It stores only the element's enabled state and top-left scaled-GUI

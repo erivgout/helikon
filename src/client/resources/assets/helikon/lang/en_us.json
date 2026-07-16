@@ -10,6 +10,9 @@
   "screen.helikon.reset_module": "Reset module",
   "screen.helikon.reset_setting": "Reset %s",
   "screen.helikon.hud_button": "HUD",
+  "screen.helikon.theme_button": "Theme",
+  "screen.helikon.theme_editor.title": "ClickGUI Theme",
+  "screen.helikon.theme_editor.instructions": "Choose a local palette. Escape returns to the ClickGUI.",
   "screen.helikon.hud_editor.title": "Helikon HUD Editor",
   "screen.helikon.hud_editor.instructions": "Drag the preview. Press Escape to return to the ClickGUI.",
   "screen.helikon.hud_editor.active_modules": "Active modules"

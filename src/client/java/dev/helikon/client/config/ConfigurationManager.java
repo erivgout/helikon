@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.helikon.client.input.Keybind;
 import dev.helikon.client.gui.ClickGuiWindowState;
+import dev.helikon.client.gui.ClickGuiTheme;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.Setting;
@@ -188,6 +189,7 @@ public final class ConfigurationManager {
             window.addProperty("width", clickGuiWindow.width());
             window.addProperty("height", clickGuiWindow.height());
         }
+        window.addProperty("theme", clickGuiWindow.theme().id());
         return window;
     }
 
@@ -228,27 +230,32 @@ public final class ConfigurationManager {
         }
 
         JsonElement sizedElement = window.get("sized");
-        if (sizedElement == null) {
-            return;
-        }
-        if (!sizedElement.isJsonPrimitive() || !sizedElement.getAsJsonPrimitive().isBoolean()) {
+        if (sizedElement != null && (!sizedElement.isJsonPrimitive() || !sizedElement.getAsJsonPrimitive().isBoolean())) {
             LOGGER.warning("Invalid ClickGUI sized value; reset to default dimensions");
             clickGuiWindow.resetSize();
-            return;
-        }
-        if (!sizedElement.getAsBoolean()) {
-            return;
-        }
-        try {
-            int width = getRequiredInt(window, "width");
-            int height = getRequiredInt(window, "height");
-            if (!clickGuiWindow.setSize(width, height)) {
-                throw new IllegalArgumentException("ClickGUI dimensions are outside the supported range");
+        } else if (sizedElement != null && sizedElement.getAsBoolean()) {
+            try {
+                int width = getRequiredInt(window, "width");
+                int height = getRequiredInt(window, "height");
+                if (!clickGuiWindow.setSize(width, height)) {
+                    throw new IllegalArgumentException("ClickGUI dimensions are outside the supported range");
+                }
+            } catch (IllegalArgumentException exception) {
+                LOGGER.warning("Invalid ClickGUI dimensions; reset to defaults");
+                clickGuiWindow.resetSize();
             }
-        } catch (IllegalArgumentException exception) {
-            LOGGER.warning("Invalid ClickGUI dimensions; reset to defaults");
-            clickGuiWindow.resetSize();
         }
+
+        JsonElement themeElement = window.get("theme");
+        if (themeElement == null) {
+            return;
+        }
+        if (!themeElement.isJsonPrimitive() || !themeElement.getAsJsonPrimitive().isString()) {
+            LOGGER.warning("Invalid ClickGUI theme; reset to Midnight");
+            return;
+        }
+        ClickGuiTheme.find(themeElement.getAsString()).ifPresentOrElse(clickGuiWindow::setTheme,
+                () -> LOGGER.warning("Unknown ClickGUI theme; reset to Midnight"));
     }
 
     private static JsonObject serializeKeybind(Keybind keybind) {

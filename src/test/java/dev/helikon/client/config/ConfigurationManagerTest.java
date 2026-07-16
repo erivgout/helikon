@@ -2,6 +2,7 @@ package dev.helikon.client.config;
 
 import dev.helikon.client.input.Keybind;
 import dev.helikon.client.gui.ClickGuiWindowState;
+import dev.helikon.client.gui.ClickGuiTheme;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
@@ -115,6 +116,7 @@ class ConfigurationManagerTest {
         ClickGuiWindowState sourceWindow = new ClickGuiWindowState();
         sourceWindow.setPosition(44, 72);
         sourceWindow.setSize(420, 260);
+        sourceWindow.setTheme(ClickGuiTheme.OCEAN);
 
         ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
         manager.save(sourceRegistry, sourceWindow);
@@ -129,6 +131,7 @@ class ConfigurationManagerTest {
         assertTrue(targetWindow.isSized());
         assertEquals(420, targetWindow.width());
         assertEquals(260, targetWindow.height());
+        assertEquals(ClickGuiTheme.OCEAN, targetWindow.theme());
     }
 
     @Test
@@ -200,6 +203,24 @@ class ConfigurationManagerTest {
         assertFalse(window.isSized());
         assertEquals(ClickGuiWindowState.DEFAULT_WIDTH, window.width());
         assertEquals(ClickGuiWindowState.DEFAULT_HEIGHT, window.height());
+    }
+
+    @Test
+    void invalidStoredClickGuiThemeFallsBackToMidnight() throws IOException {
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        Files.createDirectories(manager.configurationDirectory());
+        Files.writeString(manager.globalConfigurationPath(), """
+                {
+                  "schemaVersion": 1,
+                  "modules": {},
+                  "clickGui": {"positioned": false, "theme": "unknown"}
+                }
+                """);
+
+        ClickGuiWindowState window = new ClickGuiWindowState();
+        window.setTheme(ClickGuiTheme.OCEAN);
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(new ModuleRegistry(), window));
+        assertEquals(ClickGuiTheme.MIDNIGHT, window.theme());
     }
 
     private static final class ConfigurableModule extends Module {

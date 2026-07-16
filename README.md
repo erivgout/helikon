@@ -1,10 +1,10 @@
 # Helikon
 
 Helikon is a clean-room, open-source Fabric utility client for Minecraft Java
-Edition. This repository currently contains the **bootstrap/core skeleton plus
-the ClickGUI foundation**: the client entrypoint, modular lifecycle API, basic
-settings, local JSON configuration, an internal event bus, a functional Right
-Shift ClickGUI, and tests.
+Edition. This repository currently contains the **core framework**: the client
+entrypoint, modular lifecycle API, basic settings, local JSON configuration,
+an internal event bus, a functional Right Shift ClickGUI, local chat commands,
+module keybinds, and tests.
 
 It is not affiliated with Aristois, and it does not contain copied code, assets,
 branding, or configuration formats from that project.
@@ -48,6 +48,29 @@ its modules, click a module to inspect and edit its settings, and click the
 square at the right of a row to toggle it. The search box at the top filters
 across every category. Changes are written to `global.json` when the screen
 closes.
+
+## Local commands
+
+Chat messages that start with `.` are intercepted on the client and are never
+sent to the server:
+
+| Command | Effect |
+| --- | --- |
+| `.help` | Lists all local commands. |
+| `.modules` | Lists registered modules and their state. |
+| `.toggle <module>` | Enables or disables a module by ID. |
+| `.search <text>` | Finds modules by name, ID, or description. |
+| `.setting <module> <setting> <value>` | Changes a boolean or number setting. |
+| `.reset <module>` | Resets a module's settings to defaults. |
+| `.bind <module> <key> [toggle\|hold\|press_once]` | Binds a key to a module. |
+| `.unbind <module>` | Removes a module's keybind. |
+| `.gui` | Opens the ClickGUI. |
+| `.panic` | Disables all modules immediately. |
+
+Key names follow Minecraft's keyboard names, for example `r`, `f6`, or
+`right.shift`. Module keybinds never fire while any screen is open, so typing
+into chat or a search box cannot toggle modules. Tab completion is not
+implemented yet.
 
 ## Local data and privacy
 

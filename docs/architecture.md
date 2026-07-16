@@ -24,6 +24,40 @@ module business logic.
 or classpath scanning, including during ticks and renders. Fabric lifecycle
 events are bridged into `ClientTickEvent` during the bootstrap.
 
+## Commands
+
+`CommandDispatcher` owns the `.` prefix. A Fabric `ALLOW_CHAT` hook
+(`ChatCommands`) routes every prefixed outgoing chat message to the dispatcher
+and cancels it, so command attempts — including typos — are never sent to the
+server. Each command is a small `HelikonCommand` implementation registered in
+`HelikonCommands`; command failures are caught, reported as feedback, and
+logged. The command layer has no Minecraft imports (key names resolve through
+the `KeyNameResolver` interface; `MinecraftKeyNameResolver` is the only
+Minecraft-facing piece), so dispatcher and command behavior is unit-tested
+directly. Responses go through `CommandFeedback`, implemented in game by
+`ChatNotifier`.
+
+`.gui` cannot open a screen while the chat screen is still closing, so the
+entrypoint queues the screen change and applies it on the next tick once no
+screen is open.
+
+## Module keybinds
+
+`KeybindManager` polls bound module keys once per client tick and applies the
+`Keybind.Activation` mode (toggle on press edge, hold enables while down,
+press_once only enables). All transitions go through `ModuleRegistry`. While
+any screen is open, keybind actions are suppressed and HOLD modules release;
+physical key state keeps being tracked so a key held across the end of
+suppression does not count as a fresh press. The key source is an injected
+`KeyStateReader`, keeping the edge/hold logic unit-testable. Keybinds are
+assigned with `.bind`/`.unbind` and persist in `global.json`.
+
+## Notifications
+
+`ChatNotifier` posts local-only messages to the chat HUD (command feedback and
+module-failure notices) and falls back to the log before a player exists.
+Nothing is ever sent to the server.
+
 ## Settings and configuration
 
 Each setting validates its own values and owns JSON conversion. Invalid values

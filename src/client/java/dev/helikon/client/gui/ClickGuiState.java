@@ -3,9 +3,9 @@ package dev.helikon.client.gui;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.module.ModuleSearch;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -53,11 +53,11 @@ public final class ClickGuiState {
      * categories while a query is present.
      */
     public List<Module> visibleModules() {
-        String needle = searchQuery.trim().toLowerCase(Locale.ROOT);
+        if (isSearching()) {
+            return ModuleSearch.filter(registry.all(), searchQuery);
+        }
         return registry.all().stream()
-                .filter(module -> needle.isEmpty()
-                        ? module.category() == selectedCategory
-                        : matches(module, needle))
+                .filter(module -> module.category() == selectedCategory)
                 .toList();
     }
 
@@ -68,13 +68,6 @@ public final class ClickGuiState {
     /** Selects the module whose settings the GUI shows; {@code null} clears it. */
     public void selectModule(Module module) {
         this.selectedModule = module;
-    }
-
-    /** Case-insensitive match against module name, ID, and description. */
-    static boolean matches(Module module, String lowerCaseNeedle) {
-        return module.name().toLowerCase(Locale.ROOT).contains(lowerCaseNeedle)
-                || module.id().contains(lowerCaseNeedle)
-                || module.description().toLowerCase(Locale.ROOT).contains(lowerCaseNeedle);
     }
 
     private static ModuleCategory initialCategory(ModuleRegistry registry) {

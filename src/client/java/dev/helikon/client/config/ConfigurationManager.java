@@ -3,6 +3,7 @@ package dev.helikon.client.config;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.helikon.client.input.Keybind;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.Setting;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -92,6 +94,7 @@ public final class ConfigurationManager {
         for (Module module : registry.all()) {
             JsonObject moduleObject = new JsonObject();
             moduleObject.addProperty("enabled", module.isEnabled());
+            moduleObject.add("keybind", serializeKeybind(module.keybind()));
 
             JsonObject settings = new JsonObject();
             for (Setting<?> setting : module.settings()) {
@@ -124,6 +127,8 @@ public final class ConfigurationManager {
                 applySettings(module, settingsElement.getAsJsonObject());
             }
 
+            applyKeybind(module, moduleObject.get("keybind"));
+
             JsonElement enabledElement = moduleObject.get("enabled");
             boolean enabled = enabledElement != null && enabledElement.isJsonPrimitive()
                     && enabledElement.getAsJsonPrimitive().isBoolean()
@@ -143,6 +148,38 @@ public final class ConfigurationManager {
             if (!setting.applyJson(settingElement)) {
                 LOGGER.warning(() -> "Invalid value for setting '" + module.id() + "." + setting.id() + "'; reset to default");
             }
+        }
+    }
+
+    private static JsonObject serializeKeybind(Keybind keybind) {
+        JsonObject keybindObject = new JsonObject();
+        keybindObject.addProperty("key", keybind.keyCode());
+        keybindObject.addProperty("activation", keybind.activation().name().toLowerCase(Locale.ROOT));
+        return keybindObject;
+    }
+
+    /** Applies a stored keybind; missing or invalid data leaves the module unbound-safe default. */
+    private static void applyKeybind(Module module, JsonElement element) {
+        if (element == null || !element.isJsonObject()) {
+            return;
+        }
+
+        try {
+            JsonObject keybindObject = element.getAsJsonObject();
+            int keyCode = getRequiredInt(keybindObject, "key");
+            JsonElement activationElement = keybindObject.get("activation");
+            if (activationElement == null || !activationElement.isJsonPrimitive()
+                    || !activationElement.getAsJsonPrimitive().isString()) {
+                throw new IllegalArgumentException("Missing or invalid 'activation'");
+            }
+            Keybind.Activation activation = Keybind.Activation.valueOf(
+                    activationElement.getAsString().toUpperCase(Locale.ROOT));
+            module.setKeybind(keyCode < Keybind.UNBOUND_KEY
+                    ? Keybind.unbound()
+                    : new Keybind(keyCode, activation));
+        } catch (RuntimeException exception) {
+            LOGGER.warning(() -> "Invalid keybind for module '" + module.id() + "'; keeping it unbound");
+            module.setKeybind(Keybind.unbound());
         }
     }
 

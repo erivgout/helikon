@@ -8,6 +8,7 @@ import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.NumberSetting;
+import dev.helikon.client.setting.NumberSettingText;
 import dev.helikon.client.setting.Setting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
@@ -281,8 +282,8 @@ public final class HelikonClickGuiScreen extends Screen {
                 drawCheckbox(graphics, settingsCheckboxX(),
                         row.y() + (BOOLEAN_ROW_HEIGHT - CHECKBOX_SIZE) / 2, booleanSetting.value());
             } else if (setting instanceof NumberSetting numberSetting) {
-                String range = "(" + NumberSettingField.format(numberSetting.minimum())
-                        + "–" + NumberSettingField.format(numberSetting.maximum()) + ")";
+                String range = "(" + NumberSettingText.format(numberSetting.minimum())
+                        + "–" + NumberSettingText.format(numberSetting.maximum()) + ")";
                 int rangeWidth = font.width(range);
                 graphics.text(font, range, settingsX + SETTINGS_WIDTH - 6 - rangeWidth, row.y() + 3, COLOR_TEXT_DIM, false);
             }
@@ -381,9 +382,9 @@ public final class HelikonClickGuiScreen extends Screen {
             EditBox field = new EditBox(font, settingsX + 6, row.y() + 12, SETTINGS_WIDTH - 12, 14,
                     Component.literal(numberSetting.name()));
             field.setMaxLength(32);
-            field.setValue(NumberSettingField.format(numberSetting.value()));
+            field.setValue(NumberSettingText.format(numberSetting.value()));
             field.setResponder(text ->
-                    field.setTextColor(NumberSettingField.tryApply(numberSetting, text) ? COLOR_TEXT : COLOR_INVALID));
+                    field.setTextColor(NumberSettingText.tryApply(numberSetting, text) ? COLOR_TEXT : COLOR_INVALID));
             addRenderableWidget(field);
             numberFields.put(numberSetting, field);
         }

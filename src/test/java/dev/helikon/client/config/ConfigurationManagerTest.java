@@ -41,6 +41,50 @@ class ConfigurationManagerTest {
     }
 
     @Test
+    void keybindsRoundTripThroughConfiguration() {
+        ModuleRegistry sourceRegistry = new ModuleRegistry();
+        ConfigurableModule source = new ConfigurableModule();
+        sourceRegistry.register(source);
+        source.setKeybind(new Keybind(82, Keybind.Activation.HOLD));
+
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        manager.save(sourceRegistry);
+
+        ModuleRegistry targetRegistry = new ModuleRegistry();
+        ConfigurableModule target = new ConfigurableModule();
+        targetRegistry.register(target);
+
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(targetRegistry));
+        assertEquals(new Keybind(82, Keybind.Activation.HOLD), target.keybind());
+    }
+
+    @Test
+    void invalidStoredKeybindFallsBackToUnbound() throws IOException {
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        Files.createDirectories(manager.configurationDirectory());
+        Files.writeString(manager.globalConfigurationPath(), """
+                {
+                  "schemaVersion": 1,
+                  "modules": {
+                    "configurable": {
+                      "enabled": false,
+                      "keybind": {"key": 82, "activation": "sometimes"},
+                      "settings": {}
+                    }
+                  }
+                }
+                """);
+
+        ModuleRegistry registry = new ModuleRegistry();
+        ConfigurableModule module = new ConfigurableModule();
+        module.setKeybind(new Keybind(65, Keybind.Activation.TOGGLE));
+        registry.register(module);
+
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(registry));
+        assertFalse(module.keybind().isBound());
+    }
+
+    @Test
     void malformedConfigurationIsPreservedAndDoesNotEnableModules() throws IOException {
         ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
         Files.createDirectories(manager.configurationDirectory());

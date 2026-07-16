@@ -1,16 +1,15 @@
-package dev.helikon.client.gui;
-
-import dev.helikon.client.setting.NumberSetting;
+package dev.helikon.client.setting;
 
 /**
- * Text conversion for {@link NumberSetting} edit fields. Kept free of
- * Minecraft classes so the commit-on-valid-input rules stay unit-testable.
+ * Text conversion for {@link NumberSetting} values, shared by the ClickGUI
+ * number fields and the {@code .setting} command. Kept free of Minecraft
+ * classes so the commit-on-valid-input rules stay unit-testable.
  */
-public final class NumberSettingField {
-    private NumberSettingField() {
+public final class NumberSettingText {
+    private NumberSettingText() {
     }
 
-    /** Formats a value the way the edit field initially displays it. */
+    /** Formats a value the way edit fields and command feedback display it. */
     public static String format(double value) {
         if (value == Math.rint(value) && Math.abs(value) < 1.0e15) {
             return Long.toString((long) value);
@@ -21,7 +20,7 @@ public final class NumberSettingField {
     /**
      * Applies the typed text when it parses to a finite value inside the
      * setting range. Otherwise the current value is kept and {@code false} is
-     * returned so the field can mark the text as invalid.
+     * returned so the caller can report invalid input.
      */
     public static boolean tryApply(NumberSetting setting, String text) {
         if (setting == null || text == null) {

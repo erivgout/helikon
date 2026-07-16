@@ -20,3 +20,10 @@ Toggles are dispatched through `ModuleRegistry`, so a module that throws
 during `onEnable`/`onDisable` is isolated and force-disabled instead of
 crashing the client. Setting edits and enabled state persist to
 `config/helikon/global.json` when the screen closes.
+
+## Commands and keybinds
+
+Modules can also be controlled through local chat commands (`.toggle`,
+`.setting`, `.reset`, `.bind`, `.unbind` — see the README) and per-module
+keybinds with `toggle`, `hold`, or `press_once` activation. Keybinds never
+fire while a screen is open.

@@ -7,7 +7,10 @@ The bootstrap stores only global module state at:
 ```
 
 The schema currently contains `schemaVersion` and one entry per registered
-module. Each module stores its enabled state and setting values.
+module. Each module stores its enabled state, its keybind (`key` code and
+`activation` of `toggle`, `hold`, or `press_once`), and setting values. A
+missing keybind entry keeps the module's default; an invalid one resets to
+unbound and is logged.
 
 Configuration is written when the ClickGUI closes and on normal client
 shutdown — never per frame or per tick. Writes use a temporary file followed

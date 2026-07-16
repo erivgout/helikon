@@ -1,0 +1,195 @@
+package dev.helikon.client.command;
+
+import dev.helikon.client.input.Keybind;
+import dev.helikon.client.module.Module;
+import dev.helikon.client.module.ModuleCategory;
+import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.setting.BooleanSetting;
+import dev.helikon.client.setting.NumberSetting;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.OptionalInt;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class BuiltinCommandsTest {
+    private static final int KEY_R = 82;
+
+    private final KeyNameResolver fakeKeys = name -> switch (name) {
+        case "r" -> OptionalInt.of(KEY_R);
+        case "f6" -> OptionalInt.of(295);
+        default -> OptionalInt.empty();
+    };
+
+    private ModuleRegistry registry;
+    private ConfigurableModule module;
+    private CommandDispatcher dispatcher;
+    private RecordingFeedback feedback;
+    private boolean guiOpened;
+
+    @BeforeEach
+    void setUp() {
+        registry = new ModuleRegistry();
+        module = new ConfigurableModule();
+        registry.register(module);
+        dispatcher = new CommandDispatcher();
+        feedback = new RecordingFeedback();
+        guiOpened = false;
+        HelikonCommands.registerDefaults(dispatcher, registry, fakeKeys, () -> guiOpened = true);
+    }
+
+    @Test
+    void helpListsEveryRegisteredCommand() {
+        dispatcher.dispatch(".help", feedback);
+        // The intro line plus one line per built-in command.
+        assertEquals(1 + dispatcher.commands().size(), feedback.infos.size());
+        assertTrue(feedback.infos.stream().anyMatch(line -> line.contains(".toggle <module>")));
+    }
+
+    @Test
+    void toggleEnablesAndDisablesThroughTheRegistry() {
+        dispatcher.dispatch(".toggle configurable", feedback);
+        assertTrue(module.isEnabled());
+        assertTrue(feedback.infos.get(0).contains("Enabled 'configurable'"));
+
+        dispatcher.dispatch(".toggle configurable", feedback);
+        assertFalse(module.isEnabled());
+    }
+
+    @Test
+    void toggleReportsUnknownModules() {
+        dispatcher.dispatch(".toggle nope", feedback);
+        assertTrue(feedback.errors.get(0).contains("Unknown module 'nope'"));
+    }
+
+    @Test
+    void toggleFailureIsIsolatedAndReported() {
+        FailingModule failing = new FailingModule();
+        registry.register(failing);
+
+        dispatcher.dispatch(".toggle failing", feedback);
+        assertFalse(failing.isEnabled());
+        assertTrue(feedback.errors.get(0).contains("Failed to enable 'failing'"));
+    }
+
+    @Test
+    void modulesListsStatePerCategory() {
+        dispatcher.dispatch(".modules", feedback);
+        assertTrue(feedback.infos.stream().anyMatch(line ->
+                line.startsWith("Miscellaneous:") && line.contains("configurable [off]")));
+    }
+
+    @Test
+    void searchFindsModulesAndReportsNoMatches() {
+        dispatcher.dispatch(".search config", feedback);
+        assertTrue(feedback.infos.stream().anyMatch(line -> line.contains("configurable")));
+
+        RecordingFeedback empty = new RecordingFeedback();
+        dispatcher.dispatch(".search zzz", empty);
+        assertTrue(empty.infos.get(0).contains("No modules match"));
+    }
+
+    @Test
+    void settingEditsBooleanAndNumberValues() {
+        dispatcher.dispatch(".setting configurable flag false", feedback);
+        assertFalse(module.flag.value());
+
+        dispatcher.dispatch(".setting configurable amount 7.5", feedback);
+        assertEquals(7.5, module.amount.value());
+    }
+
+    @Test
+    void settingRejectsInvalidValues() {
+        dispatcher.dispatch(".setting configurable flag maybe", feedback);
+        assertTrue(feedback.errors.get(0).contains("Expected true or false"));
+        assertTrue(module.flag.value());
+
+        dispatcher.dispatch(".setting configurable amount 99", feedback);
+        assertTrue(feedback.errors.get(1).contains("between 0 and 10"));
+        assertEquals(2.0, module.amount.value());
+    }
+
+    @Test
+    void settingReportsUnknownSetting() {
+        dispatcher.dispatch(".setting configurable nope true", feedback);
+        assertTrue(feedback.errors.get(0).contains("has no setting 'nope'"));
+    }
+
+    @Test
+    void resetRestoresDefaults() {
+        module.amount.set(9.0);
+        module.flag.set(false);
+
+        dispatcher.dispatch(".reset configurable", feedback);
+        assertEquals(2.0, module.amount.value());
+        assertTrue(module.flag.value());
+    }
+
+    @Test
+    void bindAssignsKeyAndActivation() {
+        dispatcher.dispatch(".bind configurable r", feedback);
+        assertEquals(new Keybind(KEY_R, Keybind.Activation.TOGGLE), module.keybind());
+
+        dispatcher.dispatch(".bind configurable f6 hold", feedback);
+        assertEquals(Keybind.Activation.HOLD, module.keybind().activation());
+    }
+
+    @Test
+    void bindRejectsUnknownKeysAndActivations() {
+        dispatcher.dispatch(".bind configurable notakey", feedback);
+        assertTrue(feedback.errors.get(0).contains("Unknown key 'notakey'"));
+        assertFalse(module.keybind().isBound());
+
+        dispatcher.dispatch(".bind configurable r sometimes", feedback);
+        assertTrue(feedback.errors.get(1).contains("Unknown activation 'sometimes'"));
+        assertFalse(module.keybind().isBound());
+    }
+
+    @Test
+    void unbindClearsTheKeybind() {
+        module.setKeybind(new Keybind(KEY_R, Keybind.Activation.TOGGLE));
+        dispatcher.dispatch(".unbind configurable", feedback);
+        assertFalse(module.keybind().isBound());
+    }
+
+    @Test
+    void guiRunsTheOpener() {
+        dispatcher.dispatch(".gui", feedback);
+        assertTrue(guiOpened);
+    }
+
+    @Test
+    void panicDisablesAllModules() {
+        registry.setEnabled(module, true);
+        dispatcher.dispatch(".panic", feedback);
+        assertFalse(module.isEnabled());
+        assertTrue(feedback.infos.get(0).contains("disabled 1 module(s)"));
+    }
+
+    private static final class ConfigurableModule extends Module {
+        private final BooleanSetting flag;
+        private final NumberSetting amount;
+
+        private ConfigurableModule() {
+            super("configurable", "Configurable", "Used by command tests.",
+                    ModuleCategory.MISCELLANEOUS, false, Keybind.unbound());
+            flag = addSetting(new BooleanSetting("flag", "Flag", "A test flag.", true));
+            amount = addSetting(new NumberSetting("amount", "Amount", "A test number.", 2.0, 0.0, 10.0));
+        }
+    }
+
+    private static final class FailingModule extends Module {
+        private FailingModule() {
+            super("failing", "Failing", "Always fails to enable.",
+                    ModuleCategory.MISCELLANEOUS, false, Keybind.unbound());
+        }
+
+        @Override
+        protected void onEnable() {
+            throw new IllegalStateException("intentional test failure");
+        }
+    }
+}

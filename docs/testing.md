@@ -7,9 +7,12 @@ Run the test suite with:
 ```
 
 The automated tests cover module lifecycle behavior, failure isolation,
-setting validation/JSON recovery, configuration round-tripping, malformed JSON
-recovery, ClickGUI search/filtering (`ClickGuiStateTest`), and number-field
-edit rules (`NumberSettingFieldTest`).
+setting validation/JSON recovery, configuration round-tripping (including
+keybinds), malformed JSON recovery, ClickGUI search/filtering
+(`ClickGuiStateTest`), number-field edit rules (`NumberSettingTextTest`),
+command parsing and every built-in command (`CommandDispatcherTest`,
+`BuiltinCommandsTest`), and keybind edge/hold/suppression behavior
+(`KeybindManagerTest`).
 
 ## Manual ClickGUI smoke test
 
@@ -34,6 +37,25 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
    do not trigger game actions.
 8. Close the GUI, quit the client, and verify `config/helikon/global.json`
    contains the edited values; relaunch and verify the GUI shows them again.
+
+## Manual command and keybind smoke test
+
+1. In a world, send `.help` in chat and verify the command list appears in
+   chat (gray text with a gold `[Helikon]` prefix) and nothing is sent to the
+   server (no "unknown command" from the server, not visible to other
+   players).
+2. Send `.toggle fullbright_stub`, then `.modules`, and verify the state
+   changed. Send `.toggle nope` and verify a red error.
+3. Send `.setting fullbright_stub brightness 5` and verify the ClickGUI shows
+   5; send an out-of-range value and verify the red range error.
+4. Send `.bind fullbright_stub r`, close chat, press R, and verify the module
+   toggles. Open chat, type `r`, and verify the module does not toggle. Send
+   `.bind fullbright_stub r hold`, hold R, and verify it enables only while
+   held.
+5. Send `.gui` and verify the ClickGUI opens after chat closes.
+6. Send `.panic` and verify all modules disable.
+7. Quit and relaunch; verify the keybind still works (persisted in
+   `global.json`).
 
 ## Bootstrap smoke test
 

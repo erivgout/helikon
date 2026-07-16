@@ -135,6 +135,15 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     Rename and remove an entry, relaunch to verify persistence and backup
     creation, then replace `waypoints.json` with malformed or duplicate data;
     it must become `waypoints.corrupt-<timestamp>.json` and show no entries.
+15. Create a macro with `.macro create smoke`, then append a local action, a
+    delay, ordinary chat text, and a Minecraft command (without `/`). Verify
+    `show` reports each action, `run` executes no more than one action per tick
+    after chat closes, and `stop` cancels it. Create a server-scoped macro on a
+    multiplayer server and change servers before its next action; it must stop.
+    Verify chat actions beginning with `.` or `/`, command actions with `/`,
+    and local `.macro` recursion are rejected. Relaunch to verify
+    `macros.json` persistence and backup; malformed or duplicate data must
+    become `macros.corrupt-<timestamp>.json`.
 
 ## Bootstrap smoke test
 

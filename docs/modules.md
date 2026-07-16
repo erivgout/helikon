@@ -75,6 +75,21 @@ Death and logout waypoints are deliberately not automatic yet. The first HUD
 indicator has no separate HUD-editor position or world-space beacon; those
 rendering and layout controls remain future work.
 
+## Macros
+
+Macros are configured through `.macro`. Create a global or currently connected
+server-scoped macro, then append explicit `local`, `chat`, `command`, or
+`delay` actions. A local action must start with `.` and stays inside the local
+dispatcher; chat text cannot start with `.` or `/`; Minecraft command text
+omits `/`; delay actions are bounded to 1-12,000 ticks. Run one macro at a time
+with `.macro run <name>` and stop it with `.macro stop`. The runner pauses while
+a screen is open, executes no more than one action per client tick, and stops a
+server-scoped macro if the current server changes.
+
+Macros are not a scripting engine: they cannot execute code, read files, or
+download content. They do not bypass server authority, rate limits, or normal
+chat/command packet formats.
+
 ## HUD
 
 | Element | Behavior | Persistence | Limitation | Coverage |

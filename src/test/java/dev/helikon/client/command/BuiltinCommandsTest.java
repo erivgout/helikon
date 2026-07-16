@@ -5,6 +5,8 @@ import dev.helikon.client.config.ProfileManager;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.input.Keybind;
+import dev.helikon.client.macro.MacroManager;
+import dev.helikon.client.macro.MacroRunner;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
@@ -58,7 +60,8 @@ class BuiltinCommandsTest {
                 new ClickGuiWindowState(), new FriendManager(temporaryDirectory.resolve("helikon")),
                 new WaypointManager(temporaryDirectory.resolve("helikon")),
                 () -> java.util.Optional.of(new WaypointLocation(0, 64, 0,
-                        new WaypointContext("world:command-test", "minecraft:overworld"))));
+                        new WaypointContext("world:command-test", "minecraft:overworld"))),
+                new MacroManager(temporaryDirectory.resolve("helikon")), new MacroRunner(), java.util.Optional::empty);
     }
 
     @Test

@@ -5,7 +5,7 @@ Edition. This repository currently contains the **core framework**: the client
 entrypoint, modular lifecycle API, basic settings, local JSON configuration,
 an internal event bus, a functional Right Shift ClickGUI, local chat commands,
 module keybinds, an Active Modules HUD, local profiles, local friends, local
-waypoints, and tests.
+waypoints, local macros, and tests.
 
 It is not affiliated with Aristois, and it does not contain copied code, assets,
 branding, or configuration formats from that project.
@@ -99,6 +99,10 @@ sent to the server:
 | `.waypoint add <name> [x y z]` | Saves the current location or supplied coordinates locally. |
 | `.waypoint remove <name>` / `.waypoint rename <from> <to>` | Deletes or renames a local waypoint here. |
 | `.waypoint toggle\|color\|icon <name> ...` | Changes a waypoint's local visibility, color, or optional icon token. |
+| `.macro list` / `.macro create <name> [global\|server]` | Lists or creates a local macro. |
+| `.macro add <name> <local\|chat\|command\|delay> <text\|ticks>` | Adds one explicit, bounded macro action. |
+| `.macro show\|clear\|scope\|delete <name> ...` | Inspects or changes a stored local macro. |
+| `.macro run <name>` / `.macro stop` | Starts one local macro or stops its queued run. |
 | `.panic` | Disables all modules immediately. |
 
 Key names follow Minecraft's keyboard names, for example `r`, `f6`, or
@@ -113,6 +117,9 @@ Waypoints are scoped locally to the current server/world and dimension; their
 nearest enabled entries appear as a small direction-and-distance HUD list.
 Waypoint names, coordinates, world/server scope, dimension, colors, icons, and
 enabled state are stored locally only in `waypoints.json`.
+Macros are stored locally in `macros.json` and run only explicitly configured
+local Helikon commands, ordinary chat messages, Minecraft commands, and bounded
+delays. There is no macro scripting or arbitrary code execution.
 
 ## Local data and privacy
 

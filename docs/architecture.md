@@ -102,6 +102,15 @@ nearest enabled entries for that current context; it caches a bounded nearest
 set until the player position, context, or waypoint revision changes. It
 neither sends waypoint data nor accesses storage during rendering.
 
+`MacroManager` is another schema-versioned local store. `MacroAction` has a
+closed validated action set, and `MacroRunner` schedules at most one action per
+client tick, honors bounded delay actions, stops server-scoped macros when the
+connection changes, and contains executor failures. The Minecraft action
+adapter is deliberately narrow: local actions dispatch through
+`CommandDispatcher`, while chat and command actions use the normal 26.2 client
+connection only after a user explicitly runs that stored macro. It cannot load
+scripts or execute arbitrary code.
+
 ## Rendering, GUI, and HUD
 
 The Right Shift keybind opens `HelikonClickGuiScreen`, a vanilla `Screen`

@@ -20,6 +20,12 @@ import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.hud.WaypointHud;
 import dev.helikon.client.input.HelikonKeybinds;
 import dev.helikon.client.input.KeybindManager;
+import dev.helikon.client.macro.MacroActionExecutor;
+import dev.helikon.client.macro.MacroManager;
+import dev.helikon.client.macro.MacroRunner;
+import dev.helikon.client.macro.MacroServerContextProvider;
+import dev.helikon.client.macro.MinecraftMacroActionExecutor;
+import dev.helikon.client.macro.MinecraftMacroServerContextProvider;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.render.FullbrightStub;
 import dev.helikon.client.notification.ChatNotifier;
@@ -58,6 +64,9 @@ public final class HelikonClient implements ClientModInitializer {
     private final FriendToggleGesture friendToggleGesture = new FriendToggleGesture();
     private final WaypointManager waypoints = new WaypointManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
     private final WaypointLocationProvider waypointLocations = new MinecraftWaypointLocationProvider();
+    private final MacroManager macros = new MacroManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
+    private final MacroRunner macroRunner = new MacroRunner();
+    private final MacroServerContextProvider macroServerContext = new MinecraftMacroServerContextProvider();
     private final HudLayout hudLayout = new HudLayout();
     private final HudConfigurationManager hudConfiguration = new HudConfigurationManager(
             FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
@@ -65,6 +74,7 @@ public final class HelikonClient implements ClientModInitializer {
     private final KeybindManager keybinds = new KeybindManager(modules);
     private final CommandDispatcher commands = new CommandDispatcher();
     private final ChatNotifier notifier = new ChatNotifier();
+    private final MacroActionExecutor macroExecutor = new MinecraftMacroActionExecutor(commands, notifier);
 
     /** A screen change requested from chat, applied on the next tick once chat has closed. */
     private final AtomicReference<Runnable> pendingScreenAction = new AtomicReference<>();
@@ -94,10 +104,15 @@ public final class HelikonClient implements ClientModInitializer {
         } catch (ConfigurationException exception) {
             LOGGER.log(Level.WARNING, "Unable to load waypoints; continuing with an empty local waypoint list", exception);
         }
+        try {
+            macros.load();
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to load macros; continuing with an empty local macro list", exception);
+        }
 
         HelikonCommands.registerDefaults(commands, modules, new MinecraftKeyNameResolver(),
                 HelikonKeybinds::isGuiKey, () -> pendingScreenAction.set(this::openClickGui), profiles, clickGuiWindow,
-                friends, waypoints, waypointLocations);
+                friends, waypoints, waypointLocations, macros, macroRunner, macroServerContext);
         ChatCommands.register(commands, notifier);
 
         HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);
@@ -116,6 +131,7 @@ public final class HelikonClient implements ClientModInitializer {
                     client.gui.screen() != null
             );
             toggleFriendOnMiddleClick(client);
+            tickMacro(client);
 
             Runnable screenAction = pendingScreenAction.getAndSet(null);
             if (screenAction != null && client.gui.screen() == null) {
@@ -158,6 +174,32 @@ public final class HelikonClient implements ClientModInitializer {
         }
     }
 
+    private void tickMacro(Minecraft client) {
+        MacroRunner.TickResult contextResult = macroRunner.validateServerContext(macroServerContext.currentServerAddress());
+        if (contextResult.status() == MacroRunner.TickStatus.CANCELLED_CONTEXT) {
+            reportMacroResult(contextResult);
+            return;
+        }
+        if (client.gui.screen() != null) {
+            return;
+        }
+        reportMacroResult(macroRunner.tick(macroServerContext.currentServerAddress(), macroExecutor));
+    }
+
+    private void reportMacroResult(MacroRunner.TickResult result) {
+        switch (result.status()) {
+            case COMPLETED -> notifier.info("Completed local macro '" + result.macroName() + "'.");
+            case CANCELLED_CONTEXT -> notifier.error("Stopped local macro '" + result.macroName() + "': server context changed.");
+            case FAILED -> {
+                LOGGER.warning("Local macro '" + result.macroName() + "' failed: " + result.detail());
+                notifier.error("Stopped local macro '" + result.macroName() + "' after an action failed (see log).");
+            }
+            case IDLE, WAITING, EXECUTED -> {
+                // Avoid chat noise for each queued action or delay tick.
+            }
+        }
+    }
+
     private void saveConfigurations() {
         try {
             configuration.save(modules, clickGuiWindow);
@@ -176,6 +218,11 @@ public final class HelikonClient implements ClientModInitializer {
             waypoints.save();
         } catch (ConfigurationException exception) {
             LOGGER.log(Level.WARNING, "Unable to save waypoints while stopping", exception);
+        }
+        try {
+            macros.save();
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to save macros while stopping", exception);
         }
     }
 

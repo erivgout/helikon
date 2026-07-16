@@ -72,4 +72,13 @@ so `Home` can exist separately in the Overworld and Nether. Writes use
 `waypoints.corrupt-<timestamp>.json`. Waypoints are never synchronized or sent
 to a Minecraft server. Command mutations roll back in memory if their atomic
 save fails, so a failed add or edit is never later persisted unexpectedly.
-Macros and remaining HUD layout are planned future local stores.
+
+Macros live in schema-versioned `macros.json`. A macro has a safe local name,
+an optional normalized multiplayer-server restriction, and up to 64 explicit
+actions: a Helikon local command, ordinary chat message, Minecraft command, or
+1-12,000 tick delay. Text is validated and bounded; no scripts, filesystem
+paths, downloaded content, or arbitrary code are accepted. Writes use
+`macros.json.bak`, malformed files become `macros.corrupt-<timestamp>.json`,
+and a command mutation rolls back if saving cannot complete. Macro definitions
+are never sent to a server; configured chat and command actions use only the
+player's existing normal Minecraft connection.

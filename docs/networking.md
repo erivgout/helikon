@@ -6,6 +6,11 @@ Helikon makes no HTTP, WebSocket, telemetry, analytics, update-check, account,
 or backend requests. It only uses Minecraft's normal connection when the player
 joins a server.
 
+When the user explicitly runs a configured macro, its `chat` and `command`
+actions use that same normal Minecraft server connection. Macro definitions,
+action lists, and server-scope choices remain local; Helikon sends no macro
+data to any separate service.
+
 ## Future policy
 
 Optional external integrations must be isolated under

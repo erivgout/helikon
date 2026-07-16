@@ -3,6 +3,9 @@ package dev.helikon.client.command;
 import dev.helikon.client.config.ProfileManager;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.gui.ClickGuiWindowState;
+import dev.helikon.client.macro.MacroManager;
+import dev.helikon.client.macro.MacroRunner;
+import dev.helikon.client.macro.MacroServerContextProvider;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointManager;
@@ -25,7 +28,10 @@ public final class HelikonCommands {
             ClickGuiWindowState clickGuiWindow,
             FriendManager friends,
             WaypointManager waypoints,
-            WaypointLocationProvider waypointLocations
+            WaypointLocationProvider waypointLocations,
+            MacroManager macros,
+            MacroRunner macroRunner,
+            MacroServerContextProvider macroServerContext
     ) {
         dispatcher.register(new HelpCommand(dispatcher));
         dispatcher.register(new ModulesCommand(registry));
@@ -40,5 +46,6 @@ public final class HelikonCommands {
         dispatcher.register(new ProfileCommand(profiles, registry, clickGuiWindow));
         dispatcher.register(new FriendCommand(friends));
         dispatcher.register(new WaypointCommand(waypoints, waypointLocations));
+        dispatcher.register(new MacroCommand(macros, macroRunner, macroServerContext));
     }
 }

@@ -3,6 +3,7 @@ package dev.helikon.client.command;
 import dev.helikon.client.config.ConfigurationManager;
 import dev.helikon.client.config.ProfileManager;
 import dev.helikon.client.gui.ClickGuiWindowState;
+import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.input.Keybind;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
@@ -51,7 +52,7 @@ class BuiltinCommandsTest {
         HelikonCommands.registerDefaults(dispatcher, registry, fakeKeys,
                 key -> key == KEY_RIGHT_SHIFT, () -> guiOpened = true,
                 new ProfileManager(new ConfigurationManager(temporaryDirectory.resolve("helikon"))),
-                new ClickGuiWindowState());
+                new ClickGuiWindowState(), new FriendManager(temporaryDirectory.resolve("helikon")));
     }
 
     @Test

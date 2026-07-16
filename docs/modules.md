@@ -52,6 +52,15 @@ also be marked as the persisted default. Keybinds never fire while a screen is
 open. Server and singleplayer associations are also local profile preferences;
 they neither inspect nor send server data beyond the user-provided identifier.
 
+## Friends
+
+Friends are local player-name entries, managed through `.friend list`,
+`.friend add`, `.friend remove`, and `.friend color`. Middle-click a targeted
+player in the game world to add or remove that name without opening chat.
+Each entry stores a local ARGB render color in `friends.json`; no friend data is
+sent to a server. Targeting modules will use the friend list for their default
+friend-exclusion policy when those modules are introduced.
+
 ## HUD
 
 | Element | Behavior | Persistence | Limitation | Coverage |

@@ -120,6 +120,13 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
 12. Associate `smoke` with a server address and a world ID. Verify the
     associations survive a profile rename and are cleared when that profile is
     deleted; case changes in the server address should still resolve it.
+13. Add a friend with `.friend add Alice_1`, set a color, list it, and remove
+    it. Target a player and middle-click once to add them, hold the button to
+    verify it does not repeatedly toggle, then release and middle-click again
+    to remove them. Verify clicks while a screen is open do not alter friends.
+    Relaunch after adding to verify `friends.json` persists; malformed or
+    case-insensitively duplicate entries must become
+    `friends.corrupt-<timestamp>.json`.
 
 ## Bootstrap smoke test
 

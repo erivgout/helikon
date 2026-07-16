@@ -1,6 +1,7 @@
 package dev.helikon.client.command;
 
 import dev.helikon.client.config.ProfileManager;
+import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.module.ModuleRegistry;
 
@@ -19,7 +20,8 @@ public final class HelikonCommands {
             IntPredicate reservedKeys,
             Runnable guiOpener,
             ProfileManager profiles,
-            ClickGuiWindowState clickGuiWindow
+            ClickGuiWindowState clickGuiWindow,
+            FriendManager friends
     ) {
         dispatcher.register(new HelpCommand(dispatcher));
         dispatcher.register(new ModulesCommand(registry));
@@ -32,5 +34,6 @@ public final class HelikonCommands {
         dispatcher.register(new GuiCommand(guiOpener));
         dispatcher.register(new PanicCommand(registry));
         dispatcher.register(new ProfileCommand(profiles, registry, clickGuiWindow));
+        dispatcher.register(new FriendCommand(friends));
     }
 }

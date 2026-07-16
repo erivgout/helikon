@@ -84,6 +84,14 @@ manifest, which also owns server and singleplayer-world profile associations.
 Profile rename/delete keeps every preference reference valid without requiring
 Minecraft classes in the storage layer.
 
+`FriendManager` is likewise a Minecraft-free, schema-versioned local store for
+validated player names and ARGB render colors. `FriendToggleGesture` contains
+the middle-click edge and screen-suppression policy; the client entrypoint is
+limited to resolving the targeted player through the 26.2 hit result and
+calling the store. Future targeting modules can query `FriendManager.contains`
+to exclude friends by default without coupling their decision logic to input or
+JSON handling.
+
 ## Rendering, GUI, and HUD
 
 The Right Shift keybind opens `HelikonClickGuiScreen`, a vanilla `Screen`

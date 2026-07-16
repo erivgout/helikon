@@ -11,6 +11,8 @@ import dev.helikon.client.config.HudConfigurationManager;
 import dev.helikon.client.config.ProfileManager;
 import dev.helikon.client.event.ClientTickEvent;
 import dev.helikon.client.event.EventBus;
+import dev.helikon.client.friend.FriendManager;
+import dev.helikon.client.friend.FriendToggleGesture;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
@@ -27,6 +29,8 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.EntityHitResult;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -46,6 +50,8 @@ public final class HelikonClient implements ClientModInitializer {
     );
     private final ClickGuiWindowState clickGuiWindow = new ClickGuiWindowState();
     private final ProfileManager profiles = new ProfileManager(configuration);
+    private final FriendManager friends = new FriendManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
+    private final FriendToggleGesture friendToggleGesture = new FriendToggleGesture();
     private final HudLayout hudLayout = new HudLayout();
     private final HudConfigurationManager hudConfiguration = new HudConfigurationManager(
             FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
@@ -72,9 +78,14 @@ public final class HelikonClient implements ClientModInitializer {
             modules.enableDefaultModules();
         }
         hudConfiguration.load(hudLayout);
+        try {
+            friends.load();
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to load friends; continuing with an empty local friend list", exception);
+        }
 
         HelikonCommands.registerDefaults(commands, modules, new MinecraftKeyNameResolver(),
-                HelikonKeybinds::isGuiKey, () -> pendingScreenAction.set(this::openClickGui), profiles, clickGuiWindow);
+                HelikonKeybinds::isGuiKey, () -> pendingScreenAction.set(this::openClickGui), profiles, clickGuiWindow, friends);
         ChatCommands.register(commands, notifier);
 
         HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);
@@ -90,6 +101,7 @@ public final class HelikonClient implements ClientModInitializer {
                     key -> InputConstants.isKeyDown(client.getWindow(), key),
                     client.gui.screen() != null
             );
+            toggleFriendOnMiddleClick(client);
 
             Runnable screenAction = pendingScreenAction.getAndSet(null);
             if (screenAction != null && client.gui.screen() == null) {
@@ -107,6 +119,31 @@ public final class HelikonClient implements ClientModInitializer {
         ));
     }
 
+    private void toggleFriendOnMiddleClick(Minecraft client) {
+        String targetedPlayerName = null;
+        if (client.hitResult instanceof EntityHitResult entityHit
+                && entityHit.getEntity() instanceof Player player) {
+            targetedPlayerName = player.getGameProfile().name();
+        }
+
+        friendToggleGesture.update(
+                client.mouseHandler.isMiddlePressed(),
+                client.gui.screen() != null,
+                targetedPlayerName
+        ).ifPresent(this::toggleFriend);
+    }
+
+    private void toggleFriend(String playerName) {
+        try {
+            boolean isFriend = friends.toggle(playerName);
+            friends.save();
+            notifier.info((isFriend ? "Added local friend '" : "Removed local friend '") + playerName + "'.");
+        } catch (ConfigurationException | IllegalArgumentException exception) {
+            LOGGER.log(Level.WARNING, "Unable to toggle local friend '" + playerName + "'", exception);
+            notifier.error("Unable to toggle local friend '" + playerName + "' (see log).");
+        }
+    }
+
     private void saveConfigurations() {
         try {
             configuration.save(modules, clickGuiWindow);
@@ -117,6 +154,9 @@ public final class HelikonClient implements ClientModInitializer {
             hudConfiguration.save(hudLayout);
         } catch (ConfigurationException exception) {
             LOGGER.log(Level.WARNING, "Unable to save Helikon HUD layout while stopping", exception);
+        }
+        try { friends.save(); } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to save friends while stopping", exception);
         }
     }
 

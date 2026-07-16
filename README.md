@@ -92,6 +92,8 @@ sent to the server:
 | `.profile server <address> <profile\|clear>` | Associates a local profile with a server address. |
 | `.profile world <id> <profile\|clear>` | Associates a local profile with a singleplayer world ID. |
 | `.profile import <file> <name>` / `.profile export <name> <file>` | Imports from `imports/` or exports to `exports/` below the Helikon config directory. |
+| `.friend list\|add\|remove <player>` | Lists or changes local player-name friends. |
+| `.friend color <player> <#RRGGBB\|#AARRGGBB>` | Sets the local friend render color. |
 | `.panic` | Disables all modules immediately. |
 
 Key names follow Minecraft's keyboard names, for example `r`, `f6`, or
@@ -99,6 +101,9 @@ Key names follow Minecraft's keyboard names, for example `r`, `f6`, or
 into chat or a search box cannot toggle modules. Tab completion is not
 implemented yet. Profile names are local, lowercase file-safe tokens (letters,
 digits, `_`, and `-`), and no profile data is synchronized or sent to a server.
+Friend names and colors are also stored locally only in `friends.json`.
+Middle-clicking a player in the world toggles that local friend entry; this
+does not consume or alter normal middle-click actions on blocks or items.
 
 ## Local data and privacy
 

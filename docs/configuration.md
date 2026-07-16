@@ -57,6 +57,9 @@ by atomic replacement when available. The previously saved valid file is copied 
 Malformed files are moved to `global.corrupt-<timestamp>.json`; Helikon then
 uses safe defaults. No configuration is synchronized remotely.
 
-Friends, waypoints, macros, and remaining HUD layout are planned future local
-stores. Imported data must be validated before activation and must never
-execute code or write outside the Helikon configuration folder.
+Friends live in schema-versioned `friends.json`, storing validated player names
+and local ARGB render colors. Friend writes use `friends.json.bak`; malformed
+files become `friends.corrupt-<timestamp>.json`. Nothing in this store is sent
+to Minecraft servers or an external service. Case-insensitive duplicate names
+are invalid persisted data and recover through the same corrupt-file path.
+Waypoints, macros, and remaining HUD layout are planned future local stores.

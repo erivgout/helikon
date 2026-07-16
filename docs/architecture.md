@@ -27,6 +27,12 @@ and restores the snapshot on disable. Periodic module callbacks use
 `ModuleRegistry.runGuarded`, so adapter failures also disable and clean up the
 affected module through normal lifecycle isolation.
 
+AntiBlind uses three narrowly targeted 26.2 client mixins: fog-environment
+selection for Blindness/Darkness, the Darkness lightmap blend, and the exact
+HUD calls for Nausea, pumpkin, and powder-snow overlays. BetterCrosshair is a
+Fabric HUD element with Minecraft-free arm geometry; a separate HUD mixin
+suppresses the vanilla crosshair only when its local setting requests it.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

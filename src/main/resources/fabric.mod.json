@@ -17,6 +17,9 @@
       "dev.helikon.client.HelikonClient"
     ]
   },
+  "mixins": [
+    "helikon.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.19.3",
     "minecraft": "~26.2",

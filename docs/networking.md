@@ -14,6 +14,9 @@ data to any separate service.
 Fullbright changes only local client options and local visual effect state. It
 does not construct, alter, or send a Minecraft packet.
 
+AntiBlind and BetterCrosshair likewise filter or add only local render state;
+they do not remove server effects, change hit detection, or send packets.
+
 ## Future policy
 
 Optional external integrations must be isolated under

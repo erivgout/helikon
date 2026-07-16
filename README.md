@@ -12,18 +12,19 @@ branding, or configuration formats from that project.
 
 ## Status
 
-Helikon currently includes a client-only Fullbright module: it can set local
-gamma or a local visual Night Vision effect, and restores the previous gamma
-and Night Vision state when disabled. Gameplay automation, combat tools,
-packet manipulation, external networking, telemetry, a custom backend, and a
-server-side component remain unimplemented.
+Helikon currently includes three client-only render modules: Fullbright restores
+the previous gamma and Night Vision state when disabled; AntiBlind selectively
+hides local impairment visuals; and BetterCrosshair draws a local configurable
+HUD crosshair. Gameplay automation, combat tools, packet manipulation,
+external networking, telemetry, a custom backend, and a server-side component
+remain unimplemented.
 
 The ClickGUI currently provides:
 
 - a category sidebar driven by `ModuleCategory`
 - a scrollable module list with per-module toggles
 - search across module names, IDs, and descriptions
-- a settings panel with metadata plus editable boolean and number settings
+- a settings panel with metadata plus editable boolean, number, and ARGB color settings
 - in-GUI keyboard keybind assignment (Backspace/Delete unbinds; Escape cancels)
 - reset buttons for individual settings and whole modules
 - a draggable, resizable, clamped window saved in `global.json`
@@ -82,7 +83,7 @@ sent to the server:
 | `.modules` | Lists registered modules and their state. |
 | `.toggle <module>` | Enables or disables a module by ID. |
 | `.search <text>` | Finds modules by name, ID, or description. |
-| `.setting <module> <setting> <value>` | Changes a boolean or number setting. |
+| `.setting <module> <setting> <value>` | Changes a boolean, number, or `#AARRGGBB` color setting. |
 | `.reset <module>` | Resets a module's settings to defaults. |
 | `.bind <module> <key> [toggle\|hold\|press_once]` | Binds a key to a module. |
 | `.unbind <module>` | Removes a module's keybind. |

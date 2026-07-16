@@ -21,6 +21,9 @@ command wiring are covered by `ProfileManagerTest` and `ProfileCommandTest`.
 Fullbright's gamma restoration, setting-driven Night Vision lifecycle, and
 identity-safe effect restoration are covered by `FullbrightGammaControllerTest`,
 `FullbrightTest`, and `ClientEffectOverrideStateTest`.
+AntiBlind setting gating, BetterCrosshair geometry, and strict ARGB color
+settings are covered by `AntiBlindTest`, `BetterCrosshairTest`,
+`CrosshairGeometryTest`, and `SettingTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -89,6 +92,15 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     view, then use Enter and Space to toggle the selected module. Click the
     search or a number field and verify its normal keyboard editing continues
     to take priority.
+15. Select **BetterCrosshair**, enable it, and verify its custom crosshair
+    replaces the vanilla one. Change its size, gap, thickness, outline, and
+    `#AARRGGBB` color text field; while moving, verify the optional dynamic gap
+    responds locally. Disable it and verify the vanilla crosshair returns.
+16. Select **AntiBlind** and independently toggle each setting. Verify Nausea,
+    carved-pumpkin, and powder-snow overlays hide only when configured; verify
+    disabling the module restores vanilla visuals. Blindness and Darkness fog
+    checks require the matching effect in a controlled local test world; verify
+    both the fog-color darkening and fog-distance changes are absent.
 
 ## Manual command and keybind smoke test
 

@@ -21,6 +21,10 @@ The former bootstrap ID `fullbright_stub` is migrated locally to the production
 `fullbright` module on load, preserving its enabled state, keybind, and shared
 settings before the next normal save writes the production ID.
 
+`ColorSetting` values use strict eight-digit ARGB strings such as `#80FF6600`.
+Malformed color values reset only that setting to its safe default and are
+logged, following the existing per-setting recovery policy.
+
 The Active Modules HUD has its own schema-versioned `hud.json` in the same
 directory. It stores only the element's enabled state and top-left scaled-GUI
 coordinates. The HUD editor saves it when closed; normal client shutdown also

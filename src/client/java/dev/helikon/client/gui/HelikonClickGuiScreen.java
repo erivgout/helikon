@@ -11,6 +11,8 @@ import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.BooleanSetting;
+import dev.helikon.client.setting.ColorSetting;
+import dev.helikon.client.setting.ColorSettingText;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.setting.NumberSettingText;
 import dev.helikon.client.setting.Setting;
@@ -78,7 +80,7 @@ public final class HelikonClickGuiScreen extends Screen {
     private final ClickGuiState state;
     private final KeybindAssignment keybindAssignment;
     private final KeyCaptureSuppression keyCaptureSuppression = new KeyCaptureSuppression();
-    private final Map<NumberSetting, EditBox> numberFields = new LinkedHashMap<>();
+    private final Map<Setting<?>, EditBox> textFields = new LinkedHashMap<>();
 
     private EditBox searchField;
     private double listScroll;
@@ -164,8 +166,8 @@ public final class HelikonClickGuiScreen extends Screen {
             return;
         }
         for (SettingRow row : settingRows(module)) {
-            if (row.setting() instanceof NumberSetting numberSetting) {
-                EditBox field = numberFields.get(numberSetting);
+            if (row.setting() instanceof NumberSetting || row.setting() instanceof ColorSetting) {
+                EditBox field = textFields.get(row.setting());
                 if (field != null) {
                     field.setX(settingsX + 6);
                     field.setY(row.y() + 12);
@@ -469,6 +471,10 @@ public final class HelikonClickGuiScreen extends Screen {
                         + "–" + NumberSettingText.format(numberSetting.maximum()) + ")";
                 int rangeWidth = font.width(range);
                 graphics.text(font, range, settingResetX() - 4 - rangeWidth, row.y() + 3, COLOR_TEXT_DIM, false);
+            } else if (setting instanceof ColorSetting colorSetting) {
+                int swatchX = settingResetX() - 18;
+                graphics.fill(swatchX, row.y() + 3, swatchX + 12, row.y() + 10, colorSetting.value());
+                graphics.outline(swatchX, row.y() + 3, 12, 7, COLOR_TEXT_DIM);
             }
 
             if (isInside(mouseX, mouseY, settingResetX(), row.y() + 2, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE)) {
@@ -655,10 +661,10 @@ public final class HelikonClickGuiScreen extends Screen {
         listScroll = clampScroll(listScroll);
     }
 
-    /** Removes and recreates the number-setting edit boxes for the selection. */
+    /** Removes and recreates the text-setting edit boxes for the selection. */
     private void rebuildSettingWidgets() {
-        numberFields.values().forEach(this::removeWidget);
-        numberFields.clear();
+        textFields.values().forEach(this::removeWidget);
+        textFields.clear();
 
         Module module = state.selectedModule().orElse(null);
         if (module == null) {
@@ -666,17 +672,25 @@ public final class HelikonClickGuiScreen extends Screen {
         }
 
         for (SettingRow row : settingRows(module)) {
-            if (!(row.setting() instanceof NumberSetting numberSetting)) {
+            Setting<?> setting = row.setting();
+            if (!(setting instanceof NumberSetting) && !(setting instanceof ColorSetting)) {
                 continue;
             }
             EditBox field = new EditBox(font, settingsX + 6, row.y() + 12, SETTINGS_WIDTH - 12, 14,
-                    Component.literal(numberSetting.name()));
+                    Component.literal(setting.name()));
             field.setMaxLength(32);
-            field.setValue(NumberSettingText.format(numberSetting.value()));
-            field.setResponder(text ->
-                    field.setTextColor(NumberSettingText.tryApply(numberSetting, text) ? COLOR_TEXT : COLOR_INVALID));
+            if (setting instanceof NumberSetting numberSetting) {
+                field.setValue(NumberSettingText.format(numberSetting.value()));
+                field.setResponder(text -> field.setTextColor(
+                        NumberSettingText.tryApply(numberSetting, text) ? COLOR_TEXT : COLOR_INVALID));
+            } else {
+                ColorSetting colorSetting = (ColorSetting) setting;
+                field.setValue(ColorSettingText.format(colorSetting.value()));
+                field.setResponder(text -> field.setTextColor(
+                        ColorSettingText.tryApply(colorSetting, text) ? COLOR_TEXT : COLOR_INVALID));
+            }
             addRenderableWidget(field);
-            numberFields.put(numberSetting, field);
+            textFields.put(setting, field);
         }
     }
 
@@ -690,7 +704,8 @@ public final class HelikonClickGuiScreen extends Screen {
         List<SettingRow> rows = new ArrayList<>();
         int y = settingControlsTop(module) + MODULE_RESET_ROW_HEIGHT + BIND_ROW_HEIGHT + ENABLED_ROW_HEIGHT;
         for (Setting<?> setting : module.settings()) {
-            int rowHeight = setting instanceof NumberSetting ? NUMBER_ROW_HEIGHT : BOOLEAN_ROW_HEIGHT;
+            int rowHeight = setting instanceof NumberSetting || setting instanceof ColorSetting
+                    ? NUMBER_ROW_HEIGHT : BOOLEAN_ROW_HEIGHT;
             rows.add(new SettingRow(setting, y, rowHeight));
             y += rowHeight;
         }

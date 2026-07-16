@@ -15,6 +15,7 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.setting.BooleanSetting;
+import dev.helikon.client.setting.ColorSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.waypoint.WaypointContext;
 import dev.helikon.client.waypoint.WaypointLocation;
@@ -130,6 +131,9 @@ class BuiltinCommandsTest {
 
         dispatcher.dispatch(".setting configurable amount 7.5", feedback);
         assertEquals(7.5, module.amount.value());
+
+        dispatcher.dispatch(".setting configurable color #80FF6600", feedback);
+        assertEquals(0x80FF6600, module.color.value());
     }
 
     @Test
@@ -141,6 +145,9 @@ class BuiltinCommandsTest {
         dispatcher.dispatch(".setting configurable amount 99", feedback);
         assertTrue(feedback.errors.get(1).contains("between 0 and 10"));
         assertEquals(2.0, module.amount.value());
+
+        dispatcher.dispatch(".setting configurable color #FF00FF", feedback);
+        assertTrue(feedback.errors.get(2).contains("Expected #AARRGGBB"));
     }
 
     @Test
@@ -210,12 +217,14 @@ class BuiltinCommandsTest {
     private static final class ConfigurableModule extends Module {
         private final BooleanSetting flag;
         private final NumberSetting amount;
+        private final ColorSetting color;
 
         private ConfigurableModule() {
             super("configurable", "Configurable", "Used by command tests.",
                     ModuleCategory.MISCELLANEOUS, false, Keybind.unbound());
             flag = addSetting(new BooleanSetting("flag", "Flag", "A test flag.", true));
             amount = addSetting(new NumberSetting("amount", "Amount", "A test number.", 2.0, 0.0, 10.0));
+            color = addSetting(new ColorSetting("color", "Color", "A test color.", 0xFFFFFFFF));
         }
     }
 

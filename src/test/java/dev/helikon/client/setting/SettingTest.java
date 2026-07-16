@@ -38,4 +38,16 @@ class SettingTest {
         assertFalse(setting.applyJson(new JsonPrimitive("false")));
         assertTrue(setting.value());
     }
+
+    @Test
+    void colorSettingUsesStrictArgbTokensAndRecoversMalformedJson() {
+        ColorSetting setting = new ColorSetting("color", "Color", "Test color.", 0xFF112233);
+
+        assertTrue(setting.applyJson(new JsonPrimitive("#80445566")));
+        assertEquals(0x80445566, setting.value());
+        assertEquals("#80445566", ColorSettingText.format(setting.value()));
+
+        assertFalse(setting.applyJson(new JsonPrimitive("#445566")));
+        assertEquals(0xFF112233, setting.value());
+    }
 }

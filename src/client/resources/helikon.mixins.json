@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "dev.helikon.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "FogRendererMixin",
+    "HudMixin",
+    "LightmapRenderStateExtractorMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

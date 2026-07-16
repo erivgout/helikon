@@ -5,6 +5,8 @@
 | ID | Category | Description | Settings | Limitation |
 | --- | --- | --- | --- | --- |
 | `fullbright` | Render | Locally increases brightness with reversible gamma or Night Vision. | `use_gamma`, `night_vision`, `brightness` | Gamma is constrained to Minecraft's 0.0–1.0 option range; Night Vision is visual and client-local. |
+| `anti_blind` | Render | Hides selected local impairment visuals. | `blindness`, `darkness`, `nausea`, `pumpkin_overlay`, `powder_snow_overlay` | Does not remove effects from the local player or change server state; it only filters their 26.2 render paths. |
+| `better_crosshair` | Render | Draws a local four-arm HUD crosshair. | `size`, `gap`, `thickness`, `outline`, `color`, `dynamic_movement`, `hide_vanilla` | Dynamic movement uses local horizontal velocity; hit detection and server packets are unaffected. |
 
 Every production module will document its stable ID, category, settings,
 limitations, acceptance criteria, and automated or manual test coverage here.
@@ -15,7 +17,8 @@ Module IDs are lowercase and stable; display names are not used as identifiers.
 
 Modules appear in the ClickGUI (Right Shift) under their `ModuleCategory`.
 Selecting a module shows its name, category, ID, description, an enabled
-toggle, and controls for its `BooleanSetting` and `NumberSetting` values.
+toggle, and controls for its `BooleanSetting`, `NumberSetting`, and
+`ColorSetting` values. Colors use strict `#AARRGGBB` tokens.
 Toggles are dispatched through `ModuleRegistry`, so a module that throws
 during `onEnable`/`onDisable` is isolated and force-disabled instead of
 crashing the client. Setting edits and enabled state persist to

@@ -3,6 +3,8 @@ package dev.helikon.client.command;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.BooleanSetting;
+import dev.helikon.client.setting.ColorSetting;
+import dev.helikon.client.setting.ColorSettingText;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.setting.NumberSettingText;
 import dev.helikon.client.setting.Setting;
@@ -60,6 +62,7 @@ public final class SettingCommand implements HelikonCommand {
         String value = arguments.get(2);
         switch (foundSetting.get()) {
             case BooleanSetting booleanSetting -> applyBoolean(module, booleanSetting, value, feedback);
+            case ColorSetting colorSetting -> applyColor(module, colorSetting, value, feedback);
             case NumberSetting numberSetting -> applyNumber(module, numberSetting, value, feedback);
             default -> feedback.error("Setting '" + settingId + "' has an unsupported type for this command.");
         }
@@ -83,5 +86,13 @@ public final class SettingCommand implements HelikonCommand {
             return;
         }
         feedback.info("'" + module.id() + "." + setting.id() + "' set to " + NumberSettingText.format(setting.value()) + ".");
+    }
+
+    private static void applyColor(Module module, ColorSetting setting, String value, CommandFeedback feedback) {
+        if (!ColorSettingText.tryApply(setting, value)) {
+            feedback.error("Expected #AARRGGBB for '" + setting.id() + "', got '" + value + "'.");
+            return;
+        }
+        feedback.info("'" + module.id() + "." + setting.id() + "' set to " + ColorSettingText.format(setting.value()) + ".");
     }
 }

@@ -19,6 +19,7 @@ import dev.helikon.client.gui.HelikonClickGuiScreen;
 import dev.helikon.client.gui.HelikonHudEditorScreen;
 import dev.helikon.client.gui.HelikonThemeEditorScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
+import dev.helikon.client.hud.BetterCrosshairHud;
 import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.hud.WaypointHud;
 import dev.helikon.client.input.HelikonKeybinds;
@@ -32,8 +33,11 @@ import dev.helikon.client.macro.MinecraftMacroActionExecutor;
 import dev.helikon.client.macro.MinecraftMacroServerContextProvider;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.render.Fullbright;
+import dev.helikon.client.module.render.AntiBlind;
+import dev.helikon.client.module.render.BetterCrosshair;
 import dev.helikon.client.module.render.MinecraftGammaAccess;
 import dev.helikon.client.module.render.MinecraftNightVisionAccess;
+import dev.helikon.client.module.render.RenderModuleAccess;
 import dev.helikon.client.notification.ChatNotifier;
 import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.panic.PanicState;
@@ -107,6 +111,11 @@ public final class HelikonClient implements ClientModInitializer {
         );
         Fullbright fullbright = new Fullbright(new MinecraftGammaAccess(), new MinecraftNightVisionAccess());
         modules.register(fullbright);
+        AntiBlind antiBlind = new AntiBlind();
+        BetterCrosshair betterCrosshair = new BetterCrosshair();
+        modules.register(antiBlind);
+        modules.register(betterCrosshair);
+        RenderModuleAccess.install(antiBlind, betterCrosshair);
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
                 modules.runGuarded(fullbright, "tick", fullbright::tick);
@@ -150,6 +159,8 @@ public final class HelikonClient implements ClientModInitializer {
                 new ActiveModulesHud(modules, hudLayout, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "waypoints"),
                 new WaypointHud(waypoints, waypointLocations, panicState));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "better_crosshair"),
+                new BetterCrosshairHud(betterCrosshair, panicState));
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             screenWasOpenAtTickStart = client.gui.screen() != null;
             helikonScreenWasOpenAtTickStart = isHelikonScreen(client);

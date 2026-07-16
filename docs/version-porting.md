@@ -8,6 +8,9 @@ When porting:
 1. Update all pinned versions together from Fabric's official release metadata.
 2. Build and run the full test suite with the target Java version.
 3. Revalidate client lifecycle, key mapping, screen, rendering, and mixin APIs.
+   In particular, verify AntiBlind's `FogRenderer.setupFog`,
+   `LightmapRenderStateExtractor.extract`, and `Hud` extraction targets before
+   release; these are client-only visual hooks and must remain narrowly scoped.
 4. Run the manual smoke test in an empty profile and with no internet access.
 5. Document compatibility changes and retained limitations before release.
 

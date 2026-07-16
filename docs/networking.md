@@ -11,6 +11,9 @@ actions use that same normal Minecraft server connection. Macro definitions,
 action lists, and server-scope choices remain local; Helikon sends no macro
 data to any separate service.
 
+Fullbright changes only local client options and local visual effect state. It
+does not construct, alter, or send a Minecraft packet.
+
 ## Future policy
 
 Optional external integrations must be isolated under

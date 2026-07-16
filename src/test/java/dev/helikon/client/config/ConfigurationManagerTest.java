@@ -6,6 +6,7 @@ import dev.helikon.client.gui.ClickGuiTheme;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.NumberSetting;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -40,6 +41,33 @@ class ConfigurationManagerTest {
         assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(targetRegistry));
         assertTrue(target.isEnabled());
         assertEquals(7.5, target.amount.value());
+    }
+
+    @Test
+    void legacyFullbrightStubStateLoadsIntoTheProductionModule() throws IOException {
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        Files.createDirectories(manager.configurationDirectory());
+        Files.writeString(manager.globalConfigurationPath(), """
+                {
+                  "schemaVersion": 1,
+                  "modules": {
+                    "fullbright_stub": {
+                      "enabled": true,
+                      "keybind": {"key": -1, "activation": "toggle"},
+                      "settings": {"use_gamma": false, "brightness": 0.6}
+                    }
+                  }
+                }
+                """);
+
+        ModuleRegistry registry = new ModuleRegistry();
+        LegacyFullbrightModule fullbright = new LegacyFullbrightModule();
+        registry.register(fullbright);
+
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(registry));
+        assertTrue(fullbright.isEnabled());
+        assertFalse(fullbright.gammaMode.value());
+        assertEquals(0.6, fullbright.brightness.value());
     }
 
     @Test
@@ -229,6 +257,18 @@ class ConfigurationManagerTest {
         private ConfigurableModule() {
             super("configurable", "Configurable", "Used by configuration tests.", ModuleCategory.MISCELLANEOUS, false, Keybind.unbound());
             amount = addSetting(new NumberSetting("amount", "Amount", "A test number.", 2.0, 0.0, 10.0));
+        }
+    }
+
+    private static final class LegacyFullbrightModule extends Module {
+        private final BooleanSetting gammaMode;
+        private final NumberSetting brightness;
+
+        private LegacyFullbrightModule() {
+            super("fullbright", "Fullbright", "Used to test legacy configuration migration.",
+                    ModuleCategory.RENDER, false, Keybind.unbound());
+            gammaMode = addSetting(new BooleanSetting("use_gamma", "Gamma mode", "A test gamma mode.", true));
+            brightness = addSetting(new NumberSetting("brightness", "Brightness", "A test brightness.", 1.0, 0.0, 1.0));
         }
     }
 }

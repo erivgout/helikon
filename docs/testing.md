@@ -18,11 +18,14 @@ configuration recovery (`ActiveModulesTest`, `HudEditorStateTest`,
 category/module wrapping and empty-search selection handling. Profile save,
 load, atomic backup, malformed-file recovery, safe profile names, and local
 command wiring are covered by `ProfileManagerTest` and `ProfileCommandTest`.
+Fullbright's gamma restoration, setting-driven Night Vision lifecycle, and
+identity-safe effect restoration are covered by `FullbrightGammaControllerTest`,
+`FullbrightTest`, and `ClientEffectOverrideStateTest`.
 
 ## Manual Active Modules HUD smoke test
 
 1. Run `./gradlew.bat runClient`, join a world, and send
-   `.toggle fullbright_stub`. Verify **Fullbright (Stub)** appears in a small
+   `.toggle fullbright`. Verify **Fullbright** appears in a small
    top-left HUD panel; send the command again and verify the panel disappears.
 2. Open the ClickGUI with Right Shift and click **HUD** in its header. Verify a
    dimmed editor opens, with an Active modules checkbox and a preview (showing
@@ -44,15 +47,16 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
 
 1. Press Right Shift in a world and verify the ClickGUI opens; press Escape
    and verify it closes.
-2. Click the **Render** category and verify `Fullbright (Stub)` is listed.
+2. Click the **Render** category and verify `Fullbright` is listed.
 3. Click the square at the right of the module row and verify it fills with
    the accent color (enabled); click again to disable.
 4. Click the module name and verify the right panel shows its name, category,
-   ID, description, an **Enabled** row, the **Gamma mode** checkbox, and the
+   ID, description, an **Enabled** row, the **Gamma mode** and **Night Vision
+   mode** checkboxes, and the
    **Brightness** number field with its range.
 5. Toggle **Gamma mode** and type a new **Brightness** value. Out-of-range or
    non-numeric text must turn red and leave the stored value unchanged.
-6. Type into the search box and verify matches by name (`full`), ID (`stub`),
+6. Type into the search box and verify matches by name or ID (`full`),
    and description text, across all categories; verify a nonsense query shows
    "No matching modules" and that clearing the query restores the category
    list.
@@ -92,13 +96,13 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
    chat (gray text with a gold `[Helikon]` prefix) and nothing is sent to the
    server (no "unknown command" from the server, not visible to other
    players).
-2. Send `.toggle fullbright_stub`, then `.modules`, and verify the state
+2. Send `.toggle fullbright`, then `.modules`, and verify the state
    changed. Send `.toggle nope` and verify a red error.
-3. Send `.setting fullbright_stub brightness 5` and verify the ClickGUI shows
-   5; send an out-of-range value and verify the red range error.
-4. Send `.bind fullbright_stub r`, close chat, press R, and verify the module
+3. Send `.setting fullbright brightness 0.7` and verify the ClickGUI shows
+   0.7; send an out-of-range value and verify the red range error.
+4. Send `.bind fullbright r`, close chat, press R, and verify the module
    toggles. Open chat, type `r`, and verify the module does not toggle. Send
-   `.bind fullbright_stub r hold`, hold R, and verify it enables only while
+   `.bind fullbright r hold`, hold R, and verify it enables only while
    held.
 5. Send `.gui` and verify the ClickGUI opens after chat closes.
 6. Send `.panic` and verify all modules disable.

@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,6 +31,9 @@ import java.util.logging.Logger;
  */
 public final class ConfigurationManager {
     public static final int SCHEMA_VERSION = 1;
+
+    /** Legacy bootstrap IDs that retain their saved state after graduating to a real module. */
+    private static final Map<String, String> LEGACY_MODULE_IDS = Map.of("fullbright", "fullbright_stub");
 
     private static final Logger LOGGER = Logger.getLogger(ConfigurationManager.class.getName());
 
@@ -160,6 +164,15 @@ public final class ConfigurationManager {
         JsonObject modules = root.getAsJsonObject("modules");
         for (Module module : registry.all()) {
             JsonElement moduleElement = modules.get(module.id());
+            if (moduleElement == null) {
+                String legacyId = LEGACY_MODULE_IDS.get(module.id());
+                if (legacyId != null) {
+                    moduleElement = modules.get(legacyId);
+                    if (moduleElement != null) {
+                        LOGGER.info(() -> "Migrating saved module state from '" + legacyId + "' to '" + module.id() + "'");
+                    }
+                }
+            }
             if (moduleElement == null || !moduleElement.isJsonObject()) {
                 restoreModuleDefaults(module);
                 registry.setEnabled(module, module.defaultEnabled());

@@ -12,10 +12,11 @@ branding, or configuration formats from that project.
 
 ## Status
 
-The current milestones deliberately do **not** implement gameplay automation,
-combat tools, packet manipulation, external networking, telemetry, a custom
-backend, or a server-side component. `FullbrightStub` exists only to exercise
-the registry and settings architecture; it does not change game brightness.
+Helikon currently includes a client-only Fullbright module: it can set local
+gamma or a local visual Night Vision effect, and restores the previous gamma
+and Night Vision state when disabled. Gameplay automation, combat tools,
+packet manipulation, external networking, telemetry, a custom backend, and a
+server-side component remain unimplemented.
 
 The ClickGUI currently provides:
 

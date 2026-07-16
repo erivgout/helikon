@@ -79,6 +79,31 @@ public final class ModuleRegistry {
         }
     }
 
+    /**
+     * Runs periodic module work through the same failure isolation as lifecycle
+     * transitions. A failed callback disables the registered module so its
+     * normal cleanup can restore any client state it owns.
+     */
+    public boolean runGuarded(Module module, String operation, Runnable action) {
+        Module nonNullModule = Objects.requireNonNull(module, "module");
+        String nonBlankOperation = Objects.requireNonNull(operation, "operation");
+        Runnable nonNullAction = Objects.requireNonNull(action, "action");
+        if (nonBlankOperation.isBlank()) {
+            throw new IllegalArgumentException("operation must not be blank");
+        }
+        if (!modules.containsValue(nonNullModule)) {
+            throw new IllegalArgumentException("Module '" + nonNullModule.id() + "' is not registered");
+        }
+
+        try {
+            nonNullAction.run();
+            return true;
+        } catch (RuntimeException exception) {
+            isolateFailure(nonNullModule, nonBlankOperation, exception);
+            return false;
+        }
+    }
+
     public void addFailureHandler(ModuleFailureHandler handler) {
         failureHandlers.add(Objects.requireNonNull(handler, "handler"));
     }

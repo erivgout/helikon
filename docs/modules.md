@@ -1,10 +1,10 @@
 # Modules
 
-## Bootstrap modules
+## Render modules
 
 | ID | Category | Description | Settings | Limitation |
 | --- | --- | --- | --- | --- |
-| `fullbright_stub` | Render | Exercises module registration, settings, and persistence. | `use_gamma`, `brightness` | Does not modify gamma or gameplay state. |
+| `fullbright` | Render | Locally increases brightness with reversible gamma or Night Vision. | `use_gamma`, `night_vision`, `brightness` | Gamma is constrained to Minecraft's 0.0–1.0 option range; Night Vision is visual and client-local. |
 
 Every production module will document its stable ID, category, settings,
 limitations, acceptance criteria, and automated or manual test coverage here.

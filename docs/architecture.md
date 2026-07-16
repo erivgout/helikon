@@ -18,6 +18,15 @@ Modules should not directly depend on configuration or GUI classes. Minecraft
 version-specific hooks belong in adapters or event bridges, not scattered across
 module business logic.
 
+`Fullbright` follows this split: `FullbrightGammaController` owns the
+Minecraft-free capture, override, and restoration decision, while
+`MinecraftGammaAccess` and `MinecraftNightVisionAccess` are the small 26.2 API
+adapters. The Night Vision adapter keeps an effect snapshot per local player,
+tracks its exact injected effect instance, reasserts only that visual effect,
+and restores the snapshot on disable. Periodic module callbacks use
+`ModuleRegistry.runGuarded`, so adapter failures also disable and clean up the
+affected module through normal lifecycle isolation.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

@@ -36,6 +36,20 @@ class ModuleLifecycleTest {
         assertEquals(1, module.disableCount);
     }
 
+    @Test
+    void guardedPeriodicWorkUsesFailureIsolationAndCleanup() {
+        ModuleRegistry registry = new ModuleRegistry();
+        RecordingModule module = new RecordingModule();
+        registry.register(module);
+        registry.setEnabled(module, true);
+
+        assertFalse(registry.runGuarded(module, "tick", () -> {
+            throw new IllegalStateException("Expected test failure");
+        }));
+        assertFalse(module.isEnabled());
+        assertEquals(1, module.disableCount);
+    }
+
     private static final class RecordingModule extends Module {
         private int enableCount;
         private int disableCount;

@@ -7,15 +7,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.OptionalInt;
+import java.util.function.IntPredicate;
 
 /** Assigns a module keybind, optionally with an activation mode. */
 public final class BindCommand implements HelikonCommand {
     private final ModuleRegistry registry;
     private final KeyNameResolver keyNames;
+    private final IntPredicate reservedKeys;
 
-    public BindCommand(ModuleRegistry registry, KeyNameResolver keyNames) {
+    public BindCommand(ModuleRegistry registry, KeyNameResolver keyNames, IntPredicate reservedKeys) {
         this.registry = Objects.requireNonNull(registry, "registry");
         this.keyNames = Objects.requireNonNull(keyNames, "keyNames");
+        this.reservedKeys = Objects.requireNonNull(reservedKeys, "reservedKeys");
     }
 
     @Override
@@ -43,7 +46,12 @@ public final class BindCommand implements HelikonCommand {
         String keyName = arguments.get(1).toLowerCase(Locale.ROOT);
         OptionalInt keyCode = keyNames.resolve(keyName);
         if (keyCode.isEmpty()) {
-            feedback.error("Unknown key '" + keyName + "'. Examples: r, f6, right.shift.");
+            feedback.error("Unknown key '" + keyName + "'. Examples: r, f6, home.");
+            return;
+        }
+        if (reservedKeys.test(keyCode.getAsInt())) {
+            feedback.error("Key '" + keyName + "' opens the Helikon GUI, so it cannot activate a module. "
+                    + "Pick another key or rebind the GUI key in Controls.");
             return;
         }
 

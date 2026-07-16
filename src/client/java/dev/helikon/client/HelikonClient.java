@@ -58,9 +58,8 @@ public final class HelikonClient implements ClientModInitializer {
             modules.enableDefaultModules();
         }
 
-        HelikonCommands.registerDefaults(commands, modules, new MinecraftKeyNameResolver(), () ->
-                pendingScreenAction.set(() -> openClickGui())
-        );
+        HelikonCommands.registerDefaults(commands, modules, new MinecraftKeyNameResolver(),
+                HelikonKeybinds::isGuiKey, () -> pendingScreenAction.set(this::openClickGui));
         ChatCommands.register(commands, notifier);
 
         HelikonKeybinds.register(modules, configuration);

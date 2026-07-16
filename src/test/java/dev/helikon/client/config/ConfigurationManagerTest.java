@@ -60,6 +60,12 @@ class ConfigurationManagerTest {
 
     @Test
     void invalidStoredKeybindFallsBackToUnbound() throws IOException {
+        assertStoredKeybindIsRejected("{\"key\": 82, \"activation\": \"sometimes\"}");
+        assertStoredKeybindIsRejected("{\"key\": 0, \"activation\": \"toggle\"}");
+        assertStoredKeybindIsRejected("{\"key\": 999999, \"activation\": \"toggle\"}");
+    }
+
+    private void assertStoredKeybindIsRejected(String keybindJson) throws IOException {
         ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
         Files.createDirectories(manager.configurationDirectory());
         Files.writeString(manager.globalConfigurationPath(), """
@@ -68,12 +74,12 @@ class ConfigurationManagerTest {
                   "modules": {
                     "configurable": {
                       "enabled": false,
-                      "keybind": {"key": 82, "activation": "sometimes"},
+                      "keybind": %s,
                       "settings": {}
                     }
                   }
                 }
-                """);
+                """.formatted(keybindJson));
 
         ModuleRegistry registry = new ModuleRegistry();
         ConfigurableModule module = new ConfigurableModule();
@@ -81,7 +87,7 @@ class ConfigurationManagerTest {
         registry.register(module);
 
         assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(registry));
-        assertFalse(module.keybind().isBound());
+        assertFalse(module.keybind().isBound(), "keybind " + keybindJson + " must reset to unbound");
     }
 
     @Test

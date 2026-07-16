@@ -17,10 +17,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BuiltinCommandsTest {
     private static final int KEY_R = 82;
+    private static final int KEY_RIGHT_SHIFT = 344;
 
     private final KeyNameResolver fakeKeys = name -> switch (name) {
         case "r" -> OptionalInt.of(KEY_R);
         case "f6" -> OptionalInt.of(295);
+        case "right.shift" -> OptionalInt.of(KEY_RIGHT_SHIFT);
         default -> OptionalInt.empty();
     };
 
@@ -38,7 +40,8 @@ class BuiltinCommandsTest {
         dispatcher = new CommandDispatcher();
         feedback = new RecordingFeedback();
         guiOpened = false;
-        HelikonCommands.registerDefaults(dispatcher, registry, fakeKeys, () -> guiOpened = true);
+        HelikonCommands.registerDefaults(dispatcher, registry, fakeKeys,
+                key -> key == KEY_RIGHT_SHIFT, () -> guiOpened = true);
     }
 
     @Test
@@ -145,6 +148,13 @@ class BuiltinCommandsTest {
 
         dispatcher.dispatch(".bind configurable r sometimes", feedback);
         assertTrue(feedback.errors.get(1).contains("Unknown activation 'sometimes'"));
+        assertFalse(module.keybind().isBound());
+    }
+
+    @Test
+    void bindRejectsTheGuiKey() {
+        dispatcher.dispatch(".bind configurable right.shift", feedback);
+        assertTrue(feedback.errors.get(0).contains("opens the Helikon GUI"));
         assertFalse(module.keybind().isBound());
     }
 

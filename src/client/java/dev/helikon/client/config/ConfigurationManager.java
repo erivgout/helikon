@@ -174,9 +174,9 @@ public final class ConfigurationManager {
             }
             Keybind.Activation activation = Keybind.Activation.valueOf(
                     activationElement.getAsString().toUpperCase(Locale.ROOT));
-            module.setKeybind(keyCode < Keybind.UNBOUND_KEY
-                    ? Keybind.unbound()
-                    : new Keybind(keyCode, activation));
+            // The Keybind constructor rejects key codes outside the supported
+            // range, sending manually edited garbage to the catch below.
+            module.setKeybind(new Keybind(keyCode, activation));
         } catch (RuntimeException exception) {
             LOGGER.warning(() -> "Invalid keybind for module '" + module.id() + "'; keeping it unbound");
             module.setKeybind(Keybind.unbound());

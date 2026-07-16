@@ -10,6 +10,9 @@ import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.NumberSetting;
+import dev.helikon.client.waypoint.WaypointContext;
+import dev.helikon.client.waypoint.WaypointLocation;
+import dev.helikon.client.waypoint.WaypointManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -52,7 +55,10 @@ class BuiltinCommandsTest {
         HelikonCommands.registerDefaults(dispatcher, registry, fakeKeys,
                 key -> key == KEY_RIGHT_SHIFT, () -> guiOpened = true,
                 new ProfileManager(new ConfigurationManager(temporaryDirectory.resolve("helikon"))),
-                new ClickGuiWindowState(), new FriendManager(temporaryDirectory.resolve("helikon")));
+                new ClickGuiWindowState(), new FriendManager(temporaryDirectory.resolve("helikon")),
+                new WaypointManager(temporaryDirectory.resolve("helikon")),
+                () -> java.util.Optional.of(new WaypointLocation(0, 64, 0,
+                        new WaypointContext("world:command-test", "minecraft:overworld"))));
     }
 
     @Test

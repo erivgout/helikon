@@ -61,6 +61,20 @@ Each entry stores a local ARGB render color in `friends.json`; no friend data is
 sent to a server. Targeting modules will use the friend list for their default
 friend-exclusion policy when those modules are introduced.
 
+## Waypoints
+
+`.waypoint add <name>` saves the current block position; supplying `x y z`
+saves manual coordinates in the currently loaded server/world and dimension.
+`.waypoint list` orders enabled local entries by distance and reports a compass
+direction. Waypoints can be removed, renamed, toggled, recolored, or given a
+small optional icon token with local commands. The minimal Waypoints HUD shows
+up to three nearest enabled entries with distance and direction, and hides
+entries from any other server/world or dimension.
+
+Death and logout waypoints are deliberately not automatic yet. The first HUD
+indicator has no separate HUD-editor position or world-space beacon; those
+rendering and layout controls remain future work.
+
 ## HUD
 
 | Element | Behavior | Persistence | Limitation | Coverage |

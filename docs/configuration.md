@@ -62,4 +62,14 @@ and local ARGB render colors. Friend writes use `friends.json.bak`; malformed
 files become `friends.corrupt-<timestamp>.json`. Nothing in this store is sent
 to Minecraft servers or an external service. Case-insensitive duplicate names
 are invalid persisted data and recover through the same corrupt-file path.
-Waypoints, macros, and remaining HUD layout are planned future local stores.
+
+Waypoints live in schema-versioned `waypoints.json`. Every entry has a
+validated name, coordinates, local `server:` or `world:` scope, dimension,
+ARGB color, optional icon token, enabled state, and creation timestamp. Names
+only need to be unique case-insensitively within the same scope and dimension,
+so `Home` can exist separately in the Overworld and Nether. Writes use
+`waypoints.json.bak`; malformed, duplicate, or out-of-policy entries become
+`waypoints.corrupt-<timestamp>.json`. Waypoints are never synchronized or sent
+to a Minecraft server. Command mutations roll back in memory if their atomic
+save fails, so a failed add or edit is never later persisted unexpectedly.
+Macros and remaining HUD layout are planned future local stores.

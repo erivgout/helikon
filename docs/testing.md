@@ -127,6 +127,14 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     Relaunch after adding to verify `friends.json` persists; malformed or
     case-insensitively duplicate entries must become
     `friends.corrupt-<timestamp>.json`.
+14. In a world, run `.waypoint add home`, walk away, and run `.waypoint list`.
+    Verify the current-dimension entry reports distance and a compass direction
+    and appears in the small Waypoints HUD. Add manual coordinates with
+    `.waypoint add mine 10 70 -5`, use `color`, `icon`, and `toggle`, then
+    verify disabled entries are absent from the HUD but identified by `list`.
+    Rename and remove an entry, relaunch to verify persistence and backup
+    creation, then replace `waypoints.json` with malformed or duplicate data;
+    it must become `waypoints.corrupt-<timestamp>.json` and show no entries.
 
 ## Bootstrap smoke test
 

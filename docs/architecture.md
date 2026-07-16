@@ -92,6 +92,16 @@ calling the store. Future targeting modules can query `FriendManager.contains`
 to exclude friends by default without coupling their decision logic to input or
 JSON handling.
 
+`WaypointManager` follows the same atomic local-storage rules for
+`waypoints.json`. `WaypointContext`, `WaypointLocation`, and
+`WaypointNavigation` own validation, context filtering, distance ordering, and
+compass labels without Minecraft imports. `MinecraftWaypointLocationProvider`
+is the small 26.2 adapter that derives the current server/world directory,
+dimension identifier, and block position. `WaypointHud` only renders the
+nearest enabled entries for that current context; it caches a bounded nearest
+set until the player position, context, or waypoint revision changes. It
+neither sends waypoint data nor accesses storage during rendering.
+
 ## Rendering, GUI, and HUD
 
 The Right Shift keybind opens `HelikonClickGuiScreen`, a vanilla `Screen`

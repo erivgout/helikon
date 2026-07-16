@@ -17,11 +17,15 @@ import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
 import dev.helikon.client.hud.HudLayout;
+import dev.helikon.client.hud.WaypointHud;
 import dev.helikon.client.input.HelikonKeybinds;
 import dev.helikon.client.input.KeybindManager;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.render.FullbrightStub;
 import dev.helikon.client.notification.ChatNotifier;
+import dev.helikon.client.waypoint.MinecraftWaypointLocationProvider;
+import dev.helikon.client.waypoint.WaypointLocationProvider;
+import dev.helikon.client.waypoint.WaypointManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -52,6 +56,8 @@ public final class HelikonClient implements ClientModInitializer {
     private final ProfileManager profiles = new ProfileManager(configuration);
     private final FriendManager friends = new FriendManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
     private final FriendToggleGesture friendToggleGesture = new FriendToggleGesture();
+    private final WaypointManager waypoints = new WaypointManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
+    private final WaypointLocationProvider waypointLocations = new MinecraftWaypointLocationProvider();
     private final HudLayout hudLayout = new HudLayout();
     private final HudConfigurationManager hudConfiguration = new HudConfigurationManager(
             FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
@@ -83,14 +89,22 @@ public final class HelikonClient implements ClientModInitializer {
         } catch (ConfigurationException exception) {
             LOGGER.log(Level.WARNING, "Unable to load friends; continuing with an empty local friend list", exception);
         }
+        try {
+            waypoints.load();
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to load waypoints; continuing with an empty local waypoint list", exception);
+        }
 
         HelikonCommands.registerDefaults(commands, modules, new MinecraftKeyNameResolver(),
-                HelikonKeybinds::isGuiKey, () -> pendingScreenAction.set(this::openClickGui), profiles, clickGuiWindow, friends);
+                HelikonKeybinds::isGuiKey, () -> pendingScreenAction.set(this::openClickGui), profiles, clickGuiWindow,
+                friends, waypoints, waypointLocations);
         ChatCommands.register(commands, notifier);
 
         HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "active_modules"),
                 new ActiveModulesHud(modules, hudLayout));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "waypoints"),
+                new WaypointHud(waypoints, waypointLocations));
         ClientTickEvents.START_CLIENT_TICK.register(client -> events.post(new ClientTickEvent(ClientTickEvent.Phase.PRE)));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             events.post(new ClientTickEvent(ClientTickEvent.Phase.POST));
@@ -157,6 +171,11 @@ public final class HelikonClient implements ClientModInitializer {
         }
         try { friends.save(); } catch (ConfigurationException exception) {
             LOGGER.log(Level.WARNING, "Unable to save friends while stopping", exception);
+        }
+        try {
+            waypoints.save();
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to save waypoints while stopping", exception);
         }
     }
 

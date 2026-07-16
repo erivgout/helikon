@@ -4,6 +4,8 @@ import dev.helikon.client.config.ProfileManager;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.waypoint.WaypointLocationProvider;
+import dev.helikon.client.waypoint.WaypointManager;
 
 import java.util.function.IntPredicate;
 
@@ -21,7 +23,9 @@ public final class HelikonCommands {
             Runnable guiOpener,
             ProfileManager profiles,
             ClickGuiWindowState clickGuiWindow,
-            FriendManager friends
+            FriendManager friends,
+            WaypointManager waypoints,
+            WaypointLocationProvider waypointLocations
     ) {
         dispatcher.register(new HelpCommand(dispatcher));
         dispatcher.register(new ModulesCommand(registry));
@@ -35,5 +39,6 @@ public final class HelikonCommands {
         dispatcher.register(new PanicCommand(registry));
         dispatcher.register(new ProfileCommand(profiles, registry, clickGuiWindow));
         dispatcher.register(new FriendCommand(friends));
+        dispatcher.register(new WaypointCommand(waypoints, waypointLocations));
     }
 }

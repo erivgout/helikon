@@ -1,5 +1,8 @@
 package dev.helikon.client.command;
 
+import dev.helikon.client.config.ConfigurationManager;
+import dev.helikon.client.config.ProfileManager;
+import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.input.Keybind;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
@@ -8,7 +11,9 @@ import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.NumberSetting;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import java.util.OptionalInt;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,6 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BuiltinCommandsTest {
     private static final int KEY_R = 82;
     private static final int KEY_RIGHT_SHIFT = 344;
+
+    @TempDir
+    Path temporaryDirectory;
 
     private final KeyNameResolver fakeKeys = name -> switch (name) {
         case "r" -> OptionalInt.of(KEY_R);
@@ -41,7 +49,9 @@ class BuiltinCommandsTest {
         feedback = new RecordingFeedback();
         guiOpened = false;
         HelikonCommands.registerDefaults(dispatcher, registry, fakeKeys,
-                key -> key == KEY_RIGHT_SHIFT, () -> guiOpened = true);
+                key -> key == KEY_RIGHT_SHIFT, () -> guiOpened = true,
+                new ProfileManager(new ConfigurationManager(temporaryDirectory.resolve("helikon"))),
+                new ClickGuiWindowState());
     }
 
     @Test

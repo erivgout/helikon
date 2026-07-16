@@ -8,6 +8,7 @@ import dev.helikon.client.command.MinecraftKeyNameResolver;
 import dev.helikon.client.config.ConfigurationException;
 import dev.helikon.client.config.ConfigurationManager;
 import dev.helikon.client.config.HudConfigurationManager;
+import dev.helikon.client.config.ProfileManager;
 import dev.helikon.client.event.ClientTickEvent;
 import dev.helikon.client.event.EventBus;
 import dev.helikon.client.gui.ClickGuiWindowState;
@@ -44,6 +45,7 @@ public final class HelikonClient implements ClientModInitializer {
             FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
     );
     private final ClickGuiWindowState clickGuiWindow = new ClickGuiWindowState();
+    private final ProfileManager profiles = new ProfileManager(configuration);
     private final HudLayout hudLayout = new HudLayout();
     private final HudConfigurationManager hudConfiguration = new HudConfigurationManager(
             FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
@@ -72,7 +74,7 @@ public final class HelikonClient implements ClientModInitializer {
         hudConfiguration.load(hudLayout);
 
         HelikonCommands.registerDefaults(commands, modules, new MinecraftKeyNameResolver(),
-                HelikonKeybinds::isGuiKey, () -> pendingScreenAction.set(this::openClickGui));
+                HelikonKeybinds::isGuiKey, () -> pendingScreenAction.set(this::openClickGui), profiles, clickGuiWindow);
         ChatCommands.register(commands, notifier);
 
         HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);

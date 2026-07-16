@@ -66,6 +66,14 @@ human-readable `global.json` using a temporary file and atomic replacement when
 the filesystem supports it. The previous good file is copied to `global.json.bak`.
 Malformed JSON is retained as `global.corrupt-<timestamp>.json` for inspection.
 
+`ProfileManager` stores named module and ClickGUI snapshots below
+`config/helikon/profiles/`. It reuses the global configuration codec so profile
+activation has the same schema and individual-setting validation. Names are
+restricted to safe lowercase file tokens, writes are atomic with per-profile
+backups, and a malformed profile is moved to
+`<name>.corrupt-<timestamp>.json` before it can activate. `ProfileCommand` is
+only local chat wiring around that Minecraft-free store.
+
 ## Rendering, GUI, and HUD
 
 The Right Shift keybind opens `HelikonClickGuiScreen`, a vanilla `Screen`

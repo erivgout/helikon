@@ -1,5 +1,7 @@
 package dev.helikon.client.command;
 
+import dev.helikon.client.config.ProfileManager;
+import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.module.ModuleRegistry;
 
 import java.util.function.IntPredicate;
@@ -9,12 +11,15 @@ public final class HelikonCommands {
     private HelikonCommands() {
     }
 
+    /** Registers the full command set, including local profile management. */
     public static void registerDefaults(
             CommandDispatcher dispatcher,
             ModuleRegistry registry,
             KeyNameResolver keyNames,
             IntPredicate reservedKeys,
-            Runnable guiOpener
+            Runnable guiOpener,
+            ProfileManager profiles,
+            ClickGuiWindowState clickGuiWindow
     ) {
         dispatcher.register(new HelpCommand(dispatcher));
         dispatcher.register(new ModulesCommand(registry));
@@ -26,5 +31,6 @@ public final class HelikonCommands {
         dispatcher.register(new UnbindCommand(registry));
         dispatcher.register(new GuiCommand(guiOpener));
         dispatcher.register(new PanicCommand(registry));
+        dispatcher.register(new ProfileCommand(profiles, registry, clickGuiWindow));
     }
 }

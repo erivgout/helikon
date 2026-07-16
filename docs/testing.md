@@ -15,7 +15,9 @@ command parsing and every built-in command (`CommandDispatcherTest`,
 (`KeybindManagerTest`), and Active Modules selection, drag clamping, and HUD
 configuration recovery (`ActiveModulesTest`, `HudEditorStateTest`,
 `HudConfigurationManagerTest`). `ClickGuiStateTest` also covers keyboard
-category/module wrapping and empty-search selection handling.
+category/module wrapping and empty-search selection handling. Profile save,
+load, atomic backup, malformed-file recovery, safe profile names, and local
+command wiring are covered by `ProfileManagerTest` and `ProfileCommandTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -102,6 +104,11 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
 6. Send `.panic` and verify all modules disable.
 7. Quit and relaunch; verify the keybind still works (persisted in
    `global.json`).
+8. Send `.profile save smoke`, change a setting or module state, then send
+   `.profile load smoke` and verify the saved local state returns. Send
+   `.profile list` and `.profile delete smoke`; verify the profile is listed
+   then removed. Replace a profile file with invalid JSON and verify it is
+   renamed to `smoke.corrupt-<timestamp>.json` without changing live state.
 
 ## Bootstrap smoke test
 

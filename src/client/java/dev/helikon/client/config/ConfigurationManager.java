@@ -104,6 +104,26 @@ public final class ConfigurationManager {
         }
     }
 
+    /** Creates a validated-schema configuration snapshot for a local profile. */
+    public synchronized JsonObject snapshot(ModuleRegistry registry, ClickGuiWindowState clickGuiWindow) {
+        Objects.requireNonNull(registry, "registry");
+        return serializeConfiguration(registry, clickGuiWindow);
+    }
+
+    /**
+     * Applies a previously parsed local profile snapshot. Structural validation
+     * happens before module state changes; individual invalid settings retain
+     * the existing safe-default recovery behavior.
+     */
+    public synchronized void applySnapshot(
+            JsonObject snapshot,
+            ModuleRegistry registry,
+            ClickGuiWindowState clickGuiWindow
+    ) {
+        applyConfiguration(Objects.requireNonNull(snapshot, "snapshot"),
+                Objects.requireNonNull(registry, "registry"), clickGuiWindow);
+    }
+
     private JsonObject serializeConfiguration(ModuleRegistry registry, ClickGuiWindowState clickGuiWindow) {
         JsonObject root = new JsonObject();
         root.addProperty("schemaVersion", SCHEMA_VERSION);
@@ -139,6 +159,7 @@ public final class ConfigurationManager {
         for (Module module : registry.all()) {
             JsonElement moduleElement = modules.get(module.id());
             if (moduleElement == null || !moduleElement.isJsonObject()) {
+                restoreModuleDefaults(module);
                 registry.setEnabled(module, module.defaultEnabled());
                 continue;
             }
@@ -147,6 +168,11 @@ public final class ConfigurationManager {
             JsonElement settingsElement = moduleObject.get("settings");
             if (settingsElement != null && settingsElement.isJsonObject()) {
                 applySettings(module, settingsElement.getAsJsonObject());
+            } else {
+                if (settingsElement != null) {
+                    LOGGER.warning(() -> "Invalid settings block for module '" + module.id() + "'; reset to defaults");
+                }
+                module.resetSettings();
             }
 
             applyKeybind(module, moduleObject.get("keybind"));
@@ -175,6 +201,11 @@ public final class ConfigurationManager {
                 LOGGER.warning(() -> "Invalid value for setting '" + module.id() + "." + setting.id() + "'; reset to default");
             }
         }
+    }
+
+    private static void restoreModuleDefaults(Module module) {
+        module.resetSettings();
+        module.setKeybind(module.defaultKeybind());
     }
 
     private static JsonObject serializeClickGuiWindow(ClickGuiWindowState clickGuiWindow) {
@@ -268,6 +299,7 @@ public final class ConfigurationManager {
     /** Applies a stored keybind; missing or invalid data leaves the module unbound-safe default. */
     private static void applyKeybind(Module module, JsonElement element) {
         if (element == null || !element.isJsonObject()) {
+            module.setKeybind(module.defaultKeybind());
             return;
         }
 

@@ -4,7 +4,7 @@ Helikon is a clean-room, open-source Fabric utility client for Minecraft Java
 Edition. This repository currently contains the **core framework**: the client
 entrypoint, modular lifecycle API, basic settings, local JSON configuration,
 an internal event bus, a functional Right Shift ClickGUI, local chat commands,
-module keybinds, an Active Modules HUD, and tests.
+module keybinds, an Active Modules HUD, local profiles, and tests.
 
 It is not affiliated with Aristois, and it does not contain copied code, assets,
 branding, or configuration formats from that project.
@@ -85,12 +85,15 @@ sent to the server:
 | `.bind <module> <key> [toggle\|hold\|press_once]` | Binds a key to a module. |
 | `.unbind <module>` | Removes a module's keybind. |
 | `.gui` | Opens the ClickGUI. |
+| `.profile list` | Lists saved local profiles. |
+| `.profile save\|load\|delete <name>` | Saves, loads, or deletes a local module/ClickGUI snapshot. |
 | `.panic` | Disables all modules immediately. |
 
 Key names follow Minecraft's keyboard names, for example `r`, `f6`, or
 `right.shift`. Module keybinds never fire while any screen is open, so typing
 into chat or a search box cannot toggle modules. Tab completion is not
-implemented yet.
+implemented yet. Profile names are local, lowercase file-safe tokens (letters,
+digits, `_`, and `-`), and no profile data is synchronized or sent to a server.
 
 ## Local data and privacy
 

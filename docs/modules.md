@@ -43,9 +43,10 @@ toggles the selected module through `ModuleRegistry`.
 ## Commands and keybinds
 
 Modules can also be controlled through local chat commands (`.toggle`,
-`.setting`, `.reset`, `.bind`, `.unbind` — see the README) and per-module
-keybinds with `toggle`, `hold`, or `press_once` activation. Keybinds never
-fire while a screen is open.
+`.setting`, `.reset`, `.bind`, `.unbind`, `.profile` — see the README) and
+per-module keybinds with `toggle`, `hold`, or `press_once` activation. Profile
+commands save/load the complete local module and ClickGUI snapshot without
+transmitting it. Keybinds never fire while a screen is open.
 
 ## HUD
 

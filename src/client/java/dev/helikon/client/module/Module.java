@@ -17,6 +17,7 @@ public abstract class Module {
     private final String description;
     private final ModuleCategory category;
     private final boolean defaultEnabled;
+    private final Keybind defaultKeybind;
     private final List<Setting<?>> settings = new ArrayList<>();
 
     private Keybind keybind;
@@ -35,7 +36,8 @@ public abstract class Module {
         this.description = requireText(description, "description");
         this.category = Objects.requireNonNull(category, "category");
         this.defaultEnabled = defaultEnabled;
-        this.keybind = Objects.requireNonNullElse(keybind, Keybind.unbound());
+        this.defaultKeybind = Objects.requireNonNullElse(keybind, Keybind.unbound());
+        this.keybind = defaultKeybind;
     }
 
     public final String id() {
@@ -56,6 +58,10 @@ public abstract class Module {
 
     public final boolean defaultEnabled() {
         return defaultEnabled;
+    }
+
+    public final Keybind defaultKeybind() {
+        return defaultKeybind;
     }
 
     public final boolean isEnabled() {

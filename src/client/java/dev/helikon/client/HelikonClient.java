@@ -32,6 +32,10 @@ import dev.helikon.client.macro.MacroServerContextProvider;
 import dev.helikon.client.macro.MinecraftMacroActionExecutor;
 import dev.helikon.client.macro.MinecraftMacroServerContextProvider;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.module.movement.AutoSprint;
+import dev.helikon.client.module.movement.AutoWalk;
+import dev.helikon.client.module.movement.MovementModuleAccess;
+import dev.helikon.client.module.movement.SprintContext;
 import dev.helikon.client.module.render.Fullbright;
 import dev.helikon.client.module.render.AntiBlind;
 import dev.helikon.client.module.render.BetterCrosshair;
@@ -116,9 +120,15 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(antiBlind);
         modules.register(betterCrosshair);
         RenderModuleAccess.install(antiBlind, betterCrosshair);
+        AutoSprint autoSprint = new AutoSprint();
+        AutoWalk autoWalk = new AutoWalk();
+        modules.register(autoSprint);
+        modules.register(autoWalk);
+        MovementModuleAccess.install(autoWalk);
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
                 modules.runGuarded(fullbright, "tick", fullbright::tick);
+                modules.runGuarded(autoSprint, "tick", () -> tickAutoSprint(autoSprint));
             }
         });
 
@@ -257,6 +267,34 @@ public final class HelikonClient implements ClientModInitializer {
             return;
         }
         reportMacroResult(macroRunner.tick(macroServerContext.currentServerAddress(), macroExecutor));
+    }
+
+    /** Applies the Minecraft-free AutoSprint decision through normal local player state only. */
+    private void tickAutoSprint(AutoSprint autoSprint) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null) {
+            autoSprint.onPlayerUnavailable();
+            return;
+        }
+
+        boolean screenOpen = client.gui.screen() != null;
+        net.minecraft.world.entity.player.Input input = client.player.input.keyPresses;
+        boolean forward = !screenOpen && input.forward();
+        boolean moving = !screenOpen && (input.forward() || input.backward() || input.left() || input.right());
+        AutoSprint.SprintAction action = autoSprint.update(new SprintContext(
+                forward,
+                moving,
+                client.player.getFoodData().getFoodLevel(),
+                client.player.horizontalCollision,
+                client.player.isSprinting()
+        ));
+        switch (action) {
+            case START -> client.player.setSprinting(true);
+            case STOP -> client.player.setSprinting(false);
+            case NONE -> {
+                // The module has no local state transition to apply this tick.
+            }
+        }
     }
 
     private void reportMacroResult(MacroRunner.TickResult result) {

@@ -10,7 +10,8 @@ When porting:
 3. Revalidate client lifecycle, key mapping, screen, rendering, and mixin APIs.
    In particular, verify AntiBlind's `FogRenderer.setupFog`,
    `LightmapRenderStateExtractor.extract`, and `Hud` extraction targets before
-   release; these are client-only visual hooks and must remain narrowly scoped.
+   release, plus AutoWalk's `KeyboardInput.tick` target; these client-only
+   hooks must remain narrowly scoped.
 4. Run the manual smoke test in an empty profile and with no internet access.
 5. Document compatibility changes and retained limitations before release.
 

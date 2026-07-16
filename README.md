@@ -15,7 +15,8 @@ branding, or configuration formats from that project.
 Helikon currently includes three client-only render modules: Fullbright restores
 the previous gamma and Night Vision state when disabled; AntiBlind selectively
 hides local impairment visuals; and BetterCrosshair draws a local configurable
-HUD crosshair. Gameplay automation, combat tools, packet manipulation,
+HUD crosshair. AutoSprint and AutoWalk apply only normal local movement input
+and sprint state. Other gameplay automation, combat tools, packet manipulation,
 external networking, telemetry, a custom backend, and a server-side component
 remain unimplemented.
 

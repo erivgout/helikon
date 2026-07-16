@@ -33,6 +33,16 @@ HUD calls for Nausea, pumpkin, and powder-snow overlays. BetterCrosshair is a
 Fabric HUD element with Minecraft-free arm geometry; a separate HUD mixin
 suppresses the vanilla crosshair only when its local setting requests it.
 
+AutoWalk uses one narrow `KeyboardInput.tick` tail mixin after Minecraft has
+freshly polled the user's physical keys. Its transformation is a tested,
+Minecraft-free `MovementInput` policy; it updates both the input flags and the
+matching normalized movement vector every tick, so it does not leave a key
+mapping pressed after disable. AutoSprint's input,
+hunger, and collision decision is likewise Minecraft-free; a small client-tick
+adapter applies only its reversible normal `LocalPlayer.setSprinting` request.
+It releases only sprint state that it previously requested and never constructs
+or alters a packet.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

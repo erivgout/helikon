@@ -24,6 +24,9 @@ identity-safe effect restoration are covered by `FullbrightGammaControllerTest`,
 AntiBlind setting gating, BetterCrosshair geometry, and strict ARGB color
 settings are covered by `AntiBlindTest`, `BetterCrosshairTest`,
 `CrosshairGeometryTest`, and `SettingTest`.
+AutoSprint's hunger, collision, direction, and reversible ownership decisions,
+plus AutoWalk's GUI and steering input policy, are covered by
+`AutoSprintTest` and `AutoWalkTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -101,6 +104,17 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     disabling the module restores vanilla visuals. Blindness and Darkness fog
     checks require the matching effect in a controlled local test world; verify
     both the fog-color darkening and fog-distance changes are absent.
+17. Enable **AutoWalk** and verify W-style forward movement continues after
+    releasing the physical forward key. Verify side/back steering remains
+    available by default; disable **Allow steering** to verify only forward
+    movement remains. Open chat or the ClickGUI and verify movement stops with
+    **Stop on GUI** enabled, then disable the module and verify normal input
+    resumes immediately.
+18. Enable **AutoSprint** with its defaults and verify it requests normal
+    sprinting only while moving forward with enough hunger and no horizontal
+    collision. Verify the hunger and collision settings gate the request,
+    `forward_only` permits other movement directions when off, and disabling
+    the module releases only sprinting it enabled.
 
 ## Manual command and keybind smoke test
 

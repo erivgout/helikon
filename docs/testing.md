@@ -112,6 +112,9 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
 9. Save `smoke`, run `.profile duplicate smoke copy` and
    `.profile rename copy renamed`, then verify `renamed` appears in
    `.profile list`, loads correctly, and `copy` no longer exists.
+10. Export `smoke` as `portable`, copy its file from `exports/` to `imports/`
+    as `incoming.json`, and import it as `restored`. Verify it loads correctly;
+    an unsupported-schema import must be rejected without creating a profile.
 
 ## Bootstrap smoke test
 

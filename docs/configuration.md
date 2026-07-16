@@ -38,6 +38,12 @@ stored profile name before the new file is activated later, so a renamed file
 cannot fail validation due to a stale embedded name. Renaming also transfers
 the source profile's `.bak` file to the new name. The profile schema is
 validated before either operation writes a new file.
+To import, place `<file>.json` in `config/helikon/imports/` and run
+`.profile import <file> <name>`; validated imports are copied into `profiles/`.
+`.profile export <name> <file>` writes atomically to
+`config/helikon/exports/<file>.json` (with a `.bak` on replacement). Commands
+accept only safe file tokens, so chat input cannot read or write arbitrary
+paths.
 
 Configuration is written when the ClickGUI closes and on normal client
 shutdown — never per frame or per tick. Writes use a temporary file followed

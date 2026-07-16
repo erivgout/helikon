@@ -76,6 +76,9 @@ only local chat wiring around that Minecraft-free store. Duplicate and rename
 operations parse and rewrite the embedded profile name before atomically
 creating their destination, without activating a profile; they share the
 configuration codec's non-mutating schema validation first.
+Profile import/export uses fixed local `imports/` and `exports/` directories
+below the Helikon configuration root, validates imported schema before copy,
+and never accepts an arbitrary chat-supplied filesystem path.
 
 ## Rendering, GUI, and HUD
 

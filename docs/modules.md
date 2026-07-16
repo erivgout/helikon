@@ -46,7 +46,9 @@ Modules can also be controlled through local chat commands (`.toggle`,
 `.setting`, `.reset`, `.bind`, `.unbind`, `.profile` — see the README) and
 per-module keybinds with `toggle`, `hold`, or `press_once` activation. Profile
 commands save/load/duplicate/rename the complete local module and ClickGUI
-snapshot without transmitting it. Keybinds never fire while a screen is open.
+snapshot without transmitting it. Import/export uses Helikon's local
+`imports/` and `exports/` folders rather than arbitrary paths. Keybinds never
+fire while a screen is open.
 
 ## HUD
 

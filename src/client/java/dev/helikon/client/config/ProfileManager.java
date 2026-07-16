@@ -32,14 +32,26 @@ public final class ProfileManager {
 
     private final ConfigurationManager configuration;
     private final Path profilesDirectory;
+    private final Path importsDirectory;
+    private final Path exportsDirectory;
 
     public ProfileManager(ConfigurationManager configuration) {
         this.configuration = Objects.requireNonNull(configuration, "configuration");
         profilesDirectory = configuration.configurationDirectory().resolve("profiles");
+        importsDirectory = configuration.configurationDirectory().resolve("imports");
+        exportsDirectory = configuration.configurationDirectory().resolve("exports");
     }
 
     public Path profilesDirectory() {
         return profilesDirectory;
+    }
+
+    public Path importsDirectory() {
+        return importsDirectory;
+    }
+
+    public Path exportsDirectory() {
+        return exportsDirectory;
     }
 
     /** Lists saved profile names in stable case-insensitive order. */
@@ -100,6 +112,34 @@ public final class ProfileManager {
         } catch (IOException exception) {
             throw new ConfigurationException("Unable to finish renaming profile '" + source + "'", exception);
         }
+        return true;
+    }
+
+    /**
+     * Imports a validated profile from {@code config/helikon/imports} under a
+     * new name. The caller chooses only a safe token, never an arbitrary path.
+     */
+    public synchronized boolean importProfile(String importName, String targetName) {
+        String source = normalizeName(importName);
+        String target = normalizeName(targetName);
+        JsonObject snapshot = readImportedSnapshot(source);
+        if (snapshot == null) {
+            return false;
+        }
+        snapshot.addProperty("profileName", target);
+        writeSnapshot(target, snapshot, false);
+        return true;
+    }
+
+    /** Exports a validated profile to {@code config/helikon/exports}. */
+    public synchronized boolean exportProfile(String profileName, String exportName) {
+        String source = normalizeName(profileName);
+        String target = normalizeName(exportName);
+        JsonObject snapshot = readSnapshotForCopy(source);
+        if (snapshot == null) {
+            return false;
+        }
+        writeExternalSnapshot(exportsDirectory.resolve(target + ".json"), snapshot);
         return true;
     }
 
@@ -178,6 +218,31 @@ public final class ProfileManager {
         }
     }
 
+    private JsonObject readImportedSnapshot(String normalizedName) {
+        Path source = importsDirectory.resolve(normalizedName + ".json");
+        if (Files.notExists(source)) {
+            return null;
+        }
+        try {
+            JsonElement parsed = JsonParser.parseString(Files.readString(source, StandardCharsets.UTF_8));
+            if (!parsed.isJsonObject()) {
+                throw new IllegalArgumentException("Profile root must be an object");
+            }
+            JsonObject snapshot = parsed.getAsJsonObject();
+            JsonElement profileName = snapshot.get("profileName");
+            if (profileName != null && (!profileName.isJsonPrimitive()
+                    || !profileName.getAsJsonPrimitive().isString())) {
+                throw new IllegalArgumentException("Imported profile name is invalid");
+            }
+            configuration.validateSnapshot(snapshot);
+            return snapshot;
+        } catch (IOException exception) {
+            throw new ConfigurationException("Unable to read import '" + normalizedName + "'", exception);
+        } catch (RuntimeException exception) {
+            throw new IllegalArgumentException("Import '" + normalizedName + "' is not a valid profile", exception);
+        }
+    }
+
     private void writeSnapshot(String normalizedName, JsonObject snapshot, boolean replaceExisting) {
         try {
             Files.createDirectories(profilesDirectory);
@@ -193,6 +258,21 @@ public final class ProfileManager {
             moveAtomically(temporary, destination);
         } catch (IOException exception) {
             throw new ConfigurationException("Unable to save profile '" + normalizedName + "'", exception);
+        }
+    }
+
+    private void writeExternalSnapshot(Path destination, JsonObject snapshot) {
+        try {
+            Files.createDirectories(exportsDirectory);
+            Path temporary = Files.createTempFile(exportsDirectory, "profile-export-", ".json.tmp");
+            Files.writeString(temporary, snapshot.toString(), StandardCharsets.UTF_8);
+            if (Files.exists(destination)) {
+                Files.copy(destination, destination.resolveSibling(destination.getFileName() + ".bak"),
+                        StandardCopyOption.REPLACE_EXISTING);
+            }
+            moveAtomically(temporary, destination);
+        } catch (IOException exception) {
+            throw new ConfigurationException("Unable to export profile", exception);
         }
     }
 

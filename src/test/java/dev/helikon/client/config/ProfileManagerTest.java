@@ -203,6 +203,42 @@ class ProfileManagerTest {
         assertTrue(Files.exists(profiles.profilePath("target")));
     }
 
+    @Test
+    void exportsAndImportsValidatedProfilesWithinTheHelikonDirectory() throws IOException {
+        ConfigurationManager configuration = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        ProfileManager profiles = new ProfileManager(configuration);
+        ModuleRegistry sourceRegistry = new ModuleRegistry();
+        ConfigurableModule source = new ConfigurableModule();
+        sourceRegistry.register(source);
+        source.amount.set(7.0);
+        profiles.save("builder", sourceRegistry, new ClickGuiWindowState());
+
+        assertTrue(profiles.exportProfile("builder", "portable"));
+        Path exportPath = profiles.exportsDirectory().resolve("portable.json");
+        assertTrue(Files.exists(exportPath));
+        Files.createDirectories(profiles.importsDirectory());
+        Files.copy(exportPath, profiles.importsDirectory().resolve("incoming.json"));
+        assertTrue(profiles.importProfile("incoming", "imported"));
+
+        ModuleRegistry targetRegistry = new ModuleRegistry();
+        ConfigurableModule target = new ConfigurableModule();
+        targetRegistry.register(target);
+        assertEquals(ProfileManager.LoadResult.LOADED,
+                profiles.load("imported", targetRegistry, new ClickGuiWindowState()));
+        assertEquals(7.0, target.amount.value());
+    }
+
+    @Test
+    void rejectsInvalidImportsWithoutCreatingAProfile() throws IOException {
+        ProfileManager profiles = new ProfileManager(new ConfigurationManager(temporaryDirectory.resolve("helikon")));
+        Files.createDirectories(profiles.importsDirectory());
+        Files.writeString(profiles.importsDirectory().resolve("invalid.json"), "{\"schemaVersion\": 99, \"modules\": {}}");
+
+        assertThrows(IllegalArgumentException.class, () -> profiles.importProfile("invalid", "target"));
+        assertFalse(Files.exists(profiles.profilePath("target")));
+        assertTrue(Files.exists(profiles.importsDirectory().resolve("invalid.json")));
+    }
+
     private static final class ConfigurableModule extends Module {
         private final NumberSetting amount;
 

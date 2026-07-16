@@ -26,12 +26,12 @@ public final class ProfileCommand implements HelikonCommand {
 
     @Override
     public String usage() {
-        return CommandDispatcher.PREFIX + "profile list|save <name>|load <name>|duplicate <from> <to>|rename <from> <to>|delete <name>";
+        return CommandDispatcher.PREFIX + "profile list|save <name>|load <name>|duplicate <from> <to>|rename <from> <to>|import <file> <name>|export <name> <file>|delete <name>";
     }
 
     @Override
     public String description() {
-        return "Lists, saves, loads, duplicates, renames, or deletes local profiles.";
+        return "Manages local profiles and Helikon-directory imports/exports.";
     }
 
     @Override
@@ -47,6 +47,8 @@ public final class ProfileCommand implements HelikonCommand {
                 case "load" -> load(arguments, feedback);
                 case "duplicate" -> duplicate(arguments, feedback);
                 case "rename" -> rename(arguments, feedback);
+                case "import" -> importProfile(arguments, feedback);
+                case "export" -> exportProfile(arguments, feedback);
                 case "delete" -> delete(arguments, feedback);
                 default -> feedback.error("Usage: " + usage());
             }
@@ -118,6 +120,30 @@ public final class ProfileCommand implements HelikonCommand {
         }
         if (profiles.rename(arguments.get(1), arguments.get(2))) {
             feedback.info("Renamed local profile '" + arguments.get(1) + "' to '" + arguments.get(2) + "'.");
+        } else {
+            feedback.error("No local profile named '" + arguments.get(1) + "'.");
+        }
+    }
+
+    private void importProfile(List<String> arguments, CommandFeedback feedback) {
+        if (arguments.size() != 3) {
+            feedback.error("Usage: " + CommandDispatcher.PREFIX + "profile import <file> <name>");
+            return;
+        }
+        if (profiles.importProfile(arguments.get(1), arguments.get(2))) {
+            feedback.info("Imported local profile '" + arguments.get(2) + "'.");
+        } else {
+            feedback.error("No import file named '" + arguments.get(1) + "'.");
+        }
+    }
+
+    private void exportProfile(List<String> arguments, CommandFeedback feedback) {
+        if (arguments.size() != 3) {
+            feedback.error("Usage: " + CommandDispatcher.PREFIX + "profile export <name> <file>");
+            return;
+        }
+        if (profiles.exportProfile(arguments.get(1), arguments.get(2))) {
+            feedback.info("Exported local profile '" + arguments.get(1) + "' as '" + arguments.get(2) + "'.");
         } else {
             feedback.error("No local profile named '" + arguments.get(1) + "'.");
         }

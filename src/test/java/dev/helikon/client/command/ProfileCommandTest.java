@@ -11,7 +11,9 @@ import dev.helikon.client.setting.NumberSetting;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Files;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,7 +23,7 @@ class ProfileCommandTest {
     Path temporaryDirectory;
 
     @Test
-    void savesListsLoadsAndDeletesLocalProfiles() {
+    void savesListsLoadsAndDeletesLocalProfiles() throws IOException {
         ModuleRegistry registry = new ModuleRegistry();
         ConfigurableModule module = new ConfigurableModule();
         registry.register(module);
@@ -33,6 +35,10 @@ class ProfileCommandTest {
 
         module.amount.set(8.0);
         dispatcher.dispatch(".profile save builder", feedback);
+        dispatcher.dispatch(".profile export builder portable", feedback);
+        Files.createDirectories(profiles.importsDirectory());
+        Files.copy(profiles.exportsDirectory().resolve("portable.json"), profiles.importsDirectory().resolve("incoming.json"));
+        dispatcher.dispatch(".profile import incoming imported", feedback);
         dispatcher.dispatch(".profile duplicate builder copy", feedback);
         dispatcher.dispatch(".profile rename copy renovated", feedback);
         dispatcher.dispatch(".profile list", feedback);
@@ -41,9 +47,11 @@ class ProfileCommandTest {
         dispatcher.dispatch(".profile delete builder", feedback);
 
         assertEquals(8.0, module.amount.value());
-        assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Profiles: builder, renovated")));
+        assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Profiles: builder, imported, renovated")));
         assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Duplicated local profile 'builder' as 'copy'")));
         assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Renamed local profile 'copy' to 'renovated'")));
+        assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Exported local profile 'builder' as 'portable'")));
+        assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Imported local profile 'imported'")));
         assertTrue(feedback.infos.stream().anyMatch(message -> message.contains("Deleted local profile 'builder'")));
     }
 

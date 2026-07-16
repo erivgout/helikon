@@ -1,6 +1,7 @@
 package dev.helikon.client.config;
 
 import dev.helikon.client.input.Keybind;
+import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
@@ -105,6 +106,47 @@ class ConfigurationManagerTest {
         try (var files = Files.list(manager.configurationDirectory())) {
             assertTrue(files.anyMatch(path -> path.getFileName().toString().startsWith("global.corrupt-")));
         }
+    }
+
+    @Test
+    void clickGuiPositionRoundTripsThroughGlobalConfiguration() {
+        ModuleRegistry sourceRegistry = new ModuleRegistry();
+        sourceRegistry.register(new ConfigurableModule());
+        ClickGuiWindowState sourceWindow = new ClickGuiWindowState();
+        sourceWindow.setPosition(44, 72);
+
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        manager.save(sourceRegistry, sourceWindow);
+
+        ModuleRegistry targetRegistry = new ModuleRegistry();
+        targetRegistry.register(new ConfigurableModule());
+        ClickGuiWindowState targetWindow = new ClickGuiWindowState();
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(targetRegistry, targetWindow));
+        assertTrue(targetWindow.isPositioned());
+        assertEquals(44, targetWindow.x());
+        assertEquals(72, targetWindow.y());
+    }
+
+    @Test
+    void invalidStoredClickGuiPositionResetsToCentering() throws IOException {
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        Files.createDirectories(manager.configurationDirectory());
+        Files.writeString(manager.globalConfigurationPath(), """
+                {
+                  "schemaVersion": 1,
+                  "modules": {},
+                  "clickGui": {
+                    "positioned": true,
+                    "x": -1,
+                    "y": 20
+                  }
+                }
+                """);
+
+        ClickGuiWindowState window = new ClickGuiWindowState();
+        window.setPosition(50, 50);
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(new ModuleRegistry(), window));
+        assertFalse(window.isPositioned());
     }
 
     private static final class ConfigurableModule extends Module {

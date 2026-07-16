@@ -10,7 +10,9 @@ The schema currently contains `schemaVersion` and one entry per registered
 module. Each module stores its enabled state, its keybind (`key` code and
 `activation` of `toggle`, `hold`, or `press_once`), and setting values. A
 missing keybind entry keeps the module's default; an invalid one resets to
-unbound and is logged.
+unbound and is logged. The same local file optionally stores a `clickGui`
+block with its saved top-left window position. Missing or invalid GUI layout
+data safely falls back to centered placement.
 
 The Active Modules HUD has its own schema-versioned `hud.json` in the same
 directory. It stores only the element's enabled state and top-left scaled-GUI

@@ -87,12 +87,22 @@ view layer:
 - The screen saves the registry through `ConfigurationManager` once, when the
   screen closes (`removed()`), never per frame. Shutdown still saves via the
   existing `CLIENT_STOPPING` hook.
+- `KeybindAssignment`, `ClickGuiWindowState`, and `ClickGuiWindowDragState`
+  are Minecraft-free. They respectively validate in-GUI key capture against
+  the existing GUI-key reservation rule, model saved window placement, and
+  calculate pointer-offset drag clamping. The screen only forwards 26.2 input
+  objects and moves existing vanilla `EditBox` widgets with the panel.
+- GUI setting/module reset controls use `Setting.reset()` and
+  `Module.resetSettings()`. Module lifecycle changes remain exclusively routed
+  through `ModuleRegistry`.
 
 Keyboard safety: the GUI keybind only opens the screen when no other screen is
 active, and while the ClickGUI is open Minecraft routes key input to the
 focused widget (search box or a number field) rather than to game keybinds.
-The future module keybind dispatcher must likewise ignore input while any
-screen is open.
+While a ClickGUI key-capture row is active, it consumes the next keyboard
+token before widgets do: Escape cancels, Backspace/Delete unbinds, and the
+reserved GUI key is rejected. The module keybind dispatcher continues to
+ignore input while any screen is open.
 
 `ActiveModulesHud` is registered through Fabric's supported
 `HudElementRegistry` API and only renders enabled modules. `ActiveModules`

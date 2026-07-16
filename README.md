@@ -22,6 +22,9 @@ The ClickGUI currently provides:
 - a scrollable module list with per-module toggles
 - search across module names, IDs, and descriptions
 - a settings panel with metadata plus editable boolean and number settings
+- in-GUI keyboard keybind assignment (Backspace/Delete unbinds; Escape cancels)
+- reset buttons for individual settings and whole modules
+- a draggable, clamped window position saved in `global.json`
 - persistence of module state and settings when the screen closes
 
 The first HUD slice adds an **Active Modules** list. It renders enabled Helikon
@@ -54,7 +57,9 @@ its modules, click a module to inspect and edit its settings, and click the
 square at the right of a row to toggle it. The search box at the top filters
 across every category. Changes are written to `global.json` when the screen
 closes. Select **HUD** in the header to open the minimal HUD editor; its
-changes are written to `hud.json` when that editor closes.
+changes are written to `hud.json` when that editor closes. Drag the ClickGUI
+by an empty part of its header. In a selected module's settings panel, click
+**Bind** and press a key; Backspace/Delete removes the bind and Escape cancels.
 
 ## Local commands
 

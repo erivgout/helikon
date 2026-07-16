@@ -10,6 +10,7 @@ import dev.helikon.client.config.ConfigurationManager;
 import dev.helikon.client.config.HudConfigurationManager;
 import dev.helikon.client.event.ClientTickEvent;
 import dev.helikon.client.event.EventBus;
+import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
 import dev.helikon.client.hud.HudLayout;
@@ -42,6 +43,7 @@ public final class HelikonClient implements ClientModInitializer {
     private final ConfigurationManager configuration = new ConfigurationManager(
             FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
     );
+    private final ClickGuiWindowState clickGuiWindow = new ClickGuiWindowState();
     private final HudLayout hudLayout = new HudLayout();
     private final HudConfigurationManager hudConfiguration = new HudConfigurationManager(
             FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
@@ -63,7 +65,7 @@ public final class HelikonClient implements ClientModInitializer {
         );
         modules.register(new FullbrightStub());
 
-        ConfigurationManager.LoadResult configurationResult = configuration.load(modules);
+        ConfigurationManager.LoadResult configurationResult = configuration.load(modules, clickGuiWindow);
         if (configurationResult != ConfigurationManager.LoadResult.LOADED) {
             modules.enableDefaultModules();
         }
@@ -73,7 +75,7 @@ public final class HelikonClient implements ClientModInitializer {
                 HelikonKeybinds::isGuiKey, () -> pendingScreenAction.set(this::openClickGui));
         ChatCommands.register(commands, notifier);
 
-        HelikonKeybinds.register(modules, configuration, hudLayout, hudConfiguration);
+        HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "active_modules"),
                 new ActiveModulesHud(modules, hudLayout));
         ClientTickEvents.START_CLIENT_TICK.register(client -> events.post(new ClientTickEvent(ClientTickEvent.Phase.PRE)));
@@ -99,13 +101,13 @@ public final class HelikonClient implements ClientModInitializer {
 
     private void openClickGui() {
         Minecraft.getInstance().setScreenAndShow(new HelikonClickGuiScreen(
-                modules, configuration, hudLayout, hudConfiguration
+                modules, configuration, clickGuiWindow, hudLayout, hudConfiguration
         ));
     }
 
     private void saveConfigurations() {
         try {
-            configuration.save(modules);
+            configuration.save(modules, clickGuiWindow);
         } catch (ConfigurationException exception) {
             LOGGER.log(Level.WARNING, "Unable to save Helikon configuration while stopping", exception);
         }

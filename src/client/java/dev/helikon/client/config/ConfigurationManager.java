@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.helikon.client.input.Keybind;
+import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.Setting;
@@ -48,8 +49,16 @@ public final class ConfigurationManager {
     }
 
     public synchronized LoadResult load(ModuleRegistry registry) {
+        return load(registry, null);
+    }
+
+    /** Loads module state plus an optional persisted ClickGUI window position. */
+    public synchronized LoadResult load(ModuleRegistry registry, ClickGuiWindowState clickGuiWindow) {
         Objects.requireNonNull(registry, "registry");
         if (Files.notExists(globalConfigurationPath)) {
+            if (clickGuiWindow != null) {
+                clickGuiWindow.reset();
+            }
             return LoadResult.MISSING;
         }
 
@@ -59,18 +68,26 @@ public final class ConfigurationManager {
                 throw new IllegalArgumentException("Global configuration root must be an object");
             }
 
-            applyConfiguration(parsed.getAsJsonObject(), registry);
+            applyConfiguration(parsed.getAsJsonObject(), registry, clickGuiWindow);
             return LoadResult.LOADED;
         } catch (Exception exception) {
             LOGGER.log(Level.WARNING, "Unable to load Helikon configuration; using safe defaults", exception);
+            if (clickGuiWindow != null) {
+                clickGuiWindow.reset();
+            }
             preserveMalformedConfiguration();
             return LoadResult.RECOVERED_FROM_ERROR;
         }
     }
 
     public synchronized void save(ModuleRegistry registry) {
+        save(registry, null);
+    }
+
+    /** Saves module state plus an optional ClickGUI window position. */
+    public synchronized void save(ModuleRegistry registry, ClickGuiWindowState clickGuiWindow) {
         Objects.requireNonNull(registry, "registry");
-        JsonObject root = serializeConfiguration(registry);
+        JsonObject root = serializeConfiguration(registry, clickGuiWindow);
 
         try {
             Files.createDirectories(configurationDirectory);
@@ -86,7 +103,7 @@ public final class ConfigurationManager {
         }
     }
 
-    private JsonObject serializeConfiguration(ModuleRegistry registry) {
+    private JsonObject serializeConfiguration(ModuleRegistry registry, ClickGuiWindowState clickGuiWindow) {
         JsonObject root = new JsonObject();
         root.addProperty("schemaVersion", SCHEMA_VERSION);
 
@@ -104,10 +121,14 @@ public final class ConfigurationManager {
             modules.add(module.id(), moduleObject);
         }
         root.add("modules", modules);
+
+        if (clickGuiWindow != null) {
+            root.add("clickGui", serializeClickGuiWindow(clickGuiWindow));
+        }
         return root;
     }
 
-    private void applyConfiguration(JsonObject root, ModuleRegistry registry) {
+    private void applyConfiguration(JsonObject root, ModuleRegistry registry, ClickGuiWindowState clickGuiWindow) {
         int schemaVersion = getRequiredInt(root, "schemaVersion");
         if (schemaVersion < 1 || schemaVersion > SCHEMA_VERSION) {
             throw new IllegalArgumentException("Unsupported configuration schema " + schemaVersion);
@@ -136,6 +157,10 @@ public final class ConfigurationManager {
                     : module.defaultEnabled();
             registry.setEnabled(module, enabled);
         }
+
+        if (clickGuiWindow != null) {
+            applyClickGuiWindow(root.get("clickGui"), clickGuiWindow);
+        }
     }
 
     private void applySettings(Module module, JsonObject serializedSettings) {
@@ -148,6 +173,53 @@ public final class ConfigurationManager {
             if (!setting.applyJson(settingElement)) {
                 LOGGER.warning(() -> "Invalid value for setting '" + module.id() + "." + setting.id() + "'; reset to default");
             }
+        }
+    }
+
+    private static JsonObject serializeClickGuiWindow(ClickGuiWindowState clickGuiWindow) {
+        JsonObject window = new JsonObject();
+        window.addProperty("positioned", clickGuiWindow.isPositioned());
+        if (clickGuiWindow.isPositioned()) {
+            window.addProperty("x", clickGuiWindow.x());
+            window.addProperty("y", clickGuiWindow.y());
+        }
+        return window;
+    }
+
+    /** Applies an optional layout block; malformed values reset only the GUI position. */
+    private void applyClickGuiWindow(JsonElement element, ClickGuiWindowState clickGuiWindow) {
+        if (element == null) {
+            clickGuiWindow.reset();
+            return;
+        }
+        if (!element.isJsonObject()) {
+            LOGGER.warning("Invalid ClickGUI layout; reset to centered placement");
+            clickGuiWindow.reset();
+            return;
+        }
+
+        JsonObject window = element.getAsJsonObject();
+        JsonElement positionedElement = window.get("positioned");
+        if (positionedElement == null || !positionedElement.isJsonPrimitive()
+                || !positionedElement.getAsJsonPrimitive().isBoolean()) {
+            LOGGER.warning("Invalid ClickGUI positioned value; reset to centered placement");
+            clickGuiWindow.reset();
+            return;
+        }
+        if (!positionedElement.getAsBoolean()) {
+            clickGuiWindow.reset();
+            return;
+        }
+
+        try {
+            int x = getRequiredInt(window, "x");
+            int y = getRequiredInt(window, "y");
+            if (!clickGuiWindow.setPosition(x, y)) {
+                throw new IllegalArgumentException("ClickGUI coordinates are outside the supported range");
+            }
+        } catch (IllegalArgumentException exception) {
+            LOGGER.warning("Invalid ClickGUI position; reset to centered placement");
+            clickGuiWindow.reset();
         }
     }
 

@@ -7,6 +7,8 @@
   "screen.helikon.no_results": "No matching modules",
   "screen.helikon.no_selection": "Select a module to edit its settings",
   "screen.helikon.enabled": "Enabled",
+  "screen.helikon.reset_module": "Reset module",
+  "screen.helikon.reset_setting": "Reset %s",
   "screen.helikon.hud_button": "HUD",
   "screen.helikon.hud_editor.title": "Helikon HUD Editor",
   "screen.helikon.hud_editor.instructions": "Drag the preview. Press Escape to return to the ClickGUI.",

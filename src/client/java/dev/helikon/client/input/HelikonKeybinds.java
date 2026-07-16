@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.helikon.client.HelikonClient;
 import dev.helikon.client.config.ConfigurationManager;
 import dev.helikon.client.config.HudConfigurationManager;
+import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
 import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.module.ModuleRegistry;
@@ -23,6 +24,7 @@ public final class HelikonKeybinds {
     public static void register(
             ModuleRegistry modules,
             ConfigurationManager configuration,
+            ClickGuiWindowState clickGuiWindow,
             HudLayout hudLayout,
             HudConfigurationManager hudConfiguration
     ) {
@@ -41,7 +43,9 @@ public final class HelikonKeybinds {
                 // Never replace an open screen: keybinds must not fire while
                 // the user might be typing into another GUI's text field.
                 if (client.gui.screen() == null) {
-                    client.setScreenAndShow(new HelikonClickGuiScreen(modules, configuration, hudLayout, hudConfiguration));
+                    client.setScreenAndShow(new HelikonClickGuiScreen(
+                            modules, configuration, clickGuiWindow, hudLayout, hudConfiguration
+                    ));
                 }
             }
         });

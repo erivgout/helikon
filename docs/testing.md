@@ -57,6 +57,19 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
    do not trigger game actions.
 8. Close the GUI, quit the client, and verify `config/helikon/global.json`
    contains the edited values; relaunch and verify the GUI shows them again.
+9. In the selected module panel, change **Gamma mode** and **Brightness**,
+   click the appropriate small **R** controls, and verify each returns only
+   that setting to its default. Change both again, click **Reset module**, and
+   verify both defaults are restored.
+10. Click **Bind**, press `R`, close the GUI, and verify R toggles the module.
+    Reopen it and click **Bind** again: Escape must leave the R bind unchanged;
+    Backspace/Delete must remove it. Verify Right Shift is rejected as the
+    reserved GUI key and does not replace the module bind. Start capture after
+    focusing Search or the Brightness field and verify the captured printable
+    key does not enter or change that field.
+11. Drag an unused portion of the header to every edge. Verify the complete
+    window and its search/number fields move together and remain visible;
+    close and reopen the GUI to verify the saved position is restored.
 
 ## Manual command and keybind smoke test
 

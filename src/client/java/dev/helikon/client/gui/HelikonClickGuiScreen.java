@@ -5,6 +5,8 @@ import dev.helikon.client.config.ConfigurationException;
 import dev.helikon.client.config.ConfigurationManager;
 import dev.helikon.client.config.HudConfigurationManager;
 import dev.helikon.client.hud.HudLayout;
+import dev.helikon.client.input.HelikonKeybinds;
+import dev.helikon.client.input.Keybind;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
@@ -15,12 +17,16 @@ import dev.helikon.client.setting.Setting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -39,10 +45,13 @@ public final class HelikonClickGuiScreen extends Screen {
     private static final int SIDEBAR_WIDTH = 72;
     private static final int SETTINGS_WIDTH = 132;
     private static final int ROW_HEIGHT = 14;
+    private static final int MODULE_RESET_ROW_HEIGHT = 14;
+    private static final int BIND_ROW_HEIGHT = 14;
     private static final int ENABLED_ROW_HEIGHT = 14;
     private static final int BOOLEAN_ROW_HEIGHT = 14;
     private static final int NUMBER_ROW_HEIGHT = 28;
     private static final int CHECKBOX_SIZE = 8;
+    private static final int RESET_BUTTON_SIZE = 10;
     private static final int HUD_BUTTON_WIDTH = 30;
 
     private static final int COLOR_PANEL = 0xF014161B;
@@ -60,13 +69,18 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private final ModuleRegistry modules;
     private final ConfigurationManager configuration;
+    private final ClickGuiWindowState windowState;
+    private final ClickGuiWindowDragState windowDrag;
     private final HudLayout hudLayout;
     private final HudConfigurationManager hudConfiguration;
     private final ClickGuiState state;
+    private final KeybindAssignment keybindAssignment;
+    private final KeyCaptureSuppression keyCaptureSuppression = new KeyCaptureSuppression();
     private final Map<NumberSetting, EditBox> numberFields = new LinkedHashMap<>();
 
     private EditBox searchField;
     private double listScroll;
+    private String keybindStatus = "";
 
     private int panelX;
     private int panelY;
@@ -81,30 +95,28 @@ public final class HelikonClickGuiScreen extends Screen {
     public HelikonClickGuiScreen(
             ModuleRegistry modules,
             ConfigurationManager configuration,
+            ClickGuiWindowState windowState,
             HudLayout hudLayout,
             HudConfigurationManager hudConfiguration
     ) {
         super(Component.translatable("screen.helikon.title"));
         this.modules = Objects.requireNonNull(modules, "modules");
         this.configuration = Objects.requireNonNull(configuration, "configuration");
+        this.windowState = Objects.requireNonNull(windowState, "windowState");
+        this.windowDrag = new ClickGuiWindowDragState(this.windowState);
         this.hudLayout = Objects.requireNonNull(hudLayout, "hudLayout");
         this.hudConfiguration = Objects.requireNonNull(hudConfiguration, "hudConfiguration");
         this.state = new ClickGuiState(modules);
+        this.keybindAssignment = new KeybindAssignment(HelikonKeybinds::isGuiKey);
     }
 
     @Override
     protected void init() {
         panelWidth = Math.min(width - 16, PANEL_MAX_WIDTH);
         panelHeight = Math.min(height - 16, PANEL_MAX_HEIGHT);
-        panelX = (width - panelWidth) / 2;
-        panelY = (height - panelHeight) / 2;
-        contentTop = panelY + HEADER_HEIGHT + 1;
-        contentBottom = panelY + panelHeight - 4;
-        listX = panelX + SIDEBAR_WIDTH + 1;
-        settingsX = panelX + panelWidth - SETTINGS_WIDTH;
-        listWidth = settingsX - listX - 1;
+        applyWindowPosition(windowState.resolve(width, height, panelWidth, panelHeight));
 
-        searchField = new EditBox(font, panelX + panelWidth - 116, panelY + 4, 110, 14,
+        searchField = new EditBox(font, searchFieldX(), panelY + 4, 110, 14,
                 Component.translatable("screen.helikon.search_hint"));
         searchField.setMaxLength(64);
         searchField.setHint(Component.translatable("screen.helikon.search_hint"));
@@ -118,6 +130,36 @@ public final class HelikonClickGuiScreen extends Screen {
         rebuildSettingWidgets();
     }
 
+    /** Applies a resolved window position and moves the existing vanilla widgets with the panel. */
+    private void applyWindowPosition(ClickGuiWindowState.Position position) {
+        panelX = position.x();
+        panelY = position.y();
+        contentTop = panelY + HEADER_HEIGHT + 1;
+        contentBottom = panelY + panelHeight - 4;
+        listX = panelX + SIDEBAR_WIDTH + 1;
+        settingsX = panelX + panelWidth - SETTINGS_WIDTH;
+        listWidth = settingsX - listX - 1;
+
+        if (searchField != null) {
+            searchField.setX(searchFieldX());
+            searchField.setY(panelY + 4);
+        }
+
+        Module module = state.selectedModule().orElse(null);
+        if (module == null) {
+            return;
+        }
+        for (SettingRow row : settingRows(module)) {
+            if (row.setting() instanceof NumberSetting numberSetting) {
+                EditBox field = numberFields.get(numberSetting);
+                if (field != null) {
+                    field.setX(settingsX + 6);
+                    field.setY(row.y() + 12);
+                }
+            }
+        }
+    }
+
     @Override
     public boolean isPauseScreen() {
         return false;
@@ -127,7 +169,7 @@ public final class HelikonClickGuiScreen extends Screen {
     public void removed() {
         super.removed();
         try {
-            configuration.save(modules);
+            configuration.save(modules, windowState);
         } catch (ConfigurationException exception) {
             HelikonClient.LOGGER.log(Level.WARNING, "Unable to save configuration while closing the ClickGUI", exception);
         }
@@ -162,7 +204,63 @@ public final class HelikonClickGuiScreen extends Screen {
         return handleHudEditorClick(mouseX, mouseY)
                 || handleCategoryClick(mouseX, mouseY)
                 || handleModuleListClick(mouseX, mouseY)
-                || handleSettingsClick(mouseX, mouseY);
+                || handleSettingsClick(mouseX, mouseY)
+                || handleWindowDragStart(mouseX, mouseY);
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (event.button() == 0 && windowDrag.dragTo(
+                (int) event.x(), (int) event.y(), width, height, panelWidth, panelHeight
+        )) {
+            applyWindowPosition(windowState.resolve(width, height, panelWidth, panelHeight));
+            return true;
+        }
+        return super.mouseDragged(event, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (event.button() == 0 && windowDrag.isDragging()) {
+            windowDrag.endDrag();
+            return true;
+        }
+        return super.mouseReleased(event);
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        if (keyCaptureSuppression.consumesKeyPress(event.key())) {
+            return true;
+        }
+        KeybindAssignment.Result result = keybindAssignment.acceptKey(event.key());
+        if (result != KeybindAssignment.Result.IGNORED) {
+            if (isTerminalCaptureResult(result)) {
+                keyCaptureSuppression.begin(event.key());
+            }
+            keybindStatus = keybindStatus(result);
+            return true;
+        }
+        return super.keyPressed(event);
+    }
+
+    @Override
+    public boolean charTyped(CharacterEvent event) {
+        if (keyCaptureSuppression.consumesCharacterInput()) {
+            return true;
+        }
+        if (keybindAssignment.target().isPresent()) {
+            return true;
+        }
+        return super.charTyped(event);
+    }
+
+    @Override
+    public boolean keyReleased(KeyEvent event) {
+        if (keyCaptureSuppression.release(event.key())) {
+            return true;
+        }
+        return super.keyReleased(event);
     }
 
     @Override
@@ -288,14 +386,24 @@ public final class HelikonClickGuiScreen extends Screen {
         graphics.textWithWordWrap(font, Component.literal(module.description()), textX, y,
                 SETTINGS_WIDTH - 12, COLOR_TEXT_DIM);
 
-        int enabledY = settingControlsTop(module);
+        int moduleResetY = settingControlsTop(module);
+        drawWideButton(graphics, Component.translatable("screen.helikon.reset_module"), moduleResetY, mouseX, mouseY);
+
+        int bindY = moduleResetY + MODULE_RESET_ROW_HEIGHT;
+        String bindText = keybindAssignment.isAssigning(module)
+                ? keybindStatus.isBlank() ? "Press a key..." : keybindStatus
+                : "Bind: " + keyDisplayName(module.keybind());
+        drawWideButton(graphics, Component.literal(font.plainSubstrByWidth(bindText, SETTINGS_WIDTH - 18)), bindY, mouseX, mouseY);
+
+        int enabledY = bindY + BIND_ROW_HEIGHT;
         graphics.text(font, Component.translatable("screen.helikon.enabled"), textX, enabledY + 3, COLOR_TEXT, false);
         drawCheckbox(graphics, settingsCheckboxX(), enabledY + (ENABLED_ROW_HEIGHT - CHECKBOX_SIZE) / 2, module.isEnabled());
 
         for (SettingRow row : settingRows(module)) {
             Setting<?> setting = row.setting();
-            String label = font.plainSubstrByWidth(setting.name(), SETTINGS_WIDTH - 24);
+            String label = font.plainSubstrByWidth(setting.name(), SETTINGS_WIDTH - 38);
             graphics.text(font, label, textX, row.y() + 3, COLOR_TEXT, false);
+            drawResetButton(graphics, settingResetX(), row.y() + 2, mouseX, mouseY);
 
             if (setting instanceof BooleanSetting booleanSetting) {
                 drawCheckbox(graphics, settingsCheckboxX(),
@@ -304,13 +412,30 @@ public final class HelikonClickGuiScreen extends Screen {
                 String range = "(" + NumberSettingText.format(numberSetting.minimum())
                         + "–" + NumberSettingText.format(numberSetting.maximum()) + ")";
                 int rangeWidth = font.width(range);
-                graphics.text(font, range, settingsX + SETTINGS_WIDTH - 6 - rangeWidth, row.y() + 3, COLOR_TEXT_DIM, false);
+                graphics.text(font, range, settingResetX() - 4 - rangeWidth, row.y() + 3, COLOR_TEXT_DIM, false);
             }
 
-            if (isInside(mouseX, mouseY, settingsX, row.y(), SETTINGS_WIDTH, 10)) {
+            if (isInside(mouseX, mouseY, settingResetX(), row.y() + 2, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE)) {
+                graphics.setTooltipForNextFrame(font, Component.translatable("screen.helikon.reset_setting", setting.name()), mouseX, mouseY);
+            } else if (isInside(mouseX, mouseY, settingsX, row.y(), SETTINGS_WIDTH, 10)) {
                 graphics.setTooltipForNextFrame(font, Component.literal(setting.description()), mouseX, mouseY);
             }
         }
+    }
+
+    private void drawWideButton(GuiGraphicsExtractor graphics, Component text, int y, int mouseX, int mouseY) {
+        int x = settingsX + 6;
+        int buttonWidth = SETTINGS_WIDTH - 12;
+        int color = isInside(mouseX, mouseY, x, y + 2, buttonWidth, 10) ? COLOR_ROW_HOVER : COLOR_OUTLINE;
+        graphics.outline(x, y + 2, buttonWidth, 10, color);
+        graphics.centeredText(font, text, x + buttonWidth / 2, y + 3, COLOR_TEXT_DIM);
+    }
+
+    private void drawResetButton(GuiGraphicsExtractor graphics, int x, int y, int mouseX, int mouseY) {
+        int color = isInside(mouseX, mouseY, x, y, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE)
+                ? COLOR_ACCENT : COLOR_TEXT_DIM;
+        graphics.outline(x, y, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE, color);
+        graphics.centeredText(font, "R", x + RESET_BUTTON_SIZE / 2, y + 1, color);
     }
 
     private void drawCheckbox(GuiGraphicsExtractor graphics, int x, int y, boolean checked) {
@@ -362,6 +487,8 @@ public final class HelikonClickGuiScreen extends Screen {
             if (mouseX >= toggleBoxX() - 3) {
                 modules.toggle(module);
             } else {
+                keybindAssignment.cancel();
+                keyCaptureSuppression.clear();
                 state.selectModule(module);
                 rebuildSettingWidgets();
             }
@@ -376,14 +503,35 @@ public final class HelikonClickGuiScreen extends Screen {
             return false;
         }
 
-        int enabledY = settingControlsTop(module);
+        int moduleResetY = settingControlsTop(module);
+        if (isInside(mouseX, mouseY, settingsX + 6, moduleResetY + 2, SETTINGS_WIDTH - 12, 10)) {
+            module.resetSettings();
+            rebuildSettingWidgets();
+            return true;
+        }
+
+        int bindY = moduleResetY + MODULE_RESET_ROW_HEIGHT;
+        if (isInside(mouseX, mouseY, settingsX + 6, bindY + 2, SETTINGS_WIDTH - 12, 10)) {
+            keybindAssignment.begin(module);
+            keybindStatus = "";
+            keyCaptureSuppression.clear();
+            return true;
+        }
+
+        int enabledY = bindY + BIND_ROW_HEIGHT;
         if (isInside(mouseX, mouseY, settingsX, enabledY, SETTINGS_WIDTH, ENABLED_ROW_HEIGHT)) {
             modules.toggle(module);
             return true;
         }
 
         for (SettingRow row : settingRows(module)) {
-            if (row.setting() instanceof BooleanSetting booleanSetting
+            Setting<?> setting = row.setting();
+            if (isInside(mouseX, mouseY, settingResetX(), row.y() + 2, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE)) {
+                setting.reset();
+                rebuildSettingWidgets();
+                return true;
+            }
+            if (setting instanceof BooleanSetting booleanSetting
                     && isInside(mouseX, mouseY, settingsX, row.y(), SETTINGS_WIDTH, BOOLEAN_ROW_HEIGHT)) {
                 booleanSetting.set(!booleanSetting.value());
                 return true;
@@ -417,7 +565,7 @@ public final class HelikonClickGuiScreen extends Screen {
         }
     }
 
-    /** The y position where the enabled row starts, below the wrapped description. */
+    /** The y position where module reset controls start, below the wrapped description. */
     private int settingControlsTop(Module module) {
         int descriptionHeight = font.wordWrapHeight(Component.literal(module.description()), SETTINGS_WIDTH - 12);
         return contentTop + 4 + 10 + 12 + descriptionHeight + 4;
@@ -425,7 +573,7 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private List<SettingRow> settingRows(Module module) {
         List<SettingRow> rows = new ArrayList<>();
-        int y = settingControlsTop(module) + ENABLED_ROW_HEIGHT;
+        int y = settingControlsTop(module) + MODULE_RESET_ROW_HEIGHT + BIND_ROW_HEIGHT + ENABLED_ROW_HEIGHT;
         for (Setting<?> setting : module.settings()) {
             int rowHeight = setting instanceof NumberSetting ? NUMBER_ROW_HEIGHT : BOOLEAN_ROW_HEIGHT;
             rows.add(new SettingRow(setting, y, rowHeight));
@@ -445,11 +593,52 @@ public final class HelikonClickGuiScreen extends Screen {
     }
 
     private int settingsCheckboxX() {
-        return settingsX + SETTINGS_WIDTH - CHECKBOX_SIZE - 6;
+        return settingsX + SETTINGS_WIDTH - CHECKBOX_SIZE - RESET_BUTTON_SIZE - 10;
+    }
+
+    private int settingResetX() {
+        return settingsX + SETTINGS_WIDTH - RESET_BUTTON_SIZE - 6;
     }
 
     private int hudButtonX() {
         return panelX + panelWidth - 150;
+    }
+
+    private int searchFieldX() {
+        return panelX + panelWidth - 116;
+    }
+
+    private boolean handleWindowDragStart(int mouseX, int mouseY) {
+        if (!isInside(mouseX, mouseY, panelX, panelY, panelWidth, HEADER_HEIGHT)) {
+            return false;
+        }
+        windowDrag.beginDrag(mouseX, mouseY, new ClickGuiWindowState.Position(panelX, panelY));
+        return true;
+    }
+
+    private static String keybindStatus(KeybindAssignment.Result result) {
+        return switch (result) {
+            case ASSIGNED -> "Bound";
+            case UNBOUND -> "Unbound";
+            case CANCELLED -> "Cancelled";
+            case RESERVED -> "GUI key is reserved";
+            case INVALID -> "Unsupported key";
+            case IGNORED -> "";
+        };
+    }
+
+    private static boolean isTerminalCaptureResult(KeybindAssignment.Result result) {
+        return result == KeybindAssignment.Result.ASSIGNED
+                || result == KeybindAssignment.Result.UNBOUND
+                || result == KeybindAssignment.Result.CANCELLED;
+    }
+
+    private static String keyDisplayName(Keybind keybind) {
+        if (!keybind.isBound()) {
+            return "Unbound";
+        }
+        return InputConstants.Type.KEYSYM.getOrCreate(keybind.keyCode()).getDisplayName().getString()
+                + " (" + keybind.activation().name().toLowerCase(Locale.ROOT) + ")";
     }
 
     private static boolean isInside(int mouseX, int mouseY, int x, int y, int width, int height) {

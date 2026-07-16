@@ -21,6 +21,14 @@ during `onEnable`/`onDisable` is isolated and force-disabled instead of
 crashing the client. Setting edits and enabled state persist to
 `config/helikon/global.json` when the screen closes.
 
+The settings panel also has **Reset module** plus small **R** buttons for each
+visible setting. Reset operations use the existing validated setting defaults.
+Its **Bind** row captures one keyboard key locally; Escape cancels capture,
+Backspace/Delete clears the bind, and the key that opens the Helikon GUI is
+rejected. Existing activation mode (`toggle`, `hold`, or `press_once`) is
+preserved when rebinding. Drag an unused portion of the header to move the
+window; the clamped top-left position persists in `global.json`.
+
 ## Commands and keybinds
 
 Modules can also be controlled through local chat commands (`.toggle`,

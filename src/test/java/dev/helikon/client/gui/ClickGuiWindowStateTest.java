@@ -39,4 +39,22 @@ class ClickGuiWindowStateTest {
         assertFalse(drag.isDragging());
         assertFalse(drag.dragTo(20, 20, 400, 300, 360, 220));
     }
+
+    @Test
+    void savedSizeClampsToViewportAndCanKeepCenteredPlacement() {
+        ClickGuiWindowState state = new ClickGuiWindowState();
+        assertTrue(state.setSize(640, 480));
+
+        assertEquals(new ClickGuiWindowState.Size(484, 284), state.resolveSize(500, 300));
+        assertEquals(new ClickGuiWindowState.Position(8, 8), state.resolve(500, 300, 484, 284));
+        assertFalse(state.isPositioned());
+    }
+
+    @Test
+    void smallViewportRetainsAResizedSizeInsteadOfExpandingItAgain() {
+        ClickGuiWindowState state = new ClickGuiWindowState();
+        assertTrue(state.setSize(100, 80));
+
+        assertEquals(new ClickGuiWindowState.Size(100, 80), state.resolveSize(180, 120));
+    }
 }

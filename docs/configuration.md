@@ -12,7 +12,9 @@ module. Each module stores its enabled state, its keybind (`key` code and
 missing keybind entry keeps the module's default; an invalid one resets to
 unbound and is logged. The same local file optionally stores a `clickGui`
 block with its saved top-left window position. Missing or invalid GUI layout
-data safely falls back to centered placement.
+data safely falls back to centered placement. The same block stores a custom
+window width and height when the user has resized it; invalid dimensions reset
+to the default size without affecting valid module data.
 
 The Active Modules HUD has its own schema-versioned `hud.json` in the same
 directory. It stores only the element's enabled state and top-left scaled-GUI

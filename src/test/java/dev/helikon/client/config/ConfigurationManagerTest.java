@@ -114,6 +114,7 @@ class ConfigurationManagerTest {
         sourceRegistry.register(new ConfigurableModule());
         ClickGuiWindowState sourceWindow = new ClickGuiWindowState();
         sourceWindow.setPosition(44, 72);
+        sourceWindow.setSize(420, 260);
 
         ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
         manager.save(sourceRegistry, sourceWindow);
@@ -125,6 +126,9 @@ class ConfigurationManagerTest {
         assertTrue(targetWindow.isPositioned());
         assertEquals(44, targetWindow.x());
         assertEquals(72, targetWindow.y());
+        assertTrue(targetWindow.isSized());
+        assertEquals(420, targetWindow.width());
+        assertEquals(260, targetWindow.height());
     }
 
     @Test
@@ -147,6 +151,55 @@ class ConfigurationManagerTest {
         window.setPosition(50, 50);
         assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(new ModuleRegistry(), window));
         assertFalse(window.isPositioned());
+    }
+
+    @Test
+    void oldClickGuiLayoutWithoutSizeKeepsDefaultDimensions() throws IOException {
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        Files.createDirectories(manager.configurationDirectory());
+        Files.writeString(manager.globalConfigurationPath(), """
+                {
+                  "schemaVersion": 1,
+                  "modules": {},
+                  "clickGui": {"positioned": false}
+                }
+                """);
+
+        ClickGuiWindowState window = new ClickGuiWindowState();
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(new ModuleRegistry(), window));
+        assertFalse(window.isPositioned());
+        assertFalse(window.isSized());
+        assertEquals(ClickGuiWindowState.DEFAULT_WIDTH, window.width());
+        assertEquals(ClickGuiWindowState.DEFAULT_HEIGHT, window.height());
+    }
+
+    @Test
+    void invalidStoredClickGuiDimensionsResetWithoutDiscardingPosition() throws IOException {
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        Files.createDirectories(manager.configurationDirectory());
+        Files.writeString(manager.globalConfigurationPath(), """
+                {
+                  "schemaVersion": 1,
+                  "modules": {},
+                  "clickGui": {
+                    "positioned": true,
+                    "x": 40,
+                    "y": 60,
+                    "sized": true,
+                    "width": 0,
+                    "height": 220
+                  }
+                }
+                """);
+
+        ClickGuiWindowState window = new ClickGuiWindowState();
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(new ModuleRegistry(), window));
+        assertTrue(window.isPositioned());
+        assertEquals(40, window.x());
+        assertEquals(60, window.y());
+        assertFalse(window.isSized());
+        assertEquals(ClickGuiWindowState.DEFAULT_WIDTH, window.width());
+        assertEquals(ClickGuiWindowState.DEFAULT_HEIGHT, window.height());
     }
 
     private static final class ConfigurableModule extends Module {

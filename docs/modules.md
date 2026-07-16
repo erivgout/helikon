@@ -27,7 +27,8 @@ Its **Bind** row captures one keyboard key locally; Escape cancels capture,
 Backspace/Delete clears the bind, and the key that opens the Helikon GUI is
 rejected. Existing activation mode (`toggle`, `hold`, or `press_once`) is
 preserved when rebinding. Drag an unused portion of the header to move the
-window; the clamped top-left position persists in `global.json`.
+window, or its bottom-right handle to resize it. The clamped top-left position
+and custom dimensions persist in `global.json`.
 
 ## Commands and keybinds
 

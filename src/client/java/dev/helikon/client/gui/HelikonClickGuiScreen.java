@@ -39,9 +39,8 @@ import java.util.logging.Level;
  * when the screen closes.
  */
 public final class HelikonClickGuiScreen extends Screen {
-    private static final int PANEL_MAX_WIDTH = 360;
-    private static final int PANEL_MAX_HEIGHT = 220;
     private static final int HEADER_HEIGHT = 22;
+    private static final int RESIZE_HANDLE_SIZE = 8;
     private static final int SIDEBAR_WIDTH = 72;
     private static final int SETTINGS_WIDTH = 132;
     private static final int ROW_HEIGHT = 14;
@@ -71,6 +70,7 @@ public final class HelikonClickGuiScreen extends Screen {
     private final ConfigurationManager configuration;
     private final ClickGuiWindowState windowState;
     private final ClickGuiWindowDragState windowDrag;
+    private final ClickGuiWindowResizeState windowResize;
     private final HudLayout hudLayout;
     private final HudConfigurationManager hudConfiguration;
     private final ClickGuiState state;
@@ -104,6 +104,7 @@ public final class HelikonClickGuiScreen extends Screen {
         this.configuration = Objects.requireNonNull(configuration, "configuration");
         this.windowState = Objects.requireNonNull(windowState, "windowState");
         this.windowDrag = new ClickGuiWindowDragState(this.windowState);
+        this.windowResize = new ClickGuiWindowResizeState(this.windowState);
         this.hudLayout = Objects.requireNonNull(hudLayout, "hudLayout");
         this.hudConfiguration = Objects.requireNonNull(hudConfiguration, "hudConfiguration");
         this.state = new ClickGuiState(modules);
@@ -112,8 +113,9 @@ public final class HelikonClickGuiScreen extends Screen {
 
     @Override
     protected void init() {
-        panelWidth = Math.min(width - 16, PANEL_MAX_WIDTH);
-        panelHeight = Math.min(height - 16, PANEL_MAX_HEIGHT);
+        ClickGuiWindowState.Size size = windowState.resolveSize(width, height);
+        panelWidth = size.width();
+        panelHeight = size.height();
         applyWindowPosition(windowState.resolve(width, height, panelWidth, panelHeight));
 
         searchField = new EditBox(font, searchFieldX(), panelY + 4, 110, 14,
@@ -205,11 +207,21 @@ public final class HelikonClickGuiScreen extends Screen {
                 || handleCategoryClick(mouseX, mouseY)
                 || handleModuleListClick(mouseX, mouseY)
                 || handleSettingsClick(mouseX, mouseY)
+                || handleWindowResizeStart(mouseX, mouseY)
                 || handleWindowDragStart(mouseX, mouseY);
     }
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (event.button() == 0 && windowResize.resizeTo(
+                (int) event.x(), (int) event.y(), new ClickGuiWindowState.Position(panelX, panelY), width, height
+        )) {
+            ClickGuiWindowState.Size size = windowState.resolveSize(width, height);
+            panelWidth = size.width();
+            panelHeight = size.height();
+            applyWindowPosition(windowState.resolve(width, height, panelWidth, panelHeight));
+            return true;
+        }
         if (event.button() == 0 && windowDrag.dragTo(
                 (int) event.x(), (int) event.y(), width, height, panelWidth, panelHeight
         )) {
@@ -221,6 +233,10 @@ public final class HelikonClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        if (event.button() == 0 && windowResize.isResizing()) {
+            windowResize.endResize();
+            return true;
+        }
         if (event.button() == 0 && windowDrag.isDragging()) {
             windowDrag.endDrag();
             return true;
@@ -280,6 +296,8 @@ public final class HelikonClickGuiScreen extends Screen {
         graphics.outline(panelX - 1, panelY - 1, panelWidth + 2, panelHeight + 2, COLOR_OUTLINE);
         graphics.fill(panelX, panelY, panelX + panelWidth, panelY + HEADER_HEIGHT, COLOR_HEADER);
         graphics.text(font, title, panelX + 6, panelY + 7, COLOR_ACCENT, true);
+        graphics.fill(panelX + panelWidth - RESIZE_HANDLE_SIZE, panelY + panelHeight - 2,
+                panelX + panelWidth - 2, panelY + panelHeight, COLOR_TEXT_DIM);
 
         int buttonColor = isInside(mouseX, mouseY, hudButtonX(), panelY + 4, HUD_BUTTON_WIDTH, 14)
                 ? COLOR_ROW_HOVER : COLOR_OUTLINE;
@@ -613,6 +631,19 @@ public final class HelikonClickGuiScreen extends Screen {
             return false;
         }
         windowDrag.beginDrag(mouseX, mouseY, new ClickGuiWindowState.Position(panelX, panelY));
+        return true;
+    }
+
+    private boolean handleWindowResizeStart(int mouseX, int mouseY) {
+        if (!isInside(mouseX, mouseY, panelX + panelWidth - RESIZE_HANDLE_SIZE,
+                panelY + panelHeight - RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE)) {
+            return false;
+        }
+        // Resizing anchors the current top-left corner; without this, an
+        // unsaved centered window would recenter after each size change.
+        windowState.setPosition(panelX, panelY);
+        windowResize.beginResize(mouseX, mouseY, new ClickGuiWindowState.Position(panelX, panelY),
+                new ClickGuiWindowState.Size(panelWidth, panelHeight));
         return true;
     }
 

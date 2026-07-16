@@ -92,6 +92,9 @@ view layer:
   the existing GUI-key reservation rule, model saved window placement, and
   calculate pointer-offset drag clamping. The screen only forwards 26.2 input
   objects and moves existing vanilla `EditBox` widgets with the panel.
+- `ClickGuiWindowResizeState` owns the bottom-right drag-handle math. It keeps
+  the panel's top-left fixed, clamps dimensions to the usable viewport, and
+  relies on the same validated, persisted `ClickGuiWindowState` as movement.
 - GUI setting/module reset controls use `Setting.reset()` and
   `Module.resetSettings()`. Module lifecycle changes remain exclusively routed
   through `ModuleRegistry`.

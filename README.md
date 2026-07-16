@@ -24,7 +24,7 @@ The ClickGUI currently provides:
 - a settings panel with metadata plus editable boolean and number settings
 - in-GUI keyboard keybind assignment (Backspace/Delete unbinds; Escape cancels)
 - reset buttons for individual settings and whole modules
-- a draggable, clamped window position saved in `global.json`
+- a draggable, resizable, clamped window saved in `global.json`
 - persistence of module state and settings when the screen closes
 
 The first HUD slice adds an **Active Modules** list. It renders enabled Helikon
@@ -60,6 +60,8 @@ closes. Select **HUD** in the header to open the minimal HUD editor; its
 changes are written to `hud.json` when that editor closes. Drag the ClickGUI
 by an empty part of its header. In a selected module's settings panel, click
 **Bind** and press a key; Backspace/Delete removes the bind and Escape cancels.
+Drag its bottom-right handle to resize it; the position and dimensions are
+restored locally when it is reopened.
 
 ## Local commands
 

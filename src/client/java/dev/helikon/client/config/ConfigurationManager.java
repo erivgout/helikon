@@ -183,10 +183,15 @@ public final class ConfigurationManager {
             window.addProperty("x", clickGuiWindow.x());
             window.addProperty("y", clickGuiWindow.y());
         }
+        window.addProperty("sized", clickGuiWindow.isSized());
+        if (clickGuiWindow.isSized()) {
+            window.addProperty("width", clickGuiWindow.width());
+            window.addProperty("height", clickGuiWindow.height());
+        }
         return window;
     }
 
-    /** Applies an optional layout block; malformed values reset only the GUI position. */
+    /** Applies an optional layout block; malformed position and size values use independent safe defaults. */
     private void applyClickGuiWindow(JsonElement element, ClickGuiWindowState clickGuiWindow) {
         if (element == null) {
             clickGuiWindow.reset();
@@ -199,6 +204,7 @@ public final class ConfigurationManager {
         }
 
         JsonObject window = element.getAsJsonObject();
+        clickGuiWindow.reset();
         JsonElement positionedElement = window.get("positioned");
         if (positionedElement == null || !positionedElement.isJsonPrimitive()
                 || !positionedElement.getAsJsonPrimitive().isBoolean()) {
@@ -207,19 +213,41 @@ public final class ConfigurationManager {
             return;
         }
         if (!positionedElement.getAsBoolean()) {
-            clickGuiWindow.reset();
-            return;
+            clickGuiWindow.resetPosition();
+        } else {
+            try {
+                int x = getRequiredInt(window, "x");
+                int y = getRequiredInt(window, "y");
+                if (!clickGuiWindow.setPosition(x, y)) {
+                    throw new IllegalArgumentException("ClickGUI coordinates are outside the supported range");
+                }
+            } catch (IllegalArgumentException exception) {
+                LOGGER.warning("Invalid ClickGUI position; reset to centered placement");
+                clickGuiWindow.resetPosition();
+            }
         }
 
+        JsonElement sizedElement = window.get("sized");
+        if (sizedElement == null) {
+            return;
+        }
+        if (!sizedElement.isJsonPrimitive() || !sizedElement.getAsJsonPrimitive().isBoolean()) {
+            LOGGER.warning("Invalid ClickGUI sized value; reset to default dimensions");
+            clickGuiWindow.resetSize();
+            return;
+        }
+        if (!sizedElement.getAsBoolean()) {
+            return;
+        }
         try {
-            int x = getRequiredInt(window, "x");
-            int y = getRequiredInt(window, "y");
-            if (!clickGuiWindow.setPosition(x, y)) {
-                throw new IllegalArgumentException("ClickGUI coordinates are outside the supported range");
+            int width = getRequiredInt(window, "width");
+            int height = getRequiredInt(window, "height");
+            if (!clickGuiWindow.setSize(width, height)) {
+                throw new IllegalArgumentException("ClickGUI dimensions are outside the supported range");
             }
         } catch (IllegalArgumentException exception) {
-            LOGGER.warning("Invalid ClickGUI position; reset to centered placement");
-            clickGuiWindow.reset();
+            LOGGER.warning("Invalid ClickGUI dimensions; reset to defaults");
+            clickGuiWindow.resetSize();
         }
     }
 

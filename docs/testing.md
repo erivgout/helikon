@@ -70,6 +70,9 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
 11. Drag an unused portion of the header to every edge. Verify the complete
     window and its search/number fields move together and remain visible;
     close and reopen the GUI to verify the saved position is restored.
+12. Drag the bottom-right handle inward and outward. Verify the top-left corner
+    remains fixed, the window cannot shrink below its usable minimum or grow
+    beyond the screen, and its restored size remains valid after a relaunch.
 
 ## Manual command and keybind smoke test
 

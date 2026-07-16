@@ -39,7 +39,7 @@ public final class HelikonClient implements ClientModInitializer {
             modules.enableDefaultModules();
         }
 
-        HelikonKeybinds.register();
+        HelikonKeybinds.register(modules, configuration);
         ClientTickEvents.START_CLIENT_TICK.register(client -> events.post(new ClientTickEvent(ClientTickEvent.Phase.PRE)));
         ClientTickEvents.END_CLIENT_TICK.register(client -> events.post(new ClientTickEvent(ClientTickEvent.Phase.POST)));
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> configuration.save(modules));

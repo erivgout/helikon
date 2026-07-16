@@ -34,6 +34,30 @@ Malformed JSON is retained as `global.corrupt-<timestamp>.json` for inspection.
 
 ## Rendering and GUI
 
-The current Right Shift screen is intentionally a placeholder. The future
-ClickGUI and HUD editor must use supported Minecraft/Fabric rendering APIs,
-restore render state, and remain separate from module business logic.
+The Right Shift keybind opens `HelikonClickGuiScreen`, a vanilla `Screen`
+subclass that uses only supported Minecraft/Fabric GUI APIs (`EditBox`
+widgets, `GuiGraphicsExtractor` fills/text/scissor). The screen is a thin
+view layer:
+
+- `ClickGuiState` holds the selected category, search query, and selected
+  module. It has no Minecraft imports, so filtering and selection rules are
+  unit-tested directly. Search matches module name, ID, and description
+  case-insensitively; a non-blank query spans all categories.
+- `NumberSettingField` owns the text-to-value rules for number edit fields:
+  input is applied only when it parses to a finite value inside the setting
+  range, otherwise the current value is kept and the field is marked invalid.
+- All enable/disable transitions go through `ModuleRegistry`, so lifecycle
+  failure isolation applies to GUI toggles exactly as it does everywhere else.
+  Boolean and number settings are edited through the settings' own validated
+  `set` path.
+- The screen saves the registry through `ConfigurationManager` once, when the
+  screen closes (`removed()`), never per frame. Shutdown still saves via the
+  existing `CLIENT_STOPPING` hook.
+
+Keyboard safety: the GUI keybind only opens the screen when no other screen is
+active, and while the ClickGUI is open Minecraft routes key input to the
+focused widget (search box or a number field) rather than to game keybinds.
+The future module keybind dispatcher must likewise ignore input while any
+screen is open.
+
+The HUD editor remains future work and must follow the same separation.

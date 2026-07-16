@@ -1,19 +1,28 @@
 # Helikon
 
 Helikon is a clean-room, open-source Fabric utility client for Minecraft Java
-Edition. This repository currently contains the **bootstrap/core skeleton**:
-the client entrypoint, modular lifecycle API, basic settings, local JSON
-configuration, an internal event bus, a Right Shift placeholder GUI, and tests.
+Edition. This repository currently contains the **bootstrap/core skeleton plus
+the ClickGUI foundation**: the client entrypoint, modular lifecycle API, basic
+settings, local JSON configuration, an internal event bus, a functional Right
+Shift ClickGUI, and tests.
 
 It is not affiliated with Aristois, and it does not contain copied code, assets,
 branding, or configuration formats from that project.
 
 ## Status
 
-The first milestone deliberately does **not** implement gameplay automation,
+The current milestones deliberately do **not** implement gameplay automation,
 combat tools, packet manipulation, external networking, telemetry, a custom
 backend, or a server-side component. `FullbrightStub` exists only to exercise
 the registry and settings architecture; it does not change game brightness.
+
+The ClickGUI currently provides:
+
+- a category sidebar driven by `ModuleCategory`
+- a scrollable module list with per-module toggles
+- search across module names, IDs, and descriptions
+- a settings panel with metadata plus editable boolean and number settings
+- persistence of module state and settings when the screen closes
 
 ## Requirements
 
@@ -34,7 +43,11 @@ The remapped mod JAR is produced in `build/libs`. To start a development client:
 .\gradlew.bat runClient
 ```
 
-Press Right Shift in the client to open the bootstrap ClickGUI placeholder.
+Press Right Shift in the client to open the ClickGUI. Click a category to list
+its modules, click a module to inspect and edit its settings, and click the
+square at the right of a row to toggle it. The search box at the top filters
+across every category. Changes are written to `global.json` when the screen
+closes.
 
 ## Local data and privacy
 
@@ -57,7 +70,8 @@ server-side behavior.
 ## Development
 
 Read [architecture.md](docs/architecture.md), [configuration.md](docs/configuration.md),
-and [testing.md](docs/testing.md) before changing core systems. Contributions
+and [testing.md](docs/testing.md) before changing core systems. The long-term
+roadmap and policies live in [PLAN.md](PLAN.md). Contributions
 should include tests and keep all behavior local-only unless an explicitly
 documented optional integration is approved.
 

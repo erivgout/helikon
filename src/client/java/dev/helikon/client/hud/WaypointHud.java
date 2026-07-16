@@ -4,6 +4,7 @@ import dev.helikon.client.waypoint.WaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointLocation;
 import dev.helikon.client.waypoint.WaypointManager;
 import dev.helikon.client.waypoint.WaypointNavigation;
+import dev.helikon.client.panic.PanicState;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -23,17 +24,27 @@ public final class WaypointHud implements HudElement {
 
     private final WaypointManager waypoints;
     private final WaypointLocationProvider locations;
+    private final PanicState panicState;
     private WaypointLocation cachedLocation;
     private long cachedRevision = Long.MIN_VALUE;
     private List<WaypointNavigation.LocatedWaypoint> cachedNearest = List.of();
 
     public WaypointHud(WaypointManager waypoints, WaypointLocationProvider locations) {
+        this(waypoints, locations, new PanicState());
+    }
+
+    public WaypointHud(WaypointManager waypoints, WaypointLocationProvider locations, PanicState panicState) {
         this.waypoints = Objects.requireNonNull(waypoints, "waypoints");
         this.locations = Objects.requireNonNull(locations, "locations");
+        this.panicState = Objects.requireNonNull(panicState, "panicState");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
+        if (panicState.customHudHidden()) {
+            clearCache();
+            return;
+        }
         locations.currentLocation().ifPresentOrElse(location -> {
             long revision = waypoints.revision();
             if (!location.equals(cachedLocation) || revision != cachedRevision) {

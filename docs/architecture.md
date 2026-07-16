@@ -111,6 +111,15 @@ adapter is deliberately narrow: local actions dispatch through
 connection only after a user explicitly runs that stored macro. It cannot load
 scripts or execute arbitrary code.
 
+`PanicController` is a Minecraft-free coordinator. It always uses
+`ModuleRegistry.disableAll`, so each module's normal disable cleanup restores
+the client state it owns; it also cancels temporary macro work and hides custom
+HUD without changing persisted layout. A thin client callback closes only
+Helikon-owned GUI screens. `PanicKeybindManager` handles its own press edge and
+is screen-safe: normal screens suppress it, while Helikon screens permit it so
+the key can close the ClickGUI. Its recoverable local persistence is isolated
+in `PanicConfigurationManager`.
+
 ## Rendering, GUI, and HUD
 
 The Right Shift keybind opens `HelikonClickGuiScreen`, a vanilla `Screen`

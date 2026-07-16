@@ -1,15 +1,19 @@
 package dev.helikon.client.command;
 
 import dev.helikon.client.config.ConfigurationManager;
+import dev.helikon.client.config.PanicConfigurationManager;
 import dev.helikon.client.config.ProfileManager;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.input.Keybind;
+import dev.helikon.client.input.PanicKeybindManager;
 import dev.helikon.client.macro.MacroManager;
 import dev.helikon.client.macro.MacroRunner;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.panic.PanicController;
+import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.waypoint.WaypointContext;
@@ -54,6 +58,8 @@ class BuiltinCommandsTest {
         dispatcher = new CommandDispatcher();
         feedback = new RecordingFeedback();
         guiOpened = false;
+        PanicState panicState = new PanicState();
+        PanicKeybindManager panicKeybinds = new PanicKeybindManager();
         HelikonCommands.registerDefaults(dispatcher, registry, fakeKeys,
                 key -> key == KEY_RIGHT_SHIFT, () -> guiOpened = true,
                 new ProfileManager(new ConfigurationManager(temporaryDirectory.resolve("helikon"))),
@@ -61,7 +67,9 @@ class BuiltinCommandsTest {
                 new WaypointManager(temporaryDirectory.resolve("helikon")),
                 () -> java.util.Optional.of(new WaypointLocation(0, 64, 0,
                         new WaypointContext("world:command-test", "minecraft:overworld"))),
-                new MacroManager(temporaryDirectory.resolve("helikon")), new MacroRunner(), java.util.Optional::empty);
+                new MacroManager(temporaryDirectory.resolve("helikon")), new MacroRunner(), java.util.Optional::empty,
+                new PanicController(registry, panicState, () -> { }, () -> { }), panicKeybinds,
+                new PanicConfigurationManager(temporaryDirectory.resolve("helikon")));
     }
 
     @Test

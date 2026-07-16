@@ -103,7 +103,9 @@ sent to the server:
 | `.macro add <name> <local\|chat\|command\|delay> <text\|ticks>` | Adds one explicit, bounded macro action. |
 | `.macro show\|clear\|scope\|delete <name> ...` | Inspects or changes a stored local macro. |
 | `.macro run <name>` / `.macro stop` | Starts one local macro or stops its queued run. |
-| `.panic` | Disables all modules immediately. |
+| `.panic` | Disables modules, hides custom HUD for this session, and closes Helikon GUI screens. |
+| `.panic bind <key>` / `.panic unbind` | Configures or clears the local persisted panic key. |
+| `.panic status` / `.panic restorehud` | Shows the bind or restores HUD visibility without re-enabling modules. |
 
 Key names follow Minecraft's keyboard names, for example `r`, `f6`, or
 `right.shift`. Module keybinds never fire while any screen is open, so typing
@@ -120,6 +122,9 @@ enabled state are stored locally only in `waypoints.json`.
 Macros are stored locally in `macros.json` and run only explicitly configured
 local Helikon commands, ordinary chat messages, Minecraft commands, and bounded
 delays. There is no macro scripting or arbitrary code execution.
+The optional panic key is stored locally in `panic.json`; it is suppressed while
+typing in chat or ordinary screens, but works inside Helikon screens to close
+them immediately.
 
 ## Local data and privacy
 

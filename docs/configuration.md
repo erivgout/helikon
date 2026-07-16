@@ -82,3 +82,10 @@ paths, downloaded content, or arbitrary code are accepted. Writes use
 and a command mutation rolls back if saving cannot complete. Macro definitions
 are never sent to a server; configured chat and command actions use only the
 player's existing normal Minecraft connection.
+
+`panic.json` stores only a schema-versioned keyboard token for the optional
+local panic key. It has the same atomic write, `.bak`, corrupt-file recovery,
+invalid-key fallback rules as other local stores; the reserved Helikon GUI key
+is invalid even when manually written to the file. Panic activation does not
+rewrite `global.json`, `hud.json`, or module settings: HUD hiding is transient
+for the current session and can be restored with `.panic restorehud`.

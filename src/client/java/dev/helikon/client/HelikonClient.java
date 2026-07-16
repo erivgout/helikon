@@ -8,6 +8,7 @@ import dev.helikon.client.command.MinecraftKeyNameResolver;
 import dev.helikon.client.config.ConfigurationException;
 import dev.helikon.client.config.ConfigurationManager;
 import dev.helikon.client.config.HudConfigurationManager;
+import dev.helikon.client.config.PanicConfigurationManager;
 import dev.helikon.client.config.ProfileManager;
 import dev.helikon.client.event.ClientTickEvent;
 import dev.helikon.client.event.EventBus;
@@ -15,11 +16,14 @@ import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.friend.FriendToggleGesture;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
+import dev.helikon.client.gui.HelikonHudEditorScreen;
+import dev.helikon.client.gui.HelikonThemeEditorScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
 import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.hud.WaypointHud;
 import dev.helikon.client.input.HelikonKeybinds;
 import dev.helikon.client.input.KeybindManager;
+import dev.helikon.client.input.PanicKeybindManager;
 import dev.helikon.client.macro.MacroActionExecutor;
 import dev.helikon.client.macro.MacroManager;
 import dev.helikon.client.macro.MacroRunner;
@@ -29,6 +33,8 @@ import dev.helikon.client.macro.MinecraftMacroServerContextProvider;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.render.FullbrightStub;
 import dev.helikon.client.notification.ChatNotifier;
+import dev.helikon.client.panic.PanicController;
+import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.waypoint.MinecraftWaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointManager;
@@ -62,11 +68,19 @@ public final class HelikonClient implements ClientModInitializer {
     private final ProfileManager profiles = new ProfileManager(configuration);
     private final FriendManager friends = new FriendManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
     private final FriendToggleGesture friendToggleGesture = new FriendToggleGesture();
+    private final PanicState panicState = new PanicState();
+    private final PanicKeybindManager panicKeybinds = new PanicKeybindManager();
+    private final PanicConfigurationManager panicConfiguration = new PanicConfigurationManager(
+            FabricLoader.getInstance().getConfigDir().resolve(MOD_ID), HelikonKeybinds::isGuiKey
+    );
     private final WaypointManager waypoints = new WaypointManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
     private final WaypointLocationProvider waypointLocations = new MinecraftWaypointLocationProvider();
     private final MacroManager macros = new MacroManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
     private final MacroRunner macroRunner = new MacroRunner();
     private final MacroServerContextProvider macroServerContext = new MinecraftMacroServerContextProvider();
+    private final PanicController panic = new PanicController(
+            modules, panicState, this::closeHelikonScreen, () -> macroRunner.cancel()
+    );
     private final HudLayout hudLayout = new HudLayout();
     private final HudConfigurationManager hudConfiguration = new HudConfigurationManager(
             FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
@@ -78,6 +92,8 @@ public final class HelikonClient implements ClientModInitializer {
 
     /** A screen change requested from chat, applied on the next tick once chat has closed. */
     private final AtomicReference<Runnable> pendingScreenAction = new AtomicReference<>();
+    private boolean screenWasOpenAtTickStart;
+    private boolean helikonScreenWasOpenAtTickStart;
 
     @Override
     public void onInitializeClient() {
@@ -109,26 +125,45 @@ public final class HelikonClient implements ClientModInitializer {
         } catch (ConfigurationException exception) {
             LOGGER.log(Level.WARNING, "Unable to load macros; continuing with an empty local macro list", exception);
         }
+        try {
+            panicConfiguration.load(panicKeybinds);
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to load panic keybind; keeping it unbound", exception);
+        }
 
         HelikonCommands.registerDefaults(commands, modules, new MinecraftKeyNameResolver(),
                 HelikonKeybinds::isGuiKey, () -> pendingScreenAction.set(this::openClickGui), profiles, clickGuiWindow,
-                friends, waypoints, waypointLocations, macros, macroRunner, macroServerContext);
+                friends, waypoints, waypointLocations, macros, macroRunner, macroServerContext,
+                panic, panicKeybinds, panicConfiguration);
         ChatCommands.register(commands, notifier);
 
         HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "active_modules"),
-                new ActiveModulesHud(modules, hudLayout));
+                new ActiveModulesHud(modules, hudLayout, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "waypoints"),
-                new WaypointHud(waypoints, waypointLocations));
-        ClientTickEvents.START_CLIENT_TICK.register(client -> events.post(new ClientTickEvent(ClientTickEvent.Phase.PRE)));
+                new WaypointHud(waypoints, waypointLocations, panicState));
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            screenWasOpenAtTickStart = client.gui.screen() != null;
+            helikonScreenWasOpenAtTickStart = isHelikonScreen(client);
+            events.post(new ClientTickEvent(ClientTickEvent.Phase.PRE));
+        });
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             events.post(new ClientTickEvent(ClientTickEvent.Phase.POST));
 
+            boolean anyScreenOpen = screenWasOpenAtTickStart || client.gui.screen() != null;
+            boolean panicTriggered = panicKeybinds.tick(
+                    key -> InputConstants.isKeyDown(client.getWindow(), key),
+                    anyScreenOpen,
+                    helikonScreenWasOpenAtTickStart || isHelikonScreen(client),
+                    this::activatePanic
+            );
+
             // Module keybinds count as released while any screen is open so
-            // typing into text fields can never trigger them.
+            // typing into text fields can never trigger them. A panic press
+            // also suppresses this tick so a shared key cannot re-enable one.
             keybinds.tick(
                     key -> InputConstants.isKeyDown(client.getWindow(), key),
-                    client.gui.screen() != null
+                    anyScreenOpen || panicTriggered
             );
             toggleFriendOnMiddleClick(client);
             tickMacro(client);
@@ -147,6 +182,25 @@ public final class HelikonClient implements ClientModInitializer {
         Minecraft.getInstance().setScreenAndShow(new HelikonClickGuiScreen(
                 modules, configuration, clickGuiWindow, hudLayout, hudConfiguration
         ));
+    }
+
+    private void activatePanic() {
+        PanicController.Result result = panic.activate();
+        notifier.info("Panic: disabled " + result.disabledModules()
+                + " module(s), hid custom HUD, and preserved configuration.");
+    }
+
+    private void closeHelikonScreen() {
+        Minecraft client = Minecraft.getInstance();
+        if (isHelikonScreen(client)) {
+            client.gui.setScreen(null);
+        }
+    }
+
+    private static boolean isHelikonScreen(Minecraft client) {
+        return client.gui.screen() instanceof HelikonClickGuiScreen
+                || client.gui.screen() instanceof HelikonHudEditorScreen
+                || client.gui.screen() instanceof HelikonThemeEditorScreen;
     }
 
     private void toggleFriendOnMiddleClick(Minecraft client) {
@@ -223,6 +277,11 @@ public final class HelikonClient implements ClientModInitializer {
             macros.save();
         } catch (ConfigurationException exception) {
             LOGGER.log(Level.WARNING, "Unable to save macros while stopping", exception);
+        }
+        try {
+            panicConfiguration.save(panicKeybinds);
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to save panic keybind while stopping", exception);
         }
     }
 

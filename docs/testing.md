@@ -144,6 +144,13 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     and local `.macro` recursion are rejected. Relaunch to verify
     `macros.json` persistence and backup; malformed or duplicate data must
     become `macros.corrupt-<timestamp>.json`.
+16. Bind panic with `.panic bind r`, enable a module, and press R outside a
+    screen. Verify all modules disable, Helikon custom HUD hides, queued macros
+    stop, and the persisted module/HUD layout files remain unchanged. Open the
+    ClickGUI and press R to verify it closes; press R while typing in chat to
+    verify it does not fire. Use `.panic restorehud`, relaunch to verify the
+    key persists in `panic.json`, and replace that file with invalid JSON to
+    verify `panic.corrupt-<timestamp>.json` recovery and an unbound fallback.
 
 ## Bootstrap smoke test
 

@@ -1,6 +1,7 @@
 package dev.helikon.client.hud;
 
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.panic.PanicState;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -18,15 +19,21 @@ public final class ActiveModulesHud implements HudElement {
 
     private final ModuleRegistry modules;
     private final HudLayout layout;
+    private final PanicState panicState;
 
     public ActiveModulesHud(ModuleRegistry modules, HudLayout layout) {
+        this(modules, layout, new PanicState());
+    }
+
+    public ActiveModulesHud(ModuleRegistry modules, HudLayout layout, PanicState panicState) {
         this.modules = Objects.requireNonNull(modules, "modules");
         this.layout = Objects.requireNonNull(layout, "layout");
+        this.panicState = Objects.requireNonNull(panicState, "panicState");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (!layout.activeModulesEnabled()) {
+        if (panicState.customHudHidden() || !layout.activeModulesEnabled()) {
             return;
         }
 

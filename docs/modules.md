@@ -90,6 +90,17 @@ Macros are not a scripting engine: they cannot execute code, read files, or
 download content. They do not bypass server authority, rate limits, or normal
 chat/command packet formats.
 
+## Panic
+
+`.panic` disables every enabled module through `ModuleRegistry`, so current and
+future modules run their own `onDisable` restoration (for example brightness,
+timer, FOV, or step changes). It closes any Helikon GUI screen, stops queued
+macro work, and hides all custom HUD for the current session without deleting
+or changing user configuration. Use `.panic restorehud` to show HUD again
+without re-enabling modules. `.panic bind <key>` stores a separate local
+keyboard-only panic key; chat and ordinary screens suppress it, while Helikon
+screens permit it as an emergency close control.
+
 ## HUD
 
 | Element | Behavior | Persistence | Limitation | Coverage |

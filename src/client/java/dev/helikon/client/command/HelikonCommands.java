@@ -7,6 +7,9 @@ import dev.helikon.client.macro.MacroManager;
 import dev.helikon.client.macro.MacroRunner;
 import dev.helikon.client.macro.MacroServerContextProvider;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.config.PanicConfigurationManager;
+import dev.helikon.client.input.PanicKeybindManager;
+import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointManager;
 
@@ -31,7 +34,10 @@ public final class HelikonCommands {
             WaypointLocationProvider waypointLocations,
             MacroManager macros,
             MacroRunner macroRunner,
-            MacroServerContextProvider macroServerContext
+            MacroServerContextProvider macroServerContext,
+            PanicController panic,
+            PanicKeybindManager panicKeybinds,
+            PanicConfigurationManager panicConfiguration
     ) {
         dispatcher.register(new HelpCommand(dispatcher));
         dispatcher.register(new ModulesCommand(registry));
@@ -42,7 +48,7 @@ public final class HelikonCommands {
         dispatcher.register(new BindCommand(registry, keyNames, reservedKeys));
         dispatcher.register(new UnbindCommand(registry));
         dispatcher.register(new GuiCommand(guiOpener));
-        dispatcher.register(new PanicCommand(registry));
+        dispatcher.register(new PanicCommand(panic, panicKeybinds, panicConfiguration, keyNames, reservedKeys));
         dispatcher.register(new ProfileCommand(profiles, registry, clickGuiWindow));
         dispatcher.register(new FriendCommand(friends));
         dispatcher.register(new WaypointCommand(waypoints, waypointLocations));

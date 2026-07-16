@@ -11,8 +11,28 @@ setting validation/JSON recovery, configuration round-tripping (including
 keybinds), malformed JSON recovery, ClickGUI search/filtering
 (`ClickGuiStateTest`), number-field edit rules (`NumberSettingTextTest`),
 command parsing and every built-in command (`CommandDispatcherTest`,
-`BuiltinCommandsTest`), and keybind edge/hold/suppression behavior
-(`KeybindManagerTest`).
+`BuiltinCommandsTest`), keybind edge/hold/suppression behavior
+(`KeybindManagerTest`), and Active Modules selection, drag clamping, and HUD
+configuration recovery (`ActiveModulesTest`, `HudEditorStateTest`,
+`HudConfigurationManagerTest`).
+
+## Manual Active Modules HUD smoke test
+
+1. Run `./gradlew.bat runClient`, join a world, and send
+   `.toggle fullbright_stub`. Verify **Fullbright (Stub)** appears in a small
+   top-left HUD panel; send the command again and verify the panel disappears.
+2. Open the ClickGUI with Right Shift and click **HUD** in its header. Verify a
+   dimmed editor opens, with an Active modules checkbox and a preview (showing
+   either enabled modules or `No modules enabled`).
+3. Drag the preview to each screen edge and verify it stays fully visible;
+   turn its checkbox off and verify the normal HUD no longer renders after
+   leaving the editor. Turn it back on and move it to a distinct position.
+4. Press Escape and verify the ClickGUI returns. Close it, relaunch the
+   client, and verify the enabled state and position are restored from
+   `config/helikon/hud.json`.
+5. Replace `hud.json` with invalid JSON, relaunch, and verify Helikon creates
+   `hud.corrupt-<timestamp>.json` and returns the element to its default
+   position.
 
 ## Manual ClickGUI smoke test
 

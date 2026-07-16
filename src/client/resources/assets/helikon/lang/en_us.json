@@ -6,5 +6,9 @@
   "screen.helikon.search_results": "Search results",
   "screen.helikon.no_results": "No matching modules",
   "screen.helikon.no_selection": "Select a module to edit its settings",
-  "screen.helikon.enabled": "Enabled"
+  "screen.helikon.enabled": "Enabled",
+  "screen.helikon.hud_button": "HUD",
+  "screen.helikon.hud_editor.title": "Helikon HUD Editor",
+  "screen.helikon.hud_editor.instructions": "Drag the preview. Press Escape to return to the ClickGUI.",
+  "screen.helikon.hud_editor.active_modules": "Active modules"
 }

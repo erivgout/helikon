@@ -4,7 +4,7 @@ Helikon is a clean-room, open-source Fabric utility client for Minecraft Java
 Edition. This repository currently contains the **core framework**: the client
 entrypoint, modular lifecycle API, basic settings, local JSON configuration,
 an internal event bus, a functional Right Shift ClickGUI, local chat commands,
-module keybinds, and tests.
+module keybinds, an Active Modules HUD, and tests.
 
 It is not affiliated with Aristois, and it does not contain copied code, assets,
 branding, or configuration formats from that project.
@@ -23,6 +23,12 @@ The ClickGUI currently provides:
 - search across module names, IDs, and descriptions
 - a settings panel with metadata plus editable boolean and number settings
 - persistence of module state and settings when the screen closes
+
+The first HUD slice adds an **Active Modules** list. It renders enabled Helikon
+modules in registry order and can be positioned through the small HUD editor.
+Open the ClickGUI with Right Shift and select **HUD** in its header; drag the
+preview, toggle it with the checkbox, and press Escape to return. The layout
+is stored locally in `config/helikon/hud.json`.
 
 ## Requirements
 
@@ -47,7 +53,8 @@ Press Right Shift in the client to open the ClickGUI. Click a category to list
 its modules, click a module to inspect and edit its settings, and click the
 square at the right of a row to toggle it. The search box at the top filters
 across every category. Changes are written to `global.json` when the screen
-closes.
+closes. Select **HUD** in the header to open the minimal HUD editor; its
+changes are written to `hud.json` when that editor closes.
 
 ## Local commands
 

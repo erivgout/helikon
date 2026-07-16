@@ -5,10 +5,14 @@ import dev.helikon.client.command.ChatCommands;
 import dev.helikon.client.command.CommandDispatcher;
 import dev.helikon.client.command.HelikonCommands;
 import dev.helikon.client.command.MinecraftKeyNameResolver;
+import dev.helikon.client.config.ConfigurationException;
 import dev.helikon.client.config.ConfigurationManager;
+import dev.helikon.client.config.HudConfigurationManager;
 import dev.helikon.client.event.ClientTickEvent;
 import dev.helikon.client.event.EventBus;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
+import dev.helikon.client.hud.ActiveModulesHud;
+import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.input.HelikonKeybinds;
 import dev.helikon.client.input.KeybindManager;
 import dev.helikon.client.module.ModuleRegistry;
@@ -17,8 +21,10 @@ import dev.helikon.client.notification.ChatNotifier;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -34,6 +40,10 @@ public final class HelikonClient implements ClientModInitializer {
             LOGGER.log(Level.SEVERE, "Unhandled listener error for " + event.getClass().getSimpleName(), exception)
     );
     private final ConfigurationManager configuration = new ConfigurationManager(
+            FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
+    );
+    private final HudLayout hudLayout = new HudLayout();
+    private final HudConfigurationManager hudConfiguration = new HudConfigurationManager(
             FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
     );
     private final KeybindManager keybinds = new KeybindManager(modules);
@@ -57,12 +67,15 @@ public final class HelikonClient implements ClientModInitializer {
         if (configurationResult != ConfigurationManager.LoadResult.LOADED) {
             modules.enableDefaultModules();
         }
+        hudConfiguration.load(hudLayout);
 
         HelikonCommands.registerDefaults(commands, modules, new MinecraftKeyNameResolver(),
                 HelikonKeybinds::isGuiKey, () -> pendingScreenAction.set(this::openClickGui));
         ChatCommands.register(commands, notifier);
 
-        HelikonKeybinds.register(modules, configuration);
+        HelikonKeybinds.register(modules, configuration, hudLayout, hudConfiguration);
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "active_modules"),
+                new ActiveModulesHud(modules, hudLayout));
         ClientTickEvents.START_CLIENT_TICK.register(client -> events.post(new ClientTickEvent(ClientTickEvent.Phase.PRE)));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             events.post(new ClientTickEvent(ClientTickEvent.Phase.POST));
@@ -79,13 +92,28 @@ public final class HelikonClient implements ClientModInitializer {
                 screenAction.run();
             }
         });
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> configuration.save(modules));
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> saveConfigurations());
 
         LOGGER.info("Helikon bootstrap initialized with " + modules.all().size() + " module(s)");
     }
 
     private void openClickGui() {
-        Minecraft.getInstance().setScreenAndShow(new HelikonClickGuiScreen(modules, configuration));
+        Minecraft.getInstance().setScreenAndShow(new HelikonClickGuiScreen(
+                modules, configuration, hudLayout, hudConfiguration
+        ));
+    }
+
+    private void saveConfigurations() {
+        try {
+            configuration.save(modules);
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to save Helikon configuration while stopping", exception);
+        }
+        try {
+            hudConfiguration.save(hudLayout);
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to save Helikon HUD layout while stopping", exception);
+        }
     }
 
     public ModuleRegistry modules() {

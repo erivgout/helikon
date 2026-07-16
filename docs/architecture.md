@@ -66,7 +66,7 @@ human-readable `global.json` using a temporary file and atomic replacement when
 the filesystem supports it. The previous good file is copied to `global.json.bak`.
 Malformed JSON is retained as `global.corrupt-<timestamp>.json` for inspection.
 
-## Rendering and GUI
+## Rendering, GUI, and HUD
 
 The Right Shift keybind opens `HelikonClickGuiScreen`, a vanilla `Screen`
 subclass that uses only supported Minecraft/Fabric GUI APIs (`EditBox`
@@ -94,4 +94,13 @@ focused widget (search box or a number field) rather than to game keybinds.
 The future module keybind dispatcher must likewise ignore input while any
 screen is open.
 
-The HUD editor remains future work and must follow the same separation.
+`ActiveModulesHud` is registered through Fabric's supported
+`HudElementRegistry` API and only renders enabled modules. `ActiveModules`
+contains the Minecraft-free selection rule, while `HudLayout` stores the
+validated persisted position and enabled state. `HudEditorState` owns pointer
+offsets and bounds clamping without Minecraft imports; `HelikonHudEditorScreen`
+is only the input/render adapter. The editor is reached from the **HUD** button
+in the ClickGUI header, saves once when it closes, and returns to the ClickGUI.
+
+The initial editor intentionally has one draggable element. Alignment, scale,
+background options, snapping, and other HUD elements remain future work.

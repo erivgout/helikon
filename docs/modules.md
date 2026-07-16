@@ -27,3 +27,14 @@ Modules can also be controlled through local chat commands (`.toggle`,
 `.setting`, `.reset`, `.bind`, `.unbind` — see the README) and per-module
 keybinds with `toggle`, `hold`, or `press_once` activation. Keybinds never
 fire while a screen is open.
+
+## HUD
+
+| Element | Behavior | Persistence | Limitation | Coverage |
+| --- | --- | --- | --- | --- |
+| Active Modules | Lists enabled Helikon modules in registry order. | `hud.json`: enabled state and top-left position. | No sorting options, styling controls, snapping, or animation yet. | `ActiveModulesTest`, `HudEditorStateTest`, `HudConfigurationManagerTest`, manual HUD checklist. |
+
+The minimal HUD editor is opened through the **HUD** button in the ClickGUI
+header. It shows a preview even when no module is enabled, supports toggling
+the element, and clamps dragging so its entire current preview remains on
+screen. It is client-only and sends no network traffic.

@@ -3,7 +3,9 @@ package dev.helikon.client.input;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.helikon.client.HelikonClient;
 import dev.helikon.client.config.ConfigurationManager;
+import dev.helikon.client.config.HudConfigurationManager;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
+import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.module.ModuleRegistry;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -18,7 +20,12 @@ public final class HelikonKeybinds {
     private HelikonKeybinds() {
     }
 
-    public static void register(ModuleRegistry modules, ConfigurationManager configuration) {
+    public static void register(
+            ModuleRegistry modules,
+            ConfigurationManager configuration,
+            HudLayout hudLayout,
+            HudConfigurationManager hudConfiguration
+    ) {
         KeyMapping.Category category = KeyMapping.Category.register(
                 Identifier.fromNamespaceAndPath(HelikonClient.MOD_ID, "general")
         );
@@ -34,7 +41,7 @@ public final class HelikonKeybinds {
                 // Never replace an open screen: keybinds must not fire while
                 // the user might be typing into another GUI's text field.
                 if (client.gui.screen() == null) {
-                    client.setScreenAndShow(new HelikonClickGuiScreen(modules, configuration));
+                    client.setScreenAndShow(new HelikonClickGuiScreen(modules, configuration, hudLayout, hudConfiguration));
                 }
             }
         });

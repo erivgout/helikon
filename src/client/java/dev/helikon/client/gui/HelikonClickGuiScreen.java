@@ -3,6 +3,8 @@ package dev.helikon.client.gui;
 import dev.helikon.client.HelikonClient;
 import dev.helikon.client.config.ConfigurationException;
 import dev.helikon.client.config.ConfigurationManager;
+import dev.helikon.client.config.HudConfigurationManager;
+import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
@@ -41,6 +43,7 @@ public final class HelikonClickGuiScreen extends Screen {
     private static final int BOOLEAN_ROW_HEIGHT = 14;
     private static final int NUMBER_ROW_HEIGHT = 28;
     private static final int CHECKBOX_SIZE = 8;
+    private static final int HUD_BUTTON_WIDTH = 30;
 
     private static final int COLOR_PANEL = 0xF014161B;
     private static final int COLOR_HEADER = 0xFF1C2027;
@@ -57,6 +60,8 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private final ModuleRegistry modules;
     private final ConfigurationManager configuration;
+    private final HudLayout hudLayout;
+    private final HudConfigurationManager hudConfiguration;
     private final ClickGuiState state;
     private final Map<NumberSetting, EditBox> numberFields = new LinkedHashMap<>();
 
@@ -73,10 +78,17 @@ public final class HelikonClickGuiScreen extends Screen {
     private int listWidth;
     private int settingsX;
 
-    public HelikonClickGuiScreen(ModuleRegistry modules, ConfigurationManager configuration) {
+    public HelikonClickGuiScreen(
+            ModuleRegistry modules,
+            ConfigurationManager configuration,
+            HudLayout hudLayout,
+            HudConfigurationManager hudConfiguration
+    ) {
         super(Component.translatable("screen.helikon.title"));
         this.modules = Objects.requireNonNull(modules, "modules");
         this.configuration = Objects.requireNonNull(configuration, "configuration");
+        this.hudLayout = Objects.requireNonNull(hudLayout, "hudLayout");
+        this.hudConfiguration = Objects.requireNonNull(hudConfiguration, "hudConfiguration");
         this.state = new ClickGuiState(modules);
     }
 
@@ -147,7 +159,8 @@ public final class HelikonClickGuiScreen extends Screen {
 
         int mouseX = (int) event.x();
         int mouseY = (int) event.y();
-        return handleCategoryClick(mouseX, mouseY)
+        return handleHudEditorClick(mouseX, mouseY)
+                || handleCategoryClick(mouseX, mouseY)
                 || handleModuleListClick(mouseX, mouseY)
                 || handleSettingsClick(mouseX, mouseY);
     }
@@ -169,6 +182,12 @@ public final class HelikonClickGuiScreen extends Screen {
         graphics.outline(panelX - 1, panelY - 1, panelWidth + 2, panelHeight + 2, COLOR_OUTLINE);
         graphics.fill(panelX, panelY, panelX + panelWidth, panelY + HEADER_HEIGHT, COLOR_HEADER);
         graphics.text(font, title, panelX + 6, panelY + 7, COLOR_ACCENT, true);
+
+        int buttonColor = isInside(mouseX, mouseY, hudButtonX(), panelY + 4, HUD_BUTTON_WIDTH, 14)
+                ? COLOR_ROW_HOVER : COLOR_OUTLINE;
+        graphics.outline(hudButtonX(), panelY + 4, HUD_BUTTON_WIDTH, 14, buttonColor);
+        graphics.centeredText(font, Component.translatable("screen.helikon.hud_button"),
+                hudButtonX() + HUD_BUTTON_WIDTH / 2, panelY + 7, COLOR_TEXT);
     }
 
     private void drawSidebar(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -319,6 +338,14 @@ public final class HelikonClickGuiScreen extends Screen {
         return false;
     }
 
+    private boolean handleHudEditorClick(int mouseX, int mouseY) {
+        if (!isInside(mouseX, mouseY, hudButtonX(), panelY + 4, HUD_BUTTON_WIDTH, 14)) {
+            return false;
+        }
+        minecraft.setScreenAndShow(new HelikonHudEditorScreen(this, modules, hudLayout, hudConfiguration));
+        return true;
+    }
+
     private boolean handleModuleListClick(int mouseX, int mouseY) {
         if (mouseX < listX || mouseX >= listX + listWidth || mouseY < contentTop || mouseY >= contentBottom) {
             return false;
@@ -419,6 +446,10 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private int settingsCheckboxX() {
         return settingsX + SETTINGS_WIDTH - CHECKBOX_SIZE - 6;
+    }
+
+    private int hudButtonX() {
+        return panelX + panelWidth - 150;
     }
 
     private static boolean isInside(int mouseX, int mouseY, int x, int y, int width, int height) {

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "helikon",
+  "version": "${version}",
+  "name": "Helikon",
+  "description": "A local-only Fabric utility client framework.",
+  "authors": [
+    "Helikon contributors"
+  ],
+  "contact": {
+    "sources": "https://github.com/helikon-client/helikon"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.helikon.client.HelikonClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

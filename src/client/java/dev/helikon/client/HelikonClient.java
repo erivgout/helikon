@@ -46,12 +46,14 @@ import dev.helikon.client.gui.HelikonAutoReconnectScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
 import dev.helikon.client.hud.BetterCrosshairHud;
 import dev.helikon.client.hud.CoordinateHud;
+import dev.helikon.client.hud.ClientTpsEstimate;
 import dev.helikon.client.hud.DebugOverlayHud;
 import dev.helikon.client.hud.DurabilityWarningsHud;
 import dev.helikon.client.hud.ElytraHud;
 import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.hud.InventoryPreviewHud;
 import dev.helikon.client.hud.MiniPlayerHud;
+import dev.helikon.client.hud.PlanTelemetryHud;
 import dev.helikon.client.hud.RadarHud;
 import dev.helikon.client.hud.ReachDisplayHud;
 import dev.helikon.client.hud.SaturationHud;
@@ -529,6 +531,7 @@ public final class HelikonClient implements ClientModInitializer {
         );
         DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,
                 events, configuration, panicState, hudLayout);
+        ClientTpsEstimate tpsEstimate = new ClientTpsEstimate();
         AtomicReference<MinecraftCombatAccess.Snapshot> combatSnapshot = new AtomicReference<>(
                 MinecraftCombatAccess.Snapshot.unavailable());
         AtomicBoolean combatAttackStarted = new AtomicBoolean();
@@ -746,11 +749,14 @@ public final class HelikonClient implements ClientModInitializer {
                         hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "debug_overlay"),
                 debugOverlayHud);
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "plan_telemetry"),
+                new PlanTelemetryHud(hudLayout, panicState, tpsEstimate));
         LevelRenderEvents.BEFORE_GIZMOS.register(context -> {
             events.post(new RenderEvent(RenderEvent.Kind.WORLD, 0.0D, ""));
             worldVisuals.render(context);
         });
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            tpsEstimate.observeTick(System.nanoTime());
             observeScreenTransition(client);
             screenWasOpenAtTickStart = client.gui.screen() != null;
             helikonScreenWasOpenAtTickStart = isHelikonScreen(client);

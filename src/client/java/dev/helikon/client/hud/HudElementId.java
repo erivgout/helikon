@@ -13,21 +13,40 @@ public enum HudElementId {
     RADAR(Anchor.TOP_LEFT, 5, 120),
     MINI_PLAYER(Anchor.TOP_LEFT, 5, 210),
     DEBUG_OVERLAY(Anchor.TOP_LEFT, 5, 5),
-    BETTER_CROSSHAIR(Anchor.CENTER, 0, 0);
+    BETTER_CROSSHAIR(Anchor.CENTER, 0, 0),
+    DIRECTION(Anchor.TOP_RIGHT, 5, 5, false),
+    FPS(Anchor.TOP_RIGHT, 5, 18, false),
+    PING(Anchor.TOP_RIGHT, 5, 31, false),
+    TPS(Anchor.TOP_RIGHT, 5, 44, false),
+    SPEED(Anchor.TOP_RIGHT, 5, 57, false),
+    ARMOR_DURABILITY(Anchor.TOP_RIGHT, 5, 70, false),
+    HELD_ITEM_DURABILITY(Anchor.TOP_RIGHT, 5, 83, false),
+    POTION_EFFECTS(Anchor.TOP_RIGHT, 5, 96, false),
+    CLOCK(Anchor.TOP_RIGHT, 5, 109, false),
+    BIOME(Anchor.TOP_RIGHT, 5, 122, false),
+    SERVER_ADDRESS(Anchor.TOP_RIGHT, 5, 135, false),
+    TOTEM_COUNT(Anchor.TOP_RIGHT, 5, 148, false);
 
     private final Anchor defaultAnchor;
     private final int defaultOffsetX;
     private final int defaultOffsetY;
+    private final boolean defaultEnabled;
 
     HudElementId(Anchor defaultAnchor, int defaultOffsetX, int defaultOffsetY) {
+        this(defaultAnchor, defaultOffsetX, defaultOffsetY, true);
+    }
+
+    HudElementId(Anchor defaultAnchor, int defaultOffsetX, int defaultOffsetY, boolean defaultEnabled) {
         this.defaultAnchor = defaultAnchor;
         this.defaultOffsetX = defaultOffsetX;
         this.defaultOffsetY = defaultOffsetY;
+        this.defaultEnabled = defaultEnabled;
     }
 
     public Anchor defaultAnchor() { return defaultAnchor; }
     public int defaultOffsetX() { return defaultOffsetX; }
     public int defaultOffsetY() { return defaultOffsetY; }
+    public boolean defaultEnabled() { return defaultEnabled; }
 
     public enum Anchor {
         TOP_LEFT,

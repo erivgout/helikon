@@ -4,13 +4,14 @@ import java.util.Objects;
 
 /** Persisted enabled state and anchored local placement for one HUD element. */
 public final class HudElementPlacement {
-    private boolean enabled = true;
+    private boolean enabled;
     private HudElementId.Anchor anchor;
     private int offsetX;
     private int offsetY;
 
     public HudElementPlacement(HudElementId element) {
         Objects.requireNonNull(element, "element");
+        enabled = element.defaultEnabled();
         anchor = element.defaultAnchor();
         offsetX = element.defaultOffsetX();
         offsetY = element.defaultOffsetY();
@@ -58,7 +59,7 @@ public final class HudElementPlacement {
 
     public void reset(HudElementId element) {
         Objects.requireNonNull(element, "element");
-        enabled = true;
+        enabled = element.defaultEnabled();
         anchor = element.defaultAnchor();
         offsetX = element.defaultOffsetX();
         offsetY = element.defaultOffsetY();

@@ -61,7 +61,9 @@ loads the earlier position-only schema 1 safely with presentation defaults.
 Schema 3 also persists enabled state plus anchored offsets for each editable
 HUD element (waypoints, coordinates, saturation, Elytra, Target HUD, reach,
 Inventory Preview, durability warnings, Radar, MiniPlayer, Debug Overlay, and
-Better Crosshair); older files retain their safe built-in placements.
+Better Crosshair, plus opt-in Direction, FPS, Ping, local TPS estimate, Speed,
+Armor/held-item durability, Potion effects, Clock, Biome, Server address, and
+Totem count); older files retain their safe built-in placements.
 The HUD editor saves it when closed; normal client shutdown also saves it. Its
 writes use `hud.json.bak` and move malformed files to
 `hud.corrupt-<timestamp>.json`. Invalid individual HUD values are logged and

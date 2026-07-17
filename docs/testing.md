@@ -179,6 +179,11 @@ key (`ConfigurationManagerTest`).
    actual rendered content remains fully on screen. For Better Crosshair,
    verify its placement changes the arm centre and toggling it restores the
    vanilla crosshair when its module is otherwise enabled.
+   Continue through Direction, FPS, Ping, TPS estimate, Speed, Armor
+   durability, Held-item durability, Potion effects, Clock, Biome, Server
+   address, and Totem count. Enable a few, verify they render only local facts
+   at their saved placements, then disable them again; TPS must be labelled
+   local and must not be presented as server information.
 5. Replace `hud.json` with invalid JSON, relaunch, and verify Helikon creates
    `hud.corrupt-<timestamp>.json` and returns the element to its default
    position.

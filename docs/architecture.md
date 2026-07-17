@@ -604,6 +604,14 @@ a drag intentionally converting it to a stable top-left placement. The
 preview is a placement handle; every renderer clamps its actual local content
 bounds to the scaled viewport, including when dynamic content changes size.
 
+`PlanTelemetryHud` supplies the remaining version-one telemetry surfaces as
+opt-in placement entries: direction, FPS, local-player latency, a clearly
+labelled local tick-cadence estimate, speed, durability summaries, potion
+effects, clock, biome, server address, and totem count. It reads only the
+already-loaded client/player/connection state; it never requests server data.
+`ClientTpsEstimate` and `TelemetryText` keep cadence calculation and display
+rules Minecraft-free and unit-testable.
+
 `SaturationHud` is a separate local HUD element. It reads the current
 local player's `FoodData.getSaturationLevel()` through the narrow 26.2 adapter
 layer and formats only a bounded display string. It neither modifies hunger nor

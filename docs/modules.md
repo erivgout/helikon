@@ -233,6 +233,7 @@ screens permit it as an emergency close control.
 | --- | --- | --- | --- | --- |
 | Active Modules | Lists enabled Helikon modules with registry, alphabetical, or width sorting. | `hud.json`: enabled state, position, scale, padding, backdrop/shadow, sort/alignment/color modes. | List-entry animations remain later work. | `ActiveModulesTest`, `HudEditorStateTest`, `HudConfigurationManagerTest`, manual HUD checklist. |
 | Other custom HUD | Lets the editor toggle and place every registered non-Active-Modules HUD renderer. | `hud.json`: enabled state plus validated anchor/offset placement. | The editor uses a labelled placement preview rather than reproducing each renderer's dynamic content. | `HudElementPlacementTest`, `HudConfigurationManagerTest`, manual HUD checklist. |
+| Plan telemetry | Opt-in direction, FPS, Ping, local TPS estimate, Speed, armor/held durability, effects, clock, biome, server address, and totem-count readouts. | `hud.json`: independent enabled state and placement for every readout. | TPS reflects observed local client tick cadence, not a server-reported TPS; all values use already-loaded client state. | `ClientTpsEstimateTest`, `TelemetryTextTest`, manual HUD checklist. |
 
 The HUD editor is opened through the **HUD** button in the ClickGUI header. It
 shows a preview even when no module is enabled, supports the listed Active

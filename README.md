@@ -233,7 +233,9 @@ background, text shadow, scale, and padding. The layout is stored locally in
 `config/helikon/hud.json`. Cycle the **HUD element** selector to position or
 hide Waypoints, Coordinates, Saturation, Elytra, Target HUD, Reach, Inventory
 Preview, Durability Warnings, Radar, MiniPlayer, Debug Overlay, and Better
-Crosshair.
+Crosshair. The same selector includes opt-in Direction, FPS, Ping, local TPS
+estimate, Speed, Armor durability, Held-item durability, Potion effects,
+Clock, Biome, Server address, and Totem count readouts.
 
 ## Requirements
 

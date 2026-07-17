@@ -1,253 +1,38 @@
 # Helikon
 
 Helikon is a clean-room, open-source Fabric utility client for Minecraft Java
-Edition 26.2. This `1.0.0-rc.1` repository contains the client
-entrypoint, modular lifecycle API, basic settings, local JSON configuration,
-an internal event bus, a functional Right Shift ClickGUI, local chat commands,
-module keybinds, an Active Modules HUD, local profiles, local friends, local
-waypoints, local macros, and tests.
+Edition 26.2. It provides a searchable ClickGUI, a drag-and-drop HUD editor,
+local profiles, friends, waypoints, and macros, and more than 80 toggleable
+modules — all stored locally, with no backend, no telemetry, and no account.
 
-Saturation Display is a local HUD readout of the player's current hunger
-saturation. It changes no food state and sends no packet or request.
+Helikon is not affiliated with Aristois and contains no copied code, assets,
+branding, or configuration formats from that or any other project.
 
-Better Nametags adds only local billboard facts for nearby visible players. It
-does not change vanilla name tags, player data, packets, or server visibility.
+## Features
 
-AntiTotemAnimation hides only the local death-protection item activation
-overlay. It leaves totem gameplay, particles, sound, and server processing
-unchanged.
+- **Render** — Fullbright, EntityESP (outline/box/glow/shader), BlockESP,
+  StorageESP, XRay, Tracers, Trajectories, TrueSight, Radar, Breadcrumbs,
+  BetterNametags, BetterCrosshair, DamageIndicators, MiniPlayer, and more.
+- **Movement** — AutoSprint, AutoWalk, AutoSneak, AutoParkour, NoSlow, Step,
+  Speed, BunnyHop, Flight (with freecam view), NoFall, ExtraElytra, Scaffold,
+  Timer, and more.
+- **Player automation** — AutoEat, AutoTool, AutoArmor, AutoTotem, AutoFish,
+  AutoEject, AutoPotion, AutoReconnect, InventoryManager, ChestSteal,
+  BuilderAssist, Nuker.
+- **Chat** — BetterChat, ChatFilter, ChatMute, ChatColor, ChatTimestamps,
+  ChatHistory, ChatSpammer, ChatPrefix/Suffix, MentionNotifier, AutoReply,
+  Announcer, AntiSpam, PrivateMessageHelper, LocalTranslator.
+- **Combat** — KillAura, TriggerBot, BowAimAssist, CriticalAssist, AutoPotion,
+  TargetHUD, ReachDisplay, AntiBot.
+- **Local systems** — ClickGUI with themes and keyboard navigation, HUD
+  editor, per-server profiles, friends, waypoints, macros, panic key, and a
+  local-only debug overlay.
 
-Dinnerbone applies Minecraft's existing upside-down living-entity transform to
-selected local render categories. RainbowEnchant recolors only the local
-item-stack enchantment glint; neither feature changes entity data, items,
-packets, or server state.
-
-The internal event bus uses typed, Minecraft-free event models. Its currently
-wired lifecycle bridge covers ticks, local world connections, identity-aware
-screen changes, accepted ordinary chat, HUD/world/entity/block-outline rendering,
-ordinary local interactions, packet-class boundaries, local player-state
-observations, raw key/mouse/scroll input, loaded-chunk lifecycle, and resource
-reload start/completion. The narrow verified callback bridge only observes
-metadata; it never consumes input, cancels reloads, changes chunk state, creates
-or edits packets, alters an interaction result, or exposes packet contents.
-
-Its local settings API supports booleans, integers and decimals, enums,
-colors, keyboard/mouse binds with modifiers, bounded text and text lists, block/item/entity ID
-selections, enum multi-selections, numeric ranges, and bounded safe regular
-expressions. Every value is validated and stored only in local JSON.
-
-It is not affiliated with Aristois, and it does not contain copied code, assets,
-branding, or configuration formats from that project.
-
-## Status
-
-Helikon currently includes nineteen client-only render modules: Fullbright restores
-the previous gamma and Night Vision state when disabled; AntiBlind selectively
-and AntiTotemAnimation hides the local death-protection activation overlay;
-BetterCrosshair draws a local configurable HUD crosshair; Dinnerbone applies
-the existing upside-down entity transform to selected living categories; and
-RainbowEnchant tints local item-stack foil glint without modifying item data.
-EntityESP, BlockESP, Tracers, and Breadcrumbs never alter entities, blocks,
-client movement, or packets. EntityESP's Outline/Box modes (like BlockESP,
-Tracers, and Breadcrumbs) draw only in Minecraft's local world-render Gizmo
-phase, while its Glow/Shader modes reuse Minecraft's genuine entity-outline
-post-processing pass through a local read-only target snapshot. Glow keeps
-the vanilla team-derived outline color, Shader applies the configured
-module/friend colors, and disabling or changing worlds clears the snapshot
-without ever touching server-provided glowing flags. BlockESP deliberately scans a bounded cube at a bounded
-per-tick budget, so newly loaded or changed blocks can take one scan pass to
-appear. Its optional validated per-block colors affect only local Gizmo boxes
-and tracers. AutoSprint, AutoWalk, AutoSneak, and Twerk apply only normal local
-movement input and sprint state; AutoTool selects a safe local hotbar tool only
-while the user is already mining; FastPlace can lower Minecraft's transient
-local use cooldown only while the user holds Use; and FastBreak can lower an
-existing normal destroy cooldown for an optional local block-ID filter. AutoEat
-selects existing safe hotbar food and holds Minecraft's ordinary Use key only
-while its local threshold and combat rules permit it.
-AntiCactus only slides a normal local self-movement vector away from already
-loaded cactus collision boxes; it never suppresses cactus damage or claims to
-override server movement. BlockSelection renders one local highlight around the
-current visible block target and never modifies the selected block.
-
-AutoParkour requests only Minecraft's ordinary Jump input at a locally loaded,
-non-lava ledge with a shallow observed landing; it never jumps in a screen or
-over a larger drop. InventoryWalk allows configured keyboard movement only in
-the vanilla player inventory while no widget is focused. AntiAFK is disabled by
-default and, after its configurable idle interval, can make a small local view
-turn, grounded Jump request, or one-tick forward request. None creates a
-packet or changes server movement authority.
-
-AutoArmor, AutoEject, AutoTotem, and InventoryManager act only in the player's
-open vanilla inventory with an empty carried cursor, using Minecraft's normal
-container interactions. ChestSteal similarly runs only in an open vanilla
-chest and uses normal quick-move actions. Their local plans preserve configured
-hotbar slots, named/enchant-protected items, durability reserves, and Binding
-Curse equipment where applicable; Minecraft and the server remain authoritative
-over every attempted action.
-
-AutoFish observes the local fishing-hook state, waits for a configured bite
-delay, uses the selected player-provided rod normally to reel, and recasts once
-after the configured delay. AutoReconnect displays a cancellable local
-countdown after a multiplayer disconnect and asks Minecraft's normal connection
-screen to retry the same remembered server for a bounded number of attempts;
-it declines local/singleplayer targets and a disconnect that never reaches the
-ordinary disconnect screen. BuilderAssist previews small loaded replaceable
-line/floor/wall plans while a player-provided block is held and sends at most
-one ordinary Use interaction at its configured cadence. Nuker is disabled by
-default and requires Attack plus a non-empty block whitelist before it can make
-at most two normal destroy requests for loaded, reachable blocks per tick; its
-server-visible result is never assumed. A Baritone installation is detected
-only by its local Fabric mod ID; Helikon does not bundle, download, reflect on,
-or invoke Baritone. Packet manipulation, external networking, telemetry, a
-custom backend, and a server-side component remain unimplemented.
-
-Combat tools are deliberately constrained to Minecraft's ordinary client
-paths. TriggerBot and KillAura make at most one normal locally observed, line-of-sight
-attack request per client tick; CriticalAssist acts only while the user holds
-Attack during an ordinary falling critical window. BowAimAssist smooths only
-the local view while the user holds a bow and draws a local target outline; it
-never fires the bow. AutoPotion uses only player-owned, locally identified
-restorative hotbar potions, then restores a slot it still owns. AntiBot uses
-local tab-list/profile/age/name/invisibility heuristics only. TargetHUD and
-ReachDisplay render local observed facts; ReachDisplay reports distances for
-Helikon's own ordinary attack requests and never claims modified reach. KillAura
-also uses a configurable bounded local rotation adjustment before its normal
-attack request.
-
-The advanced movement modules remain deliberately conservative. NoSlow changes
-only selected local vanilla slowdown calculations; FastLadders, WaterJump,
-Step, Speed, and BunnyHop use bounded local input/collision/velocity choices
-with no anti-cheat-named modes. WaterJump requests ordinary Jump only at a
-loaded, clear water edge while moving forward. Flight and NoFall enable only
-Minecraft-granted flight
-abilities, while Flight's optional freecam view is a local invisible camera
-that suppresses player movement keys and never moves the player. ExtraElytra adds local pitch/speed/durability
-assistance. Scaffold uses player-provided hotbar blocks and normal Use
-interactions only while Use is held. Timer is constrained to 0.5×–1.25×,
-resets on world leave, and cannot make a multiplayer server advance faster.
-
-Trajectories predicts only frustum-visible in-flight arrows, tridents, and
-thrown items through a local block-collision simulation; it does not alter
-projectile physics or generate an aiming preview. TrueSight makes selected
-invisible entities locatable with transparent local boxes, without changing
-vanilla model rendering. Radar is a configurable local HUD for selected
-nearby entities. None of these features sends data or changes the server game.
-
-XRay rebuilds only local compiled chunk geometry so non-selected blocks are
-absent and configured targets remain locally visible; toggling it or changing
-its block list/opacity rebuilds the geometry again, including a full restoration
-on disable. StorageESP uses a separate bounded loaded-chunk scan for selected
-block entities and draws only frustum-visible local boxes. Neither feature
-requests chunks, modifies blocks, or sends packets.
-
-MiniPlayer renders the current local player model in a configurable HUD panel with
-local rotation, scale, armor, and background controls. DamageIndicators tracks
-only observed nearby local health decreases while the target has a current
-hurt indication, then draws a bounded fading/rising amount. Neither changes
-entity health, combat, packets, or server-side UI.
-
-ChatPrefix and ChatSuffix can format only ordinary outgoing chat, with explicit
-guards for Helikon commands, slash commands, private messages, and likely
-authentication commands. They use the player's normal server chat connection;
-no messages are relayed through a Helikon service.
-
-ChatMute and ChatFilter apply only local incoming-message decisions. They can
-hide structured vanilla message categories or bounded keyword/player/regex
-matches from the local HUD without affecting what a server sends to anyone
-else.
-
-ChatSpammer is deliberately constrained: it accepts ordinary local text only,
-waits at least two seconds between sends, pauses in screens by default, stops
-after disconnect, and has a small per-session cap. Servers may still punish
-spam, so it is off by default.
-
-MentionNotifier and AutoReply are off by default. MentionNotifier watches
-ordinary incoming player chat for the local player's name or configured local
-terms and can locally highlight the line, post Helikon feedback, and play a
-client UI sound. AutoReply evaluates one configured
-rule only, ignores the local player's own messages, pauses in screens by
-default, bounds replies per minute, and sends only safe ordinary chat through
-Minecraft's normal connection. It never sends commands or retries a failure.
-
-AntiSpam is also off by default. Its local policy can hide repeated or rapid
-incoming messages, collapse bursts of same-type join/leave notices, and exempt
-message categories. When its duplicate-stacking option is enabled, consecutive
-visible lines are locally collapsed with a bounded counter even if BetterChat
-is disabled. It has no server effect and never changes protocol traffic.
-
-ChatTimestamps is off by default and prepends a locally rendered timestamp to
-incoming player and server-system chat lines. It supports 12/24-hour time,
-seconds, brackets, a local color, and a session-relative label mode. The
-original message component is preserved; no timestamp is transmitted to a
-server. Minecraft logs the original message before Helikon decorates the
-locally stored display line.
-
-ChatColor is off by default and applies a configurable local palette to
-displayed player, server-system, mention, and conservatively recognized
-private-message lines. It also controls the timestamp-label color, standard
-vanilla `<player>` span color, background-opacity multiplier, and text shadow.
-It rebuilds only local display components after Minecraft logs the original
-message; custom server chat formats retain their own structured name styling.
-
-BetterChat is off by default and extends only the local chat display: bounded
-expanded history, consecutive duplicate stacking and `[xN]` counters, standard
-vanilla player names that suggest (but never send) a `/msg <name>` command,
-longer visibility with an adjustable fade, compact line height, and eased
-multi-line scrolling. Its `.chat` command searches, lists, or explicitly copies
-currently retained local lines; no history is persisted.
-
-ChatHistory is a separate, off-by-default local record module. It keeps a
-bounded searchable history while enabled and its `.history` command can list
-or search entries, copy a selected message or valid player name, and reopen a
-locally sent line as an unsent draft. Persistent logging is disabled by default.
-When explicitly enabled, records stay in schema-versioned per-server local
-files with retention pruning; they are never transmitted or used for private
-message inference.
-
-Announcer is off by default, and every local trigger is separately disabled
-until selected. It may send a bounded normal Minecraft chat line for a death,
-confirmed direct melee kill, pickup, distance, mined block, dimension, join,
-advancement, low-health, or totem event, subject to a local cooldown, cap, and
-screen pause. A leave trigger uses local Helikon feedback because no valid
-server connection remains after disconnect.
-
-LocalTranslator is off by default and has no external API mode. It displays an
-additional local translation from a bounded exact configured glossary; no chat
-text or credentials leave the client.
-
-PrivateMessageHelper intercepts `.pm` and `.reply` locally, validates a player
-name and a bounded message, then uses Minecraft's normal server-command route
-with configurable `msg` and `r` command tokens. The `.` command itself is
-never sent. Recent outgoing conversation tabs stay in memory only; Helikon
-does not inspect, relay, or persist private-message content.
-
-The ClickGUI currently provides:
-
-- a category sidebar driven by `ModuleCategory`
-- a scrollable module list with per-module toggles
-- search across module names, IDs, and descriptions
-- a settings panel with metadata plus editable boolean, number, and ARGB color settings
-- in-GUI keyboard or mouse keybind assignment with held modifier capture (Backspace/Delete unbinds; Escape cancels)
-- reset buttons for individual settings and whole modules
-- a draggable, resizable, clamped window saved in `global.json`
-- three local ClickGUI palettes, plus validated 0.75x–1.50x interface scale and reduced-animation preferences, selected from the Theme editor and saved in `global.json`
-- keyboard navigation: Left/Right changes categories, Up/Down selects module rows, and Enter/Space toggles the selected module
-- persistence of module state and settings when the screen closes
-
-The HUD editor provides a fully configurable **Active Modules** list and full
-enabled/placement/presentation controls for every other Helikon HUD element. Open the
-ClickGUI with Right Shift and select **HUD** in its header; drag the Active
-Modules preview (it snaps to edges and centre), toggle it, choose registry,
-alphabetical, or width sorting, left/right alignment, accent/rainbow color,
-background, text shadow, scale, and padding. The layout is stored locally in
-`config/helikon/hud.json`. Cycle the **HUD element** selector to position or
-hide Waypoints, Coordinates, Saturation, Elytra, Target HUD, Reach, Inventory
-Preview, Durability Warnings, Radar, MiniPlayer, Debug Overlay, and Better
-Crosshair. The same selector includes opt-in Direction, FPS, Ping, local TPS
-estimate, Speed, Armor durability, Held-item durability, Potion effects,
-Clock, Biome, Server address, and Totem count readouts.
-Each element has its own scale, alignment, background, padding, text shadow,
-local color, and rainbow setting; the editor always shows a styled draggable preview.
+Every module is honest about server authority: client-side effects are local,
+nothing sends malformed packets, and there are no anti-cheat bypass presets.
+See [modules.md](docs/modules.md) for every module's settings, limitations,
+and test coverage, and [usage.md](docs/usage.md) for the ClickGUI, HUD
+editor, keybind, and dot-command reference.
 
 ## Requirements
 
@@ -262,190 +47,52 @@ local color, and rainbow setting; the editor always shows a styled draggable pre
    Minecraft Java Edition 26.2.
 2. Place the Fabric API JAR and the built `helikon-<version>.jar` into your
    `.minecraft/mods` folder.
-3. Launch the Fabric profile. Press Right Shift in game to open the ClickGUI.
+3. Launch the Fabric profile. Press **Right Shift** in game to open the
+   ClickGUI, or type `.help` in chat for the local command list.
 
-Helikon is client-only: it must not be installed on servers, and you should
-only use it where the server's rules permit client modifications.
+## Multiplayer warning
 
-## Build
+Helikon is client-only and must not be installed on servers. Use it only
+where the server's rules permit client modifications; Minecraft servers
+remain authoritative, and no client-side feature can guarantee a server-side
+result.
+
+## Privacy and no-backend policy
+
+- All data (settings, profiles, friends, waypoints, macros, opt-in chat
+  history) is stored locally under `.minecraft/config/helikon/`.
+- No Helikon-operated backend, telemetry, analytics, account service, remote
+  feature flags, or cloud synchronization exists.
+- The current release performs no external network requests at all.
+
+See [privacy.md](docs/privacy.md) and [networking.md](docs/networking.md).
+
+## Building from source
 
 ```powershell
-.\gradlew.bat build
+.\gradlew.bat build        # remapped mod JAR in build/libs
+.\gradlew.bat runClient    # development client
+.\gradlew.bat check releaseBundle  # tests, checks, and auditable release zip
 ```
 
-The remapped mod JAR is produced in `build/libs`. To start a development client:
+The release bundle in `build/releases` contains the JAR, sources, SHA-256
+checksums, and the resolved dependency report. See
+[release.md](docs/release.md) for the release gate and
+[security-review.md](docs/security-review.md) for its security review scope.
 
-```powershell
-.\gradlew.bat runClient
-```
+## Status
 
-To validate the release candidate and create the locally auditable release
-bundle (JAR, SHA-256 checksums, resolved-dependency report, release notes, and
-the relevant documentation), run:
+`1.0.0-rc.1` is a release candidate. The automated test suite, style, and
+client-only architecture checks pass; the live-client smoke checklists in
+[testing.md](docs/testing.md) remain a release gate and are not a substitute
+for real-world testing on a disposable profile.
 
-```powershell
-.\gradlew.bat check releaseBundle
-```
+## Contributing
 
-The bundle is written to `build/releases`. See [release.md](docs/release.md)
-for the release gate and [security-review.md](docs/security-review.md) for its
-security review scope.
-
-Press Right Shift in the client to open the ClickGUI. Click a category to list
-its modules, click a module to inspect and edit its settings, and click the
-square at the right of a row to toggle it. The search box at the top filters
-across every category. Changes are written to `global.json` when the screen
-closes. Select **HUD** in the header to open the minimal HUD editor; its
-changes are written to `hud.json` when that editor closes. Drag the ClickGUI
-by an empty part of its header. In a selected module's settings panel, click
-**Bind** and press a key; Backspace/Delete removes the bind and Escape cancels.
-Drag its bottom-right handle to resize it; the position and dimensions are
-restored locally when it is reopened.
-Select **Theme** in the header to choose Midnight, High Contrast, or Ocean;
-the client never downloads themes or contacts a service.
-
-ClickGUI text controls validate every supported compact setting type before
-changing the stored value. Use semicolons for text/identifier lists, commas for
-multi-enum selections, `minimum..maximum` for ranges, and
-`keyboard|mouse:code:toggle|hold|press_once[:modifiers]` for standalone
-keybind settings. Invalid input is shown in red and retains the last valid
-value. Color-setting rows additionally provide local alpha/red/green/blue
-picker tracks below the text value.
-With no text field focused, use Left/Right to switch categories, Up/Down to
-select a module, and Enter or Space to toggle it.
-Select **ChatColor** in the Chat category to edit its `#AARRGGBB` local
-palette, opacity multiplier, and text-shadow setting. The module never changes
-outgoing chat or server-visible formatting.
-Select **Dinnerbone** in the Render category to flip selected local player,
-hostile, or other living-entity models. Select **RainbowEnchant** to choose a
-local `#AARRGGBB` item-glint tint or cycle through a rainbow; worn armor-layer
-glint remains vanilla in this initial implementation.
-
-## Local commands
-
-Chat messages that start with `.` are intercepted on the client and are never
-sent to the server:
-
-| Command | Effect |
-| --- | --- |
-| `.help` | Lists all local commands. |
-| `.modules` | Lists registered modules and their state. |
-| `.toggle <module>` | Enables or disables a module by ID. |
-| `.search <text>` | Finds modules by name, ID, or description. |
-| `.setting <module> <setting> <value>` | Changes a boolean, number, `#AARRGGBB` color, or documented enum setting. |
-| `.reset <module>` | Resets a module's settings to defaults. |
-| `.bind <module> <key> [toggle\|hold\|press_once]` | Binds a keyboard/mouse input, optionally with modifiers, to a module. |
-| `.unbind <module>` | Removes a module's keybind. |
-| `.gui` | Opens the ClickGUI. |
-| `.profile list` | Lists saved local profiles. |
-| `.profile save\|load\|delete <name>` | Saves, loads, or deletes a local module/ClickGUI snapshot. |
-| `.profile duplicate\|rename <from> <to>` | Creates a named copy or renames a local profile. |
-| `.profile default <name\|clear>` | Sets or clears the locally persisted startup profile. |
-| `.profile server <address> <profile\|clear>` | Associates a local profile with a server address; it overrides the default on matching joins. |
-| `.profile world <id> <profile\|clear>` | Associates a local profile with a singleplayer world name; it overrides the default on matching joins. |
-| `.profile import <file> <name>` / `.profile export <name> <file>` | Imports from `imports/` or exports to `exports/` below the Helikon config directory. |
-| `.friend list\|add\|remove <player>` | Lists or changes local player-name friends. |
-| `.friend color <player> <#RRGGBB\|#AARRGGBB>` | Sets the local friend render color. |
-| `.waypoint list` | Lists local waypoints for the current world and dimension by distance. |
-| `.waypoint add <name> [x y z]` | Saves the current location or supplied coordinates locally. |
-| `.waypoint remove <name>` / `.waypoint rename <from> <to>` | Deletes or renames a local waypoint here. |
-| `.waypoint toggle\|color\|icon <name> ...` | Changes a waypoint's local visibility, color, or optional icon token. |
-| `.macro list` / `.macro create <name> [global\|server]` | Lists or creates a local macro. |
-| `.macro add <name> <local\|chat\|command\|delay> <text\|ticks>` | Adds one explicit, bounded macro action. |
-| `.macro show\|clear\|scope\|delete <name> ...` | Inspects or changes a stored local macro. |
-| `.macro run <name>` / `.macro stop` | Starts one local macro or stops its queued run. |
-| `.pm <player> <message>` / `.pm history [player]` | Sends one validated normal server PM or views bounded local outgoing history. Prefix a literal `history` target with `--`. |
-| `.reply <message>` / `.reply history [player]` | Sends one validated normal server reply or views the same local history. Prefix a literal `history` reply with `--`. |
-| `.chat search <text>` / `.chat copy <newest-index>` / `.chat history [count]` | Searches, explicitly copies, or lists bounded local BetterChat display history while BetterChat is enabled. |
-| `.history search <text>` / `.history copy\|player\|reopen <newest-index>` / `.history list [count]` | Searches or lists ChatHistory entries, copies a retained message/player name, or reopens a sent line as an unsent local draft. |
-| `.panic` | Disables modules, hides custom HUD for this session, and closes Helikon GUI screens. |
-| `.panic bind <key>` / `.panic unbind` | Configures or clears the local persisted panic keyboard/mouse bind. |
-| `.panic status` / `.panic restorehud` | Shows the bind or restores HUD visibility without re-enabling modules. |
-
-Key names follow Minecraft's keyboard names, for example `r`, `f6`, or
-`right.shift`; binds also accept `mouse1` through `mouse8` and modifiers such
-as `ctrl+r` or `alt+mouse1`. Module keybinds never fire while any screen is
-open, so typing into chat or a search box cannot toggle modules. The chat
-screen completes unambiguous dot-command names with Tab; it never intercepts
-server command completion or command arguments. A local warning identifies
-module keybind collisions without silently changing either bind. This reservation
-also follows any mouse binding assigned to **Open GUI** in Minecraft Controls.
-Profile names are local, lowercase file-safe tokens (letters,
-digits, `_`, and `-`), and no profile data is synchronized or sent to a server.
-Friend names and colors are also stored locally only in `friends.json`. With
-**OneClickFriends** enabled, middle-clicking a player in the world toggles that
-local friend entry; this does not consume or alter normal middle-click actions
-on blocks or items. SkinBlinker changes only the session-local skin-layer
-options and restores them on disable, screen open, or world exit. Annoy is disabled by
-default and makes at most one ordinary main-hand swing every configured 20–600
-ticks; it never attacks, targets, or sends chat.
-Local Cape replaces only this client's transient local-player cape render state
-with a procedurally generated texture based on its locally stored color
-settings. Local Cosmetics draws one bounded local aura ring at the local
-player's feet. Neither feature downloads, uploads, distributes, or changes a
-cape or cosmetic for another player.
-Debug Overlay is disabled by default. When explicitly enabled, it displays
-local per-module tick/render timing, bounded BlockESP/StorageESP cache counts,
-event subscribers, and global configuration-save status. It is paged locally
-and never writes diagnostics or sends them to a server or service.
-Inventory Preview and Durability Warnings render only already-loaded local
-inventory facts; neither opens an inventory nor changes an item. Death
-Coordinates and Logout Coordinates retain one enabled-only, session-local
-coordinate snapshot and show local chat/HUD feedback only in the same local
-server or singleplayer-world scope. They do not create a waypoint, write a
-coordinate file, or send location data, and reset on restart.
-Waypoints are scoped locally to the current server/world and dimension; their
-nearest enabled entries appear as a small direction-and-distance HUD list.
-Waypoint names, coordinates, world/server scope, dimension, colors, icons, and
-enabled state are stored locally only in `waypoints.json`.
-Macros are stored locally in `macros.json` and run only explicitly configured
-local Helikon commands, ordinary chat messages, Minecraft commands, and bounded
-delays. There is no macro scripting or arbitrary code execution.
-PrivateMessageHelper's command-token settings are stored with the other module
-settings in `global.json`; its recent message text is deliberately session-only
-memory and is discarded on client exit.
-ChatHistory persistence remains opt-in: enabled logs use opaque hashed
-per-server filenames below `chat-history/`, atomic replacement and `.bak`
-backups, bounded retention, and corrupt-file recovery. They contain only
-accepted non-overlay incoming lines and ordinary sent chat, never local `.`
-commands.
-The optional panic key is stored locally in `panic.json`; it is suppressed while
-typing in chat or ordinary screens, but works inside Helikon screens to close
-them immediately.
-
-## Local data and privacy
-
-Helikon stores its initial global configuration locally at:
-
-```text
-.minecraft/config/helikon/global.json
-```
-
-No Helikon-operated backend, telemetry, account service, remote feature flags,
-or cloud synchronization is used. See [networking.md](docs/networking.md) and
-[privacy.md](docs/privacy.md).
-
-## Multiplayer
-
-Use only on servers whose rules permit client modifications. Minecraft servers
-remain authoritative; future client-side features must not claim to guarantee
-server-side behavior.
-
-## Release candidate status
-
-`1.0.0-rc.1` is a client-only release candidate for Minecraft 26.2. The live
-client smoke checklists in [testing.md](docs/testing.md) remain a release gate;
-the automated suite and local release-bundle checks do not replace real-world
-testing on a disposable profile.
-
-## Development
-
-Read [architecture.md](docs/architecture.md), [configuration.md](docs/configuration.md),
+Read [contributing.md](docs/contributing.md) for the ground rules, and
+[architecture.md](docs/architecture.md), [configuration.md](docs/configuration.md),
 and [testing.md](docs/testing.md) before changing core systems. The long-term
-roadmap and policies live in [PLAN.md](PLAN.md). See
-[contributing.md](docs/contributing.md) for the contribution ground rules;
-contributions should include tests and keep all behavior local-only unless an
-explicitly documented optional integration is approved.
+roadmap and policies live in [PLAN.md](PLAN.md) and [RULES.md](RULES.md).
 
 ## License
 

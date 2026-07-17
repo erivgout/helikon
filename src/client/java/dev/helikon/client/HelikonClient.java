@@ -81,6 +81,7 @@ import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
 import dev.helikon.client.module.combat.ReachDisplay;
+import dev.helikon.client.module.combat.SilentAura;
 import dev.helikon.client.module.combat.TriggerBot;
 import dev.helikon.client.module.movement.AutoSprint;
 import dev.helikon.client.module.movement.AutoSneak;
@@ -453,6 +454,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoPotion autoPotion = new AutoPotion();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
+        SilentAura silentAura = new SilentAura();
         ReachDisplay reachDisplay = new ReachDisplay();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
         Annoy annoy = new Annoy();
@@ -525,6 +527,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoPotion);
         modules.register(targetHud);
         modules.register(killAura);
+        modules.register(silentAura);
         modules.register(reachDisplay);
         modules.register(annoy);
         modules.register(oneClickFriends);
@@ -623,6 +626,12 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(killAura, "tick", () -> {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftCombatAccess.tickKillAura(clientTick, killAura,
+                                combatSnapshot.get(), combatTracker));
+                    }
+                });
+                modules.runGuarded(silentAura, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftCombatAccess.tickSilentAura(clientTick, silentAura,
                                 combatSnapshot.get(), combatTracker));
                     }
                 });

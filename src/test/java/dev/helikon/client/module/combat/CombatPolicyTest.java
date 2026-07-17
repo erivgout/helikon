@@ -97,6 +97,49 @@ class CombatPolicyTest {
     }
 
     @Test
+    void silentAuraSelectsVisibleTargetsAtBoundedCadenceAndAimsDirectlyWithoutSmoothing() {
+        SilentAura aura = enabled(new SilentAura());
+        CombatTarget first = target("a", CombatEntityType.HOSTILE, false, false, true, 2.0D, 1.0D, 10.0D);
+        CombatTarget second = target("b", CombatEntityType.HOSTILE, false, false, true, 3.0D, 2.0D, 10.0D);
+        CombatTarget blocked = target("blocked", CombatEntityType.HOSTILE, false, false, false, 1.0D, 1.0D, 10.0D);
+
+        // Line-of-sight-blocked targets are excluded, and the nearest eligible one is kept in Single mode.
+        assertEquals("a", aura.nextAttack(0L, List.of(second, first, blocked), true).orElseThrow().id());
+        // The normal attack cooldown suppresses a second attack until the configured delay elapses.
+        assertTrue(aura.nextAttack(1L, List.of(second, first, blocked), true).isEmpty());
+        assertEquals("a", aura.nextAttack(4L, List.of(second, first, blocked), true).orElseThrow().id());
+
+        enumSetting(aura, "target_mode", SilentAura.TargetMode.class).set(SilentAura.TargetMode.SWITCH);
+        assertEquals("b", aura.nextAttack(8L, List.of(second, first, blocked), true).orElseThrow().id());
+
+        // The server-facing aim is the exact rotation toward the target, not a bounded per-tick adjustment,
+        // because no visible camera movement is involved.
+        CombatTarget straightAhead = new CombatTarget("ahead", "ahead", CombatEntityType.HOSTILE, false, false,
+                true, true, true, 4.0D, 0.0D, 0.0D, 0.0D, 4.0D, 0.0D, 0.0D, 0.0D, 20.0D, 0,
+                "minecraft:air", List.of());
+        CombatAim.Rotation aim = aura.serverAim(straightAhead);
+        assertEquals(CombatAim.predictedRotation(straightAhead, 1.0D, 0.0D, false).yaw(), aim.yaw(), 0.0001F);
+        assertEquals(0.0F, aim.pitch(), 0.0001F);
+    }
+
+    @Test
+    void silentAuraRespectsDisabledStateAndMultiModeBounds() {
+        SilentAura aura = new SilentAura();
+        // A disabled advantage module never selects a target.
+        assertTrue(aura.nextAttacks(0L, List.of(target("x", CombatEntityType.HOSTILE, false, false, true,
+                2.0D, 1.0D, 10.0D)), true).isEmpty());
+
+        enabled(aura);
+        enumSetting(aura, "target_mode", SilentAura.TargetMode.class).set(SilentAura.TargetMode.MULTI);
+        numberSetting(aura, "max_targets").set(2.0D);
+        CombatTarget nearest = target("nearest", CombatEntityType.HOSTILE, false, false, true, 1.5D, 4.0D, 10.0D);
+        CombatTarget middle = target("middle", CombatEntityType.HOSTILE, false, false, true, 2.5D, 2.0D, 10.0D);
+        CombatTarget far = target("far", CombatEntityType.HOSTILE, false, false, true, 3.5D, 1.0D, 10.0D);
+
+        assertEquals(List.of(nearest, middle), aura.nextAttacks(0L, List.of(far, middle, nearest), true));
+    }
+
+    @Test
     void autoPotionUsesOnlyRestorativeWhitelistedPotionAndRestoresOwnedSlot() {
         AutoPotion autoPotion = enabled(new AutoPotion());
         PotionCandidate safe = new PotionCandidate(3, "healing", PotionCandidate.Kind.SPLASH, true);

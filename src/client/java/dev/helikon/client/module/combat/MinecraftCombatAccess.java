@@ -10,6 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -139,6 +140,45 @@ public final class MinecraftCombatAccess {
             attacked |= attack(client, snapshot.entities().get(target.id()), target, tracker);
         }
         return attacked;
+    }
+
+    /**
+     * Aims via a well-formed server-facing rotation packet and requests ordinary attacks without moving the
+     * visible local camera. The server-side rotation is restored to the real camera after the attacks are sent,
+     * and the Minecraft server remains authoritative over reach, cooldown, line of sight, and hit validation.
+     */
+    public static boolean tickSilentAura(long tick, SilentAura silentAura, Snapshot snapshot, CombatTargetTracker tracker) {
+        Minecraft client = Minecraft.getInstance();
+        if (!readyForAttack(client, snapshot) || client.player.connection == null) {
+            return false;
+        }
+        List<CombatTarget> targets = silentAura.nextAttacks(tick, snapshot.targets(), attackReady(client.player));
+        if (targets.isEmpty()) {
+            return false;
+        }
+        LocalPlayer player = client.player;
+        float cameraYaw = player.getYRot();
+        float cameraPitch = player.getXRot();
+        boolean attacked = false;
+        for (CombatTarget target : targets) {
+            LivingEntity entity = snapshot.entities().get(target.id());
+            if (entity == null || entity.isRemoved() || !entity.isAlive() || !player.hasLineOfSight(entity)) {
+                continue;
+            }
+            CombatAim.Rotation aim = silentAura.serverAim(target);
+            sendRotation(player, aim.yaw(), aim.pitch());
+            attacked |= attack(client, entity, target, tracker);
+        }
+        if (attacked) {
+            // Return the server-side rotation to the untouched local camera so the visible view stays authoritative.
+            sendRotation(player, cameraYaw, cameraPitch);
+        }
+        return attacked;
+    }
+
+    private static void sendRotation(LocalPlayer player, float yaw, float pitch) {
+        player.connection.send(new ServerboundMovePlayerPacket.Rot(yaw, pitch, player.onGround(),
+                player.horizontalCollision));
     }
 
     private static boolean readyForAttack(Minecraft client, Snapshot snapshot) {

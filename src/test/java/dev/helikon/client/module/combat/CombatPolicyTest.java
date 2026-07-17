@@ -174,6 +174,51 @@ class CombatPolicyTest {
         assertTrue(tracker.lastAttackDistance().isEmpty());
     }
 
+    @Test
+    void blockHitRaisesShieldForInRangeThreatAndUnblocksAroundReadyAttack() {
+        FakeUseKey key = new FakeUseKey();
+        BlockHit blockHit = enabled(new BlockHit(key));
+        CombatTarget threat = target("threat", CombatEntityType.HOSTILE, false, false, false, 3.0D, 0.0D, 20.0D);
+
+        BlockHit.Action idle = blockHit.tick(0L, new BlockHit.Context(true, true, false, false, List.of()));
+        assertFalse(idle.holdBlock());
+        assertFalse(key.down);
+
+        BlockHit.Action noShield = blockHit.tick(1L, new BlockHit.Context(false, true, false, false, List.of(threat)));
+        assertFalse(noShield.holdBlock());
+        assertFalse(key.down);
+
+        BlockHit.Action raise = blockHit.tick(2L, new BlockHit.Context(true, true, false, false, List.of(threat)));
+        assertTrue(raise.holdBlock());
+        assertTrue(key.down);
+
+        BlockHit.Action unblock = blockHit.tick(3L, new BlockHit.Context(true, true, true, false, List.of(threat)));
+        assertTrue(unblock.releaseBlock());
+        assertFalse(key.down);
+
+        BlockHit.Action reblock = blockHit.tick(6L, new BlockHit.Context(true, true, false, false, List.of(threat)));
+        assertTrue(reblock.holdBlock());
+        assertTrue(key.down);
+
+        blockHit.disable();
+        assertFalse(key.down);
+    }
+
+    private static final class FakeUseKey implements BlockHit.UseKeyAccess {
+        private boolean physicallyDown;
+        private boolean down;
+
+        @Override
+        public boolean isPhysicallyDown() {
+            return physicallyDown;
+        }
+
+        @Override
+        public void setDown(boolean value) {
+            down = value;
+        }
+    }
+
     private static CombatTarget target(String id, CombatEntityType type, boolean friend, boolean bot, boolean lineOfSight,
                                        double distance, double angle, double health) {
         return new CombatTarget(id, id, type, friend, bot, true, true, lineOfSight, distance, angle,

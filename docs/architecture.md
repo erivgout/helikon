@@ -171,7 +171,13 @@ only Helikon's normal attack request distance and does not imply server reach.
 KillAura applies the same bounded local rotation policy before its normal attack
 cycle. TargetHUD retains the last crosshair or Helikon attack target while it
 remains in the current locally rendered target set, then clears it on absence or
-world loss; it does not flash a non-crosshair target for only one frame.
+world loss; it does not flash a non-crosshair target for only one frame. BlockHit
+keeps its threat-in-range, screen, shield, and unblock-window decision in a
+Minecraft-free policy; `MinecraftBlockHitUseKey` is the only adapter and just
+owns the ordinary local Use key (raising a held `BLOCKS_ATTACKS` shield) while an
+eligible non-friend target is inside its bounded range, releasing that key around
+a ready attack and on disable, panic, or player loss. It never constructs a
+packet, so the server still validates every shield-blocked or unblocked hit.
 
 The inventory-automation modules keep armor ranking, item-ID/slot parsing,
 totem restore conditions, chest priority, and conservative manager choices in

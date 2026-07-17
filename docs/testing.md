@@ -41,7 +41,11 @@ need the visual smoke test below.
 `SettingTest` also covers integral and range bounds, keybind JSON recovery,
 immutable bounded string/identifier lists, item/block/entity selector tokens,
 stable multi-select enum JSON, safe-regex rejection, visibility predicates,
-and validated change listeners.
+and validated change listeners. `SettingTextTest` covers the compact ClickGUI
+syntax for integer, list/selector, multi-enum, range, regex, and keybind
+settings, including rejection that retains the last valid value.
+`ColorPickerValueTest` covers ARGB channel replacement and picker endpoint
+mapping without Minecraft UI dependencies.
 AutoSprint's hunger, collision, direction, and reversible ownership decisions,
 plus AutoWalk's GUI and steering input policy, are covered by
 `AutoSprintTest` and `AutoWalkTest`.
@@ -301,8 +305,10 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     to take priority.
 15. Select **BetterCrosshair**, enable it, and verify its custom crosshair
     replaces the vanilla one. Change its size, gap, thickness, outline, and
-    `#AARRGGBB` color text field; while moving, verify the optional dynamic gap
-    responds locally. Disable it and verify the vanilla crosshair returns.
+    `#AARRGGBB` color text field; drag each alpha/red/green/blue picker track
+    and verify it changes only that color channel and synchronizes the text
+    value. While moving, verify the optional dynamic gap responds locally.
+    Disable it and verify the vanilla crosshair returns.
 16. Select **AntiBlind** and independently toggle each setting. Verify Nausea,
     carved-pumpkin, and powder-snow overlays hide only when configured; verify
     disabling the module restores vanilla visuals. Blindness and Darkness fog

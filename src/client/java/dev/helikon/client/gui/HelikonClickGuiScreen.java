@@ -13,13 +13,12 @@ import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.ColorSetting;
-import dev.helikon.client.setting.ColorSettingText;
+import dev.helikon.client.setting.ColorPickerValue;
 import dev.helikon.client.setting.EnumSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.setting.NumberSettingText;
 import dev.helikon.client.setting.Setting;
-import dev.helikon.client.setting.StringSetting;
-import dev.helikon.client.setting.StringSettingText;
+import dev.helikon.client.setting.SettingText;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -56,6 +55,9 @@ public final class HelikonClickGuiScreen extends Screen {
     private static final int ENABLED_ROW_HEIGHT = 14;
     private static final int BOOLEAN_ROW_HEIGHT = 14;
     private static final int NUMBER_ROW_HEIGHT = 28;
+    private static final int COLOR_PICKER_ROW_HEIGHT = 46;
+    private static final int COLOR_PICKER_TOP = 28;
+    private static final int COLOR_PICKER_CHANNEL_HEIGHT = 4;
     private static final int CHECKBOX_SIZE = 8;
     private static final int RESET_BUTTON_SIZE = 10;
     private static final int HUD_BUTTON_WIDTH = 30;
@@ -170,8 +172,7 @@ public final class HelikonClickGuiScreen extends Screen {
             return;
         }
         for (SettingRow row : settingRows(module)) {
-            if (row.setting() instanceof NumberSetting || row.setting() instanceof ColorSetting
-                    || row.setting() instanceof StringSetting) {
+            if (SettingText.isEditable(row.setting())) {
                 EditBox field = textFields.get(row.setting());
                 if (field != null) {
                     field.setX(settingsX + 6);
@@ -248,6 +249,7 @@ public final class HelikonClickGuiScreen extends Screen {
                 || handleThemeEditorClick(mouseX, mouseY)
                 || handleCategoryClick(mouseX, mouseY)
                 || handleModuleListClick(mouseX, mouseY)
+                || updateColorPicker(mouseX, mouseY)
                 || handleSettingsClick(mouseX, mouseY)
                 || handleWindowResizeStart(mouseX, mouseY)
                 || handleWindowDragStart(mouseX, mouseY);
@@ -255,6 +257,9 @@ public final class HelikonClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (event.button() == 0 && updateColorPicker((int) event.x(), (int) event.y())) {
+            return true;
+        }
         if (event.button() == 0 && windowResize.resizeTo(
                 (int) event.x(), (int) event.y(), new ClickGuiWindowState.Position(panelX, panelY), width, height
         )) {
@@ -485,6 +490,7 @@ public final class HelikonClickGuiScreen extends Screen {
                 int swatchX = settingResetX() - 18;
                 graphics.fill(swatchX, row.y() + 3, swatchX + 12, row.y() + 10, colorSetting.value());
                 graphics.outline(swatchX, row.y() + 3, 12, 7, COLOR_TEXT_DIM);
+                drawColorPicker(graphics, colorSetting, row.y());
             } else if (setting instanceof EnumSetting<?> enumSetting) {
                 String value = enumSetting.valueId();
                 int valueWidth = font.width(value);
@@ -520,6 +526,31 @@ public final class HelikonClickGuiScreen extends Screen {
         } else {
             graphics.outline(x, y, CHECKBOX_SIZE, CHECKBOX_SIZE, COLOR_TEXT_DIM);
         }
+    }
+
+    private void drawColorPicker(GuiGraphicsExtractor graphics, ColorSetting setting, int rowY) {
+        int x = settingsX + 6;
+        int width = SETTINGS_WIDTH - 12;
+        for (int channel = 0; channel < ColorPickerValue.CHANNEL_COUNT; channel++) {
+            int y = rowY + COLOR_PICKER_TOP + channel * COLOR_PICKER_CHANNEL_HEIGHT;
+            for (int segment = 0; segment < 32; segment++) {
+                int start = x + segment * width / 32;
+                int end = x + (segment + 1) * width / 32;
+                int value = segment * 255 / 31;
+                graphics.fill(start, y, end, y + COLOR_PICKER_CHANNEL_HEIGHT,
+                        pickerColor(setting.value(), channel, value));
+            }
+            int markerX = x + (int) Math.round(ColorPickerValue.channel(setting.value(), channel)
+                    * (width - 1) / 255.0D);
+            graphics.outline(markerX - 1, y - 1, 3, COLOR_PICKER_CHANNEL_HEIGHT + 2, COLOR_TEXT);
+        }
+    }
+
+    private static int pickerColor(int color, int channel, int value) {
+        if (channel == 0) {
+            return 0xFF000000 | value << 16 | value << 8 | value;
+        }
+        return ColorPickerValue.withChannel(color, channel, value) | 0xFF000000;
     }
 
     private boolean handleCategoryClick(int mouseX, int mouseY) {
@@ -629,6 +660,32 @@ public final class HelikonClickGuiScreen extends Screen {
         return false;
     }
 
+    /** Applies an ARGB slider drag through the existing validated ColorSetting path. */
+    private boolean updateColorPicker(int mouseX, int mouseY) {
+        Module module = state.selectedModule().orElse(null);
+        if (module == null || mouseX < settingsX + 6 || mouseX >= settingsX + SETTINGS_WIDTH - 6) {
+            return false;
+        }
+        for (SettingRow row : settingRows(module)) {
+            if (!(row.setting() instanceof ColorSetting colorSetting)) {
+                continue;
+            }
+            int relativeY = mouseY - row.y() - COLOR_PICKER_TOP;
+            int channel = relativeY / COLOR_PICKER_CHANNEL_HEIGHT;
+            if (relativeY < 0 || channel >= ColorPickerValue.CHANNEL_COUNT) {
+                continue;
+            }
+            int value = ColorPickerValue.channelAt(mouseX, settingsX + 6, SETTINGS_WIDTH - 12);
+            colorSetting.set(ColorPickerValue.withChannel(colorSetting.value(), channel, value));
+            EditBox field = textFields.get(colorSetting);
+            if (field != null) {
+                field.setValue(SettingText.format(colorSetting));
+            }
+            return true;
+        }
+        return false;
+    }
+
     /** Handles ClickGUI navigation only while no text editor owns the keyboard. */
     private boolean handleKeyboardNavigation(int key) {
         if (key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT) {
@@ -692,28 +749,15 @@ public final class HelikonClickGuiScreen extends Screen {
 
         for (SettingRow row : settingRows(module)) {
             Setting<?> setting = row.setting();
-            if (!(setting instanceof NumberSetting) && !(setting instanceof ColorSetting)
-                    && !(setting instanceof StringSetting)) {
+            if (!SettingText.isEditable(setting)) {
                 continue;
             }
             EditBox field = new EditBox(font, settingsX + 6, row.y() + 12, SETTINGS_WIDTH - 12, 14,
                     Component.literal(setting.name()));
-            field.setMaxLength(32);
-            if (setting instanceof NumberSetting numberSetting) {
-                field.setValue(NumberSettingText.format(numberSetting.value()));
-                field.setResponder(text -> field.setTextColor(
-                        NumberSettingText.tryApply(numberSetting, text) ? COLOR_TEXT : COLOR_INVALID));
-            } else if (setting instanceof ColorSetting colorSetting) {
-                field.setValue(ColorSettingText.format(colorSetting.value()));
-                field.setResponder(text -> field.setTextColor(
-                        ColorSettingText.tryApply(colorSetting, text) ? COLOR_TEXT : COLOR_INVALID));
-            } else {
-                StringSetting stringSetting = (StringSetting) setting;
-                field.setMaxLength(stringSetting.maximumLength());
-                field.setValue(stringSetting.value());
-                field.setResponder(text -> field.setTextColor(
-                        StringSettingText.tryApply(stringSetting, text) ? COLOR_TEXT : COLOR_INVALID));
-            }
+            field.setMaxLength(SettingText.maximumLength(setting));
+            field.setValue(SettingText.format(setting));
+            field.setResponder(text -> field.setTextColor(
+                    SettingText.tryApply(setting, text) ? COLOR_TEXT : COLOR_INVALID));
             addRenderableWidget(field);
             textFields.put(setting, field);
         }
@@ -729,8 +773,8 @@ public final class HelikonClickGuiScreen extends Screen {
         List<SettingRow> rows = new ArrayList<>();
         int y = settingControlsTop(module) + MODULE_RESET_ROW_HEIGHT + BIND_ROW_HEIGHT + ENABLED_ROW_HEIGHT;
         for (Setting<?> setting : module.settings()) {
-            int rowHeight = setting instanceof NumberSetting || setting instanceof ColorSetting || setting instanceof StringSetting
-                    ? NUMBER_ROW_HEIGHT : BOOLEAN_ROW_HEIGHT;
+            int rowHeight = setting instanceof ColorSetting ? COLOR_PICKER_ROW_HEIGHT
+                    : SettingText.isEditable(setting) ? NUMBER_ROW_HEIGHT : BOOLEAN_ROW_HEIGHT;
             rows.add(new SettingRow(setting, y, rowHeight));
             y += rowHeight;
         }

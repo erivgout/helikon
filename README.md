@@ -278,6 +278,14 @@ Drag its bottom-right handle to resize it; the position and dimensions are
 restored locally when it is reopened.
 Select **Theme** in the header to choose Midnight, High Contrast, or Ocean;
 the client never downloads themes or contacts a service.
+
+ClickGUI text controls validate every supported compact setting type before
+changing the stored value. Use semicolons for text/identifier lists, commas for
+multi-enum selections, `minimum..maximum` for ranges, and
+`keyboard|mouse:code:toggle|hold|press_once[:modifiers]` for standalone
+keybind settings. Invalid input is shown in red and retains the last valid
+value. Color-setting rows additionally provide local alpha/red/green/blue
+picker tracks below the text value.
 With no text field focused, use Left/Right to switch categories, Up/Down to
 select a module, and Enter or Space to toggle it.
 Select **ChatColor** in the Chat category to edit its `#AARRGGBB` local

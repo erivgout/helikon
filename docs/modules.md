@@ -131,11 +131,12 @@ Modules appear in the ClickGUI (Right Shift) under their `ModuleCategory`.
 Selecting a module shows its name, category, ID, description, an enabled
 toggle, and controls for its `BooleanSetting`, `NumberSetting`, `ColorSetting`,
 and finite `EnumSetting` values. Colors use strict `#AARRGGBB` tokens; click
-an enum row to cycle its documented choices.
-The core also serializes validated integer, keybind, string-list, selector,
-multi-select enum, range, and regex settings. Those types deliberately remain
-read-only in the current ClickGUI until their specific controls and local
-command syntax are introduced; configuration never bypasses their validation.
+an enum row to cycle its documented choices. Integer, string-list, selector,
+multi-select enum, range, regex, and keybind settings use compact validated
+text fields. Lists/selectors use `;`, multi-enums use `,`, ranges use
+`minimum..maximum`, and keybind values use
+`keyboard|mouse:code:toggle|hold|press_once[:shift+control+alt+super]`.
+Invalid text is red and leaves the last valid stored value unchanged.
 Toggles are dispatched through `ModuleRegistry`, so a module that throws
 during `onEnable`/`onDisable` is isolated and force-disabled instead of
 crashing the client. Setting edits and enabled state persist to
@@ -154,8 +155,9 @@ and custom dimensions persist in `global.json`.
 
 Select **Theme** from the ClickGUI header to open its local palette selector.
 The initial themes are Midnight, High Contrast, and Ocean; selecting one
-changes the panel immediately and persists it locally. Custom colors and the
-color picker remain future work.
+changes the panel immediately and persists it locally. Color settings also
+show an in-panel ARGB picker below their validated text value; drag any of the
+four channel tracks to update that one local color channel.
 
 When no text field is focused, the ClickGUI supports keyboard navigation:
 Left/Right changes the category (and exits search), Up/Down moves the selected

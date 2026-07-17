@@ -173,6 +173,33 @@ public final class MinecraftCombatAccess {
         return attacked;
     }
 
+    public static boolean tickAutoClicker(long timeMillis, AutoClicker autoClicker, Snapshot snapshot,
+                                          CombatTargetTracker tracker) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null || client.gameMode == null) {
+            autoClicker.onContextLost();
+            return false;
+        }
+        CombatTarget crosshair = snapshot.available() ? snapshot.crosshairTarget() : null;
+        AutoClicker.Context context = new AutoClicker.Context(client.options.keyAttack.isDown(),
+                client.gui.screen() != null, crosshair != null, crosshair != null && crosshair.friend());
+        if (!autoClicker.shouldClick(timeMillis, context)) {
+            return false;
+        }
+        LocalPlayer player = client.player;
+        if (crosshair != null && autoClicker.shouldAttackEntity(context) && attackReady(player)) {
+            LivingEntity entity = snapshot.entities().get(crosshair.id());
+            if (entity != null && !entity.isRemoved() && entity.isAlive() && player.hasLineOfSight(entity)) {
+                client.gameMode.attack(player, entity);
+                tracker.recordAttack(crosshair);
+                player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                return true;
+            }
+        }
+        player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        return true;
+    }
+
     private static boolean readyForAttack(Minecraft client, Snapshot snapshot) {
         return snapshot.available() && client.player != null && client.gameMode != null && client.gui.screen() == null;
     }

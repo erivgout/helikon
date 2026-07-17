@@ -77,6 +77,7 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.ModuleTimingMetrics;
 import dev.helikon.client.module.combat.AntiBot;
 import dev.helikon.client.module.combat.AimAssist;
+import dev.helikon.client.module.combat.AutoClicker;
 import dev.helikon.client.module.combat.AutoPotion;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
@@ -463,6 +464,7 @@ public final class HelikonClient implements ClientModInitializer {
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
         Reach reach = new Reach();
+        AutoClicker autoClicker = new AutoClicker();
         ReachDisplay reachDisplay = new ReachDisplay();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
         Annoy annoy = new Annoy();
@@ -539,6 +541,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(targetHud);
         modules.register(killAura);
         modules.register(reach);
+        modules.register(autoClicker);
         modules.register(reachDisplay);
         modules.register(annoy);
         modules.register(oneClickFriends);
@@ -650,6 +653,12 @@ public final class HelikonClient implements ClientModInitializer {
                                 combatSnapshot.get(), combatTracker));
                     }
                 });
+                 modules.runGuarded(autoClicker, "tick", () -> {
+                     if (!combatAttackStarted.get()) {
+                         combatAttackStarted.set(MinecraftCombatAccess.tickAutoClicker(System.currentTimeMillis(),
+                                 autoClicker, combatSnapshot.get(), combatTracker));
+                     }
+                 });
             }
         });
 

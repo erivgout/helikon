@@ -100,12 +100,14 @@ import dev.helikon.client.module.combat.HitSwap;
 import dev.helikon.client.module.combat.JumpReset;
 import dev.helikon.client.module.combat.JumpResetAccess;
 import dev.helikon.client.module.combat.CrystalAura;
+import dev.helikon.client.module.combat.GojosInfinity;
 import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MinecraftBlockHitUseKey;
 import dev.helikon.client.module.combat.MinecraftAntiFireballAccess;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
 import dev.helikon.client.module.combat.MinecraftAutoAnchorAccess;
 import dev.helikon.client.module.combat.MinecraftVelocityAccess;
+import dev.helikon.client.module.combat.MinecraftGojoInfinityAccess;
 import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
 import dev.helikon.client.module.combat.MinecraftCrystalAccess;
@@ -608,6 +610,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoAnchor autoAnchor = new AutoAnchor();
         CrystalAura crystalAura = new CrystalAura();
         AntiFireball antiFireball = new AntiFireball();
+        GojosInfinity gojosInfinity = new GojosInfinity();
         BackTrack backTrack = new BackTrack();
         Velocity velocity = new Velocity();
         ReachDisplay reachDisplay = new ReachDisplay();
@@ -721,6 +724,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoAnchor);
         modules.register(crystalAura);
         modules.register(antiFireball);
+        modules.register(gojosInfinity);
         modules.register(backTrack);
         modules.register(velocity);
         modules.register(reachDisplay);
@@ -850,6 +854,12 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(antiFireball, "tick", () -> {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftAntiFireballAccess.tick(clientTick, antiFireball));
+                    }
+                });
+                modules.runGuarded(gojosInfinity, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftGojoInfinityAccess.tick(clientTick, gojosInfinity,
+                                combatSnapshot.get(), combatTracker));
                     }
                 });
                 modules.runGuarded(triggerBot, "tick", () -> {

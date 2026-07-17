@@ -48,11 +48,7 @@ public final class EntityEsp extends Module {
         friendColor = addSetting(new ColorSetting("friend_color", "Friend color", "ARGB local friend outline color.",
                 0xFF61D17B));
         fillColor = addSetting(new ColorSetting("fill_color", "Fill color", "ARGB local box fill color.", 0x3033AAFF));
-        mode.addChangeListener(ignored -> {
-            if (!mode.value().usesNativeOutline()) {
-                EntityEspRenderAccess.clear();
-            }
-        });
+        mode.addChangeListener(newMode -> EntityEspRenderAccess.clear());
     }
 
     public boolean shouldRender(EntityRenderFilter.EntityType type, boolean friend, boolean localPlayer,

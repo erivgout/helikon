@@ -51,7 +51,7 @@ EntityESP, BlockESP, Tracers, and Breadcrumbs never alter entities, blocks,
 client movement, or packets. EntityESP's Outline/Box modes (like BlockESP,
 Tracers, and Breadcrumbs) draw only in Minecraft's local world-render Gizmo
 phase, while its Glow/Shader modes reuse Minecraft's genuine entity-outline
-post-processing pass through a local read-only target snapshot — Glow keeps
+post-processing pass through a local read-only target snapshot. Glow keeps
 the vanilla team-derived outline color, Shader applies the configured
 module/friend colors, and disabling or changing worlds clears the snapshot
 without ever touching server-provided glowing flags. BlockESP deliberately scans a bounded cube at a bounded

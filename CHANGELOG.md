@@ -2,6 +2,12 @@
 
 ## 1.0.0-rc.1
 
+- Adds the four planned EntityESP modes. Existing profiles without a saved
+  `mode` now default to Outline (an unfilled wireframe); choose Box to restore
+  the previous stroke-and-fill look. Glow and Shader reuse Minecraft's native
+  entity-outline pass through a local, reversible target snapshot.
+- Adds optional ChatSpammer counter and timestamp message suffixes.
+
 - Completes the planned client-only module set, local configuration stores,
   ClickGUI/HUD foundations, and release-candidate checks.
 - Adds deterministic release packaging with dependency reporting and SHA-256

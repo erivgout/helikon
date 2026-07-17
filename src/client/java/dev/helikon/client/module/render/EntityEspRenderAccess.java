@@ -29,8 +29,4 @@ public final class EntityEspRenderAccess {
     public static OptionalInt shaderColorFor(int entityId) {
         return TARGETS.get().shaderColorFor(entityId);
     }
-
-    static EntityEspNativeOutlineTargets targets() {
-        return TARGETS.get();
-    }
 }

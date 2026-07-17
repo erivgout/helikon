@@ -31,6 +31,18 @@ class EntityEspNativeOutlineTargetsBuilderTest {
     }
 
     @Test
+    void enforcesTheEntityCapWithShaderColors() {
+        EntityEspNativeOutlineTargetsBuilder builder = new EntityEspNativeOutlineTargetsBuilder(1, true);
+
+        assertTrue(builder.offer(1, 0xFF102030));
+        assertFalse(builder.offer(2, 0xFF102030));
+
+        EntityEspNativeOutlineTargets targets = builder.build();
+        assertEquals(1, targets.entityIds().size());
+        assertTrue(targets.shaderColorFor(2).isEmpty());
+    }
+
+    @Test
     void forcesShaderColorsOpaque() {
         EntityEspNativeOutlineTargetsBuilder builder = new EntityEspNativeOutlineTargetsBuilder(4, true);
         builder.offer(1, 0x0033AAFF);

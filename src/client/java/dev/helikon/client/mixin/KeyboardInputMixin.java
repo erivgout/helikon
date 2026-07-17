@@ -10,6 +10,7 @@ import dev.helikon.client.module.movement.InventoryWalkAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.ParkourAccess;
 import dev.helikon.client.module.movement.ParkourContext;
+import dev.helikon.client.module.combat.JumpResetAccess;
 import dev.helikon.client.module.movement.WaterJumpAccess;
 import dev.helikon.client.module.movement.WaterJumpContext;
 import dev.helikon.client.input.KeybindManager;
@@ -35,6 +36,8 @@ import org.lwjgl.glfw.GLFW;
 /** Applies local movement modules after Minecraft 26.2 has freshly polled physical movement keys. */
 @Mixin(KeyboardInput.class)
 abstract class KeyboardInputMixin {
+    /** Local horizontal speed above which JumpReset treats the player as moving or receiving knockback. */
+    private static final double JUMP_RESET_MOVEMENT_THRESHOLD = 0.08D;
     private static final KeybindManager.KeyStateReader HELIKON_INPUT = new KeybindManager.KeyStateReader() {
         @Override
         public boolean isKeyDown(int keyCode) {
@@ -73,6 +76,13 @@ abstract class KeyboardInputMixin {
             input.keyPresses = withJump(input.keyPresses);
         }
         if (WaterJumpAccess.shouldJump(waterJumpContext(client, input.keyPresses, screenOpen))) {
+            input.keyPresses = withJump(input.keyPresses);
+        }
+        if (client.player == null) {
+            JumpResetAccess.reset();
+        } else if (JumpResetAccess.shouldJump(screenOpen, client.player.onGround(),
+                client.player.getDeltaMovement().horizontalDistance() > JUMP_RESET_MOVEMENT_THRESHOLD,
+                client.player.hurtTime)) {
             input.keyPresses = withJump(input.keyPresses);
         }
         AntiAfk.Action antiAfkAction = AntiAfkAccess.tick(new AntiAfk.Context(screenOpen,

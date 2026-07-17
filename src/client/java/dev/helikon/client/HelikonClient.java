@@ -189,6 +189,7 @@ import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.world.Nuker;
 import dev.helikon.client.module.render.Fullbright;
 import dev.helikon.client.module.render.AntiBlind;
+import dev.helikon.client.module.render.BaseFinder;
 import dev.helikon.client.module.render.AntiTotemAnimation;
 import dev.helikon.client.module.render.BetterCrosshair;
 import dev.helikon.client.module.render.BetterNametags;
@@ -368,6 +369,7 @@ public final class HelikonClient implements ClientModInitializer {
         Dinnerbone dinnerbone = new Dinnerbone();
         RainbowEnchant rainbowEnchant = new RainbowEnchant();
         EntityEsp entityEsp = new EntityEsp();
+        BaseFinder baseFinder = new BaseFinder();
         BlockEsp blockEsp = new BlockEsp();
         Tracers tracers = new Tracers();
         Trajectories trajectories = new Trajectories();
@@ -386,6 +388,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(dinnerbone);
         modules.register(rainbowEnchant);
         modules.register(entityEsp);
+        modules.register(baseFinder);
         modules.register(blockEsp);
         modules.register(tracers);
         modules.register(trajectories);
@@ -583,7 +586,8 @@ public final class HelikonClient implements ClientModInitializer {
         TimerModuleAccess.install(timer);
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
-                modules, friends, entityEsp, betterNametags, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
+                modules, friends, entityEsp, betterNametags, baseFinder, blockEsp, tracers, trajectories, trueSight,
+                storageEsp, damageIndicators,
                 breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics
         );
         DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,

@@ -43,6 +43,13 @@ adapter applies only its reversible normal `LocalPlayer.setSprinting` request.
 It releases only sprint state that it previously requested and never constructs
 or alters a packet.
 
+AutoSneak shares the same fresh-input bridge. Its mode policy is Minecraft-free:
+**Toggle** holds local sneak while enabled, **Hold** uses only its configured
+module key, and **Edge-only** holds local sneak while moving so Minecraft's
+normal careful-movement handling guards ledges. The bridge is always inactive
+while a screen is open, and it recomputes the effective movement vector after
+the final input transformation.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

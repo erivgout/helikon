@@ -25,6 +25,11 @@ settings before the next normal save writes the production ID.
 Malformed color values reset only that setting to its safe default and are
 logged, following the existing per-setting recovery policy.
 
+`EnumSetting` values use stable lowercase tokens chosen from each setting's
+declared finite list. Unknown or malformed tokens reset only that setting to
+its safe default and are logged. The ClickGUI cycles an enum setting when its
+row is clicked; `.setting` accepts any listed token case-insensitively.
+
 The Active Modules HUD has its own schema-versioned `hud.json` in the same
 directory. It stores only the element's enabled state and top-left scaled-GUI
 coordinates. The HUD editor saves it when closed; normal client shutdown also

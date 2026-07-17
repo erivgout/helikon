@@ -27,6 +27,9 @@ settings are covered by `AntiBlindTest`, `BetterCrosshairTest`,
 AutoSprint's hunger, collision, direction, and reversible ownership decisions,
 plus AutoWalk's GUI and steering input policy, are covered by
 `AutoSprintTest` and `AutoWalkTest`.
+AutoSneak's Toggle, bound-key Hold, Edge-only, and screen-suppression policies,
+plus enum-setting recovery and command validation, are covered by
+`AutoSneakTest`, `SettingTest`, and `BuiltinCommandsTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -115,6 +118,14 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     collision. Verify the hunger and collision settings gate the request,
     `forward_only` permits other movement directions when off, and disabling
     the module releases only sprinting it enabled.
+19. Select **AutoSneak** and cycle **Mode**. In Toggle mode, verify the local
+    player sneaks while it is enabled and resumes normal movement immediately
+    when disabled. Enable the module through the GUI or a local command, bind
+    it, select Hold, and verify it sneaks only while that bound key is
+    physically held without toggling the module. Select Edge-only and verify it
+    applies local sneak while moving so vanilla careful movement stops at a
+    ledge. Open chat or the ClickGUI in each mode and verify it never forces
+    sneak while the screen is open.
 
 ## Manual command and keybind smoke test
 

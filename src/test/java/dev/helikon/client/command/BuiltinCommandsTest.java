@@ -16,6 +16,7 @@ import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.ColorSetting;
+import dev.helikon.client.setting.EnumSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.waypoint.WaypointContext;
 import dev.helikon.client.waypoint.WaypointLocation;
@@ -125,7 +126,7 @@ class BuiltinCommandsTest {
     }
 
     @Test
-    void settingEditsBooleanAndNumberValues() {
+    void settingEditsSupportedValues() {
         dispatcher.dispatch(".setting configurable flag false", feedback);
         assertFalse(module.flag.value());
 
@@ -134,6 +135,9 @@ class BuiltinCommandsTest {
 
         dispatcher.dispatch(".setting configurable color #80FF6600", feedback);
         assertEquals(0x80FF6600, module.color.value());
+
+        dispatcher.dispatch(".setting configurable mode second", feedback);
+        assertEquals(TestMode.SECOND, module.mode.value());
     }
 
     @Test
@@ -148,6 +152,9 @@ class BuiltinCommandsTest {
 
         dispatcher.dispatch(".setting configurable color #FF00FF", feedback);
         assertTrue(feedback.errors.get(2).contains("Expected #AARRGGBB"));
+
+        dispatcher.dispatch(".setting configurable mode missing", feedback);
+        assertTrue(feedback.errors.get(3).contains("Expected one of first, second"));
     }
 
     @Test
@@ -218,6 +225,7 @@ class BuiltinCommandsTest {
         private final BooleanSetting flag;
         private final NumberSetting amount;
         private final ColorSetting color;
+        private final EnumSetting<TestMode> mode;
 
         private ConfigurableModule() {
             super("configurable", "Configurable", "Used by command tests.",
@@ -225,7 +233,13 @@ class BuiltinCommandsTest {
             flag = addSetting(new BooleanSetting("flag", "Flag", "A test flag.", true));
             amount = addSetting(new NumberSetting("amount", "Amount", "A test number.", 2.0, 0.0, 10.0));
             color = addSetting(new ColorSetting("color", "Color", "A test color.", 0xFFFFFFFF));
+            mode = addSetting(new EnumSetting<>("mode", "Mode", "A test enum.", TestMode.class, TestMode.FIRST));
         }
+    }
+
+    private enum TestMode {
+        FIRST,
+        SECOND
     }
 
     private static final class FailingModule extends Module {

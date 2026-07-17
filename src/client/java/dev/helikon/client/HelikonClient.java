@@ -33,6 +33,7 @@ import dev.helikon.client.macro.MinecraftMacroActionExecutor;
 import dev.helikon.client.macro.MinecraftMacroServerContextProvider;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.movement.AutoSprint;
+import dev.helikon.client.module.movement.AutoSneak;
 import dev.helikon.client.module.movement.AutoWalk;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.SprintContext;
@@ -122,9 +123,11 @@ public final class HelikonClient implements ClientModInitializer {
         RenderModuleAccess.install(antiBlind, betterCrosshair);
         AutoSprint autoSprint = new AutoSprint();
         AutoWalk autoWalk = new AutoWalk();
+        AutoSneak autoSneak = new AutoSneak();
         modules.register(autoSprint);
         modules.register(autoWalk);
-        MovementModuleAccess.install(autoWalk);
+        modules.register(autoSneak);
+        MovementModuleAccess.install(autoWalk, autoSneak);
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
                 modules.runGuarded(fullbright, "tick", fullbright::tick);

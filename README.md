@@ -15,8 +15,8 @@ branding, or configuration formats from that project.
 Helikon currently includes three client-only render modules: Fullbright restores
 the previous gamma and Night Vision state when disabled; AntiBlind selectively
 hides local impairment visuals; and BetterCrosshair draws a local configurable
-HUD crosshair. AutoSprint and AutoWalk apply only normal local movement input
-and sprint state. Other gameplay automation, combat tools, packet manipulation,
+HUD crosshair. AutoSprint, AutoWalk, and AutoSneak apply only normal local
+movement input and sprint state. Other gameplay automation, combat tools, packet manipulation,
 external networking, telemetry, a custom backend, and a server-side component
 remain unimplemented.
 
@@ -84,7 +84,7 @@ sent to the server:
 | `.modules` | Lists registered modules and their state. |
 | `.toggle <module>` | Enables or disables a module by ID. |
 | `.search <text>` | Finds modules by name, ID, or description. |
-| `.setting <module> <setting> <value>` | Changes a boolean, number, or `#AARRGGBB` color setting. |
+| `.setting <module> <setting> <value>` | Changes a boolean, number, `#AARRGGBB` color, or documented enum setting. |
 | `.reset <module>` | Resets a module's settings to defaults. |
 | `.bind <module> <key> [toggle\|hold\|press_once]` | Binds a key to a module. |
 | `.unbind <module>` | Removes a module's keybind. |

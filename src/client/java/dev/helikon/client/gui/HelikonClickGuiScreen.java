@@ -13,6 +13,7 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.ColorSetting;
 import dev.helikon.client.setting.ColorSettingText;
+import dev.helikon.client.setting.EnumSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.setting.NumberSettingText;
 import dev.helikon.client.setting.Setting;
@@ -475,6 +476,10 @@ public final class HelikonClickGuiScreen extends Screen {
                 int swatchX = settingResetX() - 18;
                 graphics.fill(swatchX, row.y() + 3, swatchX + 12, row.y() + 10, colorSetting.value());
                 graphics.outline(swatchX, row.y() + 3, 12, 7, COLOR_TEXT_DIM);
+            } else if (setting instanceof EnumSetting<?> enumSetting) {
+                String value = enumSetting.valueId();
+                int valueWidth = font.width(value);
+                graphics.text(font, value, settingResetX() - 4 - valueWidth, row.y() + 3, COLOR_TEXT_DIM, false);
             }
 
             if (isInside(mouseX, mouseY, settingResetX(), row.y() + 2, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE)) {
@@ -604,6 +609,11 @@ public final class HelikonClickGuiScreen extends Screen {
             if (setting instanceof BooleanSetting booleanSetting
                     && isInside(mouseX, mouseY, settingsX, row.y(), SETTINGS_WIDTH, BOOLEAN_ROW_HEIGHT)) {
                 booleanSetting.set(!booleanSetting.value());
+                return true;
+            }
+            if (setting instanceof EnumSetting<?> enumSetting
+                    && isInside(mouseX, mouseY, settingsX, row.y(), SETTINGS_WIDTH, BOOLEAN_ROW_HEIGHT)) {
+                enumSetting.cycle();
                 return true;
             }
         }

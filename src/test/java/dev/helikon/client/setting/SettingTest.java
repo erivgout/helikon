@@ -50,4 +50,24 @@ class SettingTest {
         assertFalse(setting.applyJson(new JsonPrimitive("#445566")));
         assertEquals(0xFF112233, setting.value());
     }
+
+    @Test
+    void enumSettingUsesStableTokensCyclesAndRecoversMalformedJson() {
+        EnumSetting<TestMode> setting = new EnumSetting<>("mode", "Mode", "Test mode.",
+                TestMode.class, TestMode.FIRST);
+
+        assertTrue(setting.trySet("second"));
+        assertEquals(TestMode.SECOND, setting.value());
+        assertEquals("second", setting.valueId());
+        setting.cycle();
+        assertEquals(TestMode.FIRST, setting.value());
+
+        assertFalse(setting.applyJson(new JsonPrimitive("missing")));
+        assertEquals(TestMode.FIRST, setting.value());
+    }
+
+    private enum TestMode {
+        FIRST,
+        SECOND
+    }
 }

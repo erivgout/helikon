@@ -14,6 +14,7 @@
 | --- | --- | --- | --- | --- |
 | `auto_sprint` | Movement | Requests ordinary local sprinting while its conditions pass. | `always`, `forward_only`, `hunger_check`, `collision_check` | It sends no custom packets and cannot make a server accept sprinting or movement it rejects. It releases only sprint state it requested. |
 | `auto_walk` | Movement | Applies continuous local forward input. | `continue_forward`, `stop_on_gui`, `allow_steering` | It changes only the freshly polled local input record. `stop_on_gui` is on by default; turning it off intentionally permits movement while screens are open. |
+| `auto_sneak` | Movement | Applies a local sneaking policy. | `mode` (`toggle`, `hold`, `edge_only`) | Toggle holds sneak while enabled; Hold reserves its bound key as input-only after enabling the module through the GUI or a local command; Edge-only holds sneak while moving so vanilla careful movement guards ledges. It is inactive while a screen is open. |
 
 Every production module will document its stable ID, category, settings,
 limitations, acceptance criteria, and automated or manual test coverage here.
@@ -24,8 +25,9 @@ Module IDs are lowercase and stable; display names are not used as identifiers.
 
 Modules appear in the ClickGUI (Right Shift) under their `ModuleCategory`.
 Selecting a module shows its name, category, ID, description, an enabled
-toggle, and controls for its `BooleanSetting`, `NumberSetting`, and
-`ColorSetting` values. Colors use strict `#AARRGGBB` tokens.
+toggle, and controls for its `BooleanSetting`, `NumberSetting`, `ColorSetting`,
+and finite `EnumSetting` values. Colors use strict `#AARRGGBB` tokens; click
+an enum row to cycle its documented choices.
 Toggles are dispatched through `ModuleRegistry`, so a module that throws
 during `onEnable`/`onDisable` is isolated and force-disabled instead of
 crashing the client. Setting edits and enabled state persist to

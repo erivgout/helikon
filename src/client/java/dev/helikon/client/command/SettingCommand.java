@@ -5,6 +5,7 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.ColorSetting;
 import dev.helikon.client.setting.ColorSettingText;
+import dev.helikon.client.setting.EnumSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.setting.NumberSettingText;
 import dev.helikon.client.setting.Setting;
@@ -63,6 +64,7 @@ public final class SettingCommand implements HelikonCommand {
         switch (foundSetting.get()) {
             case BooleanSetting booleanSetting -> applyBoolean(module, booleanSetting, value, feedback);
             case ColorSetting colorSetting -> applyColor(module, colorSetting, value, feedback);
+            case EnumSetting<?> enumSetting -> applyEnum(module, enumSetting, value, feedback);
             case NumberSetting numberSetting -> applyNumber(module, numberSetting, value, feedback);
             default -> feedback.error("Setting '" + settingId + "' has an unsupported type for this command.");
         }
@@ -94,5 +96,16 @@ public final class SettingCommand implements HelikonCommand {
             return;
         }
         feedback.info("'" + module.id() + "." + setting.id() + "' set to " + ColorSettingText.format(setting.value()) + ".");
+    }
+
+    private static void applyEnum(Module module, EnumSetting<?> setting, String value, CommandFeedback feedback) {
+        if (!setting.trySet(value)) {
+            String choices = setting.values().stream()
+                    .map(option -> option.name().toLowerCase(Locale.ROOT))
+                    .collect(java.util.stream.Collectors.joining(", "));
+            feedback.error("Expected one of " + choices + " for '" + setting.id() + "', got '" + value + "'.");
+            return;
+        }
+        feedback.info("'" + module.id() + "." + setting.id() + "' set to " + setting.valueId() + ".");
     }
 }

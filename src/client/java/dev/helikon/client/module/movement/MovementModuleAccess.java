@@ -3,34 +3,41 @@ package dev.helikon.client.module.movement;
 import net.minecraft.world.entity.player.Input;
 
 import java.util.Objects;
+import java.util.function.IntPredicate;
 
 /** Narrow Minecraft-facing bridge for the verified keyboard-input mixin. */
 public final class MovementModuleAccess {
     private static volatile AutoWalk autoWalk;
+    private static volatile AutoSneak autoSneak;
 
     private MovementModuleAccess() {
     }
 
-    public static void install(AutoWalk autoWalkModule) {
+    public static void install(AutoWalk autoWalkModule, AutoSneak autoSneakModule) {
         autoWalk = Objects.requireNonNull(autoWalkModule, "autoWalkModule");
+        autoSneak = Objects.requireNonNull(autoSneakModule, "autoSneakModule");
     }
 
-    /** Returns an input record with only the local AutoWalk policy applied. */
-    public static Input applyAutoWalk(Input input, boolean screenOpen) {
+    /** Returns an input record with only the local movement-module policies applied. */
+    public static Input applyMovement(Input input, boolean screenOpen, boolean autoSneakKeyDown) {
         Input current = Objects.requireNonNull(input, "input");
-        AutoWalk module = autoWalk;
-        if (module == null) {
-            return current;
-        }
-
-        MovementInput result = module.apply(new MovementInput(
+        MovementInput result = new MovementInput(
                 current.forward(), current.backward(), current.left(), current.right(),
                 current.jump(), current.shift(), current.sprint()
-        ), screenOpen);
+        );
+        AutoWalk walkModule = autoWalk;
+        if (walkModule != null) {
+            result = walkModule.apply(result, screenOpen);
+        }
+        AutoSneak sneakModule = autoSneak;
+        if (sneakModule != null) {
+            result = sneakModule.apply(result, screenOpen, autoSneakKeyDown);
+        }
         if (result.forward() == current.forward()
                 && result.backward() == current.backward()
                 && result.left() == current.left()
-                && result.right() == current.right()) {
+                && result.right() == current.right()
+                && result.shift() == current.shift()) {
             return current;
         }
         return new Input(result.forward(), result.backward(), result.left(), result.right(),
@@ -44,5 +51,12 @@ public final class MovementModuleAccess {
                 current.forward(), current.backward(), current.left(), current.right(),
                 current.jump(), current.shift(), current.sprint()
         ).movementVector();
+    }
+
+    /** Reads the configured AutoSneak key only through a caller-supplied platform adapter. */
+    public static boolean isAutoSneakKeyDown(IntPredicate keyStateReader) {
+        IntPredicate reader = Objects.requireNonNull(keyStateReader, "keyStateReader");
+        AutoSneak module = autoSneak;
+        return module != null && module.keybind().isBound() && reader.test(module.keybind().keyCode());
     }
 }

@@ -125,9 +125,37 @@ class KeybindManagerTest {
         assertFalse(module.isEnabled());
     }
 
+    @Test
+    void inputConsumerKeepsItsBoundKeyOutOfNormalActivation() {
+        InputConsumerModule module = new InputConsumerModule(new Keybind(KEY, Keybind.Activation.TOGGLE));
+        Fixture fixture = Fixture.of(module);
+
+        fixture.downKeys().add(KEY);
+        fixture.tick(false);
+        assertFalse(module.isEnabled());
+
+        fixture.registry().setEnabled(module, true);
+        fixture.tick(false);
+        fixture.downKeys().remove(KEY);
+        fixture.tick(false);
+        assertTrue(module.isEnabled());
+    }
+
     private static final class TestModule extends Module {
         private TestModule(Keybind keybind) {
             super("bound", "Bound", "Used by keybind tests.", ModuleCategory.MISCELLANEOUS, false, keybind);
+        }
+    }
+
+    private static final class InputConsumerModule extends Module implements KeybindInputConsumer {
+        private InputConsumerModule(Keybind keybind) {
+            super("input_consumer", "Input consumer", "Reserves its bound key.",
+                    ModuleCategory.MISCELLANEOUS, false, keybind);
+        }
+
+        @Override
+        public boolean consumesKeybindInput() {
+            return true;
         }
     }
 }

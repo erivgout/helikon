@@ -46,6 +46,10 @@ public final class KeybindManager {
             boolean wasDown = Boolean.TRUE.equals(previouslyDown.put(module.id(), down));
             boolean pressed = down && !wasDown;
 
+            if (module instanceof KeybindInputConsumer consumer && consumer.consumesKeybindInput()) {
+                continue;
+            }
+
             if (inputSuppressed) {
                 if (keybind.activation() == Keybind.Activation.HOLD && module.isEnabled()) {
                     modules.setEnabled(module, false);

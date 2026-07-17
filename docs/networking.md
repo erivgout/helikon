@@ -17,9 +17,9 @@ does not construct, alter, or send a Minecraft packet.
 AntiBlind and BetterCrosshair likewise filter or add only local render state;
 they do not remove server effects, change hit detection, or send packets.
 
-AutoSprint and AutoWalk use ordinary local client input and player sprint
-state. They do not construct, alter, replay, or bypass Minecraft packets; the
-connected server remains authoritative for all resulting movement.
+AutoSprint, AutoWalk, and AutoSneak use ordinary local client input and player
+sprint state. They do not construct, alter, replay, or bypass Minecraft
+packets; the connected server remains authoritative for all resulting movement.
 
 ## Future policy
 

@@ -37,6 +37,7 @@
     "ModelBlockRendererXRayMixin",
     "MouseFreecamMixin",
     "MouseEventMixin",
+    "MultiPlayerGameModeArrowDmgMixin",
     "MinecraftEntityEspGlowMixin",
     "MinecraftResourceReloadEventMixin",
     "MultiPlayerGameModeEventMixin",

@@ -5,6 +5,8 @@ import dev.helikon.client.module.movement.AdvancedMovementInputAccess;
 import dev.helikon.client.module.movement.AntiAfk;
 import dev.helikon.client.module.movement.AntiAfkAccess;
 import dev.helikon.client.module.movement.AutoParkour;
+import dev.helikon.client.module.movement.DolphinAccess;
+import dev.helikon.client.module.movement.DolphinContext;
 import dev.helikon.client.module.movement.FreecamAccess;
 import dev.helikon.client.module.movement.InventoryWalkAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
@@ -75,6 +77,9 @@ abstract class KeyboardInputMixin {
         if (WaterJumpAccess.shouldJump(waterJumpContext(client, input.keyPresses, screenOpen))) {
             input.keyPresses = withJump(input.keyPresses);
         }
+        if (DolphinAccess.shouldJump(dolphinContext(client, input.keyPresses, screenOpen))) {
+            input.keyPresses = withJump(input.keyPresses);
+        }
         AntiAfk.Action antiAfkAction = AntiAfkAccess.tick(new AntiAfk.Context(screenOpen,
                 hasManualInput(physicalInput), client.player != null && client.player.onGround()));
         if (antiAfkAction.yawDegrees() != 0.0F && client.player != null) {
@@ -143,6 +148,17 @@ abstract class KeyboardInputMixin {
                 && client.level.getBlockState(upperHead).canBeReplaced();
         return new WaterJumpContext(screenOpen, client.player.isInWater(), input.forward() && !input.backward(),
                 solidStep, headroomClear);
+    }
+
+    /** Adapts ordinary local water and input facts to Dolphin without changing movement directly. */
+    private static DolphinContext dolphinContext(Minecraft client, Input input, boolean screenOpen) {
+        if (client.player == null || client.level == null) {
+            return new DolphinContext(screenOpen, false, false, false, false, false, false, false);
+        }
+        boolean movingForward = input.forward() && !input.backward();
+        boolean moving = input.forward() || input.backward() || input.left() || input.right();
+        return new DolphinContext(screenOpen, client.player.isInWater(), movingForward, moving, input.shift(),
+                client.player.isPassenger(), client.player.getAbilities().flying, client.player.isFallFlying());
     }
 
     /** Reads only loaded blocks in front of the local player; no chunk lookup or interaction is requested. */

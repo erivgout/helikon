@@ -77,6 +77,8 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.ModuleTimingMetrics;
 import dev.helikon.client.module.combat.AntiBot;
 import dev.helikon.client.module.combat.AutoPotion;
+import dev.helikon.client.module.combat.AutoLeave;
+import dev.helikon.client.module.combat.MinecraftAutoLeaveAccess;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.KillAura;
@@ -331,6 +333,7 @@ public final class HelikonClient implements ClientModInitializer {
     private ServerData reconnectServer;
     private ServerData lastConnectedServer;
     private boolean reconnectAttemptInFlight;
+    private boolean autoLeaveDisconnectInFlight;
 
     /** The live registry, exposed only for client gametests; null before client init. */
     public static ModuleRegistry activeModuleRegistry() {
@@ -452,6 +455,7 @@ public final class HelikonClient implements ClientModInitializer {
         BowAimAssist bowAimAssist = new BowAimAssist();
         CriticalAssist criticalAssist = new CriticalAssist();
         AutoPotion autoPotion = new AutoPotion();
+        AutoLeave autoLeave = new AutoLeave();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
         ReachDisplay reachDisplay = new ReachDisplay();
@@ -524,6 +528,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(bowAimAssist);
         modules.register(criticalAssist);
         modules.register(autoPotion);
+        modules.register(autoLeave);
         modules.register(targetHud);
         modules.register(killAura);
         modules.register(reachDisplay);
@@ -588,6 +593,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(autoEject, "tick", () -> tickAutoEject(autoEject, clientTick));
                 modules.runGuarded(autoFish, "tick", () -> tickAutoFish(autoFish, clientTick));
                 modules.runGuarded(autoReconnect, "tick", () -> tickAutoReconnect(autoReconnect, clientTick));
+                modules.runGuarded(autoLeave, "tick", () -> tickAutoLeave(autoLeave));
                 modules.runGuarded(autoTotem, "tick", () -> tickAutoTotem(autoTotem, clientTick));
                 modules.runGuarded(inventoryManager, "tick", () -> tickInventoryManager(inventoryManager, clientTick));
                 modules.runGuarded(fastPlace, "tick", () -> tickFastPlace(fastPlace));
@@ -729,7 +735,12 @@ public final class HelikonClient implements ClientModInitializer {
             }
             events.post(new WorldEvent(WorldEvent.Phase.LEAVE, serverAddress(lastConnectedServer)));
             playerStateEvents.reset();
-            modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));
+            if (autoLeaveDisconnectInFlight) {
+                autoLeaveDisconnectInFlight = false;
+                modules.runGuarded(autoReconnect, "disconnect", autoReconnect::onConnected);
+            } else {
+                modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));
+            }
             if (timer.isEnabled()) {
                 modules.setEnabled(timer, false);
             }
@@ -1096,6 +1107,14 @@ public final class HelikonClient implements ClientModInitializer {
             reconnectAttemptInFlight = true;
             ConnectScreen.startConnecting(reconnectParent, client, ServerAddress.parseString(address), reconnectServer,
                     false, null);
+        });
+    }
+
+    /** Uses the normal client disconnect flow only after the pure module policy observes a configured danger. */
+    private void tickAutoLeave(AutoLeave autoLeave) {
+        MinecraftAutoLeaveAccess.observedDanger(autoLeave).ifPresent(danger -> {
+            autoLeaveDisconnectInFlight = true;
+            MinecraftAutoLeaveAccess.disconnect(danger);
         });
     }
 

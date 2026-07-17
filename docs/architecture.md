@@ -167,6 +167,10 @@ KillAura applies the same bounded local rotation policy before its normal attack
 cycle. TargetHUD retains the last crosshair or Helikon attack target while it
 remains in the current locally rendered target set, then clears it on absence or
 world loss; it does not flash a non-crosshair target for only one frame.
+AutoLeave evaluates its low-health and fall-distance thresholds from an
+immutable Minecraft-free context. `MinecraftAutoLeaveAccess` reads only local
+player facts and invokes Minecraft's ordinary multiplayer disconnect flow;
+Helikon marks that intentional leave so AutoReconnect does not rejoin.
 
 The inventory-automation modules keep armor ranking, item-ID/slot parsing,
 totem restore conditions, chest priority, and conservative manager choices in

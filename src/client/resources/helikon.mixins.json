@@ -38,6 +38,7 @@
     "MinecraftResourceReloadEventMixin",
     "MultiPlayerGameModeEventMixin",
     "MultiPlayerGameModeAccessor",
+    "WTapAttackMixin",
     "SectionCompilerXRayMixin",
     "ConnectionPacketObservationMixin",
     "MinecraftAccessor"

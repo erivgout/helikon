@@ -40,6 +40,8 @@
     "MultiPlayerGameModeAccessor",
     "SectionCompilerXRayMixin",
     "ConnectionPacketObservationMixin",
+    "ConnectionBackTrackMixin",
+    "ClientboundMoveEntityPacketAccessor",
     "MinecraftAccessor"
   ],
   "injectors": {

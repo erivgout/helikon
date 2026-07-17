@@ -142,9 +142,18 @@ When porting:
     changing Debug Overlay. Preserve its disabled no-timing path, module
     failure isolation, bounded ten-row paging, cache-count-only reads, and
     in-memory-only diagnostics policy.
-33. Run the manual smoke test in an empty profile and with no internet access.
-34. Document compatibility changes and retained limitations before release.
-35. Re-run `check releaseBundle`, inspect the generated checksum and resolved
+33. Revalidate BackTrack's packet hooks: `Connection.channelRead0` (HEAD,
+    cancellable) and `Connection.getPacketListener`, plus the entity-id
+    accessors on `ClientboundMoveEntityPacket` (protected `entityId`, read via
+    the accessor mixin), `ClientboundTeleportEntityPacket.id`,
+    `ClientboundEntityPositionSyncPacket.id`, and
+    `ClientboundSetEntityMotionPacket.id`. Keep interception read-only: only
+    defer and later re-deliver unmodified packets on the client thread, never
+    edit, forge, or reorder them, and keep the network-thread path free of live
+    world reads (it consults only the client-thread eligible-id snapshot).
+34. Run the manual smoke test in an empty profile and with no internet access.
+35. Document compatibility changes and retained limitations before release.
+36. Re-run `check releaseBundle`, inspect the generated checksum and resolved
     dependency report, and repeat the focused live-client smoke checks before
     packaging a release for the target version.
 

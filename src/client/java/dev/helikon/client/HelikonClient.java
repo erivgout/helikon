@@ -76,6 +76,8 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.ModuleTimingMetrics;
 import dev.helikon.client.module.combat.AntiBot;
 import dev.helikon.client.module.combat.AutoPotion;
+import dev.helikon.client.module.combat.BackTrack;
+import dev.helikon.client.module.combat.MinecraftBackTrackAccess;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.KillAura;
@@ -453,6 +455,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoPotion autoPotion = new AutoPotion();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
+        BackTrack backTrack = new BackTrack();
         ReachDisplay reachDisplay = new ReachDisplay();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
         Annoy annoy = new Annoy();
@@ -525,6 +528,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoPotion);
         modules.register(targetHud);
         modules.register(killAura);
+        modules.register(backTrack);
         modules.register(reachDisplay);
         modules.register(annoy);
         modules.register(oneClickFriends);
@@ -626,6 +630,7 @@ public final class HelikonClient implements ClientModInitializer {
                                 combatSnapshot.get(), combatTracker));
                     }
                 });
+                modules.runGuarded(backTrack, "tick", () -> MinecraftBackTrackAccess.tick(backTrack, friends));
             }
         });
 
@@ -726,6 +731,7 @@ public final class HelikonClient implements ClientModInitializer {
             } catch (ConfigurationException exception) {
                 LOGGER.log(Level.WARNING, "Unable to save local chat history while disconnecting", exception);
             }
+            MinecraftBackTrackAccess.reset();
             events.post(new WorldEvent(WorldEvent.Phase.LEAVE, serverAddress(lastConnectedServer)));
             playerStateEvents.reset();
             modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));

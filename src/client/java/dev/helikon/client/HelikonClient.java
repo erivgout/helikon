@@ -235,6 +235,8 @@ import dev.helikon.client.module.render.Fullbright;
 import dev.helikon.client.module.render.AntiBlind;
 import dev.helikon.client.module.render.AntiDebuff;
 import dev.helikon.client.module.render.AntiDebuffAccess;
+import dev.helikon.client.module.render.CameraDistance;
+import dev.helikon.client.module.render.CameraModuleAccess;
 import dev.helikon.client.module.render.AntiTotemAnimation;
 import dev.helikon.client.module.render.Arrows;
 import dev.helikon.client.module.render.BetterCrosshair;
@@ -416,6 +418,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(fullbright);
         AntiBlind antiBlind = new AntiBlind();
         AntiDebuff antiDebuff = new AntiDebuff();
+        CameraDistance cameraDistance = new CameraDistance();
         AntiTotemAnimation antiTotemAnimation = new AntiTotemAnimation();
         BetterCrosshair betterCrosshair = new BetterCrosshair();
         BetterNametags betterNametags = new BetterNametags();
@@ -441,6 +444,7 @@ public final class HelikonClient implements ClientModInitializer {
         Health health = new Health();
         modules.register(antiBlind);
         modules.register(antiDebuff);
+        modules.register(cameraDistance);
         modules.register(antiTotemAnimation);
         modules.register(betterCrosshair);
         modules.register(betterNametags);
@@ -467,6 +471,7 @@ public final class HelikonClient implements ClientModInitializer {
         RenderModuleAccess.install(antiBlind, betterCrosshair, antiTotemAnimation, dinnerbone, rainbowEnchant,
                 hudLayout, panicState);
         AntiDebuffAccess.install(antiDebuff);
+        CameraModuleAccess.install(cameraDistance);
         AutoSprint autoSprint = new AutoSprint();
         AutoSwim autoSwim = new AutoSwim();
         AutoWalk autoWalk = new AutoWalk();

@@ -561,6 +561,14 @@ view layer:
 - `NumberSettingField` owns the text-to-value rules for number edit fields:
   input is applied only when it parses to a finite value inside the setting
   range, otherwise the current value is kept and the field is marked invalid.
+- `NumberSlider` is the Minecraft-free geometry and value mapping for the
+  numeric slider drawn above every `NumberSetting`/`IntegerSetting` field. It
+  converts a value to a handle pixel, a track pixel to a value, and a wheel
+  notch to a one-step increase/decrease. Integral sliders round to whole
+  numbers and decimal sliders snap to a range-relative grid so their text stays
+  clean; the paired text field still accepts exact entry. The screen only
+  supplies pixel coordinates and applies each result through the setting's own
+  validated `set` path, then refreshes the field text.
 - All enable/disable transitions go through `ModuleRegistry`, so lifecycle
   failure isolation applies to GUI toggles exactly as it does everywhere else.
   Boolean and number settings are edited through the settings' own validated

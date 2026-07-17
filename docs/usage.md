@@ -35,6 +35,12 @@ keybind settings. Invalid input is shown in red and the last valid value is
 retained. Color rows provide alpha/red/green/blue picker tracks below the
 `#AARRGGBB` text value.
 
+Numeric settings (whole-number and decimal) show a slider above their text
+field: drag or click the track to set a value, or point at the track and use
+the mouse wheel to increase or decrease it one step at a time. The field keeps
+showing the current value for exact typed entry, and its range is shown beside
+the setting name.
+
 ## HUD editor
 
 Select **HUD** in the ClickGUI header. Drag the Active Modules preview (it

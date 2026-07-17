@@ -101,9 +101,11 @@ also uses a configurable bounded local rotation adjustment before its normal
 attack request.
 
 The advanced movement modules remain deliberately conservative. NoSlow changes
-only selected local vanilla slowdown calculations; FastLadders, Step, Speed,
-and BunnyHop use bounded local input/collision/velocity choices with no
-anti-cheat-named modes. Flight and NoFall enable only Minecraft-granted flight
+only selected local vanilla slowdown calculations; FastLadders, WaterJump,
+Step, Speed, and BunnyHop use bounded local input/collision/velocity choices
+with no anti-cheat-named modes. WaterJump requests ordinary Jump only at a
+loaded, clear water edge while moving forward. Flight and NoFall enable only
+Minecraft-granted flight
 abilities, while Flight's optional freecam view is a local invisible camera
 that suppresses player movement keys and never moves the player. ExtraElytra adds local pitch/speed/durability
 assistance. Scaffold uses player-provided hotbar blocks and normal Use

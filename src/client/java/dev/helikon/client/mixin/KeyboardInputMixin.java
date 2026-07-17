@@ -10,6 +10,8 @@ import dev.helikon.client.module.movement.InventoryWalkAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.ParkourAccess;
 import dev.helikon.client.module.movement.ParkourContext;
+import dev.helikon.client.module.movement.WaterJumpAccess;
+import dev.helikon.client.module.movement.WaterJumpContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -54,6 +56,9 @@ abstract class KeyboardInputMixin {
                 client.player != null && client.player.onGround(), initialVector.x() != 0.0F || initialVector.y() != 0.0F,
                 openBelow, client.options.keyUse.isDown());
         if (ParkourAccess.shouldJump(parkourContext(client, input.keyPresses, screenOpen))) {
+            input.keyPresses = withJump(input.keyPresses);
+        }
+        if (WaterJumpAccess.shouldJump(waterJumpContext(client, input.keyPresses, screenOpen))) {
             input.keyPresses = withJump(input.keyPresses);
         }
         AntiAfk.Action antiAfkAction = AntiAfkAccess.tick(new AntiAfk.Context(screenOpen,
@@ -105,6 +110,25 @@ abstract class KeyboardInputMixin {
         return new ParkourContext(screenOpen, client.player.onGround(), input.forward() && !input.backward(),
                 client.player.getDeltaMovement().horizontalDistance(), facts.ledgeAhead(), facts.lavaAhead(),
                 facts.dropBlocks(), facts.landingSupportsPlayer());
+    }
+
+    /** Reads only loaded blocks directly in front of the local player; no interaction or chunk request occurs. */
+    private static WaterJumpContext waterJumpContext(Minecraft client, Input input, boolean screenOpen) {
+        if (client.player == null || client.level == null) {
+            return new WaterJumpContext(screenOpen, false, false, false, false);
+        }
+        BlockPos step = client.player.blockPosition().relative(client.player.getDirection());
+        BlockPos head = step.above();
+        BlockPos upperHead = head.above();
+        if (!client.level.isLoaded(step) || !client.level.isLoaded(head) || !client.level.isLoaded(upperHead)) {
+            return new WaterJumpContext(screenOpen, client.player.isInWater(), false, false, false);
+        }
+        BlockState stepState = client.level.getBlockState(step);
+        boolean solidStep = !stepState.canBeReplaced() && stepState.isFaceSturdy(client.level, step, Direction.UP);
+        boolean headroomClear = client.level.getBlockState(head).canBeReplaced()
+                && client.level.getBlockState(upperHead).canBeReplaced();
+        return new WaterJumpContext(screenOpen, client.player.isInWater(), input.forward() && !input.backward(),
+                solidStep, headroomClear);
     }
 
     /** Reads only loaded blocks in front of the local player; no chunk lookup or interaction is requested. */

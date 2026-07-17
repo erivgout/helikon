@@ -78,6 +78,8 @@ and Elytra status needed for the current session. Freecam's temporary camera
 entity is never added to the world, persisted, or transmitted. No movement
 module writes a route, block-placement history, speed trace, fall trace, or
 camera position to disk or a service.
+WaterJump's current water-edge facts are transient input-decision data only;
+they are neither retained nor transmitted.
 AntiCactus retains no movement or cactus history; its bounded collision boxes
 exist only while one local movement vector is being evaluated.
 

@@ -57,10 +57,11 @@ ordinary local Use binding. It never directly invokes, repeats, or fabricates
 an interaction or packet; normal client interaction rules and all server-side
 food, inventory, and combat rules remain authoritative.
 
-NoSlow, FastLadders, Step, Speed, BunnyHop, ExtraElytra, and Timer change only
-local movement/input, collision, view, or client-time calculations. They do
-not create, modify, replay, or spoof movement packets, and a server can reject
-or correct any client-side motion it does not permit. Flight and NoFall call
+NoSlow, FastLadders, WaterJump, Step, Speed, BunnyHop, ExtraElytra, and Timer
+change only local movement/input, collision, view, or client-time calculations.
+WaterJump adds only an ordinary local Jump request after loaded water-edge
+checks. They do not create, modify, replay, or spoof movement packets, and a
+server can reject or correct any client-side motion it does not permit. Flight and NoFall call
 Minecraft's ordinary ability-update path only after its existing `mayfly`
 permission is present; neither claims survival multiplayer flight.
 

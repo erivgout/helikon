@@ -112,6 +112,10 @@ hotbar selection, and safe timer multiplier are covered by
 `AdvancedMovementPolicyTest`. Mixin/HUD/freecam wiring is additionally covered
 by the live-client checklist below because it relies on verified 26.2 client
 hooks.
+
+`WaterJumpTest` independently covers its disabled default and every required
+Minecraft-free water-edge fact. Its 26.2 input adapter is covered by the
+advanced-movement smoke check below.
 Combat filtering, deterministic selection, bounded bow smoothing, legitimate
 critical gates, restorative-potion slot ownership, anti-bot heuristics, and
 session HUD tracking are covered by `CombatPolicyTest`. Minecraft combat and
@@ -481,7 +485,11 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     separately. With **NoSlow**, verify each enabled food/block/bow/sneak/
     soul-sand/honey/cobweb category changes only local responsiveness and no
     other entity is affected. Verify **FastLadders** changes only normal
-    climbable movement, **Step** honors its 1.5-block cap through normal
+    climbable movement. Enable **WaterJump** in shallow water and move forward
+    into a loaded sturdy one-block bank with two clear blocks above it: verify
+    it requests only normal Jump input. Test backward movement, air, an
+    obstructed bank, an unloaded boundary, and every open screen; none may
+    request a jump. Verify **Step** honors its 1.5-block cap through normal
     collisions, and **Speed**/**BunnyHop** remain within their configured caps
     and do nothing in screens. On a creative/spectator or otherwise permitted
     test environment, verify **Flight** enables normal permitted flight then

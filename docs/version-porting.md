@@ -82,10 +82,13 @@ When porting:
    NoSlow or Step. Revalidate `Entity.move`, `MoverType.SELF`, loaded-chunk
    checks, and cactus collision-shape bounds before changing AntiCactus. Keep
    every mixin restricted to the local player and do not suppress damage.
-24. Revalidate local input records, climbable/fall-flying state, movement
-   vectors, velocity setters, permitted `Abilities`, and ability-update path
-   before changing FastLadders, Speed, BunnyHop, Flight, NoFall, or
-   ExtraElytra. Retain bounded settings and server-authority warnings.
+24. Revalidate `KeyboardInput.tick`, local input records, `LocalPlayer` water
+   state/facing/block position, loaded-block checks, replaceability, upper-face
+   sturdiness, climbable/fall-flying state, movement vectors, velocity setters,
+   permitted `Abilities`, and ability-update path before changing WaterJump,
+   FastLadders, Speed, BunnyHop, Flight, NoFall, or ExtraElytra. WaterJump must
+   remain a loaded-edge ordinary Jump request with no direct position update.
+   Retain bounded settings and server-authority warnings.
 25. Revalidate `DeltaTracker.Timer.advanceGameTime` and its target-ms-per-tick
    provider before changing Timer. Preserve its safe range and reset-on-leave
    behavior; never use it to fabricate or alter packets.

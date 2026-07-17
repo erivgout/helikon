@@ -97,6 +97,8 @@ import dev.helikon.client.module.movement.StepAccess;
 import dev.helikon.client.module.movement.Speed;
 import dev.helikon.client.module.movement.Timer;
 import dev.helikon.client.module.movement.TimerModuleAccess;
+import dev.helikon.client.module.movement.WaterJump;
+import dev.helikon.client.module.movement.WaterJumpAccess;
 import dev.helikon.client.module.player.AutoTool;
 import dev.helikon.client.module.player.AutoArmor;
 import dev.helikon.client.module.player.AutoEject;
@@ -332,6 +334,7 @@ public final class HelikonClient implements ClientModInitializer {
         AntiAfk antiAfk = new AntiAfk();
         NoSlow noSlow = new NoSlow();
         FastLadders fastLadders = new FastLadders();
+        WaterJump waterJump = new WaterJump();
         Step step = new Step();
         Speed speed = new Speed();
         BunnyHop bunnyHop = new BunnyHop();
@@ -392,6 +395,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(antiAfk);
         modules.register(noSlow);
         modules.register(fastLadders);
+        modules.register(waterJump);
         modules.register(step);
         modules.register(speed);
         modules.register(bunnyHop);
@@ -449,6 +453,7 @@ public final class HelikonClient implements ClientModInitializer {
         NoSlowAccess.install(noSlow);
         StepAccess.install(step);
         AntiCactusAccess.install(antiCactus);
+        WaterJumpAccess.install(waterJump);
         TimerModuleAccess.install(timer);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, betterNametags, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,

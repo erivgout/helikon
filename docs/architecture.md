@@ -74,6 +74,14 @@ timer and selected action policy Minecraft-free; the same adapter only applies
 its bounded local yaw change and ordinary one-tick input requests after the
 configured idle interval, never while a screen is open or the user is moving.
 
+WaterJump uses the same narrow `KeyboardInput` adapter, but keeps its
+screen/water/forward/solid-step/headroom decision in the Minecraft-free
+`WaterJumpContext` policy. The adapter reads only three already-loaded blocks
+in the local player's cardinal facing direction; it declines unknown chunks,
+an obstructed two-block exit, or any open screen, then can request only
+Minecraft's ordinary local Jump input. It does not set position or velocity,
+interact with a block, or construct a packet.
+
 AutoTool separates hotbar candidates and deterministic scoring from the small
 Minecraft adapter. The adapter runs only while the user is normally mining a
 block through Minecraft's own game mode, selects an existing hotbar slot, and
@@ -103,9 +111,10 @@ control. When AutoEat ends its own use hold, the input port separately polls
 the configured keyboard, mouse, or scancode binding so an overlapping physical
 player hold is never cancelled.
 
-Advanced movement keeps category gates, bounded velocity math, step height,
-ability-flight ownership, Elytra pitch/status, scaffold target selection, and
-timer-rate limits in Minecraft-free modules. The version-sensitive edge is
+Advanced movement keeps category gates, bounded velocity math, water-edge jump
+gates, step height, ability-flight ownership, Elytra pitch/status, scaffold
+target selection, and timer-rate limits in Minecraft-free modules. The
+version-sensitive edge is
 narrow: NoSlow/Step/Timer mixins target verified local movement and
 `DeltaTracker` calculations; the controller adapts current local input,
 velocity, abilities, and held blocks to ordinary Minecraft APIs. No module

@@ -176,7 +176,10 @@ key (`ConfigurationManagerTest`).
    Elytra, Target HUD, Reach, Inventory Preview, Durability warnings, Radar,
    MiniPlayer, Debug Overlay, and Better Crosshair. Toggle one off, drag another
    preview to a distinct position, close/reopen the editor, and verify both local
-   settings persist and affect only that HUD element. Drag Radar, MiniPlayer,
+   settings persist and affect only that HUD element. For each selected element,
+   cycle Alignment and Color, toggle Background, Text shadow, and Rainbow, and
+   adjust Scale/Padding; verify the styled preview changes and its rendered HUD
+   remains fully on screen. Drag Radar, MiniPlayer,
    Inventory Preview, and Debug Overlay to each viewport edge and verify their
    actual rendered content remains fully on screen. For Better Crosshair,
    verify its placement changes the arm centre and toggling it restores the
@@ -305,6 +308,10 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     immediately, High Contrast remains legible, Escape returns to the ClickGUI,
     and the chosen theme is restored after relaunch. Replace the stored theme
     with an invalid value and verify Helikon safely returns to Midnight.
+    Cycle the Theme editor's **GUI scale** through 0.75x, 1.0x, 1.25x, and
+    1.50x; verify the resolved ClickGUI panel size changes, stays on-screen,
+    and persists after relaunch. Toggle **Reduced animation** and verify the
+    preference persists locally.
 14. Without clicking a text field, use Left/Right to change categories and
     Up/Down to select module rows. Verify selection wraps and scrolls into
     view, then use Enter and Space to toggle the selected module. Click the

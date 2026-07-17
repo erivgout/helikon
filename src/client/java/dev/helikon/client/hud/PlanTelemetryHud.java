@@ -19,9 +19,6 @@ import java.util.Objects;
 
 /** Opt-in local readouts covering the remaining telemetry elements named by the version-one HUD plan. */
 public final class PlanTelemetryHud implements HudElement {
-    private static final int PADDING = 3;
-    private static final int TEXT_COLOR = 0xFFE5EDF5;
-    private static final int BACKGROUND = 0xB014161B;
     private static final List<HudElementId> ELEMENTS = List.of(
             HudElementId.DIRECTION, HudElementId.FPS, HudElementId.PING, HudElementId.TPS, HudElementId.SPEED,
             HudElementId.ARMOR_DURABILITY, HudElementId.HELD_ITEM_DURABILITY, HudElementId.POTION_EFFECTS,
@@ -56,11 +53,7 @@ public final class PlanTelemetryHud implements HudElement {
             if (line == null) {
                 continue;
             }
-            int width = client.font.width(line) + PADDING * 2;
-            int height = client.font.lineHeight + PADDING * 2;
-            HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
-            graphics.fill(bounds.x(), bounds.y(), bounds.x() + width, bounds.y() + height, BACKGROUND);
-            graphics.text(client.font, line, bounds.x() + PADDING, bounds.y() + PADDING, TEXT_COLOR, true);
+            HudPresentation.drawLines(graphics, client.font, List.of(line), placement);
         }
     }
 

@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.network.chat.Component;
 
 import java.util.List;
 import java.util.Locale;
@@ -52,13 +51,6 @@ public final class TargetHud implements HudElement {
                 "Held " + target.heldItem(),
                 target.effects().isEmpty() ? "Effects none" : "Effects " + String.join(", ", target.effects())
         );
-        int width = lines.stream().mapToInt(client.font::width).max().orElse(0) + 8;
-        int height = lines.size() * client.font.lineHeight + 8;
-        HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
-        graphics.fill(bounds.x(), bounds.y(), bounds.x() + width, bounds.y() + height, 0xB014161B);
-        for (int index = 0; index < lines.size(); index++) {
-            graphics.text(client.font, Component.literal(lines.get(index)), bounds.x() + 4,
-                    bounds.y() + 4 + index * client.font.lineHeight, index == 0 ? 0xFFFFD180 : 0xFFE5EDF5, true);
-        }
+        HudPresentation.drawLines(graphics, client.font, lines, placement);
     }
 }

@@ -37,7 +37,7 @@ public final class HelikonThemeEditorScreen extends Screen {
     @Override
     protected void init() {
         panelX = (width - PANEL_WIDTH) / 2;
-        panelY = Math.max(12, (height - (56 + ClickGuiTheme.values().length * ROW_HEIGHT)) / 2);
+        panelY = Math.max(12, (height - (100 + ClickGuiTheme.values().length * ROW_HEIGHT)) / 2);
     }
 
     @Override
@@ -53,7 +53,7 @@ public final class HelikonThemeEditorScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         ClickGuiTheme selected = windowState.theme();
-        int panelHeight = 56 + ClickGuiTheme.values().length * ROW_HEIGHT;
+        int panelHeight = 100 + ClickGuiTheme.values().length * ROW_HEIGHT;
         graphics.fill(0, 0, width, height, 0x90000000);
         graphics.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + panelHeight, selected.panel());
         graphics.outline(panelX, panelY, PANEL_WIDTH, panelHeight, selected.outline());
@@ -74,6 +74,11 @@ public final class HelikonThemeEditorScreen extends Screen {
             graphics.fill(panelX + 10, rowY + 6, panelX + 28, rowY + 18, theme.accent());
             graphics.text(font, theme.displayName(), panelX + 34, rowY + 7, selected.text(), false);
         }
+        int controlsY = panelY + 40 + ClickGuiTheme.values().length * ROW_HEIGHT;
+        graphics.text(font, "GUI scale: " + String.format(java.util.Locale.ROOT, "%.2fx", windowState.interfaceScale())
+                + " (click to cycle)", panelX + 8, controlsY, selected.textDim(), false);
+        graphics.text(font, "Reduced animation: " + (windowState.reducedAnimations() ? "on" : "off"),
+                panelX + 8, controlsY + 14, selected.textDim(), false);
         super.extractRenderState(graphics, mouseX, mouseY, delta);
     }
 
@@ -90,6 +95,15 @@ public final class HelikonThemeEditorScreen extends Screen {
                 windowState.setTheme(ClickGuiTheme.values()[index]);
                 return true;
             }
+        }
+        int controlsY = panelY + 40 + ClickGuiTheme.values().length * ROW_HEIGHT;
+        if (isInside(mouseX, mouseY, panelX + 6, controlsY - 2, PANEL_WIDTH - 12, 11)) {
+            windowState.setInterfaceScale(nextScale(windowState.interfaceScale()));
+            return true;
+        }
+        if (isInside(mouseX, mouseY, panelX + 6, controlsY + 12, PANEL_WIDTH - 12, 11)) {
+            windowState.setReducedAnimations(!windowState.reducedAnimations());
+            return true;
         }
         return false;
     }
@@ -111,5 +125,15 @@ public final class HelikonThemeEditorScreen extends Screen {
 
     private static boolean isInside(int mouseX, int mouseY, int x, int y, int width, int height) {
         return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+    }
+
+    private static float nextScale(float value) {
+        float[] values = {0.75F, 1.0F, 1.25F, 1.5F};
+        for (int index = 0; index < values.length; index++) {
+            if (Float.compare(values[index], value) == 0) {
+                return values[(index + 1) % values.length];
+            }
+        }
+        return 1.0F;
     }
 }

@@ -222,12 +222,12 @@ The ClickGUI currently provides:
 - in-GUI keyboard or mouse keybind assignment with held modifier capture (Backspace/Delete unbinds; Escape cancels)
 - reset buttons for individual settings and whole modules
 - a draggable, resizable, clamped window saved in `global.json`
-- three local ClickGUI palettes, selected from the Theme editor and saved in `global.json`
+- three local ClickGUI palettes, plus validated 0.75x–1.50x interface scale and reduced-animation preferences, selected from the Theme editor and saved in `global.json`
 - keyboard navigation: Left/Right changes categories, Up/Down selects module rows, and Enter/Space toggles the selected module
 - persistence of module state and settings when the screen closes
 
-The HUD editor provides a fully configurable **Active Modules** list and
-on/off, draggable placements for every other Helikon HUD element. Open the
+The HUD editor provides a fully configurable **Active Modules** list and full
+enabled/placement/presentation controls for every other Helikon HUD element. Open the
 ClickGUI with Right Shift and select **HUD** in its header; drag the Active
 Modules preview (it snaps to edges and centre), toggle it, choose registry,
 alphabetical, or width sorting, left/right alignment, accent/rainbow color,
@@ -238,6 +238,8 @@ Preview, Durability Warnings, Radar, MiniPlayer, Debug Overlay, and Better
 Crosshair. The same selector includes opt-in Direction, FPS, Ping, local TPS
 estimate, Speed, Armor durability, Held-item durability, Potion effects,
 Clock, Biome, Server address, and Totem count readouts.
+Each element has its own scale, alignment, background, padding, text shadow,
+local color, and rainbow setting; the editor always shows a styled draggable preview.
 
 ## Requirements
 

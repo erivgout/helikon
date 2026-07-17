@@ -45,15 +45,17 @@ public final class MiniPlayerHud implements HudElement {
             return;
         }
         HudBounds rawBounds = MiniPlayerLayout.bounds();
-        HudBounds bounds = layout.element(HudElementId.MINI_PLAYER).bounds(graphics.guiWidth(), graphics.guiHeight(),
-                rawBounds.width(), rawBounds.height());
-        graphics.fill(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + bounds.height(),
-                module.backgroundColor());
-        graphics.outline(bounds.x(), bounds.y(), bounds.width(), bounds.height(), OUTLINE_COLOR);
+        HudElementPlacement placement = layout.element(HudElementId.MINI_PLAYER);
+        HudPresentation.Frame frame = HudPresentation.beginFrame(graphics, placement, rawBounds.width(), rawBounds.height());
+        if (placement.background()) {
+            graphics.fill(frame.contentX(), frame.contentY(), frame.contentX() + rawBounds.width(),
+                    frame.contentY() + rawBounds.height(), module.backgroundColor());
+        }
 
         EntityRenderState state = client.getEntityRenderDispatcher().extractEntity(client.player,
                 deltaTracker.getGameTimeDeltaPartialTick(false));
         if (!(state instanceof LivingEntityRenderState livingState)) {
+            HudPresentation.endFrame(graphics);
             return;
         }
         if (!module.armorEnabled() && state instanceof HumanoidRenderState humanoidState) {
@@ -69,7 +71,8 @@ public final class MiniPlayerHud implements HudElement {
         Quaternionf cameraOrientation = new Quaternionf().rotateX(CAMERA_PITCH_RADIANS);
         Vector3f offset = new Vector3f(0.0F, state.boundingBoxHeight / 2.0F, 0.0F);
         graphics.entity(state, MiniPlayerLayout.entitySize(module.scale()), offset, orientation, cameraOrientation,
-                bounds.x(), bounds.y(), bounds.width(), bounds.height());
+                frame.contentX(), frame.contentY(), rawBounds.width(), rawBounds.height());
+        HudPresentation.endFrame(graphics);
     }
 
     private static void normalizeEntityScale(LivingEntityRenderState state) {

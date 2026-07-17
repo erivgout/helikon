@@ -35,6 +35,7 @@ public final class ActiveModulesLayout {
     private Sort sort = Sort.REGISTRY;
     private Alignment alignment = Alignment.LEFT;
     private ColorMode colorMode = ColorMode.ACCENT;
+    private boolean animations = true;
 
     public boolean enabled() { return enabled; }
     public int x() { return x; }
@@ -46,6 +47,7 @@ public final class ActiveModulesLayout {
     public Sort sort() { return sort; }
     public Alignment alignment() { return alignment; }
     public ColorMode colorMode() { return colorMode; }
+    public boolean animations() { return animations; }
 
     public void setEnabled(boolean value) { enabled = value; }
 
@@ -79,6 +81,7 @@ public final class ActiveModulesLayout {
     public void setSort(Sort value) { sort = Objects.requireNonNull(value, "value"); }
     public void setAlignment(Alignment value) { alignment = Objects.requireNonNull(value, "value"); }
     public void setColorMode(ColorMode value) { colorMode = Objects.requireNonNull(value, "value"); }
+    public void setAnimations(boolean value) { animations = value; }
 
     public void reset() {
         enabled = true;
@@ -91,5 +94,6 @@ public final class ActiveModulesLayout {
         sort = Sort.REGISTRY;
         alignment = Alignment.LEFT;
         colorMode = ColorMode.ACCENT;
+        animations = true;
     }
 }

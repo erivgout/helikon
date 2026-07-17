@@ -56,14 +56,7 @@ public final class CoordinateHud implements HudElement {
             return;
         }
         Minecraft client = Minecraft.getInstance();
-        int width = lines.stream().mapToInt(client.font::width).max().orElse(0) + PADDING * 2;
-        int height = lines.size() * client.font.lineHeight + PADDING * 2;
-        HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
-        graphics.fill(bounds.x(), bounds.y(), bounds.x() + width, bounds.y() + height, 0xB014161B);
-        for (int index = 0; index < lines.size(); index++) {
-            graphics.text(client.font, Component.literal(lines.get(index)), bounds.x() + PADDING,
-                    bounds.y() + PADDING + index * client.font.lineHeight, 0xFFB5D8FF, true);
-        }
+        HudPresentation.drawLines(graphics, client.font, lines, placement);
     }
 
     private List<String> lines(String scope) {

@@ -17,7 +17,9 @@ data safely falls back to centered placement. The same block stores a custom
 window width and height when the user has resized it; invalid dimensions reset
 to the default size without affecting valid module data.
 It also stores the selected ClickGUI palette (`midnight`, `high_contrast`, or
-`ocean`). Unknown or malformed palette values safely fall back to Midnight.
+`ocean`), a validated 0.75x–1.50x interface scale, and the reduced-animation
+preference. Unknown or malformed palette/scale values safely fall back to
+Midnight and 1.0x respectively.
 The former bootstrap ID `fullbright_stub` is migrated locally to the production
 `fullbright` module on load, preserving its enabled state, keybind, and shared
 settings before the next normal save writes the production ID.
@@ -49,10 +51,9 @@ optional immutable modifier set; text lists and selectors
 have bounded immutable entries; selector IDs are normalized lowercase resource
 tokens; enum selections reject unknown or duplicate tokens; ranges require
 finite ordered values inside their configured bounds; and regex settings reject
-syntax errors, backreferences, lookarounds, and quantified groups. These types
-are ready for modules and configuration now. Their dedicated ClickGUI controls
-and `.setting` command syntax will be added with the editor/command completion
-work rather than accepting unvalidated ad-hoc text.
+syntax errors, backreferences, lookarounds, and quantified groups. The
+ClickGUI and `.setting` use the same validated compact syntax for these types,
+so invalid input leaves the last valid local value unchanged.
 
 The Active Modules HUD has its own schema-versioned `hud.json` in the same
 directory. It stores enabled state, top-left scaled-GUI coordinates, scale,
@@ -63,7 +64,10 @@ HUD element (waypoints, coordinates, saturation, Elytra, Target HUD, reach,
 Inventory Preview, durability warnings, Radar, MiniPlayer, Debug Overlay, and
 Better Crosshair, plus opt-in Direction, FPS, Ping, local TPS estimate, Speed,
 Armor/held-item durability, Potion effects, Clock, Biome, Server address, and
-Totem count); older files retain their safe built-in placements.
+Totem count); older files retain their safe built-in placements. Schema 4 adds
+per-element scale, alignment, background, padding, text shadow, ARGB color,
+and rainbow-mode preferences. Missing or invalid presentation values safely
+use the element defaults.
 The HUD editor saves it when closed; normal client shutdown also saves it. Its
 writes use `hud.json.bak` and move malformed files to
 `hud.corrupt-<timestamp>.json`. Invalid individual HUD values are logged and

@@ -99,6 +99,32 @@ class HudConfigurationManagerTest {
     }
 
     @Test
+    void saveAndLoadPreserveHudElementPresentation() {
+        HudConfigurationManager manager = new HudConfigurationManager(temporaryDirectory.resolve("helikon"));
+        HudLayout source = new HudLayout();
+        var placement = source.element(dev.helikon.client.hud.HudElementId.SATURATION);
+        placement.setScale(1.5F);
+        placement.setAlignment(dev.helikon.client.hud.HudElementPlacement.Alignment.CENTER);
+        placement.setBackground(false);
+        placement.setPadding(7);
+        placement.setTextShadow(false);
+        placement.setColor(0xFF80D8FF);
+        placement.setRainbow(true);
+        manager.save(source);
+
+        HudLayout target = new HudLayout();
+        assertEquals(HudConfigurationManager.LoadResult.LOADED, manager.load(target));
+        var restored = target.element(dev.helikon.client.hud.HudElementId.SATURATION);
+        assertEquals(1.5F, restored.scale());
+        assertEquals(dev.helikon.client.hud.HudElementPlacement.Alignment.CENTER, restored.alignment());
+        assertFalse(restored.background());
+        assertEquals(7, restored.padding());
+        assertFalse(restored.textShadow());
+        assertEquals(0xFF80D8FF, restored.color());
+        assertTrue(restored.rainbow());
+    }
+
+    @Test
     void malformedConfigurationIsPreservedAndRestoresDefaults() throws IOException {
         HudConfigurationManager manager = new HudConfigurationManager(temporaryDirectory.resolve("helikon"));
         Files.createDirectories(manager.hudConfigurationPath().getParent());

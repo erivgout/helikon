@@ -11,6 +11,8 @@ public final class ClickGuiWindowState {
     public static final int MIN_WIDTH = 280;
     public static final int MIN_HEIGHT = 180;
     public static final int MAX_DIMENSION = 10_000;
+    public static final float MIN_INTERFACE_SCALE = 0.75F;
+    public static final float MAX_INTERFACE_SCALE = 1.50F;
 
     private boolean positioned;
     private int x;
@@ -19,6 +21,8 @@ public final class ClickGuiWindowState {
     private int width = DEFAULT_WIDTH;
     private int height = DEFAULT_HEIGHT;
     private ClickGuiTheme theme = ClickGuiTheme.MIDNIGHT;
+    private float interfaceScale = 1.0F;
+    private boolean reducedAnimations;
 
     public boolean isPositioned() {
         return positioned;
@@ -46,7 +50,21 @@ public final class ClickGuiWindowState {
 
     public ClickGuiTheme theme() { return theme; }
 
+    public float interfaceScale() { return interfaceScale; }
+
+    public boolean reducedAnimations() { return reducedAnimations; }
+
     public void setTheme(ClickGuiTheme theme) { this.theme = java.util.Objects.requireNonNull(theme, "theme"); }
+
+    public boolean setInterfaceScale(float value) {
+        if (!Float.isFinite(value) || value < MIN_INTERFACE_SCALE || value > MAX_INTERFACE_SCALE) {
+            return false;
+        }
+        interfaceScale = value;
+        return true;
+    }
+
+    public void setReducedAnimations(boolean value) { reducedAnimations = value; }
 
     /** Sets a user-selected top-left location if both persisted values are safe. */
     public boolean setPosition(int x, int y) {
@@ -75,6 +93,8 @@ public final class ClickGuiWindowState {
         resetPosition();
         resetSize();
         theme = ClickGuiTheme.MIDNIGHT;
+        interfaceScale = 1.0F;
+        reducedAnimations = false;
     }
 
     /** Clears only the saved position while retaining the selected dimensions. */
@@ -114,8 +134,10 @@ public final class ClickGuiWindowState {
         int maximumHeight = Math.max(1, viewportHeight - 16);
         int minimumWidth = maximumWidth < MIN_WIDTH ? 1 : MIN_WIDTH;
         int minimumHeight = maximumHeight < MIN_HEIGHT ? 1 : MIN_HEIGHT;
-        int resolvedWidth = Math.clamp(sized ? width : DEFAULT_WIDTH, minimumWidth, maximumWidth);
-        int resolvedHeight = Math.clamp(sized ? height : DEFAULT_HEIGHT, minimumHeight, maximumHeight);
+        int desiredWidth = Math.round((sized ? width : DEFAULT_WIDTH) * interfaceScale);
+        int desiredHeight = Math.round((sized ? height : DEFAULT_HEIGHT) * interfaceScale);
+        int resolvedWidth = Math.clamp(desiredWidth, minimumWidth, maximumWidth);
+        int resolvedHeight = Math.clamp(desiredHeight, minimumHeight, maximumHeight);
         if (sized) {
             width = resolvedWidth;
             height = resolvedHeight;

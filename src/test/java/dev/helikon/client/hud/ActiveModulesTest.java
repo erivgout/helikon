@@ -57,6 +57,14 @@ class ActiveModulesTest {
         assertNotEquals(first, second);
     }
 
+    @Test
+    void entryAnimationOpacityIsBoundedAndCompletesQuickly() {
+        assertEquals(0.0F, ActiveModulesHud.entryOpacity(1_000L, 1_000L));
+        assertEquals(0.5F, ActiveModulesHud.entryOpacity(1_000L, 1_075L));
+        assertEquals(1.0F, ActiveModulesHud.entryOpacity(1_000L, 1_300L));
+        assertEquals(0.0F, ActiveModulesHud.entryOpacity(1_000L, 900L));
+    }
+
     private static final class TestModule extends Module {
         private TestModule(String id, String name, ModuleCategory category) {
             super(id, name, "HUD selection test module.", category, false, Keybind.unbound());

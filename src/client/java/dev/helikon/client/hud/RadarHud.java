@@ -48,11 +48,12 @@ public final class RadarHud implements HudElement {
         if (client.level == null || client.player == null) {
             return;
         }
-        HudBounds bounds = layout.element(HudElementId.RADAR).bounds(graphics.guiWidth(), graphics.guiHeight(),
-                RADIUS * 2, RADIUS * 2);
-        int centerX = bounds.x() + RADIUS;
-        int centerY = bounds.y() + RADIUS;
-        drawBackground(graphics, bounds, centerX, centerY);
+        HudElementPlacement placement = layout.element(HudElementId.RADAR);
+        HudPresentation.Frame frame = HudPresentation.beginFrame(graphics, placement, RADIUS * 2, RADIUS * 2);
+        HudBounds localBounds = new HudBounds(frame.contentX(), frame.contentY(), RADIUS * 2, RADIUS * 2);
+        int centerX = frame.contentX() + RADIUS;
+        int centerY = frame.contentY() + RADIUS;
+        drawBackground(graphics, localBounds, centerX, centerY, placement);
         EntityRenderFilter.Options options = module.options();
         int rendered = 0;
         for (Entity entity : client.level.entitiesForRendering()) {
@@ -75,13 +76,18 @@ public final class RadarHud implements HudElement {
             }
         }
         graphics.fill(centerX - 1, centerY - 1, centerX + 2, centerY + 2, PLAYER_COLOR);
+        HudPresentation.endFrame(graphics);
     }
 
-    private void drawBackground(GuiGraphicsExtractor graphics, HudBounds bounds, int centerX, int centerY) {
+    private void drawBackground(GuiGraphicsExtractor graphics, HudBounds bounds, int centerX, int centerY,
+                                HudElementPlacement placement) {
+        if (!placement.background()) {
+            return;
+        }
         if (module.shape() == RadarProjection.Shape.SQUARE) {
             graphics.fill(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + bounds.height(),
                     module.backgroundColor());
-            graphics.outline(bounds.x(), bounds.y(), bounds.width(), bounds.height(), 0xFF8A919E);
+            graphics.outline(bounds.x(), bounds.y(), bounds.width(), bounds.height(), HudPresentation.color(placement));
             return;
         }
         for (int offsetY = -RADIUS; offsetY <= RADIUS; offsetY++) {

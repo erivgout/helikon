@@ -28,7 +28,7 @@ import java.util.logging.Logger;
  * global module configuration.
  */
 public final class HudConfigurationManager {
-    public static final int SCHEMA_VERSION = 3;
+    public static final int SCHEMA_VERSION = 4;
 
     private static final Logger LOGGER = Logger.getLogger(HudConfigurationManager.class.getName());
 
@@ -101,6 +101,7 @@ public final class HudConfigurationManager {
         activeModules.addProperty("sort", state.sort().name().toLowerCase(Locale.ROOT));
         activeModules.addProperty("alignment", state.alignment().name().toLowerCase(Locale.ROOT));
         activeModules.addProperty("colorMode", state.colorMode().name().toLowerCase(Locale.ROOT));
+        activeModules.addProperty("animations", state.animations());
         root.add("activeModules", activeModules);
 
         JsonObject elements = new JsonObject();
@@ -111,6 +112,13 @@ public final class HudConfigurationManager {
             value.addProperty("anchor", placement.anchor().name().toLowerCase(Locale.ROOT));
             value.addProperty("x", placement.offsetX());
             value.addProperty("y", placement.offsetY());
+            value.addProperty("scale", placement.scale());
+            value.addProperty("alignment", placement.alignment().name().toLowerCase(Locale.ROOT));
+            value.addProperty("background", placement.background());
+            value.addProperty("padding", placement.padding());
+            value.addProperty("textShadow", placement.textShadow());
+            value.addProperty("color", placement.color());
+            value.addProperty("rainbow", placement.rainbow());
             elements.add(element.name().toLowerCase(Locale.ROOT), value);
         }
         root.add("elements", elements);
@@ -151,6 +159,7 @@ public final class HudConfigurationManager {
                 ActiveModulesLayout.Alignment.LEFT));
         state.setColorMode(getOptionalEnum(activeModules, "colorMode", ActiveModulesLayout.ColorMode.class,
                 ActiveModulesLayout.ColorMode.ACCENT));
+        state.setAnimations(getOptionalBoolean(activeModules, "animations", true));
         applyElementPlacements(root.get("elements"), layout);
     }
 
@@ -182,7 +191,16 @@ public final class HudConfigurationManager {
             if (!placement.set(anchor, x, y)) {
                 LOGGER.warning(() -> "Invalid HUD placement for '" + id.name().toLowerCase(Locale.ROOT) + "'; reset");
                 placement.reset(id);
+                continue;
             }
+            placement.setScale(getOptionalElementScale(object));
+            placement.setAlignment(getOptionalEnum(object, "alignment", HudElementPlacement.Alignment.class,
+                    HudElementPlacement.Alignment.LEFT));
+            placement.setBackground(getOptionalBoolean(object, "background", true));
+            placement.setPadding(getOptionalElementPadding(object));
+            placement.setTextShadow(getOptionalBoolean(object, "textShadow", true));
+            placement.setColor(getOptionalColor(object, "color", HudElementPlacement.DEFAULT_COLOR));
+            placement.setRainbow(getOptionalBoolean(object, "rainbow", false));
         }
     }
 
@@ -245,6 +263,52 @@ public final class HudConfigurationManager {
         }
         LOGGER.warning("Invalid 'padding' HUD value; reset to default");
         return ActiveModulesHud.PADDING;
+    }
+
+    private static float getOptionalElementScale(JsonObject object) {
+        JsonElement element = object.get("scale");
+        if (element == null) {
+            return 1.0F;
+        }
+        if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()) {
+            float value = element.getAsFloat();
+            if (Float.isFinite(value) && value >= HudElementPlacement.MIN_SCALE
+                    && value <= HudElementPlacement.MAX_SCALE) {
+                return value;
+            }
+        }
+        LOGGER.warning("Invalid HUD element scale; reset to default");
+        return 1.0F;
+    }
+
+    private static int getOptionalElementPadding(JsonObject object) {
+        JsonElement element = object.get("padding");
+        if (element == null) {
+            return 3;
+        }
+        try {
+            int value = getRequiredInt(object, "padding");
+            if (value >= HudElementPlacement.MIN_PADDING && value <= HudElementPlacement.MAX_PADDING) {
+                return value;
+            }
+        } catch (IllegalArgumentException ignored) {
+            // Logged below.
+        }
+        LOGGER.warning("Invalid HUD element padding; reset to default");
+        return 3;
+    }
+
+    private static int getOptionalColor(JsonObject object, String property, int defaultValue) {
+        JsonElement element = object.get(property);
+        if (element == null) {
+            return defaultValue;
+        }
+        try {
+            return getRequiredInt(object, property);
+        } catch (IllegalArgumentException ignored) {
+            LOGGER.warning(() -> "Invalid '" + property + "' HUD value; reset to default");
+            return defaultValue;
+        }
     }
 
     private static <E extends Enum<E>> E getOptionalEnum(JsonObject object, String property, Class<E> type, E defaultValue) {

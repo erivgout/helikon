@@ -48,11 +48,11 @@ public final class InventoryPreviewHud implements HudElement {
         }
         int width = InventoryPreviewLayout.width();
         int height = InventoryPreviewLayout.height(rows);
-        HudBounds bounds = layout.element(HudElementId.INVENTORY_PREVIEW)
-                .bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
-        int x = bounds.x();
-        int y = bounds.y();
-        graphics.fill(x, y, x + width, y + height, BACKGROUND);
+        HudElementPlacement placement = layout.element(HudElementId.INVENTORY_PREVIEW);
+        HudPresentation.Frame frame = HudPresentation.beginFrame(graphics, placement, width, height);
+        int x = frame.contentX();
+        int y = frame.contentY();
+        graphics.fill(x, y, x + width, y + height, SLOT_BACKGROUND);
         for (int index = 0; index < slots.size(); index++) {
             int column = index % InventoryPreviewLayout.COLUMNS;
             int row = index / InventoryPreviewLayout.COLUMNS;
@@ -65,5 +65,6 @@ public final class InventoryPreviewHud implements HudElement {
                 graphics.itemDecorations(client.font, stack, slotX, slotY);
             }
         }
+        HudPresentation.endFrame(graphics);
     }
 }

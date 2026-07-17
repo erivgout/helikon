@@ -57,4 +57,19 @@ class ClickGuiWindowStateTest {
 
         assertEquals(new ClickGuiWindowState.Size(100, 80), state.resolveSize(180, 120));
     }
+
+    @Test
+    void appliesValidatedInterfaceScaleAndReducedAnimationPreference() {
+        ClickGuiWindowState state = new ClickGuiWindowState();
+
+        assertTrue(state.setInterfaceScale(1.25F));
+        assertFalse(state.setInterfaceScale(2.0F));
+        state.setReducedAnimations(true);
+
+        assertEquals(new ClickGuiWindowState.Size(450, 275), state.resolveSize(800, 600));
+        assertTrue(state.reducedAnimations());
+        state.reset();
+        assertEquals(1.0F, state.interfaceScale());
+        assertFalse(state.reducedAnimations());
+    }
 }

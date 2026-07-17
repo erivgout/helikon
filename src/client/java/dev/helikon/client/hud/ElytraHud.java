@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.network.chat.Component;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -41,15 +40,7 @@ public final class ElytraHud implements HudElement {
         }
         ExtraElytra.Status status = MinecraftAdvancedMovementAccess.elytraStatus(module, client.player);
         String speed = String.format(Locale.ROOT, "Elytra %.2f b/t", status.speed());
-        int width = Math.max(client.font.width(speed), status.lowDurability() ? client.font.width("Elytra durability low") : 0) + 6;
-        int height = client.font.lineHeight + (status.lowDurability() ? client.font.lineHeight : 0) + 6;
-        HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
-        graphics.fill(bounds.x(), bounds.y(), bounds.x() + width, bounds.y() + height, 0xB014161B);
-        graphics.text(client.font, Component.literal(speed), bounds.x() + 3, bounds.y() + 3, 0xFFE5EDF5, true);
-        if (status.lowDurability()) {
-            graphics.text(client.font, Component.literal("Elytra durability low"), bounds.x() + 3,
-                    bounds.y() + 3 + client.font.lineHeight,
-                    0xFFFF8A80, true);
-        }
+        HudPresentation.drawLines(graphics, client.font, status.lowDurability()
+                ? java.util.List.of(speed, "Elytra durability low") : java.util.List.of(speed), placement);
     }
 }

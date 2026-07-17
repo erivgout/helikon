@@ -16,10 +16,6 @@ import java.util.Objects;
 
 /** Minimal HUD indicator for the nearest enabled local waypoints. */
 public final class WaypointHud implements HudElement {
-    private static final int X = 5;
-    private static final int Y = 50;
-    private static final int PADDING = 3;
-    private static final int BACKGROUND = 0xB014161B;
     private static final int MAX_LINES = 3;
 
     private final WaypointManager waypoints;
@@ -72,22 +68,10 @@ public final class WaypointHud implements HudElement {
 
     private static void draw(GuiGraphicsExtractor graphics, Font font, List<WaypointNavigation.LocatedWaypoint> located,
                              HudElementPlacement placement) {
-        int lineCount = located.size();
-        if (lineCount == 0) {
+        if (located.isEmpty()) {
             return;
         }
-        int width = 0;
-        for (int index = 0; index < lineCount; index++) {
-            width = Math.max(width, font.width(line(located.get(index))));
-        }
-        int height = lineCount * font.lineHeight + PADDING * 2;
-        HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width + PADDING * 2, height);
-        graphics.fill(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + height, BACKGROUND);
-        for (int index = 0; index < lineCount; index++) {
-            WaypointNavigation.LocatedWaypoint waypoint = located.get(index);
-            graphics.text(font, line(waypoint), bounds.x() + PADDING, bounds.y() + PADDING + index * font.lineHeight,
-                    waypoint.waypoint().color(), true);
-        }
+        HudPresentation.drawLines(graphics, font, located.stream().map(WaypointHud::line).toList(), placement);
     }
 
     private static String line(WaypointNavigation.LocatedWaypoint waypoint) {

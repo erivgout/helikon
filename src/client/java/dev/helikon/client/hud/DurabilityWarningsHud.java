@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 
@@ -50,14 +49,7 @@ public final class DurabilityWarningsHud implements HudElement {
             return;
         }
         List<String> lines = warnings.stream().map(DurabilityWarningsHud::format).toList();
-        int width = lines.stream().mapToInt(client.font::width).max().orElse(0) + PADDING * 2;
-        int height = lines.size() * client.font.lineHeight + PADDING * 2;
-        HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
-        graphics.fill(bounds.x(), bounds.y(), bounds.x() + width, bounds.y() + height, 0xB014161B);
-        for (int index = 0; index < lines.size(); index++) {
-            graphics.text(client.font, Component.literal(lines.get(index)), bounds.x() + PADDING,
-                    bounds.y() + PADDING + index * client.font.lineHeight, 0xFFFF8A80, true);
-        }
+        HudPresentation.drawLines(graphics, client.font, lines, placement);
     }
 
     private static List<DurabilityWarnings.Item> observedItems(Minecraft client, DurabilityWarnings module) {

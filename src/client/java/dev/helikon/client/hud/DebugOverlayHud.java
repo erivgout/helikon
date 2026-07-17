@@ -11,7 +11,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,13 +61,7 @@ public final class DebugOverlayHud implements HudElement {
         if (state.lines().isEmpty()) {
             return;
         }
-        HudBounds bounds = layout.element(HudElementId.DEBUG_OVERLAY)
-                .bounds(graphics.guiWidth(), graphics.guiHeight(), state.width(), state.height());
-        graphics.fill(bounds.x(), bounds.y(), bounds.x() + state.width(), bounds.y() + state.height(), 0xC014161B);
-        for (int index = 0; index < state.lines().size(); index++) {
-            graphics.text(client.font, state.lines().get(index), bounds.x() + PADDING,
-                    bounds.y() + PADDING + index * client.font.lineHeight, 0xFFE5EDF5, true);
-        }
+        HudPresentation.drawLines(graphics, client.font, state.lines(), layout.element(HudElementId.DEBUG_OVERLAY));
     }
 
     /** Rebuilds the local text only once per client tick, never from the per-frame HUD extraction path. */
@@ -78,12 +71,11 @@ public final class DebugOverlayHud implements HudElement {
             return;
         }
         Minecraft client = Minecraft.getInstance();
-        List<Component> lines = new ArrayList<>();
+        List<String> lines = new ArrayList<>();
         int maximumWidth = 0;
         for (String line : buildLines()) {
-            Component component = Component.literal(line);
-            lines.add(component);
-            maximumWidth = Math.max(maximumWidth, client.font.width(component));
+            lines.add(line);
+            maximumWidth = Math.max(maximumWidth, client.font.width(line));
         }
         renderState = new RenderState(List.copyOf(lines), maximumWidth + PADDING * 2,
                 lines.size() * client.font.lineHeight + PADDING * 2);
@@ -96,7 +88,7 @@ public final class DebugOverlayHud implements HudElement {
     }
 
     /** Prebuilt client-thread data consumed by the per-frame HUD extractor without collection work. */
-    private record RenderState(List<Component> lines, int width, int height) {
+    private record RenderState(List<String> lines, int width, int height) {
         private RenderState {
             lines = List.copyOf(Objects.requireNonNull(lines, "lines"));
             if (width < 0 || height < 0) {

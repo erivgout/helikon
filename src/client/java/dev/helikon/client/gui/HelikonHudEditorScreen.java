@@ -34,7 +34,7 @@ public final class HelikonHudEditorScreen extends Screen {
     private static final int COLOR_ACCENT = 0xFFE8A33D;
     private static final int COLOR_DISABLED = 0xFF777D86;
     private static final int CHECKBOX_SIZE = 8;
-    private static final int HEADER_BOTTOM = 158;
+    private static final int HEADER_BOTTOM = 260;
     private static final HudElementId[] PLACEMENT_ELEMENTS = {
             HudElementId.WAYPOINTS, HudElementId.COORDINATES, HudElementId.SATURATION,
             HudElementId.ELYTRA, HudElementId.TARGET, HudElementId.REACH, HudElementId.INVENTORY_PREVIEW,
@@ -125,6 +125,47 @@ public final class HelikonHudEditorScreen extends Screen {
             element.setEnabled(!element.enabled());
             return true;
         }
+        if (isInside(mouseX, mouseY, 14, 152, 220, 11)) {
+            element.setAlignment(next(element.alignment()));
+            return true;
+        }
+        if (isInside(mouseX, mouseY, 14, 165, 220, 11)) {
+            element.setBackground(!element.background());
+            return true;
+        }
+        if (isInside(mouseX, mouseY, 14, 178, 220, 11)) {
+            element.setTextShadow(!element.textShadow());
+            return true;
+        }
+        if (isInside(mouseX, mouseY, 14, 191, 42, 11)) {
+            element.setScale(Math.max(HudElementPlacement.MIN_SCALE, element.scale() - 0.25F));
+            return true;
+        }
+        if (isInside(mouseX, mouseY, 59, 191, 42, 11)) {
+            element.setScale(Math.min(HudElementPlacement.MAX_SCALE, element.scale() + 0.25F));
+            return true;
+        }
+        if (isInside(mouseX, mouseY, 104, 191, 42, 11)) {
+            element.setPadding(Math.max(HudElementPlacement.MIN_PADDING, element.padding() - 1));
+            return true;
+        }
+        if (isInside(mouseX, mouseY, 149, 191, 42, 11)) {
+            element.setPadding(Math.min(HudElementPlacement.MAX_PADDING, element.padding() + 1));
+            return true;
+        }
+        if (isInside(mouseX, mouseY, 14, 204, 220, 11)) {
+            element.setColor(nextColor(element.color()));
+            element.setRainbow(false);
+            return true;
+        }
+        if (isInside(mouseX, mouseY, 14, 217, 220, 11)) {
+            element.setRainbow(!element.rainbow());
+            return true;
+        }
+        if (isInside(mouseX, mouseY, 14, 230, 220, 11)) {
+            element.reset(selectedElement);
+            return true;
+        }
         HudBounds elementBounds = elementPreviewBounds();
         if (element.enabled() && elementBounds.contains(mouseX, mouseY)) {
             elementDragging = true;
@@ -153,7 +194,11 @@ public final class HelikonHudEditorScreen extends Screen {
             return true;
         }
         if (isInside(mouseX, mouseY, 14, 100, 220, 11)) {
-            style.setTextShadow(!style.textShadow());
+            if (mouseX >= 194) {
+                style.setAnimations(!style.animations());
+            } else {
+                style.setTextShadow(!style.textShadow());
+            }
             return true;
         }
         if (isInside(mouseX, mouseY, 14, 113, 42, 11)) {
@@ -245,6 +290,7 @@ public final class HelikonHudEditorScreen extends Screen {
         graphics.text(font, "Color: " + style.colorMode().name().toLowerCase(), 14, 74, COLOR_TEXT_DIM, false);
         graphics.text(font, "Background: " + (style.background() ? "on" : "off"), 14, 87, COLOR_TEXT_DIM, false);
         graphics.text(font, "Text shadow: " + (style.textShadow() ? "on" : "off"), 14, 100, COLOR_TEXT_DIM, false);
+        graphics.text(font, "Animation: " + (style.animations() ? "on" : "off"), 194, 100, COLOR_TEXT_DIM, false);
         graphics.text(font, "Scale -", 14, 113, COLOR_TEXT_DIM, false);
         graphics.text(font, "Scale +", 59, 113, COLOR_TEXT_DIM, false);
         graphics.text(font, "Pad -", 104, 113, COLOR_TEXT_DIM, false);
@@ -259,6 +305,16 @@ public final class HelikonHudEditorScreen extends Screen {
             graphics.outline(14, 139, CHECKBOX_SIZE, CHECKBOX_SIZE, COLOR_TEXT_DIM);
         }
         graphics.text(font, "Show selected element; drag its preview", 27, 139, COLOR_TEXT, false);
+        graphics.text(font, "Alignment: " + element.alignment().name().toLowerCase(), 14, 152, COLOR_TEXT_DIM, false);
+        graphics.text(font, "Background: " + (element.background() ? "on" : "off"), 14, 165, COLOR_TEXT_DIM, false);
+        graphics.text(font, "Text shadow: " + (element.textShadow() ? "on" : "off"), 14, 178, COLOR_TEXT_DIM, false);
+        graphics.text(font, "Scale -", 14, 191, COLOR_TEXT_DIM, false);
+        graphics.text(font, "Scale +", 59, 191, COLOR_TEXT_DIM, false);
+        graphics.text(font, "Pad -", 104, 191, COLOR_TEXT_DIM, false);
+        graphics.text(font, "Pad +", 149, 191, COLOR_TEXT_DIM, false);
+        graphics.text(font, "Color: " + colorToken(element.color()) + " (click to cycle)", 14, 204, COLOR_TEXT_DIM, false);
+        graphics.text(font, "Rainbow: " + (element.rainbow() ? "on" : "off"), 14, 217, COLOR_TEXT_DIM, false);
+        graphics.text(font, "Reset selected element", 14, 230, COLOR_ACCENT, false);
     }
 
     private List<String> previewLines() {
@@ -286,17 +342,32 @@ public final class HelikonHudEditorScreen extends Screen {
     private void drawElementPreview(GuiGraphicsExtractor graphics) {
         HudBounds bounds = elementPreviewBounds();
         HudElementPlacement placement = layout.element(selectedElement);
-        int color = placement.enabled() ? COLOR_TEXT : COLOR_DISABLED;
-        graphics.fill(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + bounds.height(), COLOR_PANEL);
-        graphics.outline(bounds.x(), bounds.y(), bounds.width(), bounds.height(), COLOR_ACCENT);
-        graphics.text(font, elementName(selectedElement), bounds.x() + 3, bounds.y() + 3, color, true);
+        int width = font.width(elementName(selectedElement)) + placement.padding() * 2;
+        int height = font.lineHeight + placement.padding() * 2;
+        int color = placement.enabled() ? (placement.rainbow()
+                ? ActiveModules.rainbowColor(System.currentTimeMillis() / 50L) : placement.color()) : COLOR_DISABLED;
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(bounds.x(), bounds.y());
+        graphics.pose().scale(placement.scale());
+        if (placement.background()) {
+            graphics.fill(0, 0, width, height, COLOR_PANEL);
+        }
+        graphics.outline(0, 0, width, height, COLOR_ACCENT);
+        int textX = switch (placement.alignment()) {
+            case LEFT -> placement.padding();
+            case CENTER -> (width - font.width(elementName(selectedElement))) / 2;
+            case RIGHT -> width - placement.padding() - font.width(elementName(selectedElement));
+        };
+        graphics.text(font, elementName(selectedElement), textX, placement.padding(), color, placement.textShadow());
+        graphics.pose().popMatrix();
     }
 
     private HudBounds elementPreviewBounds() {
         String name = elementName(selectedElement);
-        int contentWidth = font.width(name) + 6;
-        int contentHeight = font.lineHeight + 6;
-        return layout.element(selectedElement).bounds(width, height, contentWidth, contentHeight);
+        HudElementPlacement placement = layout.element(selectedElement);
+        int contentWidth = font.width(name) + placement.padding() * 2;
+        int contentHeight = font.lineHeight + placement.padding() * 2;
+        return placement.scaledBounds(width, height, contentWidth, contentHeight);
     }
 
     private HudElementId nextElement() {
@@ -340,6 +411,20 @@ public final class HelikonHudEditorScreen extends Screen {
     private static <E extends Enum<E>> E next(E value) {
         E[] values = value.getDeclaringClass().getEnumConstants();
         return values[(value.ordinal() + 1) % values.length];
+    }
+
+    private static int nextColor(int value) {
+        int[] colors = {0xFFE5EDF5, 0xFFFFD180, 0xFF80D8FF, 0xFFA5D6A7, 0xFFFF8A80};
+        for (int index = 0; index < colors.length; index++) {
+            if (colors[index] == value) {
+                return colors[(index + 1) % colors.length];
+            }
+        }
+        return colors[0];
+    }
+
+    private static String colorToken(int color) {
+        return String.format("#%08X", color);
     }
 
     private static boolean isInside(int mouseX, int mouseY, int x, int y, int width, int height) {

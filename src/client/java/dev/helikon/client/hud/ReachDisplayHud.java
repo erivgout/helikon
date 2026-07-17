@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.network.chat.Component;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -42,10 +41,6 @@ public final class ReachDisplayHud implements HudElement {
         String text = tracker.lastAttackDistance().map(distance -> String.format(Locale.ROOT, "Reach %.2f", distance))
                 .orElse("Reach --");
         Minecraft client = Minecraft.getInstance();
-        int width = client.font.width(text) + 6;
-        int height = client.font.lineHeight + 6;
-        HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
-        graphics.fill(bounds.x(), bounds.y(), bounds.x() + width, bounds.y() + height, 0xB014161B);
-        graphics.text(client.font, Component.literal(text), bounds.x() + 3, bounds.y() + 3, 0xFFE5EDF5, true);
+        HudPresentation.drawLines(graphics, client.font, java.util.List.of(text), placement);
     }
 }

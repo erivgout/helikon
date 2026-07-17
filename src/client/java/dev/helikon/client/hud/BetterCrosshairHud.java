@@ -39,18 +39,21 @@ public final class BetterCrosshairHud implements HudElement {
         Minecraft client = Minecraft.getInstance();
         int movementGap = movementGap(client);
         int diameter = crosshairDiameter(movementGap);
-        HudBounds center = layout.element(HudElementId.BETTER_CROSSHAIR)
-                .bounds(graphics.guiWidth(), graphics.guiHeight(), diameter, diameter);
-        int centerX = center.x() + diameter / 2;
-        int centerY = center.y() + diameter / 2;
+        HudElementPlacement placement = layout.element(HudElementId.BETTER_CROSSHAIR);
+        HudPresentation.Frame frame = HudPresentation.beginFrame(graphics, placement, diameter, diameter);
+        int centerX = frame.contentX() + diameter / 2;
+        int centerY = frame.contentY() + diameter / 2;
         for (CrosshairGeometry.Rect arm : CrosshairGeometry.arms(
                 centerX, centerY, module.sizePixels(), module.gapPixels(), module.thicknessPixels(), movementGap
         )) {
             if (module.outlineEnabled()) {
                 graphics.outline(arm.x() - 1, arm.y() - 1, arm.width() + 2, arm.height() + 2, OUTLINE_COLOR);
             }
-            graphics.fill(arm.x(), arm.y(), arm.x() + arm.width(), arm.y() + arm.height(), module.color());
+            int color = placement.rainbow() || placement.color() != HudElementPlacement.DEFAULT_COLOR
+                    ? HudPresentation.color(placement) : module.color();
+            graphics.fill(arm.x(), arm.y(), arm.x() + arm.width(), arm.y() + arm.height(), color);
         }
+        HudPresentation.endFrame(graphics);
     }
 
     private int movementGap(Minecraft client) {

@@ -725,7 +725,7 @@ public final class HelikonClient implements ClientModInitializer {
 
         HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "active_modules"),
-                new ActiveModulesHud(modules, hudLayout, panicState));
+                new ActiveModulesHud(modules, hudLayout, panicState, clickGuiWindow::reducedAnimations));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "waypoints"),
                 new WaypointHud(waypoints, waypointLocations, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "better_crosshair"),

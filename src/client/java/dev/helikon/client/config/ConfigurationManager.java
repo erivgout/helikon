@@ -276,6 +276,8 @@ public final class ConfigurationManager {
             window.addProperty("height", clickGuiWindow.height());
         }
         window.addProperty("theme", clickGuiWindow.theme().id());
+        window.addProperty("interfaceScale", clickGuiWindow.interfaceScale());
+        window.addProperty("reducedAnimations", clickGuiWindow.reducedAnimations());
         return window;
     }
 
@@ -342,6 +344,23 @@ public final class ConfigurationManager {
         }
         ClickGuiTheme.find(themeElement.getAsString()).ifPresentOrElse(clickGuiWindow::setTheme,
                 () -> LOGGER.warning("Unknown ClickGUI theme; reset to Midnight"));
+
+        JsonElement scaleElement = window.get("interfaceScale");
+        if (scaleElement != null) {
+            if (!scaleElement.isJsonPrimitive() || !scaleElement.getAsJsonPrimitive().isNumber()
+                    || !clickGuiWindow.setInterfaceScale(scaleElement.getAsFloat())) {
+                LOGGER.warning("Invalid ClickGUI interface scale; reset to 1.0");
+            }
+        }
+        JsonElement reducedAnimationsElement = window.get("reducedAnimations");
+        if (reducedAnimationsElement != null) {
+            if (!reducedAnimationsElement.isJsonPrimitive()
+                    || !reducedAnimationsElement.getAsJsonPrimitive().isBoolean()) {
+                LOGGER.warning("Invalid ClickGUI reduced animations value; reset to off");
+            } else {
+                clickGuiWindow.setReducedAnimations(reducedAnimationsElement.getAsBoolean());
+            }
+        }
     }
 
     private static JsonObject serializeKeybind(Keybind keybind) {

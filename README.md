@@ -59,6 +59,13 @@ original message component is preserved; no timestamp is transmitted to a
 server. Minecraft logs the original message before Helikon decorates the
 locally stored display line.
 
+ChatColor is off by default and applies a configurable local palette to
+displayed player, server-system, mention, and conservatively recognized
+private-message lines. It also controls the timestamp-label color, standard
+vanilla `<player>` span color, background-opacity multiplier, and text shadow.
+It rebuilds only local display components after Minecraft logs the original
+message; custom server chat formats retain their own structured name styling.
+
 PrivateMessageHelper intercepts `.pm` and `.reply` locally, validates a player
 name and a bounded message, then uses Minecraft's normal server-command route
 with configurable `msg` and `r` command tokens. The `.` command itself is
@@ -117,6 +124,9 @@ Select **Theme** in the header to choose Midnight, High Contrast, or Ocean;
 the client never downloads themes or contacts a service.
 With no text field focused, use Left/Right to switch categories, Up/Down to
 select a module, and Enter or Space to toggle it.
+Select **ChatColor** in the Chat category to edit its `#AARRGGBB` local
+palette, opacity multiplier, and text-shadow setting. The module never changes
+outgoing chat or server-visible formatting.
 
 ## Local commands
 

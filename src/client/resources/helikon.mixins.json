@@ -5,6 +5,7 @@
   "client": [
     "ClientInputAccessor",
     "ChatComponentMixin",
+    "ChatComponentAccessor",
     "FogRendererMixin",
     "HudMixin",
     "KeyMappingAccessor",

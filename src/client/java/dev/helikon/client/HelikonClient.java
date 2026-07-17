@@ -58,6 +58,7 @@ import dev.helikon.client.module.chat.MentionNotifier;
 import dev.helikon.client.module.chat.AutoReply;
 import dev.helikon.client.module.chat.AntiSpam;
 import dev.helikon.client.module.chat.ChatTimestamps;
+import dev.helikon.client.module.chat.ChatColor;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
@@ -176,6 +177,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoReply autoReply = new AutoReply();
         AntiSpam antiSpam = new AntiSpam();
         ChatTimestamps chatTimestamps = new ChatTimestamps();
+        ChatColor chatColor = new ChatColor();
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
@@ -192,7 +194,9 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoReply);
         modules.register(antiSpam);
         modules.register(chatTimestamps);
+        modules.register(chatColor);
         ChatDisplayAccess.install(chatTimestamps);
+        ChatDisplayAccess.install(chatColor);
         MovementModuleAccess.install(autoWalk, autoSneak);
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {

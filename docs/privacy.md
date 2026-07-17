@@ -12,3 +12,8 @@ PrivateMessageHelper keeps only a bounded, session-memory view of outgoing
 `.pm` text for local command history. It never persists that text, transmits it
 to a Helikon service, or attempts to recognize private messages from arbitrary
 incoming chat.
+
+ChatColor operates only on components Minecraft has already received for this
+client's chat display. Its local palette and opacity settings are stored with
+other module configuration, but it does not store message content or send any
+chat formatting, metadata, or display preference to a server or service.

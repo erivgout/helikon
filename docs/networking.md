@@ -77,6 +77,11 @@ display after Minecraft has logged the original incoming content. The original
 server message, signature, client log text, and all network traffic are
 unchanged.
 
+ChatColor reads only the already received local display component and modifies
+the later local chat-display copy plus its rendered background alpha. It does
+not alter outbound chat, message signatures, client-log text, packets, or
+server-visible formatting.
+
 ## Future policy
 
 Optional external integrations must be isolated under

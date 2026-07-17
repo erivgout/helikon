@@ -136,6 +136,18 @@ and `addMessageToQueue`, after Minecraft has logged the original content.
 `ChatDisplayAccess` prepends a separately styled timestamp component inside an
 unstyled wrapper while retaining the original component as a sibling. It cannot
 modify a received packet, Minecraft's original chat-log text, or another client.
+`ChatColorPolicy` keeps the conservative message-type classification free of
+Minecraft imports. When `ChatColor` is enabled, the same display adapter copies
+the local component tree to apply a fallback palette and optional no-shadow
+style; explicit server colors, click events, and hover events remain attached
+to their source components. It colors only the first structured sender argument
+of vanilla `chat.type.text`; arbitrary server formats are never flattened to
+guess at a player-name span. A verified `ChatComponent.extractRenderState`
+local-variable hook multiplies both ordinary-line and prompt background alpha
+after the module is enabled. The adapter retains a weak in-memory link to the
+uncolored local display component for each current line, so a ChatColor setting
+change or disable rebuilds retained chat without changing message packets,
+Minecraft's original log text, or timestamp insertion time.
 
 ## Events
 

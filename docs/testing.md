@@ -216,6 +216,19 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     seconds, color, and session-relative mode. Verify Helikon's own local
     command feedback is not timestamped and no timestamp is visible to another
     player or sent to the server.
+31. Enable **ChatColor** and receive normal player chat, a server-system
+    message, a mention of the local player, and a server format beginning with
+    `From` or `To`. Verify each local fallback color, background-opacity
+    multiplier applies to ordinary message-line backgrounds as well as focused
+    prompt backgrounds, and text-shadow toggle changes only this client's
+    display. In
+    standard vanilla `<player> message` chat, verify the sender span uses
+    **Player name color** while the message retains its normal color. Verify a
+    custom server chat format remains legible and keeps any explicit server
+    name styling. Combine it with **ChatTimestamps** and verify the timestamp
+    uses ChatColor's timestamp color. Relaunch to verify settings persist, then
+    disable ChatColor and verify vanilla display colors/opacity return without
+    sending or changing any chat text.
 
 ## Manual command and keybind smoke test
 

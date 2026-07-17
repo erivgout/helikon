@@ -171,6 +171,8 @@ hooks.
 
 `AntiWaterPushTest` covers its disabled default and reversible water-current
 policy. `WaterJumpTest` independently covers its disabled default and every required
+`FishTest` covers bounded underwater horizontal/vertical velocity, idle drift,
+and every exclusion state.
 Minecraft-free water-edge fact. Its 26.2 input adapter is covered by the
 advanced-movement smoke check below.
 Combat filtering, deterministic selection, bounded bow smoothing, legitimate
@@ -624,7 +626,10 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     into a loaded sturdy one-block bank with two clear blocks above it: verify
     it requests only normal Jump input. Test backward movement, air, an
     obstructed bank, an unloaded boundary, and every open screen; none may
-    request a jump. Verify **Jesus** holds a steady, non-bobbing water surface,
+    request a jump. In a submerged test area, enable **Fish** and verify only
+    directional/Jump/Sneak input applies the configured bounded local swimming
+    velocity; idle drift, screens, riding, ability flight, and Elytra flight
+    remain unchanged. Verify **Jesus** holds a steady, non-bobbing water surface,
     Jump releases upward, and Sneak permits normal diving. Walk into a wall with
     **Spider** and verify forward/side
     movement climbs while Sneak, ladders, and open screens do not. Verify

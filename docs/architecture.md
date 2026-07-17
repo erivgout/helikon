@@ -91,6 +91,10 @@ AntiWaterPush keeps its enable-state decision Minecraft-free. Its narrow
 `Entity.updateFluidInteraction` mixin suppresses only the local player's
 verified `EntityFluidInteraction.applyCurrentTo` water call, preserving water
 contact processing and the separate lava-current path.
+Fish keeps its contextual eligibility and bounded input-to-velocity policy
+Minecraft-free. The advanced-movement adapter reads only the local player's
+existing water, movement-input, flight, and velocity facts, then applies the
+returned local velocity without changing fluid state or constructing a packet.
 
 AutoTool separates hotbar candidates and deterministic scoring from the small
 Minecraft adapter. The adapter runs only while the user is normally mining a

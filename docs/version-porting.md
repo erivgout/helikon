@@ -127,9 +127,13 @@ When porting:
     render-state substitution, locally generated texture, and no-network rule.
     Revalidate world Gizmo lines for Local Cosmetics and retain its 12–48
     segment bound.
-32. Run the manual smoke test in an empty profile and with no internet access.
-33. Document compatibility changes and retained limitations before release.
-34. Re-run `check releaseBundle`, inspect the generated checksum and resolved
+32. Revalidate the existing Fabric HUD registration/extraction APIs before
+    changing Debug Overlay. Preserve its disabled no-timing path, module
+    failure isolation, bounded ten-row paging, cache-count-only reads, and
+    in-memory-only diagnostics policy.
+33. Run the manual smoke test in an empty profile and with no internet access.
+34. Document compatibility changes and retained limitations before release.
+35. Re-run `check releaseBundle`, inspect the generated checksum and resolved
     dependency report, and repeat the focused live-client smoke checks before
     packaging a release for the target version.
 

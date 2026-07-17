@@ -46,6 +46,7 @@ import dev.helikon.client.gui.HelikonAutoReconnectScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
 import dev.helikon.client.hud.BetterCrosshairHud;
 import dev.helikon.client.hud.CoordinateHud;
+import dev.helikon.client.hud.DebugOverlayHud;
 import dev.helikon.client.hud.DurabilityWarningsHud;
 import dev.helikon.client.hud.ElytraHud;
 import dev.helikon.client.hud.HudLayout;
@@ -66,6 +67,7 @@ import dev.helikon.client.macro.MacroServerContextProvider;
 import dev.helikon.client.macro.MinecraftMacroActionExecutor;
 import dev.helikon.client.macro.MinecraftMacroServerContextProvider;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.module.ModuleTimingMetrics;
 import dev.helikon.client.module.combat.AntiBot;
 import dev.helikon.client.module.combat.AutoPotion;
 import dev.helikon.client.module.combat.BowAimAssist;
@@ -106,6 +108,7 @@ import dev.helikon.client.module.movement.WaterJumpAccess;
 import dev.helikon.client.module.miscellaneous.Annoy;
 import dev.helikon.client.module.miscellaneous.CoordinateTracker;
 import dev.helikon.client.module.miscellaneous.DeathCoordinates;
+import dev.helikon.client.module.miscellaneous.DebugOverlay;
 import dev.helikon.client.module.miscellaneous.DurabilityWarnings;
 import dev.helikon.client.module.miscellaneous.InventoryPreview;
 import dev.helikon.client.module.miscellaneous.LogoutCoordinates;
@@ -254,6 +257,7 @@ public final class HelikonClient implements ClientModInitializer {
     public static final Logger LOGGER = Logger.getLogger(MOD_ID);
 
     private final ModuleRegistry modules = new ModuleRegistry();
+    private final ModuleTimingMetrics timingMetrics = new ModuleTimingMetrics();
     private final EventBus events = new EventBus((event, exception) ->
             LOGGER.log(Level.SEVERE, "Unhandled listener error for " + event.getClass().getSimpleName(), exception)
     );
@@ -303,6 +307,7 @@ public final class HelikonClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        modules.setTimingMetrics(timingMetrics);
         modules.addFailureHandler((module, operation, exception) ->
                 LOGGER.warning(() -> "Disabled module '" + module.id() + "' after a failed " + operation)
         );
@@ -415,6 +420,7 @@ public final class HelikonClient implements ClientModInitializer {
         Annoy annoy = new Annoy();
         OneClickFriends oneClickFriends = new OneClickFriends();
         SkinBlinker skinBlinker = new SkinBlinker(new MinecraftSkinLayerAccess());
+        DebugOverlay debugOverlay = new DebugOverlay(timingMetrics);
         LocalCape localCape = new LocalCape();
         LocalCosmetics localCosmetics = new LocalCosmetics();
         InventoryPreview inventoryPreview = new InventoryPreview();
@@ -481,6 +487,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(annoy);
         modules.register(oneClickFriends);
         modules.register(skinBlinker);
+        modules.register(debugOverlay);
         modules.register(localCape);
         modules.register(localCosmetics);
         modules.register(inventoryPreview);
@@ -507,6 +514,8 @@ public final class HelikonClient implements ClientModInitializer {
                 modules, friends, entityEsp, betterNametags, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
                 breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics
         );
+        DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,
+                events, configuration, panicState);
         AtomicReference<MinecraftCombatAccess.Snapshot> combatSnapshot = new AtomicReference<>(
                 MinecraftCombatAccess.Snapshot.unavailable());
         AtomicBoolean combatAttackStarted = new AtomicBoolean();
@@ -721,6 +730,8 @@ public final class HelikonClient implements ClientModInitializer {
                 new DurabilityWarningsHud(durabilityWarnings, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "coordinates"),
                 new CoordinateHud(deathCoordinates, logoutCoordinates, coordinateTracker, waypointLocations, panicState));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "debug_overlay"),
+                debugOverlayHud);
         LevelRenderEvents.BEFORE_GIZMOS.register(context -> {
             events.post(new RenderEvent(RenderEvent.Kind.WORLD, 0.0D, ""));
             worldVisuals.render(context);
@@ -737,6 +748,7 @@ public final class HelikonClient implements ClientModInitializer {
             events.post(new ClientTickEvent(ClientTickEvent.Phase.POST));
             BetterChatDisplayAccess.tickSmoothScroll();
             worldVisuals.tick(client);
+            debugOverlayHud.tick();
 
             boolean anyScreenOpen = screenWasOpenAtTickStart || client.gui.screen() != null;
             boolean panicTriggered = panicKeybinds.tick(

@@ -24,6 +24,9 @@ Gradle, the operating system, or server plugins.
   crashing unrelated modules.
 - No module constructs malformed packets, bypasses anti-cheat, downloads
   assets, executes arbitrary code, opens an external socket, or emits telemetry.
+- Debug Overlay retains only transient in-process timing/cache/event/save facts
+  while explicitly enabled; it is not a telemetry, profiler-upload, or
+  persistent diagnostic system.
 - The release bundle contains checksums, a resolved dependency report, source,
   license, and local release notes for human review.
 

@@ -59,6 +59,10 @@ Cosmetics produces at most 48 local Gizmo lines around that player. Neither
 feature requests a profile, downloads/uploads an asset, reads another player's
 cosmetic data, creates a packet, or has a network path.
 
+Debug Overlay records timing and diagnostic values only in local process memory
+while its explicit module is enabled. It creates no file, chat message, packet,
+telemetry event, service request, or hardware/account identifier.
+
 Inventory Preview and Durability Warnings read only local `Inventory` and
 `ItemStack` state to produce HUD extraction calls. They never open a screen,
 move an item, or send a packet. Death Coordinates and Logout Coordinates retain

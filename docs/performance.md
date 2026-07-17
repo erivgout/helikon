@@ -6,6 +6,19 @@ trajectory simulation caps steps and projectiles; chat, macro, and automation
 queues are bounded. Disabled modules return before their platform adapters do
 meaningful work.
 
+## Local debug overlay
+
+The **Debug Overlay** module is disabled by default, so `ModuleRegistry` does
+not call `System.nanoTime()` or allocate timing rows during normal guarded
+module work. While explicitly enabled, it records the last local `tick`,
+bounded `scan`, and `render` duration for each module. Its 10-row local pages
+also show BlockESP and StorageESP cache counts, event-bus subscriber count, and
+the in-memory global configuration-save state. It prebuilds display components
+and width only once per client tick, leaving the per-frame HUD extraction path
+to submit cached values. The overlay writes no diagnostic file and has no
+network or telemetry path. Disable it (or use panic) before a normal
+performance capture.
+
 ## Release-candidate profiling procedure
 
 Profile a production-like client with the same Java 25 and Fabric versions as

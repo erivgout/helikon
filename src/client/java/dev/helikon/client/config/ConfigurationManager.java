@@ -39,6 +39,7 @@ public final class ConfigurationManager {
 
     private final Path configurationDirectory;
     private final Path globalConfigurationPath;
+    private volatile SaveStatus saveStatus = SaveStatus.NOT_SAVED;
 
     public ConfigurationManager(Path configurationDirectory) {
         this.configurationDirectory = Objects.requireNonNull(configurationDirectory, "configurationDirectory").normalize();
@@ -51,6 +52,11 @@ public final class ConfigurationManager {
 
     public Path globalConfigurationPath() {
         return globalConfigurationPath;
+    }
+
+    /** Current local global-configuration write state for the opt-in diagnostics HUD. */
+    public SaveStatus saveStatus() {
+        return saveStatus;
     }
 
     public synchronized LoadResult load(ModuleRegistry registry) {
@@ -92,9 +98,9 @@ public final class ConfigurationManager {
     /** Saves module state plus an optional ClickGUI window position. */
     public synchronized void save(ModuleRegistry registry, ClickGuiWindowState clickGuiWindow) {
         Objects.requireNonNull(registry, "registry");
-        JsonObject root = serializeConfiguration(registry, clickGuiWindow);
-
+        saveStatus = SaveStatus.SAVING;
         try {
+            JsonObject root = serializeConfiguration(registry, clickGuiWindow);
             Files.createDirectories(configurationDirectory);
             Path temporaryPath = Files.createTempFile(configurationDirectory, "global-", ".json.tmp");
             Files.writeString(temporaryPath, root.toString(), StandardCharsets.UTF_8);
@@ -103,8 +109,31 @@ public final class ConfigurationManager {
                 Files.copy(globalConfigurationPath, backupPath(), StandardCopyOption.REPLACE_EXISTING);
             }
             moveAtomically(temporaryPath, globalConfigurationPath);
+            saveStatus = SaveStatus.SAVED;
         } catch (IOException exception) {
+            saveStatus = SaveStatus.FAILED;
             throw new ConfigurationException("Unable to save Helikon configuration", exception);
+        } catch (RuntimeException exception) {
+            saveStatus = SaveStatus.FAILED;
+            throw exception;
+        }
+    }
+
+    /** Local global-configuration save state; this is never persisted or transmitted. */
+    public enum SaveStatus {
+        NOT_SAVED("not saved"),
+        SAVING("saving"),
+        SAVED("saved"),
+        FAILED("failed");
+
+        private final String displayName;
+
+        SaveStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String displayName() {
+            return displayName;
         }
     }
 

@@ -424,6 +424,15 @@ file download, or publishing path. The supported world-Gizmo adapter renders
 at most 48 aura segments around that same local player and does not inspect
 other players.
 
+`ModuleTimingMetrics` is an opt-in, Minecraft-free recorder installed in
+`ModuleRegistry`. Its disabled path only checks a volatile flag; when Debug
+Overlay enables it, guarded `tick`, bounded `scan`, and `render` operations
+record the last duration per module. `DebugOverlayHud` pages those local rows
+and reads only the existing event-bus count, two bounded world-render cache
+counts, and `ConfigurationManager`'s in-memory global-save state. It neither
+changes gameplay state nor persists or transmits diagnostics. Panic disables
+the module, which stops timing and hides the overlay with the other custom HUD.
+
 `InventoryPreviewLayout` chooses at most the 27 storage slots and optional
 nine hotbar slots from the verified local 36-item inventory list without a
 Minecraft import. Its HUD adapter only submits existing item stacks through the

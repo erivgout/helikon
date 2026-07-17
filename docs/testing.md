@@ -60,6 +60,12 @@ geometry; `DurabilityWarningsTest` covers the inclusive local threshold; and
 pattern and ARGB-to-ABGR conversion, while `LocalAuraGeometryTest` covers its
 closed bounded ring and malformed-fact rejection. Their render integrations
 require the Phase K smoke checks below.
+`ModuleTimingMetricsTest` covers disabled collection, tick/scan/render
+classification, stable zero rows, invalid duration rejection, and the guarded
+registry bridge. `DebugOverlayTest` covers opt-in timing lifecycle, while
+`DebugOverlayLinesTest` covers local paging/formatting and all required
+diagnostic rows; `ConfigurationManagerTest` covers in-memory global-save
+status. Their HUD integration requires the diagnostics smoke check below.
 AutoParkour's safe shallow-ledge gate and malformed-fact rejection,
 InventoryWalk's inventory/text-focus and Shift-preservation policy, and
 AntiAFK's interval, local-activity reset, and grounded-jump policy are covered
@@ -631,6 +637,20 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
    world after moving, and verify the last observed position is reported. Both
    must do nothing while disabled, hide snapshots after joining a different
    local server/world, and reset after a client restart.
+
+## Manual debug-overlay smoke test
+
+1. In a disposable local/test world, enable **Debug Overlay**. Verify it shows
+   a local page of module IDs with tick/render milliseconds, BlockESP and
+   StorageESP cache counts, event subscriber count, and the global-save state.
+2. Change `page` from 1 through a later valid page and verify different module
+   rows appear; values for modules with no measured work should safely be
+   `0.000ms` rather than omitted or throwing.
+3. Close the ClickGUI after changing any module setting and verify global-save
+   state becomes `saved`. Disable Debug Overlay or use panic and verify the HUD
+   vanishes and later ordinary module work has no timing probe. Confirm no file
+   other than normal configuration output, chat line, packet, or network
+   request is created.
 
 ## Manual LocalTranslator smoke test
 

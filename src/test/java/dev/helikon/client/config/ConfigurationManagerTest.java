@@ -25,6 +25,17 @@ class ConfigurationManagerTest {
     Path temporaryDirectory;
 
     @Test
+    void reportsTheLocalGlobalSaveStateWithoutPersistingDiagnostics() {
+        ModuleRegistry registry = new ModuleRegistry();
+        registry.register(new ConfigurableModule());
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+
+        assertEquals(ConfigurationManager.SaveStatus.NOT_SAVED, manager.saveStatus());
+        manager.save(registry);
+        assertEquals(ConfigurationManager.SaveStatus.SAVED, manager.saveStatus());
+    }
+
+    @Test
     void saveAndLoadPreserveModuleStateAndSettingValues() {
         ModuleRegistry sourceRegistry = new ModuleRegistry();
         ConfigurableModule source = new ConfigurableModule();

@@ -341,6 +341,10 @@ with a procedurally generated texture based on its locally stored color
 settings. Local Cosmetics draws one bounded local aura ring at the local
 player's feet. Neither feature downloads, uploads, distributes, or changes a
 cape or cosmetic for another player.
+Debug Overlay is disabled by default. When explicitly enabled, it displays
+local per-module tick/render timing, bounded BlockESP/StorageESP cache counts,
+event subscribers, and global configuration-save status. It is paged locally
+and never writes diagnostics or sends them to a server or service.
 Inventory Preview and Durability Warnings render only already-loaded local
 inventory facts; neither opens an inventory nor changes an item. Death
 Coordinates and Logout Coordinates retain one enabled-only, session-local

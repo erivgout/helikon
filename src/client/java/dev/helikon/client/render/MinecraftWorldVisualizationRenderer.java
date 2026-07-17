@@ -218,6 +218,16 @@ public final class MinecraftWorldVisualizationRenderer {
         }
     }
 
+    /** Current bounded local block-result count exposed only to the diagnostics HUD. */
+    public int blockEspCacheSize() {
+        return blockCache.size();
+    }
+
+    /** Current bounded local storage-result count exposed only to the diagnostics HUD. */
+    public int storageEspCacheSize() {
+        return storageCache.size();
+    }
+
     private void scanBlocks(ClientLevel level, Player player) {
         if (blockEsp.scanRevision() != observedBlockScanRevision) {
             observedBlockScanRevision = blockEsp.scanRevision();

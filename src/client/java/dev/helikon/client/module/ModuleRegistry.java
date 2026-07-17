@@ -21,6 +21,7 @@ public final class ModuleRegistry {
 
     private final Map<String, Module> modules = new LinkedHashMap<>();
     private final List<ModuleFailureHandler> failureHandlers = new ArrayList<>();
+    private volatile ModuleTimingMetrics timingMetrics;
 
     public void register(Module module) {
         Module nonNullModule = Objects.requireNonNull(module, "module");
@@ -95,17 +96,29 @@ public final class ModuleRegistry {
             throw new IllegalArgumentException("Module '" + nonNullModule.id() + "' is not registered");
         }
 
+        ModuleTimingMetrics metrics = timingMetrics;
+        boolean measure = metrics != null && metrics.isRecording();
+        long startedAt = measure ? System.nanoTime() : 0L;
         try {
             nonNullAction.run();
             return true;
         } catch (RuntimeException exception) {
             isolateFailure(nonNullModule, nonBlankOperation, exception);
             return false;
+        } finally {
+            if (measure) {
+                metrics.record(nonNullModule.id(), nonBlankOperation, Math.max(0L, System.nanoTime() - startedAt));
+            }
         }
     }
 
     public void addFailureHandler(ModuleFailureHandler handler) {
         failureHandlers.add(Objects.requireNonNull(handler, "handler"));
+    }
+
+    /** Installs optional local diagnostics; measurement remains inactive until its module enables recording. */
+    public void setTimingMetrics(ModuleTimingMetrics timingMetrics) {
+        this.timingMetrics = Objects.requireNonNull(timingMetrics, "timingMetrics");
     }
 
     private void isolateFailure(Module module, String operation, RuntimeException exception) {

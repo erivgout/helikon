@@ -6,10 +6,12 @@ import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.macro.MacroManager;
 import dev.helikon.client.macro.MacroRunner;
 import dev.helikon.client.macro.MacroServerContextProvider;
+import dev.helikon.client.module.chat.PrivateMessageHelper;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.config.PanicConfigurationManager;
 import dev.helikon.client.input.PanicKeybindManager;
 import dev.helikon.client.panic.PanicController;
+import dev.helikon.client.privatechat.PrivateMessageHistory;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointManager;
 
@@ -37,7 +39,10 @@ public final class HelikonCommands {
             MacroServerContextProvider macroServerContext,
             PanicController panic,
             PanicKeybindManager panicKeybinds,
-            PanicConfigurationManager panicConfiguration
+            PanicConfigurationManager panicConfiguration,
+            PrivateMessageHelper privateMessageHelper,
+            PrivateMessageHistory privateMessageHistory,
+            ServerCommandSender serverCommandSender
     ) {
         dispatcher.register(new HelpCommand(dispatcher));
         dispatcher.register(new ModulesCommand(registry));
@@ -53,5 +58,7 @@ public final class HelikonCommands {
         dispatcher.register(new FriendCommand(friends));
         dispatcher.register(new WaypointCommand(waypoints, waypointLocations));
         dispatcher.register(new MacroCommand(macros, macroRunner, macroServerContext));
+        dispatcher.register(new PrivateMessageCommand(false, privateMessageHelper, privateMessageHistory, serverCommandSender));
+        dispatcher.register(new PrivateMessageCommand(true, privateMessageHelper, privateMessageHistory, serverCommandSender));
     }
 }

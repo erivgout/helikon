@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.helikon.client.command.ChatCommands;
 import dev.helikon.client.command.CommandDispatcher;
 import dev.helikon.client.command.HelikonCommands;
+import dev.helikon.client.command.MinecraftServerCommandSender;
 import dev.helikon.client.command.MinecraftKeyNameResolver;
 import dev.helikon.client.chat.OutgoingChatFormatter;
 import dev.helikon.client.chat.IncomingChatMessage;
@@ -51,6 +52,7 @@ import dev.helikon.client.module.chat.ChatMute;
 import dev.helikon.client.module.chat.ChatFilter;
 import dev.helikon.client.module.chat.ChatSpammer;
 import dev.helikon.client.module.chat.MinecraftChatSender;
+import dev.helikon.client.module.chat.PrivateMessageHelper;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
@@ -62,6 +64,7 @@ import dev.helikon.client.module.render.RenderModuleAccess;
 import dev.helikon.client.notification.ChatNotifier;
 import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.panic.PanicState;
+import dev.helikon.client.privatechat.PrivateMessageHistory;
 import dev.helikon.client.waypoint.MinecraftWaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointManager;
@@ -117,6 +120,7 @@ public final class HelikonClient implements ClientModInitializer {
     private final MacroManager macros = new MacroManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
     private final MacroRunner macroRunner = new MacroRunner();
     private final MacroServerContextProvider macroServerContext = new MinecraftMacroServerContextProvider();
+    private final PrivateMessageHistory privateMessageHistory = new PrivateMessageHistory();
     private final PanicController panic = new PanicController(
             modules, panicState, this::closeHelikonScreen, () -> macroRunner.cancel()
     );
@@ -161,6 +165,7 @@ public final class HelikonClient implements ClientModInitializer {
         ChatFilter chatFilter = new ChatFilter();
         ChatSpammer chatSpammer = new ChatSpammer(new MinecraftChatSender(),
                 () -> ThreadLocalRandom.current().nextInt());
+        PrivateMessageHelper privateMessageHelper = new PrivateMessageHelper();
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
@@ -172,6 +177,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(chatMute);
         modules.register(chatFilter);
         modules.register(chatSpammer);
+        modules.register(privateMessageHelper);
         MovementModuleAccess.install(autoWalk, autoSneak);
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
@@ -213,7 +219,8 @@ public final class HelikonClient implements ClientModInitializer {
         HelikonCommands.registerDefaults(commands, modules, new MinecraftKeyNameResolver(),
                 HelikonKeybinds::isGuiKey, () -> pendingScreenAction.set(this::openClickGui), profiles, clickGuiWindow,
                 friends, waypoints, waypointLocations, macros, macroRunner, macroServerContext,
-                panic, panicKeybinds, panicConfiguration);
+                panic, panicKeybinds, panicConfiguration, privateMessageHelper, privateMessageHistory,
+                new MinecraftServerCommandSender());
         ChatCommands.register(commands, notifier);
         OutgoingChatFormatter outgoingChat = new OutgoingChatFormatter(chatPrefix, chatSuffix,
                 () -> macroServerContext.currentServerAddress().orElse(null),

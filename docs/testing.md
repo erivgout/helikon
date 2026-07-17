@@ -182,6 +182,15 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     GUI is open, and stops after the configured session cap or disconnect.
     Verify slash commands and Helikon local-command prefixes in its message
     list are ignored. Do not use it where server rules prohibit repetitive chat.
+26. On a server where `/msg` and `/r` are permitted, send `.pm Alice hello`
+    and verify only the configured normal server command is emitted (never the
+    `.pm` text). Run `.pm history Alice` and verify `You: hello` is local
+    feedback. Use a 16-character player name and a long message to verify an
+    over-limit composed command is rejected before sending. Relaunch and
+    verify history is gone while the configurable command-token settings remain
+    in `global.json`. To message a player literally named `history`, use
+    `.pm -- history hello`; the `--` escape also lets `.reply -- history`
+    send that literal reply instead of opening local history.
 
 ## Manual command and keybind smoke test
 

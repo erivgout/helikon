@@ -39,6 +39,12 @@ waits at least two seconds between sends, pauses in screens by default, stops
 after disconnect, and has a small per-session cap. Servers may still punish
 spam, so it is off by default.
 
+PrivateMessageHelper intercepts `.pm` and `.reply` locally, validates a player
+name and a bounded message, then uses Minecraft's normal server-command route
+with configurable `msg` and `r` command tokens. The `.` command itself is
+never sent. Recent outgoing conversation tabs stay in memory only; Helikon
+does not inspect, relay, or persist private-message content.
+
 The ClickGUI currently provides:
 
 - a category sidebar driven by `ModuleCategory`
@@ -125,6 +131,8 @@ sent to the server:
 | `.macro add <name> <local\|chat\|command\|delay> <text\|ticks>` | Adds one explicit, bounded macro action. |
 | `.macro show\|clear\|scope\|delete <name> ...` | Inspects or changes a stored local macro. |
 | `.macro run <name>` / `.macro stop` | Starts one local macro or stops its queued run. |
+| `.pm <player> <message>` / `.pm history [player]` | Sends one validated normal server PM or views bounded local outgoing history. Prefix a literal `history` target with `--`. |
+| `.reply <message>` / `.reply history [player]` | Sends one validated normal server reply or views the same local history. Prefix a literal `history` reply with `--`. |
 | `.panic` | Disables modules, hides custom HUD for this session, and closes Helikon GUI screens. |
 | `.panic bind <key>` / `.panic unbind` | Configures or clears the local persisted panic key. |
 | `.panic status` / `.panic restorehud` | Shows the bind or restores HUD visibility without re-enabling modules. |
@@ -144,6 +152,9 @@ enabled state are stored locally only in `waypoints.json`.
 Macros are stored locally in `macros.json` and run only explicitly configured
 local Helikon commands, ordinary chat messages, Minecraft commands, and bounded
 delays. There is no macro scripting or arbitrary code execution.
+PrivateMessageHelper's command-token settings are stored with the other module
+settings in `global.json`; its recent message text is deliberately session-only
+memory and is discarded on client exit.
 The optional panic key is stored locally in `panic.json`; it is suppressed while
 typing in chat or ordinary screens, but works inside Helikon screens to close
 them immediately.

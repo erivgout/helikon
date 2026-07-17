@@ -50,6 +50,13 @@ player chat connection. It rejects command-like entries and applies a local
 minimum delay and session cap; it neither creates packets nor bypasses server
 rate limits, rejections, moderation, or punishments.
 
+PrivateMessageHelper builds a configured server command only after the local
+`.pm` or `.reply` command has been cancelled, its command token and target have
+passed validation, and the final payload is inside Helikon's conservative safe
+length limit. Its Minecraft adapter calls the normal `sendCommand` connection
+method; it does not create packets, probe a server's private-message syntax,
+retry failures, or send conversation history anywhere.
+
 ## Future policy
 
 Optional external integrations must be isolated under

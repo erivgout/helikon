@@ -95,6 +95,16 @@ server's own limits. A normal-chat cancellation for the active generated
 message is reported back through the Fabric callback; after three observed
 cancellations the module stops for the session.
 
+`PrivateMessageCommand` and `PrivateMessageHistory` are likewise
+Minecraft-free. They validate the configurable command token, the player-name
+target, a bounded single-line message, and the complete command length before
+recording a bounded in-memory outgoing entry. `MinecraftServerCommandSender`
+is the only 26.2 adapter; it invokes the normal player connection's
+`sendCommand` method. This lets the local `.` command be cancelled before any
+server traffic while still letting an explicitly requested normal server PM
+use the ordinary connection path. The current history is session-only and
+does not infer incoming private messages from arbitrary server chat text.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

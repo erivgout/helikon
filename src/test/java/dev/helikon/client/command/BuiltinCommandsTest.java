@@ -12,8 +12,10 @@ import dev.helikon.client.macro.MacroRunner;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.module.chat.PrivateMessageHelper;
 import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.panic.PanicState;
+import dev.helikon.client.privatechat.PrivateMessageHistory;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.ColorSetting;
 import dev.helikon.client.setting.EnumSetting;
@@ -27,6 +29,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.OptionalInt;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -51,6 +55,8 @@ class BuiltinCommandsTest {
     private ConfigurableModule module;
     private CommandDispatcher dispatcher;
     private RecordingFeedback feedback;
+    private PrivateMessageHistory privateMessageHistory;
+    private List<String> sentServerCommands;
     private boolean guiOpened;
 
     @BeforeEach
@@ -58,6 +64,11 @@ class BuiltinCommandsTest {
         registry = new ModuleRegistry();
         module = new ConfigurableModule();
         registry.register(module);
+        PrivateMessageHelper privateMessageHelper = new PrivateMessageHelper();
+        registry.register(privateMessageHelper);
+        registry.setEnabled(privateMessageHelper, true);
+        privateMessageHistory = new PrivateMessageHistory();
+        sentServerCommands = new ArrayList<>();
         dispatcher = new CommandDispatcher();
         feedback = new RecordingFeedback();
         guiOpened = false;
@@ -72,7 +83,8 @@ class BuiltinCommandsTest {
                         new WaypointContext("world:command-test", "minecraft:overworld"))),
                 new MacroManager(temporaryDirectory.resolve("helikon")), new MacroRunner(), java.util.Optional::empty,
                 new PanicController(registry, panicState, () -> { }, () -> { }), panicKeybinds,
-                new PanicConfigurationManager(temporaryDirectory.resolve("helikon")));
+                new PanicConfigurationManager(temporaryDirectory.resolve("helikon")), privateMessageHelper,
+                privateMessageHistory, sentServerCommands::add);
     }
 
     @Test
@@ -222,7 +234,42 @@ class BuiltinCommandsTest {
         registry.setEnabled(module, true);
         dispatcher.dispatch(".panic", feedback);
         assertFalse(module.isEnabled());
-        assertTrue(feedback.infos.get(0).contains("disabled 1 module(s)"));
+        assertTrue(feedback.infos.get(0).contains("disabled 2 module(s)"));
+    }
+
+    @Test
+    void privateMessageCommandsSendOnlyValidatedNormalCommandsAndKeepLocalHistory() {
+        dispatcher.dispatch(".pm Alice_1 hello there", feedback);
+        assertEquals(List.of("msg Alice_1 hello there"), sentServerCommands);
+        assertEquals("Sent local PM to 'Alice_1'.", feedback.infos.getFirst());
+
+        dispatcher.dispatch(".pm history alice_1", feedback);
+        assertTrue(feedback.infos.stream().anyMatch(line -> line.equals("You: hello there")));
+
+        dispatcher.dispatch(".reply received", feedback);
+        assertEquals(List.of("msg Alice_1 hello there", "r received"), sentServerCommands);
+    }
+
+    @Test
+    void privateMessageCommandRejectsUnsafeNamesAndOversizedComposedCommands() {
+        dispatcher.dispatch(".pm bad-name hello", feedback);
+        assertTrue(feedback.errors.getFirst().contains("Minecraft-style player name"));
+        assertTrue(sentServerCommands.isEmpty());
+
+        String tooLong = "x".repeat(PrivateMessageCommand.MAXIMUM_COMMAND_LENGTH);
+        dispatcher.dispatch(".pm Alice " + tooLong, feedback);
+        assertTrue(feedback.errors.getLast().contains("safe local limit"));
+        assertTrue(sentServerCommands.isEmpty());
+        assertTrue(privateMessageHistory.tabs().isEmpty());
+    }
+
+    @Test
+    void privateMessageCommandsReserveHistoryButAllowTheLiteralWordWithEscape() {
+        dispatcher.dispatch(".pm -- history hello", feedback);
+        dispatcher.dispatch(".reply -- history", feedback);
+
+        assertEquals(List.of("msg history hello", "r history"), sentServerCommands);
+        assertTrue(feedback.errors.isEmpty());
     }
 
     private static final class ConfigurableModule extends Module {

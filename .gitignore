@@ -7,3 +7,4 @@ out/
 *.log
 *.jar
 !gradle/wrapper/gradle-wrapper.jar
+.mcp.json

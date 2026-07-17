@@ -103,6 +103,7 @@ import dev.helikon.client.module.combat.HitSwap;
 import dev.helikon.client.module.combat.JumpReset;
 import dev.helikon.client.module.combat.JumpResetAccess;
 import dev.helikon.client.module.combat.CrystalAura;
+import dev.helikon.client.module.combat.EndermanAura;
 import dev.helikon.client.module.combat.GojosInfinity;
 import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MaceDmg;
@@ -113,6 +114,7 @@ import dev.helikon.client.module.combat.MinecraftCombatAccess;
 import dev.helikon.client.module.combat.MinecraftAutoAnchorAccess;
 import dev.helikon.client.module.combat.MinecraftVelocityAccess;
 import dev.helikon.client.module.combat.MinecraftGojoInfinityAccess;
+import dev.helikon.client.module.combat.MinecraftEndermanAuraAccess;
 import dev.helikon.client.module.combat.MinecraftFightBotAccess;
 import dev.helikon.client.module.combat.MinecraftProtectAccess;
 import dev.helikon.client.module.combat.Protect;
@@ -660,6 +662,7 @@ public final class HelikonClient implements ClientModInitializer {
         CrystalAura crystalAura = new CrystalAura();
         AntiFireball antiFireball = new AntiFireball();
         GojosInfinity gojosInfinity = new GojosInfinity();
+        EndermanAura endermanAura = new EndermanAura();
         BackTrack backTrack = new BackTrack();
         Velocity velocity = new Velocity();
         ReachDisplay reachDisplay = new ReachDisplay();
@@ -781,6 +784,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(crystalAura);
         modules.register(antiFireball);
         modules.register(gojosInfinity);
+        modules.register(endermanAura);
         modules.register(backTrack);
         modules.register(velocity);
         modules.register(reachDisplay);
@@ -1017,6 +1021,8 @@ public final class HelikonClient implements ClientModInitializer {
                     }
                 });
                 modules.runGuarded(backTrack, "tick", () -> MinecraftBackTrackAccess.tick(backTrack, friends));
+                modules.runGuarded(endermanAura, "tick",
+                        () -> MinecraftEndermanAuraAccess.tick(clientTick, endermanAura, friends));
                 modules.runGuarded(autoAnchor, "tick", () -> {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftAutoAnchorAccess.tick(clientTick, autoAnchor,

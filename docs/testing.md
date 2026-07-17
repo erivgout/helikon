@@ -510,6 +510,9 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     fully returns. Enable **StorageESP** near known selected storage, then
     verify its box appears after a bounded scan pass, is culled when offscreen,
     honors category/custom-ID settings, and never opens or changes a container.
+    For **BlockESP**, set two configured IDs to distinct `block_colors` entries
+    and verify each retained local box/tracer uses its own color; malformed
+    entries must safely retain the shared fallback color.
 38. In a local/test world, enable **MiniPlayer** and verify the local player
     model appears in its fixed HUD panel, responds to rotation/scale/background
     settings, and armor on/off changes only the panel. Enable **DamageIndicators**

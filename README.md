@@ -51,7 +51,8 @@ EntityESP, BlockESP, Tracers, and Breadcrumbs use Minecraft's
 local world-render Gizmo phase only: they never alter entities, blocks, client
 movement, or packets. BlockESP deliberately scans a bounded cube at a bounded
 per-tick budget, so newly loaded or changed blocks can take one scan pass to
-appear. AutoSprint, AutoWalk, AutoSneak, and Twerk apply only normal local
+appear. Its optional validated per-block colors affect only local Gizmo boxes
+and tracers. AutoSprint, AutoWalk, AutoSneak, and Twerk apply only normal local
 movement input and sprint state; AutoTool selects a safe local hotbar tool only
 while the user is already mining; FastPlace can lower Minecraft's transient
 local use cooldown only while the user holds Use; and FastBreak can lower an

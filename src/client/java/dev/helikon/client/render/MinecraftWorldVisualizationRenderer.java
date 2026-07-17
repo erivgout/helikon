@@ -195,7 +195,7 @@ public final class MinecraftWorldVisualizationRenderer {
             modules.runGuarded(trueSight, "render", () -> renderTrueSight(client.level, client.player, frustum));
         }
         if (blockEsp.isEnabled()) {
-            modules.runGuarded(blockEsp, "render", () -> renderBlocks(client.player));
+            modules.runGuarded(blockEsp, "render", () -> renderBlocks(client.level, client.player));
         }
         if (storageEsp.isEnabled()) {
             modules.runGuarded(storageEsp, "render", () -> renderStorage(client.player, frustum));
@@ -443,17 +443,20 @@ public final class MinecraftWorldVisualizationRenderer {
         }
     }
 
-    private void renderBlocks(Player localPlayer) {
-        GizmoStyle style = GizmoStyle.strokeAndFill(blockEsp.color(), blockEsp.lineWidth(), blockEsp.fillColor());
+    private void renderBlocks(ClientLevel level, Player localPlayer) {
         Vec3 start = blockEsp.tracersEnabled() ? localPlayer.getEyePosition() : null;
         for (BlockEspScanCursor.Position position : blockCache.positions()) {
             if (!isWithinCurrentBlockRange(position, localPlayer)) {
                 continue;
             }
             BlockPos blockPosition = new BlockPos(position.x(), position.y(), position.z());
+            if (!level.hasChunk(position.x() >> 4, position.z() >> 4)) continue;
+            String blockId = BuiltInRegistries.BLOCK.getKey(level.getBlockState(blockPosition).getBlock()).toString();
+            int color = blockEsp.color(blockId);
+            GizmoStyle style = GizmoStyle.strokeAndFill(color, blockEsp.lineWidth(), blockEsp.fillColor());
             Gizmos.cuboid(new AABB(blockPosition), style).setAlwaysOnTop();
             if (start != null) {
-                Gizmos.line(start, Vec3.atCenterOf(blockPosition), blockEsp.color(), blockEsp.lineWidth()).setAlwaysOnTop();
+                Gizmos.line(start, Vec3.atCenterOf(blockPosition), color, blockEsp.lineWidth()).setAlwaysOnTop();
             }
         }
     }

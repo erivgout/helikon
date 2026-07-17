@@ -4,12 +4,14 @@ import dev.helikon.client.input.Keybind;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.render.BlockIdList;
+import dev.helikon.client.render.BlockColorMap;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.ColorSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.setting.StringSetting;
 
 import java.util.Objects;
+import java.util.Map;
 import java.util.Set;
 
 /** Locally scans a bounded nearby cube for a validated configured block-ID list. */
@@ -22,7 +24,9 @@ public final class BlockEsp extends Module {
     private final NumberSetting lineWidth;
     private final ColorSetting color;
     private final ColorSetting fillColor;
+    private final StringSetting blockColors;
     private Set<String> targetBlocks;
+    private Map<String, Integer> colorOverrides;
     private long scanRevision;
     private Runnable cacheClearer = () -> {
     };
@@ -44,8 +48,12 @@ public final class BlockEsp extends Module {
                 1.0D, 0.5D, 4.0D));
         color = addSetting(new ColorSetting("color", "Color", "ARGB local outline and tracer color.", 0xFFFFD54F));
         fillColor = addSetting(new ColorSetting("fill_color", "Fill color", "ARGB local block-box fill color.", 0x30FFD54F));
+        blockColors = addSetting(new StringSetting("block_colors", "Block colors",
+                "Semicolon-separated block=#RRGGBB or block=#AARRGGBB local overrides.", "", 2_048, true));
         targetBlocks = BlockIdList.parse(blocks.value());
+        colorOverrides = BlockColorMap.parse(blockColors.value());
         blocks.addChangeListener(ignored -> refreshTargets());
+        blockColors.addChangeListener(ignored -> refreshColors());
         horizontalRange.addChangeListener(ignored -> scanRevision++);
         verticalRange.addChangeListener(ignored -> scanRevision++);
     }
@@ -63,6 +71,8 @@ public final class BlockEsp extends Module {
     public float lineWidth() { return (float) lineWidth.value().doubleValue(); }
 
     public int color() { return color.value(); }
+
+    public int color(String blockId) { return colorOverrides.getOrDefault(blockId, color.value()); }
 
     public int fillColor() { return fillColor.value(); }
 
@@ -82,5 +92,9 @@ public final class BlockEsp extends Module {
     private void refreshTargets() {
         targetBlocks = BlockIdList.parse(blocks.value());
         scanRevision++;
+    }
+
+    private void refreshColors() {
+        colorOverrides = BlockColorMap.parse(blockColors.value());
     }
 }

@@ -102,6 +102,8 @@ import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MinecraftBlockHitUseKey;
 import dev.helikon.client.module.combat.MinecraftAntiFireballAccess;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
+import dev.helikon.client.module.combat.MinecraftProtectAccess;
+import dev.helikon.client.module.combat.Protect;
 import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
 import dev.helikon.client.module.combat.MinecraftCrystalAccess;
@@ -569,6 +571,7 @@ public final class HelikonClient implements ClientModInitializer {
         ClickAura clickAura = new ClickAura();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
+        Protect protect = new Protect();
         Reach reach = new Reach();
         AutoClicker autoClicker = new AutoClicker();
         BlockHit blockHit = new BlockHit(new MinecraftBlockHitUseKey());
@@ -676,6 +679,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(clickAura);
         modules.register(targetHud);
         modules.register(killAura);
+        modules.register(protect);
         modules.register(reach);
         modules.register(autoClicker);
         modules.register(blockHit);
@@ -828,6 +832,13 @@ public final class HelikonClient implements ClientModInitializer {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftCombatAccess.tickKillAura(clientTick, killAura,
                                 combatSnapshot.get(), combatTracker));
+                    }
+                });
+                modules.runGuarded(protect, "tick", () -> {
+                    boolean attacked = MinecraftProtectAccess.tick(clientTick, protect, combatSnapshot.get(),
+                            combatTracker, friends, !combatAttackStarted.get());
+                    if (attacked) {
+                        combatAttackStarted.set(true);
                     }
                 });
                 modules.runGuarded(reach, "tick", () -> {

@@ -30,6 +30,7 @@ import dev.helikon.client.config.ProfileSelection;
 import dev.helikon.client.event.ClientTickEvent;
 import dev.helikon.client.event.ClientEventAccess;
 import dev.helikon.client.event.ChatEvent;
+import dev.helikon.client.event.ChunkEvent;
 import dev.helikon.client.event.EventBus;
 import dev.helikon.client.event.InteractionEvent;
 import dev.helikon.client.event.ScreenEvent;
@@ -286,6 +287,7 @@ import dev.helikon.client.module.render.MinecraftNightVisionAccess;
 import dev.helikon.client.module.render.MiniPlayer;
 import dev.helikon.client.module.render.NameProtect;
 import dev.helikon.client.module.render.NameProtectTextAccess;
+import dev.helikon.client.module.render.NewChunks;
 import dev.helikon.client.module.render.ProjectilePreview;
 import dev.helikon.client.module.render.NoWeather;
 import dev.helikon.client.module.render.MobSpawnEsp;
@@ -480,6 +482,7 @@ public final class HelikonClient implements ClientModInitializer {
         SaturationDisplay saturationDisplay = new SaturationDisplay();
         StorageEsp storageEsp = new StorageEsp();
         MobSpawnEsp mobSpawnEsp = new MobSpawnEsp();
+        NewChunks newChunks = new NewChunks();
         XRay xray = new XRay(new MinecraftXRayRendererInvalidator());
         MiniPlayer miniPlayer = new MiniPlayer();
         NameProtect nameProtect = new NameProtect();
@@ -516,6 +519,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(saturationDisplay);
         modules.register(storageEsp);
         modules.register(mobSpawnEsp);
+        modules.register(newChunks);
         modules.register(xray);
         modules.register(miniPlayer);
         modules.register(nameProtect);
@@ -809,9 +813,17 @@ public final class HelikonClient implements ClientModInitializer {
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, chams, betterNametags, baseFinder, blockEsp, caveFinder, tracers,
                 trajectories, projectileWarning,
-                projectilePreview, trueSight, storageEsp, mobSpawnEsp,
+                projectilePreview, trueSight, storageEsp, mobSpawnEsp, newChunks,
                 damageIndicators, breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics, explosions
         );
+        events.subscribe(ChunkEvent.class, event -> modules.runGuarded(newChunks, "chunk-event",
+                () -> newChunks.observe(
+                        event.phase() == ChunkEvent.Phase.LOAD
+                                ? NewChunks.ChunkPhase.LOAD
+                                : NewChunks.ChunkPhase.UNLOAD,
+                        event.chunkX(), event.chunkZ(), System.currentTimeMillis())));
+        events.subscribe(WorldEvent.class,
+                event -> modules.runGuarded(newChunks, "world-change", newChunks::clear));
         DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,
                 events, configuration, panicState, hudLayout);
         ClientTpsEstimate tpsEstimate = new ClientTpsEstimate();

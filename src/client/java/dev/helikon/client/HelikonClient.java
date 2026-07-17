@@ -201,6 +201,7 @@ import dev.helikon.client.module.render.BetterNametags;
 import dev.helikon.client.module.render.Dinnerbone;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.Breadcrumbs;
+import dev.helikon.client.module.render.CaveFinder;
 import dev.helikon.client.module.render.DamageIndicators;
 import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.MinecraftGammaAccess;
@@ -375,6 +376,7 @@ public final class HelikonClient implements ClientModInitializer {
         RainbowEnchant rainbowEnchant = new RainbowEnchant();
         EntityEsp entityEsp = new EntityEsp();
         BlockEsp blockEsp = new BlockEsp();
+        CaveFinder caveFinder = new CaveFinder();
         Tracers tracers = new Tracers();
         Trajectories trajectories = new Trajectories();
         TrueSight trueSight = new TrueSight();
@@ -393,6 +395,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(rainbowEnchant);
         modules.register(entityEsp);
         modules.register(blockEsp);
+        modules.register(caveFinder);
         modules.register(tracers);
         modules.register(trajectories);
         modules.register(trueSight);
@@ -599,7 +602,8 @@ public final class HelikonClient implements ClientModInitializer {
         TimerModuleAccess.install(timer);
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
-                modules, friends, entityEsp, betterNametags, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
+                modules, friends, entityEsp, betterNametags, blockEsp, caveFinder, tracers, trajectories, trueSight,
+                storageEsp, damageIndicators,
                 breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics
         );
         DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,

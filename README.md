@@ -256,6 +256,17 @@ local color, and rainbow setting; the editor always shows a styled draggable pre
 - Fabric API 0.155.0+26.2
 - Java 25
 
+## Installation
+
+1. Install [Fabric Loader](https://fabricmc.net/use/) 0.19.3 or newer for
+   Minecraft Java Edition 26.2.
+2. Place the Fabric API JAR and the built `helikon-<version>.jar` into your
+   `.minecraft/mods` folder.
+3. Launch the Fabric profile. Press Right Shift in game to open the ClickGUI.
+
+Helikon is client-only: it must not be installed on servers, and you should
+only use it where the server's rules permit client modifications.
+
 ## Build
 
 ```powershell
@@ -431,9 +442,10 @@ testing on a disposable profile.
 
 Read [architecture.md](docs/architecture.md), [configuration.md](docs/configuration.md),
 and [testing.md](docs/testing.md) before changing core systems. The long-term
-roadmap and policies live in [PLAN.md](PLAN.md). Contributions
-should include tests and keep all behavior local-only unless an explicitly
-documented optional integration is approved.
+roadmap and policies live in [PLAN.md](PLAN.md). See
+[contributing.md](docs/contributing.md) for the contribution ground rules;
+contributions should include tests and keep all behavior local-only unless an
+explicitly documented optional integration is approved.
 
 ## License
 

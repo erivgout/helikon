@@ -6,6 +6,18 @@ Run the test suite with:
 .\gradlew.bat test
 ```
 
+Test tiers, honestly stated: the automated tier is JUnit unit tests over the
+Minecraft-free decision logic plus the Gradle `verifySourceStyle` and
+`verifyClientOnlyArchitecture` checks; Minecraft API shapes are verified with
+`javap` against the mapped 26.2 jars (see `version-porting.md`). The Fabric
+GameTest tier described in PLAN.md is not implemented, and no general
+static-analysis tool beyond the two custom verify tasks is configured; the
+in-game behavior of version-specific adapters and mixins is therefore covered
+only by the manual live-client smoke checklists below, which must be performed
+on a real client before a final release. A checklist item in this document
+describes how to verify a feature — it is not a record that the check has been
+performed.
+
 The automated tests cover module lifecycle behavior, failure isolation,
 setting validation/JSON recovery, configuration round-tripping (including
 keybinds), malformed JSON recovery, ClickGUI search/filtering

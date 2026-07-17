@@ -14,6 +14,7 @@ import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.EntityEspMode;
 import dev.helikon.client.module.render.EntityEspRenderAccess;
 import dev.helikon.client.module.render.Explosions;
+import dev.helikon.client.module.render.MobSpawnEsp;
 import dev.helikon.client.module.render.ProjectileWarning;
 import dev.helikon.client.module.render.StorageEsp;
 import dev.helikon.client.module.render.Trajectories;
@@ -34,6 +35,7 @@ import net.minecraft.gizmos.GizmoStyle;
 import net.minecraft.gizmos.Gizmos;
 import net.minecraft.gizmos.TextGizmo;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -50,6 +52,7 @@ import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEgg;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownSplashPotion;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -92,6 +95,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final ProjectileWarning projectileWarning;
     private final TrueSight trueSight;
     private final StorageEsp storageEsp;
+    private final MobSpawnEsp mobSpawnEsp;
     private final DamageIndicators damageIndicators;
     private final Breadcrumbs breadcrumbs;
     private final BuilderAssist builderAssist;
@@ -105,11 +109,16 @@ public final class MinecraftWorldVisualizationRenderer {
     private final BlockEspScanCursor storageCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor storageAnchor = new BlockEspScanAnchor();
     private final BlockEspCache storageCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
+    private final BlockEspScanCursor mobSpawnCursor = new BlockEspScanCursor();
+    private final BlockEspScanAnchor mobSpawnAnchor = new BlockEspScanAnchor();
+    private final BlockEspCache mobSpawnCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
     private ClientLevel observedLevel;
     private long observedBlockScanRevision = Long.MIN_VALUE;
     private long observedStorageScanRevision = Long.MIN_VALUE;
+    private long observedMobSpawnScanRevision = Long.MIN_VALUE;
     private boolean blockScannerWasEnabled;
     private boolean storageScannerWasEnabled;
+    private boolean mobSpawnScannerWasEnabled;
     private boolean nativeOutlineWasInstalled;
     private boolean chamsWasInstalled;
 
@@ -117,7 +126,8 @@ public final class MinecraftWorldVisualizationRenderer {
                                                 Chams chams, BetterNametags betterNametags,
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
                                                 ProjectileWarning projectileWarning, TrueSight trueSight,
-                                                StorageEsp storageEsp, DamageIndicators damageIndicators,
+                                                StorageEsp storageEsp, MobSpawnEsp mobSpawnEsp,
+                                                DamageIndicators damageIndicators,
                                                 Breadcrumbs breadcrumbs, BuilderAssist builderAssist, BlockSelection blockSelection,
                                                 BowAimAssist bowAimAssist, LocalCosmetics localCosmetics, Explosions explosions) {
         this.modules = Objects.requireNonNull(modules, "modules");
@@ -131,6 +141,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.projectileWarning = Objects.requireNonNull(projectileWarning, "projectileWarning");
         this.trueSight = Objects.requireNonNull(trueSight, "trueSight");
         this.storageEsp = Objects.requireNonNull(storageEsp, "storageEsp");
+        this.mobSpawnEsp = Objects.requireNonNull(mobSpawnEsp, "mobSpawnEsp");
         this.damageIndicators = Objects.requireNonNull(damageIndicators, "damageIndicators");
         this.breadcrumbs = Objects.requireNonNull(breadcrumbs, "breadcrumbs");
         this.builderAssist = Objects.requireNonNull(builderAssist, "builderAssist");
@@ -140,6 +151,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.explosions = Objects.requireNonNull(explosions, "explosions");
         this.blockEsp.setCacheClearer(this::resetBlockScanner);
         this.storageEsp.setCacheClearer(this::resetStorageScanner);
+        this.mobSpawnEsp.setCacheClearer(this::resetMobSpawnScanner);
     }
 
     /** Samples the trail and advances the bounded block cache from the client tick bridge. */
@@ -151,6 +163,7 @@ public final class MinecraftWorldVisualizationRenderer {
             damageIndicators.clear();
             resetBlockScanner();
             resetStorageScanner();
+            resetMobSpawnScanner();
             clearNativeOutlineTargets();
             clearChamsTargets();
         }
@@ -205,6 +218,15 @@ public final class MinecraftWorldVisualizationRenderer {
                 modules.runGuarded(storageEsp, "scan", () -> scanStorage(client.level, client.player));
             }
         }
+        if (!mobSpawnEsp.isEnabled()) {
+            if (mobSpawnScannerWasEnabled) {
+                resetMobSpawnScanner();
+                mobSpawnScannerWasEnabled = false;
+            }
+        } else {
+            mobSpawnScannerWasEnabled = true;
+            modules.runGuarded(mobSpawnEsp, "scan", () -> scanMobSpawns(client.level, client.player));
+        }
     }
 
     /** Registered for Fabric's verified {@code BEFORE_GIZMOS} level-render phase. */
@@ -246,6 +268,9 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (storageEsp.isEnabled()) {
             modules.runGuarded(storageEsp, "render", () -> renderStorage(client.player, frustum));
+        }
+        if (mobSpawnEsp.isEnabled()) {
+            modules.runGuarded(mobSpawnEsp, "render", () -> renderMobSpawns(client.player));
         }
         if (damageIndicators.isEnabled()) {
             modules.runGuarded(damageIndicators, "render", () -> renderDamageIndicators(client.level, client.player,
@@ -321,6 +346,53 @@ public final class MinecraftWorldVisualizationRenderer {
             String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
             storageCache.observe(position, state.hasBlockEntity() && storageEsp.targetBlocks().contains(blockId));
         }
+    }
+
+    private void scanMobSpawns(ClientLevel level, Player player) {
+        if (mobSpawnEsp.scanRevision() != observedMobSpawnScanRevision) {
+            observedMobSpawnScanRevision = mobSpawnEsp.scanRevision();
+            resetMobSpawnScanner();
+        }
+        BlockEspScanAnchor.Update anchor = mobSpawnAnchor.update(
+                player.getBlockX(), player.getBlockY(), player.getBlockZ(),
+                mobSpawnEsp.horizontalRange(), mobSpawnEsp.verticalRange(), mobSpawnCursor.isAtPassBoundary());
+        if (anchor.changed()) {
+            clearMobSpawnResults();
+        }
+        BlockEspScanCursor.Region region = anchor.region();
+        for (int index = 0; index < mobSpawnEsp.scanBudget(); index++) {
+            BlockEspScanCursor.Position position = mobSpawnCursor.next(region);
+            mobSpawnCache.observe(position, isLoadedSpawnSample(level, player, position));
+        }
+    }
+
+    private boolean isLoadedSpawnSample(
+            ClientLevel level,
+            Player player,
+            BlockEspScanCursor.Position position
+    ) {
+        if (!mobSpawnEsp.samplesColumn(position.x(), position.z())
+                || !level.isInsideBuildHeight(position.y() - 1)
+                || !level.isInsideBuildHeight(position.y() + 1)
+                || !level.hasChunk(position.x() >> 4, position.z() >> 4)) {
+            return false;
+        }
+        BlockPos feet = new BlockPos(position.x(), position.y(), position.z());
+        BlockPos head = feet.above();
+        BlockPos floor = feet.below();
+        Vec3 center = Vec3.atCenterOf(feet);
+        return mobSpawnEsp.shouldMark(new MobSpawnEsp.SpawnSample(
+                position.x(),
+                position.y(),
+                position.z(),
+                level.getBlockState(feet).isAir(),
+                level.getBlockState(head).isAir(),
+                level.getBlockState(floor).isValidSpawn(level, floor, EntityTypes.ZOMBIE),
+                level.getBrightness(LightLayer.BLOCK, feet),
+                level.getBrightness(LightLayer.SKY, feet),
+                level.getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL,
+                center.distanceToSqr(player.position())
+        ));
     }
 
     private void observeDamage(ClientLevel level, Player localPlayer, long nowMillis) {
@@ -686,6 +758,29 @@ public final class MinecraftWorldVisualizationRenderer {
         }
     }
 
+    private void renderMobSpawns(Player localPlayer) {
+        GizmoStyle style = GizmoStyle.strokeAndFill(
+                mobSpawnEsp.color(), mobSpawnEsp.lineWidth(), mobSpawnEsp.fillColor());
+        int rendered = 0;
+        for (BlockEspScanCursor.Position position : mobSpawnCache.positions()) {
+            MobSpawnEsp.Marker marker = new MobSpawnEsp.Marker(position.x(), position.y(), position.z());
+            if (!mobSpawnEsp.withinCurrentRange(
+                    marker, localPlayer.getX(), localPlayer.getY(), localPlayer.getZ())) {
+                continue;
+            }
+            AABB bounds = new AABB(
+                    position.x() + 0.1D, position.y() + 0.02D, position.z() + 0.1D,
+                    position.x() + 0.9D, position.y() + 0.08D, position.z() + 0.9D);
+            GizmoProperties markerGizmo = Gizmos.cuboid(bounds, style);
+            if (mobSpawnEsp.alwaysOnTop()) {
+                markerGizmo.setAlwaysOnTop();
+            }
+            if (++rendered >= mobSpawnEsp.maximumMarkers()) {
+                return;
+            }
+        }
+    }
+
     private void renderDamageIndicators(ClientLevel level, Player localPlayer, Frustum frustum, long nowMillis) {
         for (DamageIndicatorTracker.RenderedIndicator indicator : damageIndicators.renderedIndicators(nowMillis)) {
             Entity entity = level.getEntity(indicator.entityId());
@@ -843,6 +938,11 @@ public final class MinecraftWorldVisualizationRenderer {
         clearStorageResults();
     }
 
+    private void resetMobSpawnScanner() {
+        mobSpawnAnchor.clear();
+        clearMobSpawnResults();
+    }
+
     private void clearBlockResults() {
         blockCursor.clear();
         blockCache.clear();
@@ -851,5 +951,10 @@ public final class MinecraftWorldVisualizationRenderer {
     private void clearStorageResults() {
         storageCursor.clear();
         storageCache.clear();
+    }
+
+    private void clearMobSpawnResults() {
+        mobSpawnCursor.clear();
+        mobSpawnCache.clear();
     }
 }

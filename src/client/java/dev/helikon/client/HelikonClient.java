@@ -224,6 +224,8 @@ import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.MinecraftGammaAccess;
 import dev.helikon.client.module.render.MinecraftNightVisionAccess;
 import dev.helikon.client.module.render.MiniPlayer;
+import dev.helikon.client.module.render.NameProtect;
+import dev.helikon.client.module.render.NameProtectTextAccess;
 import dev.helikon.client.module.render.ProjectilePreview;
 import dev.helikon.client.module.render.RenderModuleAccess;
 import dev.helikon.client.module.render.Radar;
@@ -407,6 +409,7 @@ public final class HelikonClient implements ClientModInitializer {
         StorageEsp storageEsp = new StorageEsp();
         XRay xray = new XRay(new MinecraftXRayRendererInvalidator());
         MiniPlayer miniPlayer = new MiniPlayer();
+        NameProtect nameProtect = new NameProtect();
         DamageIndicators damageIndicators = new DamageIndicators();
         Breadcrumbs breadcrumbs = new Breadcrumbs();
         Arrows arrows = new Arrows();
@@ -432,6 +435,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(storageEsp);
         modules.register(xray);
         modules.register(miniPlayer);
+        modules.register(nameProtect);
         modules.register(damageIndicators);
         modules.register(breadcrumbs);
         modules.register(arrows);
@@ -439,6 +443,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(health);
         RenderModuleAccess.install(antiBlind, betterCrosshair, antiTotemAnimation, dinnerbone, rainbowEnchant,
                 hudLayout, panicState);
+        NameProtectTextAccess.install(nameProtect);
         AntiDebuffAccess.install(antiDebuff);
         AutoSprint autoSprint = new AutoSprint();
         AutoWalk autoWalk = new AutoWalk();

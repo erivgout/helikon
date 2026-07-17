@@ -20,6 +20,7 @@
     "EntityRendererEntityEspOutlineMixin",
     "EntityMovementMixin",
     "FogRendererMixin",
+    "FontNameProtectMixin",
     "FishingHookAccessor",
     "GameRendererMixin",
     "HudMixin",

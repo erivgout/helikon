@@ -14,6 +14,7 @@ import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.EntityEspMode;
 import dev.helikon.client.module.render.EntityEspRenderAccess;
 import dev.helikon.client.module.render.Explosions;
+import dev.helikon.client.module.render.ProjectileWarning;
 import dev.helikon.client.module.render.StorageEsp;
 import dev.helikon.client.module.render.Trajectories;
 import dev.helikon.client.module.render.Tracers;
@@ -88,6 +89,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final BlockEsp blockEsp;
     private final Tracers tracers;
     private final Trajectories trajectories;
+    private final ProjectileWarning projectileWarning;
     private final TrueSight trueSight;
     private final StorageEsp storageEsp;
     private final DamageIndicators damageIndicators;
@@ -114,7 +116,8 @@ public final class MinecraftWorldVisualizationRenderer {
     public MinecraftWorldVisualizationRenderer(ModuleRegistry modules, FriendManager friends, EntityEsp entityEsp,
                                                 Chams chams, BetterNametags betterNametags,
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
-                                                TrueSight trueSight, StorageEsp storageEsp, DamageIndicators damageIndicators,
+                                                ProjectileWarning projectileWarning, TrueSight trueSight,
+                                                StorageEsp storageEsp, DamageIndicators damageIndicators,
                                                 Breadcrumbs breadcrumbs, BuilderAssist builderAssist, BlockSelection blockSelection,
                                                 BowAimAssist bowAimAssist, LocalCosmetics localCosmetics, Explosions explosions) {
         this.modules = Objects.requireNonNull(modules, "modules");
@@ -125,6 +128,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.blockEsp = Objects.requireNonNull(blockEsp, "blockEsp");
         this.tracers = Objects.requireNonNull(tracers, "tracers");
         this.trajectories = Objects.requireNonNull(trajectories, "trajectories");
+        this.projectileWarning = Objects.requireNonNull(projectileWarning, "projectileWarning");
         this.trueSight = Objects.requireNonNull(trueSight, "trueSight");
         this.storageEsp = Objects.requireNonNull(storageEsp, "storageEsp");
         this.damageIndicators = Objects.requireNonNull(damageIndicators, "damageIndicators");
@@ -229,6 +233,10 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (explosions.isEnabled()) {
             modules.runGuarded(explosions, "render", () -> renderExplosions(client.level, frustum));
+        }
+        if (projectileWarning.isEnabled()) {
+            modules.runGuarded(projectileWarning, "render",
+                    () -> renderProjectileWarning(client.level, client.player, frustum));
         }
         if (trueSight.isEnabled()) {
             modules.runGuarded(trueSight, "render", () -> renderTrueSight(client.level, client.player, frustum));
@@ -551,6 +559,57 @@ public final class MinecraftWorldVisualizationRenderer {
                         TextGizmo.Style.forColorAndCentered(color)).setAlwaysOnTop();
             }
             if (++rendered >= explosions.maximumSources()) {
+                return;
+            }
+        }
+    }
+
+    /**
+     * Highlights frustum-visible projectiles whose short-horizon linear path passes
+     * within the configured hit radius of the local player. It never changes projectile
+     * state, velocity, or packets; the server remains authoritative over damage.
+     */
+    private void renderProjectileWarning(ClientLevel level, Player localPlayer, Frustum frustum) {
+        Vec3 center = localPlayer.getBoundingBox().getCenter();
+        Vec3 playerVelocity = localPlayer.getDeltaMovement();
+        GizmoStyle style = GizmoStyle.strokeAndFill(projectileWarning.color(), projectileWarning.lineWidth(),
+                projectileWarning.fillColor());
+        int rendered = 0;
+        for (Entity entity : level.entitiesForRendering()) {
+            if (!(entity instanceof Projectile projectile)) {
+                continue;
+            }
+            Optional<Trajectories.ProjectileType> type = projectileType(projectile);
+            if (type.isEmpty() || !projectileWarning.includes(type.get())) {
+                continue;
+            }
+            Entity owner = projectile.getOwner();
+            if (owner == localPlayer) {
+                continue;
+            }
+            if (projectileWarning.excludeFriendProjectiles() && isFriend(owner)) {
+                continue;
+            }
+            if (!isFrustumVisible(frustum, projectile)) {
+                continue;
+            }
+            Vec3 position = projectile.getBoundingBox().getCenter();
+            Vec3 velocity = projectile.getDeltaMovement();
+            Optional<ProjectileThreatPolicy.ProjectileThreat> threat = ProjectileThreatPolicy.assess(
+                    position.x() - center.x(), position.y() - center.y(), position.z() - center.z(),
+                    velocity.x() - playerVelocity.x(), velocity.y() - playerVelocity.y(), velocity.z() - playerVelocity.z(),
+                    projectileWarning.hitRadius(), projectileWarning.warningTicks(), projectileWarning.detectionRange());
+            if (threat.isEmpty()) {
+                continue;
+            }
+            Gizmos.cuboid(projectile.getBoundingBox().inflate(0.25D), style).setAlwaysOnTop();
+            if (projectileWarning.showLabel()) {
+                String label = String.format(java.util.Locale.ROOT, "! %.1fs",
+                        threat.get().timeToImpactTicks() / 20.0D);
+                Gizmos.billboardText(label, position.add(0.0D, 0.35D, 0.0D),
+                        TextGizmo.Style.forColorAndCentered(projectileWarning.color())).setAlwaysOnTop();
+            }
+            if (++rendered >= projectileWarning.maximumProjectiles()) {
                 return;
             }
         }

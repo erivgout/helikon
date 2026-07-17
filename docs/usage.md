@@ -37,16 +37,20 @@ retained. Color rows provide alpha/red/green/blue picker tracks below the
 
 ## HUD editor
 
-Select **HUD** in the ClickGUI header. Drag the Active Modules preview (it
-snaps to edges and centre) and use the **HUD element** selector to position,
-toggle, and style every other element: Waypoints, Coordinates, Saturation,
-Elytra, Target HUD, Reach, Inventory Preview, Durability Warnings, Radar,
-MiniPlayer, Debug Overlay, Better Crosshair, plus opt-in Direction, FPS, Ping,
-local TPS estimate, Speed, Armor durability, Held-item durability, Potion
-effects, Clock, Biome, Server address, and Totem count readouts. Each element
-has its own scale, alignment, background, padding, text shadow, color, and
-rainbow setting, with a styled draggable preview. The layout is stored locally
-in `config/helikon/hud.json` when the editor closes.
+Select **HUD** in the ClickGUI header. The editor is a drag-only canvas: drag
+the Active Modules preview (it snaps to edges and centre) or any enabled
+element preview directly — Waypoints, Coordinates, Saturation, Elytra, Target
+HUD, Reach, Inventory Preview, Durability Warnings, Radar, MiniPlayer, Debug
+Overlay, Better Crosshair, plus opt-in Direction, FPS, Ping, local TPS
+estimate, Speed, Armor durability, Held-item durability, Potion effects,
+Clock, Biome, Server address, and Totem count readouts.
+
+Presentation options live on the separate **HUD settings** screen, opened
+from the button in the editor's header. It holds the Active Modules
+sort/alignment/color/scale rows and a per-element selector with each
+element's enable toggle, scale, alignment, background, padding, text shadow,
+color, and rainbow setting; Escape returns to the editor. The layout is
+stored locally in `config/helikon/hud.json` when either screen closes.
 
 ## Local commands
 

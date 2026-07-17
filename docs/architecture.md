@@ -608,14 +608,24 @@ snapping without Minecraft imports; `HelikonHudEditorScreen` is only the
 input/render adapter. The editor is reached from the **HUD** button in the
 ClickGUI header, saves once when it closes, and returns to the ClickGUI.
 
+Layout and presentation are separate screens. `HelikonHudEditorScreen` is a
+drag-only canvas: it draws the Active Modules preview plus one placement
+handle per enabled element (the selected element stays visible, greyed, while
+disabled), and any of them can be dragged directly. Its
+header button opens `HelikonHudSettingsScreen`, which owns every presentation
+row (Active Modules sort/alignment/color/scale plus the per-element selector
+and its style options) and performs no dragging; Escape returns to the
+editor. Both screens save the shared `HudLayout` when they close and share
+preview drawing through the package-private `HudPreviewRenderer`.
+
 `HudElementPlacement` provides the shared non-Active-Modules layout model:
 validated local enable state plus a top/bottom/left/right/centre anchor and
 offsets. Every registered custom HUD renderer resolves its content bounds
-against that model instead of hard-coding screen coordinates. The editor shows
-one selectable element preview at a time; it can be toggled and dragged, with
-a drag intentionally converting it to a stable top-left placement. The
-preview is a placement handle; every renderer clamps its actual local content
-bounds to the scaled viewport, including when dynamic content changes size.
+against that model instead of hard-coding screen coordinates. Dragging a
+placement handle intentionally converts it to a stable top-left placement.
+The preview is a placement handle; every renderer clamps its actual local
+content bounds to the scaled viewport, including when dynamic content changes
+size.
 
 `PlanTelemetryHud` supplies the remaining version-one telemetry surfaces as
 opt-in placement entries: direction, FPS, local-player latency, a clearly

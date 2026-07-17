@@ -187,24 +187,31 @@ key (`ConfigurationManagerTest`).
    `.toggle fullbright`. Verify **Fullbright** appears in a small
    top-left HUD panel; send the command again and verify the panel disappears.
 2. Open the ClickGUI with Right Shift and click **HUD** in its header. Verify a
-   dimmed editor opens, with an Active modules checkbox and a preview (showing
-   either enabled modules or `No modules enabled`).
-3. Drag the preview to each screen edge and verify it stays fully visible;
-   turn its checkbox off and verify the normal HUD no longer renders after
-   leaving the editor. Turn it back on and move it to a distinct position.
-   Drag close to, but not exactly on, an edge and then the viewport centre;
-   verify the preview snaps there. Cycle Sort, Alignment, and Color, toggle
-   Background and Text shadow, and adjust Scale/Padding; verify the live HUD
-   reflects every choice and remains entirely on screen.
-4. Press Escape and verify the ClickGUI returns. Close it, relaunch the
-   client, and verify the enabled state, position, and presentation choices are restored from
-   `config/helikon/hud.json`.
-   Cycle the **HUD element** selector through Waypoints, Coordinates, Saturation,
-   Elytra, Target HUD, Reach, Inventory Preview, Durability warnings, Radar,
-   MiniPlayer, Debug Overlay, and Better Crosshair. Toggle one off, drag another
-   preview to a distinct position, close/reopen the editor, and verify both local
-   settings persist and affect only that HUD element. For each selected element,
-   cycle Alignment and Color, toggle Background, Text shadow, and Rainbow, and
+   dimmed drag-only editor opens with a header bar, a **HUD settings** button,
+   the Active Modules preview (showing either enabled modules or
+   `No modules enabled`), and one labelled handle per enabled HUD element.
+3. Drag the Active Modules preview to each screen edge and verify it stays
+   fully visible. Drag close to, but not exactly on, an edge and then the
+   viewport centre; verify the preview snaps there. Drag several element
+   handles to distinct positions and verify each moves independently, stays
+   fully on screen, and gains the accent outline when clicked.
+4. Click **HUD settings** and verify the settings screen opens over the same
+   previews. Toggle the Active modules checkbox off and verify the normal HUD
+   no longer renders after leaving the screens; turn it back on. Cycle Sort,
+   Alignment, and Color, toggle Background, Text shadow, and Animation, and
+   adjust Scale/Padding; verify the live previews reflect every choice and
+   remain entirely on screen. Press Escape and verify the editor returns;
+   press Escape again and verify the ClickGUI returns. Relaunch the client
+   and verify the enabled state, positions, and presentation choices are
+   restored from `config/helikon/hud.json`.
+   In HUD settings, cycle the **HUD element** selector through Waypoints,
+   Coordinates, Saturation, Elytra, Target HUD, Reach, Inventory Preview,
+   Durability warnings, Radar, MiniPlayer, Debug Overlay, and Better
+   Crosshair. Toggle one off and verify its editor handle renders grey only
+   while it is the selected element. Drag another handle to a distinct
+   position, close/reopen the editor, and verify both local settings persist
+   and affect only that HUD element. For each selected element, cycle
+   Alignment and Color, toggle Background, Text shadow, and Rainbow, and
    adjust Scale/Padding; verify the styled preview changes and its rendered HUD
    remains fully on screen. Drag Radar, MiniPlayer,
    Inventory Preview, and Debug Overlay to each viewport edge and verify their

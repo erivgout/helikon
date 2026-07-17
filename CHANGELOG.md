@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Splits the HUD editor into a drag-only layout canvas and a separate HUD
+  settings screen. Every enabled element preview is now draggable directly,
+  and the settings screen (reached from the editor's header button) owns all
+  Active Modules and per-element presentation options, so previews no longer
+  intercept clicks meant for setting rows.
+
 ## 1.0.1
 
 - Adds Jesus water-surface walking and Spider wall climbing as independent

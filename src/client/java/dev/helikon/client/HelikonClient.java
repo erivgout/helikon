@@ -45,6 +45,7 @@ import dev.helikon.client.integration.BaritoneCompatibility;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
 import dev.helikon.client.gui.HelikonHudEditorScreen;
+import dev.helikon.client.gui.HelikonHudSettingsScreen;
 import dev.helikon.client.gui.HelikonThemeEditorScreen;
 import dev.helikon.client.gui.HelikonAutoReconnectScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
@@ -940,6 +941,7 @@ public final class HelikonClient implements ClientModInitializer {
     private static boolean isHelikonScreen(Minecraft client) {
         return client.gui.screen() instanceof HelikonClickGuiScreen
                 || client.gui.screen() instanceof HelikonHudEditorScreen
+                || client.gui.screen() instanceof HelikonHudSettingsScreen
                 || client.gui.screen() instanceof HelikonThemeEditorScreen;
     }
 

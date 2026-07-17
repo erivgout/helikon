@@ -246,7 +246,9 @@ screens permit it as an emergency close control.
 | Plan telemetry | Opt-in direction, FPS, Ping, local TPS estimate, Speed, armor/held durability, effects, clock, biome, server address, and totem-count readouts. | `hud.json`: independent placement and presentation preferences for every readout. | TPS reflects observed local client tick cadence, not a server-reported TPS; all values use already-loaded client state. | `ClientTpsEstimateTest`, `TelemetryTextTest`, manual HUD checklist. |
 
 The HUD editor is opened through the **HUD** button in the ClickGUI header. It
-shows a preview even when no module is enabled, supports the listed Active
-Modules controls, and clamps/snaps dragging so its complete scaled preview
-remains on screen. Cycle the HUD element selector to toggle or drag the other
-registered local HUD elements. It is client-only and sends no network traffic.
+is a drag-only canvas: it shows the Active Modules preview even when no module
+is enabled plus a handle for every enabled element, and clamps/snaps dragging
+so each complete scaled preview remains on screen. Its **HUD settings** button
+opens a separate screen with the listed Active Modules controls and the HUD
+element selector for toggling and styling every registered local HUD element.
+Both screens are client-only and send no network traffic.

@@ -1,5 +1,6 @@
 package dev.helikon.client.config;
 
+import com.google.gson.JsonParser;
 import dev.helikon.client.input.Keybind;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.ClickGuiTheme;
@@ -68,6 +69,42 @@ class ConfigurationManagerTest {
         assertTrue(fullbright.isEnabled());
         assertFalse(fullbright.gammaMode.value());
         assertEquals(0.6, fullbright.brightness.value());
+    }
+
+    @Test
+    void legacyFullbrightMigrationIsWrittenBackOnlyUnderTheProductionId() throws IOException {
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        Files.createDirectories(manager.configurationDirectory());
+        Files.writeString(manager.globalConfigurationPath(), """
+                {
+                  "schemaVersion": 1,
+                  "modules": {
+                    "fullbright_stub": {
+                      "enabled": true,
+                      "keybind": {"key": -1, "activation": "toggle"},
+                      "settings": {"use_gamma": false, "brightness": 0.6}
+                    }
+                  }
+                }
+                """);
+
+        ModuleRegistry registry = new ModuleRegistry();
+        LegacyFullbrightModule fullbright = new LegacyFullbrightModule();
+        registry.register(fullbright);
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(registry));
+
+        manager.save(registry);
+
+        var modules = JsonParser.parseString(Files.readString(manager.globalConfigurationPath()))
+                .getAsJsonObject()
+                .getAsJsonObject("modules");
+        assertTrue(modules.has("fullbright"));
+        assertFalse(modules.has("fullbright_stub"));
+        var productionState = modules.getAsJsonObject("fullbright");
+        assertTrue(productionState.get("enabled").getAsBoolean());
+        var settings = productionState.getAsJsonObject("settings");
+        assertFalse(settings.get("use_gamma").getAsBoolean());
+        assertEquals(0.6, settings.get("brightness").getAsDouble());
     }
 
     @Test

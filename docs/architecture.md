@@ -424,3 +424,13 @@ in the ClickGUI header, saves once when it closes, and returns to the ClickGUI.
 
 The initial editor intentionally has one draggable element. Alignment, scale,
 background options, snapping, and other HUD elements remain future work.
+
+## Stabilization and release boundaries
+
+The release candidate keeps runtime decision paths Minecraft-free wherever
+possible and routes integration failures through `ModuleRegistry` isolation.
+Gradle's `check` task also rejects Java source tabs/trailing whitespace and
+obvious network-client imports, while `releaseBundle` assembles the non-dev
+remapped JAR with its SHA-256 checksum and resolved-dependency report. These
+are release safeguards, not a claim that static checks replace the documented
+live-client smoke tests.

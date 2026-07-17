@@ -101,6 +101,9 @@ When porting:
     no-packet policy.
 29. Run the manual smoke test in an empty profile and with no internet access.
 30. Document compatibility changes and retained limitations before release.
+31. Re-run `check releaseBundle`, inspect the generated checksum and resolved
+    dependency report, and repeat the focused live-client smoke checks before
+    packaging a release for the target version.
 
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

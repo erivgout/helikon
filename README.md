@@ -1,7 +1,7 @@
 # Helikon
 
 Helikon is a clean-room, open-source Fabric utility client for Minecraft Java
-Edition. This repository currently contains the **core framework**: the client
+Edition 26.2. This `1.0.0-rc.1` repository contains the client
 entrypoint, modular lifecycle API, basic settings, local JSON configuration,
 an internal event bus, a functional Right Shift ClickGUI, local chat commands,
 module keybinds, an Active Modules HUD, local profiles, local friends, local
@@ -182,6 +182,18 @@ The remapped mod JAR is produced in `build/libs`. To start a development client:
 .\gradlew.bat runClient
 ```
 
+To validate the release candidate and create the locally auditable release
+bundle (JAR, SHA-256 checksums, resolved-dependency report, release notes, and
+the relevant documentation), run:
+
+```powershell
+.\gradlew.bat check releaseBundle
+```
+
+The bundle is written to `build/releases`. See [release.md](docs/release.md)
+for the release gate and [security-review.md](docs/security-review.md) for its
+security review scope.
+
 Press Right Shift in the client to open the ClickGUI. Click a category to list
 its modules, click a module to inspect and edit its settings, and click the
 square at the right of a row to toggle it. The search box at the top filters
@@ -279,6 +291,13 @@ or cloud synchronization is used. See [networking.md](docs/networking.md) and
 Use only on servers whose rules permit client modifications. Minecraft servers
 remain authoritative; future client-side features must not claim to guarantee
 server-side behavior.
+
+## Release candidate status
+
+`1.0.0-rc.1` is a client-only release candidate for Minecraft 26.2. The live
+client smoke checklists in [testing.md](docs/testing.md) remain a release gate;
+the automated suite and local release-bundle checks do not replace real-world
+testing on a disposable profile.
 
 ## Development
 

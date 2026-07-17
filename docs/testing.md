@@ -78,6 +78,9 @@ critical gates, restorative-potion slot ownership, anti-bot heuristics, and
 session HUD tracking are covered by `CombatPolicyTest`. Minecraft combat and
 HUD wiring additionally have the manual checklist below because they depend on
 verified 26.2 local game APIs.
+Configuration migration coverage verifies that legacy Fullbright state loads
+under the production module ID and that the next atomic save removes the legacy
+key (`ConfigurationManagerTest`).
 
 ## Manual Active Modules HUD smoke test
 
@@ -381,6 +384,12 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     **ReachDisplay** reports only a measured Helikon attack request distance.
     Finally toggle **AntiBot** options with a test player/list state and verify
     they merely exclude local targets and create no network/service request.
+44. Before a release candidate, start from a fresh Minecraft profile and run
+    the relevant module smoke checks above. Run `./gradlew.bat check
+    releaseBundle`, confirm the bundle contains the remapped non-dev JAR,
+    SHA-256 checksum, and dependency report, then inspect the source-style and
+    client-only architecture checks. Confirm that no release workflow publishes
+    an untagged build and record any manual checks not performed.
 
 ## Manual command and keybind smoke test
 

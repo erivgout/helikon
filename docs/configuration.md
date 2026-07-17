@@ -20,6 +20,9 @@ It also stores the selected ClickGUI palette (`midnight`, `high_contrast`, or
 The former bootstrap ID `fullbright_stub` is migrated locally to the production
 `fullbright` module on load, preserving its enabled state, keybind, and shared
 settings before the next normal save writes the production ID.
+The migration suite verifies both directions of this transition: legacy state
+loads into the production module, and its subsequent atomic save contains only
+the production ID.
 
 `ColorSetting` values use strict eight-digit ARGB strings such as `#80FF6600`.
 Malformed color values reset only that setting to its safe default and are

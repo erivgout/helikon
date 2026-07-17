@@ -26,12 +26,16 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run checks and build
-        run: ./gradlew check build
+      - name: Run checks and package release candidate
+        run: ./gradlew check releaseBundle
 
       - name: Upload mod artifacts
         uses: actions/upload-artifact@v4
         with:
           name: helikon
-          path: build/libs/*.jar
+          path: |
+            build/libs/*.jar
+            !build/libs/*-dev.jar
+            build/releases/*.zip
+            build/reports/helikon/*
           if-no-files-found: error

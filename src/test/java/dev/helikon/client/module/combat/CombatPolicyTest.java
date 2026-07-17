@@ -341,6 +341,16 @@ class CombatPolicyTest {
     }
 
     @Test
+    void clickAuraRequiresHeldAttackAndChoosesTheNearestEligibleTarget() {
+        ClickAura clickAura = enabled(new ClickAura());
+        CombatTarget near = target("near", CombatEntityType.HOSTILE, false, false, true, 2.0D, 30.0D, 10.0D);
+        CombatTarget friend = target("friend", CombatEntityType.PLAYER, true, false, true, 1.0D, 0.0D, 10.0D);
+        assertEquals("near", clickAura.nextAttack(0L, List.of(friend, near), true, true).orElseThrow().id());
+        assertTrue(clickAura.nextAttack(1L, List.of(friend, near), true, true).isEmpty());
+        assertTrue(clickAura.nextAttack(8L, List.of(near), false, true).isEmpty());
+    }
+
+    @Test
     void antiBotAndHudTrackerRemainLocalAndBounded() {
         AntiBot antiBot = enabled(new AntiBot());
         assertTrue(antiBot.isSuspected(new AntiBot.Facts(false, false, 20, false, false, true)));

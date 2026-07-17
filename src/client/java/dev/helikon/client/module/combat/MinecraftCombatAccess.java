@@ -208,6 +208,15 @@ public final class MinecraftCombatAccess {
         return false;
     }
 
+    public static boolean tickClickAura(long tick, ClickAura clickAura, Snapshot snapshot, CombatTargetTracker tracker) {
+        Minecraft client = Minecraft.getInstance();
+        if (!readyForAttack(client, snapshot)) {
+            return false;
+        }
+        return clickAura.nextAttack(tick, snapshot.targets(), client.options.keyAttack.isDown(), attackReady(client.player))
+                .map(target -> attack(client, snapshot.entities().get(target.id()), target, tracker)).orElse(false);
+    }
+
     public static boolean tickCriticalAssist(long tick, CriticalAssist criticalAssist, Snapshot snapshot,
                                              CombatTargetTracker tracker) {
         Minecraft client = Minecraft.getInstance();

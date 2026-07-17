@@ -90,6 +90,7 @@ import dev.helikon.client.module.combat.MinecraftBackTrackAccess;
 import dev.helikon.client.module.combat.AutoLeave;
 import dev.helikon.client.module.combat.MinecraftAutoLeaveAccess;
 import dev.helikon.client.module.combat.AutoSoup;
+import dev.helikon.client.module.combat.ClickAura;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.HitFlick;
@@ -553,6 +554,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoPearl autoPearl = new AutoPearl();
         AutoLeave autoLeave = new AutoLeave();
         AutoSoup autoSoup = new AutoSoup();
+        ClickAura clickAura = new ClickAura();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
         Reach reach = new Reach();
@@ -659,6 +661,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoPearl);
         modules.register(autoLeave);
         modules.register(autoSoup);
+        modules.register(clickAura);
         modules.register(targetHud);
         modules.register(killAura);
         modules.register(reach);
@@ -794,6 +797,12 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(triggerBot, "tick", () -> {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftCombatAccess.tickTriggerBot(clientTick, triggerBot,
+                                combatSnapshot.get(), combatTracker));
+                    }
+                });
+                modules.runGuarded(clickAura, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftCombatAccess.tickClickAura(clientTick, clickAura,
                                 combatSnapshot.get(), combatTracker));
                     }
                 });

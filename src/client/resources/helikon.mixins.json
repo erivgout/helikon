@@ -29,6 +29,7 @@
     "LightmapRenderStateExtractorMixin",
     "LevelRendererEventMixin",
     "LivingEntityRendererMixin",
+    "LivingEntityPushMixin",
     "LivingEntityStepMixin",
     "LocalPlayerNoSlowMixin",
     "ModelBlockRendererXRayMixin",

@@ -97,6 +97,8 @@ import dev.helikon.client.module.movement.AutoWalk;
 import dev.helikon.client.module.movement.AutoParkour;
 import dev.helikon.client.module.movement.InventoryWalk;
 import dev.helikon.client.module.movement.AntiAfk;
+import dev.helikon.client.module.movement.AntiEntityPush;
+import dev.helikon.client.module.movement.AntiEntityPushAccess;
 import dev.helikon.client.module.movement.AdvancedMovementInputAccess;
 import dev.helikon.client.module.movement.AntiAfkAccess;
 import dev.helikon.client.module.movement.BoatFlight;
@@ -406,6 +408,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoParkour autoParkour = new AutoParkour();
         InventoryWalk inventoryWalk = new InventoryWalk();
         AntiAfk antiAfk = new AntiAfk();
+        AntiEntityPush antiEntityPush = new AntiEntityPush();
         NoSlow noSlow = new NoSlow();
         FastLadders fastLadders = new FastLadders();
         WaterJump waterJump = new WaterJump();
@@ -493,6 +496,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoParkour);
         modules.register(inventoryWalk);
         modules.register(antiAfk);
+        modules.register(antiEntityPush);
         modules.register(noSlow);
         modules.register(fastLadders);
         modules.register(waterJump);
@@ -574,6 +578,7 @@ public final class HelikonClient implements ClientModInitializer {
         InventoryWalkAccess.install(inventoryWalk);
         ParkourAccess.install(autoParkour);
         AntiAfkAccess.install(antiAfk);
+        AntiEntityPushAccess.install(antiEntityPush);
         AdvancedMovementInputAccess.install(bunnyHop, scaffold);
         FreecamAccess.install(freecam);
         NoSlowAccess.install(noSlow);

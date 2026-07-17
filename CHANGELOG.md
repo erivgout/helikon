@@ -14,6 +14,11 @@
   and the settings screen (reached from the editor's header button) owns all
   Active Modules and per-element presentation options, so previews no longer
   intercept clicks meant for setting rows.
+- Adds a slider above every whole-number and decimal ClickGUI setting. Drag or
+  click the track to set a value, or point at it and use the mouse wheel to
+  increase or decrease one step. The paired text field still accepts exact
+  entry, and integral sliders round while decimal sliders snap to a clean
+  range-relative grid.
 
 ## 1.0.1
 

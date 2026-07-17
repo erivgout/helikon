@@ -15,8 +15,10 @@ import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.ColorSetting;
 import dev.helikon.client.setting.ColorPickerValue;
 import dev.helikon.client.setting.EnumSetting;
+import dev.helikon.client.setting.IntegerSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.setting.NumberSettingText;
+import dev.helikon.client.setting.NumberSlider;
 import dev.helikon.client.setting.Setting;
 import dev.helikon.client.setting.SettingText;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -54,7 +56,12 @@ public final class HelikonClickGuiScreen extends Screen {
     private static final int BIND_ROW_HEIGHT = 14;
     private static final int ENABLED_ROW_HEIGHT = 14;
     private static final int BOOLEAN_ROW_HEIGHT = 14;
-    private static final int NUMBER_ROW_HEIGHT = 28;
+    private static final int TEXT_ROW_HEIGHT = 28;
+    private static final int SLIDER_ROW_HEIGHT = 38;
+    private static final int EDIT_ROW_TOP = 12;
+    private static final int SLIDER_EDIT_TOP = 21;
+    private static final int SLIDER_TRACK_TOP = 13;
+    private static final int SLIDER_TRACK_HEIGHT = 4;
     private static final int COLOR_PICKER_ROW_HEIGHT = 46;
     private static final int COLOR_PICKER_TOP = 28;
     private static final int COLOR_PICKER_CHANNEL_HEIGHT = 4;
@@ -240,6 +247,7 @@ public final class HelikonClickGuiScreen extends Screen {
                 || handleModuleListClick(mouseX, mouseY)
                 || updateColorPicker(mouseX, mouseY)
                 || handleSettingsClick(mouseX, mouseY)
+                || updateSlider(mouseX, mouseY)
                 || handleWindowResizeStart(mouseX, mouseY)
                 || handleWindowDragStart(mouseX, mouseY);
     }
@@ -247,6 +255,9 @@ public final class HelikonClickGuiScreen extends Screen {
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
         if (event.button() == 0 && updateColorPicker((int) event.x(), (int) event.y())) {
+            return true;
+        }
+        if (event.button() == 0 && updateSlider((int) event.x(), (int) event.y())) {
             return true;
         }
         if (event.button() == 0 && windowResize.resizeTo(
@@ -328,6 +339,9 @@ public final class HelikonClickGuiScreen extends Screen {
             return true;
         }
         if (mouseX >= settingsX && mouseX < panelX + panelWidth && mouseY >= contentTop && mouseY < contentBottom) {
+            if (nudgeHoveredSlider(mouseX, mouseY, vertical)) {
+                return true;
+            }
             settingsScroll = clampSettingsScroll(settingsScroll - vertical * ROW_HEIGHT);
             syncSettingWidgetPositions();
             return true;
@@ -487,11 +501,12 @@ public final class HelikonClickGuiScreen extends Screen {
             if (setting instanceof BooleanSetting booleanSetting) {
                 drawCheckbox(graphics, settingsCheckboxX(),
                         rowY + (BOOLEAN_ROW_HEIGHT - CHECKBOX_SIZE) / 2, booleanSetting.value());
-            } else if (setting instanceof NumberSetting numberSetting) {
-                String range = "(" + NumberSettingText.format(numberSetting.minimum())
-                        + "–" + NumberSettingText.format(numberSetting.maximum()) + ")";
+            } else if (isSlider(setting)) {
+                String range = "(" + NumberSettingText.format(minOf(setting))
+                        + "–" + NumberSettingText.format(maxOf(setting)) + ")";
                 int rangeWidth = font.width(range);
                 graphics.text(font, range, settingResetX() - 4 - rangeWidth, rowY + 3, COLOR_TEXT_DIM, false);
+                drawSlider(graphics, setting, rowY, mouseX, mouseY);
             } else if (setting instanceof ColorSetting colorSetting) {
                 int swatchX = settingResetX() - 18;
                 graphics.fill(swatchX, rowY + 3, swatchX + 12, rowY + 10, colorSetting.value());
@@ -535,6 +550,24 @@ public final class HelikonClickGuiScreen extends Screen {
         } else {
             graphics.outline(x, y, CHECKBOX_SIZE, CHECKBOX_SIZE, COLOR_TEXT_DIM);
         }
+    }
+
+    /** Draws the numeric slider track, filled portion, and handle for one setting row. */
+    private void drawSlider(GuiGraphicsExtractor graphics, Setting<?> setting, int rowY, int mouseX, int mouseY) {
+        int x = settingsX + 6;
+        int width = SETTINGS_WIDTH - 12;
+        int y = rowY + SLIDER_TRACK_TOP;
+        double minimum = minOf(setting);
+        double maximum = maxOf(setting);
+        double value = valueOf(setting);
+
+        graphics.fill(x, y, x + width, y + SLIDER_TRACK_HEIGHT, COLOR_OUTLINE);
+        int handleX = NumberSlider.handleX(value, minimum, maximum, x, width);
+        if (handleX > x) {
+            graphics.fill(x, y, handleX, y + SLIDER_TRACK_HEIGHT, COLOR_ACCENT);
+        }
+        boolean hovered = isInside(mouseX, mouseY, x, y - 2, width, SLIDER_TRACK_HEIGHT + 4);
+        graphics.outline(handleX - 1, y - 1, 3, SLIDER_TRACK_HEIGHT + 2, hovered ? COLOR_TEXT : COLOR_TEXT_DIM);
     }
 
     private void drawColorPicker(GuiGraphicsExtractor graphics, ColorSetting setting, int rowY) {
@@ -711,6 +744,91 @@ public final class HelikonClickGuiScreen extends Screen {
         return false;
     }
 
+    /** Applies a numeric slider drag or click through the setting's validated set path. */
+    private boolean updateSlider(int mouseX, int mouseY) {
+        Module module = state.selectedModule().orElse(null);
+        if (module == null || mouseX < settingsX + 6 || mouseX >= settingsX + SETTINGS_WIDTH - 6
+                || mouseY < contentTop || mouseY >= contentBottom) {
+            return false;
+        }
+        for (SettingRow row : settingRows(module)) {
+            Setting<?> setting = row.setting();
+            if (!isSlider(setting) || !isOnSliderTrack(row, mouseY)) {
+                continue;
+            }
+            double value = NumberSlider.valueAt(mouseX, settingsX + 6, SETTINGS_WIDTH - 12,
+                    minOf(setting), maxOf(setting), integral(setting));
+            applySliderValue(setting, value);
+            refreshSettingField(setting);
+            return true;
+        }
+        return false;
+    }
+
+    /** Increases or decreases a hovered slider by one step from the mouse wheel. */
+    private boolean nudgeHoveredSlider(double mouseX, double mouseY, double vertical) {
+        if (vertical == 0.0D) {
+            return false;
+        }
+        Module module = state.selectedModule().orElse(null);
+        if (module == null || mouseX < settingsX + 6 || mouseX >= settingsX + SETTINGS_WIDTH - 6) {
+            return false;
+        }
+        for (SettingRow row : settingRows(module)) {
+            Setting<?> setting = row.setting();
+            if (!isSlider(setting) || !isOnSliderTrack(row, (int) mouseY)) {
+                continue;
+            }
+            double value = NumberSlider.nudge(valueOf(setting), minOf(setting), maxOf(setting),
+                    integral(setting), vertical > 0.0D ? 1 : -1);
+            applySliderValue(setting, value);
+            refreshSettingField(setting);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isOnSliderTrack(SettingRow row, int mouseY) {
+        int trackY = settingsY(row.y()) + SLIDER_TRACK_TOP;
+        return mouseY >= trackY - 2 && mouseY < trackY + SLIDER_TRACK_HEIGHT + 2;
+    }
+
+    /** Keeps a slider's paired text field showing the same value after a drag or nudge. */
+    private void refreshSettingField(Setting<?> setting) {
+        EditBox field = textFields.get(setting);
+        if (field != null) {
+            field.setValue(SettingText.format(setting));
+        }
+    }
+
+    private static boolean isSlider(Setting<?> setting) {
+        return setting instanceof NumberSetting || setting instanceof IntegerSetting;
+    }
+
+    private static double minOf(Setting<?> setting) {
+        return setting instanceof IntegerSetting integer ? integer.minimum() : ((NumberSetting) setting).minimum();
+    }
+
+    private static double maxOf(Setting<?> setting) {
+        return setting instanceof IntegerSetting integer ? integer.maximum() : ((NumberSetting) setting).maximum();
+    }
+
+    private static double valueOf(Setting<?> setting) {
+        return setting instanceof IntegerSetting integer ? integer.value() : ((NumberSetting) setting).value();
+    }
+
+    private static boolean integral(Setting<?> setting) {
+        return setting instanceof IntegerSetting;
+    }
+
+    private void applySliderValue(Setting<?> setting, double value) {
+        if (setting instanceof IntegerSetting integer) {
+            integer.set((int) Math.rint(value));
+        } else if (setting instanceof NumberSetting number) {
+            number.set(value);
+        }
+    }
+
     /** Handles ClickGUI navigation only while no text editor owns the keyboard. */
     private boolean handleKeyboardNavigation(int key) {
         if (key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT) {
@@ -778,7 +896,7 @@ public final class HelikonClickGuiScreen extends Screen {
             if (!SettingText.isEditable(setting)) {
                 continue;
             }
-            EditBox field = new EditBox(font, settingsX + 6, settingsY(row.y()) + 12, SETTINGS_WIDTH - 12, 14,
+            EditBox field = new EditBox(font, settingsX + 6, settingsY(row.y()) + editorTop(setting), SETTINGS_WIDTH - 12, 14,
                     Component.literal(setting.name()));
             field.setMaxLength(SettingText.maximumLength(setting));
             field.setValue(SettingText.format(setting));
@@ -802,7 +920,7 @@ public final class HelikonClickGuiScreen extends Screen {
                 continue;
             }
             int rowY = settingsY(row.y());
-            int fieldY = rowY + 12;
+            int fieldY = rowY + editorTop(row.setting());
             field.setX(settingsX + 6);
             field.setY(fieldY);
             field.visible = fieldY >= contentTop && fieldY + 14 <= contentBottom;
@@ -823,11 +941,17 @@ public final class HelikonClickGuiScreen extends Screen {
                 continue;
             }
             int rowHeight = setting instanceof ColorSetting ? COLOR_PICKER_ROW_HEIGHT
-                    : SettingText.isEditable(setting) ? NUMBER_ROW_HEIGHT : BOOLEAN_ROW_HEIGHT;
+                    : isSlider(setting) ? SLIDER_ROW_HEIGHT
+                    : SettingText.isEditable(setting) ? TEXT_ROW_HEIGHT : BOOLEAN_ROW_HEIGHT;
             rows.add(new SettingRow(setting, y, rowHeight));
             y += rowHeight;
         }
         return rows;
+    }
+
+    /** The label-relative y of a row's text editor, lower for numeric slider rows. */
+    private static int editorTop(Setting<?> setting) {
+        return isSlider(setting) ? SLIDER_EDIT_TOP : EDIT_ROW_TOP;
     }
 
     private int settingsY(int unscrolledY) {

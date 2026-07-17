@@ -381,15 +381,26 @@ public final class HelikonClickGuiScreen extends Screen {
         graphics.text(font, "Active", panelX + 6, contentTop + 3,
                 activeSelected ? COLOR_ACCENT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT), false);
 
+        int favoritesY = contentTop + ROW_HEIGHT;
+        boolean favoritesSelected = state.isShowingFavoriteModules();
+        if (favoritesSelected) {
+            graphics.fill(panelX, favoritesY, panelX + SIDEBAR_WIDTH, favoritesY + ROW_HEIGHT, COLOR_ROW_SELECTED);
+        } else if (isInside(mouseX, mouseY, panelX, favoritesY, SIDEBAR_WIDTH, ROW_HEIGHT)) {
+            graphics.fill(panelX, favoritesY, panelX + SIDEBAR_WIDTH, favoritesY + ROW_HEIGHT, COLOR_ROW_HOVER);
+        }
+        graphics.text(font, "Favorites", panelX + 6, favoritesY + 3,
+                favoritesSelected ? COLOR_ACCENT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT), false);
+
         ModuleCategory[] categories = ModuleCategory.values();
         for (int index = 0; index < categories.length; index++) {
             ModuleCategory category = categories[index];
-            int rowY = contentTop + (index + 1) * ROW_HEIGHT;
+            int rowY = contentTop + (index + 2) * ROW_HEIGHT;
             if (rowY + ROW_HEIGHT > contentBottom) {
                 break;
             }
 
-            boolean selected = !state.isSearching() && category == state.selectedCategory();
+            boolean selected = !state.isSearching() && !state.isShowingActiveModules()
+                    && !state.isShowingFavoriteModules() && category == state.selectedCategory();
             if (selected) {
                 graphics.fill(panelX, rowY, panelX + SIDEBAR_WIDTH, rowY + ROW_HEIGHT, COLOR_ROW_SELECTED);
             } else if (isInside(mouseX, mouseY, panelX, rowY, SIDEBAR_WIDTH, ROW_HEIGHT)) {
@@ -404,7 +415,8 @@ public final class HelikonClickGuiScreen extends Screen {
     private void drawModuleList(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         Component heading = state.isSearching()
                 ? Component.translatable("screen.helikon.search_results")
-                : Component.literal(state.selectedCategory().displayName());
+                : Component.literal(state.isShowingFavoriteModules() ? "Favorites"
+                : state.isShowingActiveModules() ? "Active" : state.selectedCategory().displayName());
         graphics.text(font, heading, listX + 4, panelY + HEADER_HEIGHT - 12, COLOR_TEXT_DIM, false);
 
         List<Module> visible = state.visibleModules();
@@ -416,6 +428,7 @@ public final class HelikonClickGuiScreen extends Screen {
             return;
         }
 
+        Module hoveredModule = null;
         graphics.enableScissor(listX, contentTop, listX + listWidth, contentBottom);
         for (int index = 0; index < visible.size(); index++) {
             Module module = visible.get(index);
@@ -431,13 +444,19 @@ public final class HelikonClickGuiScreen extends Screen {
                 graphics.fill(listX, rowY, listX + listWidth, rowY + ROW_HEIGHT, COLOR_ROW_SELECTED);
             } else if (hovered) {
                 graphics.fill(listX, rowY, listX + listWidth, rowY + ROW_HEIGHT, COLOR_ROW_HOVER);
+                hoveredModule = module;
             }
 
-            String name = font.plainSubstrByWidth(module.name(), listWidth - 24);
+            String name = font.plainSubstrByWidth(module.name(), listWidth - 38);
             graphics.text(font, name, listX + 4, rowY + 3, module.isEnabled() ? COLOR_ACCENT : COLOR_TEXT, false);
+            graphics.text(font, windowState.isFavorite(module.id()) ? "★" : "☆",
+                    favoriteBoxX(), rowY + 3, windowState.isFavorite(module.id()) ? COLOR_ACCENT : COLOR_TEXT_DIM, false);
             drawCheckbox(graphics, toggleBoxX(), rowY + (ROW_HEIGHT - CHECKBOX_SIZE) / 2, module.isEnabled());
         }
         graphics.disableScissor();
+        if (hoveredModule != null) {
+            graphics.setTooltipForNextFrame(font, Component.literal(hoveredModule.description()), mouseX, mouseY);
+        }
 
         drawListScrollbar(graphics, visible.size());
     }
@@ -604,9 +623,17 @@ public final class HelikonClickGuiScreen extends Screen {
             rebuildSettingWidgets();
             return true;
         }
+        if (isInside(mouseX, mouseY, panelX, contentTop + ROW_HEIGHT, SIDEBAR_WIDTH, ROW_HEIGHT)) {
+            state.selectFavoriteModules(windowState.favoriteModuleIds());
+            searchField.setValue("");
+            listScroll = 0;
+            settingsScroll = 0;
+            rebuildSettingWidgets();
+            return true;
+        }
         ModuleCategory[] categories = ModuleCategory.values();
         for (int index = 0; index < categories.length; index++) {
-            int rowY = contentTop + (index + 1) * ROW_HEIGHT;
+            int rowY = contentTop + (index + 2) * ROW_HEIGHT;
             if (rowY + ROW_HEIGHT > contentBottom) {
                 break;
             }
@@ -653,6 +680,11 @@ public final class HelikonClickGuiScreen extends Screen {
             Module module = visible.get(index);
             if (mouseX >= toggleBoxX() - 3) {
                 modules.toggle(module);
+            } else if (mouseX >= favoriteBoxX() - 3) {
+                windowState.setFavorite(module.id(), !windowState.isFavorite(module.id()));
+                if (state.isShowingFavoriteModules()) {
+                    state.selectFavoriteModules(windowState.favoriteModuleIds());
+                }
             } else {
                 keybindAssignment.cancel();
                 keyCaptureSuppression.clear();
@@ -996,6 +1028,10 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private int toggleBoxX() {
         return listX + listWidth - CHECKBOX_SIZE - 8;
+    }
+
+    private int favoriteBoxX() {
+        return toggleBoxX() - 14;
     }
 
     private int settingsCheckboxX() {

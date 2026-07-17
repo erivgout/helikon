@@ -278,6 +278,9 @@ public final class ConfigurationManager {
         window.addProperty("theme", clickGuiWindow.theme().id());
         window.addProperty("interfaceScale", clickGuiWindow.interfaceScale());
         window.addProperty("reducedAnimations", clickGuiWindow.reducedAnimations());
+        JsonArray favorites = new JsonArray();
+        clickGuiWindow.favoriteModuleIds().forEach(favorites::add);
+        window.add("favorites", favorites);
         return window;
     }
 
@@ -359,6 +362,20 @@ public final class ConfigurationManager {
                 LOGGER.warning("Invalid ClickGUI reduced animations value; reset to off");
             } else {
                 clickGuiWindow.setReducedAnimations(reducedAnimationsElement.getAsBoolean());
+            }
+        }
+        JsonElement favoritesElement = window.get("favorites");
+        if (favoritesElement != null) {
+            if (!favoritesElement.isJsonArray()) {
+                LOGGER.warning("Invalid ClickGUI favorites; cleared");
+            } else {
+                java.util.List<String> favorites = new java.util.ArrayList<>();
+                for (JsonElement favorite : favoritesElement.getAsJsonArray()) {
+                    if (favorite.isJsonPrimitive() && favorite.getAsJsonPrimitive().isString()) {
+                        favorites.add(favorite.getAsString());
+                    }
+                }
+                clickGuiWindow.replaceFavorites(favorites);
             }
         }
     }

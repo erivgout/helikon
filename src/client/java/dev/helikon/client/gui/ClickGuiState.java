@@ -8,6 +8,7 @@ import dev.helikon.client.module.ModuleSearch;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Screen-independent ClickGUI view state: the selected category, the search
@@ -21,6 +22,8 @@ public final class ClickGuiState {
     private String searchQuery = "";
     private Module selectedModule;
     private boolean showingActiveModules;
+    private boolean showingFavorites;
+    private Set<String> favoriteModuleIds = Set.of();
 
     public ClickGuiState(ModuleRegistry registry) {
         this.registry = Objects.requireNonNull(registry, "registry");
@@ -34,16 +37,29 @@ public final class ClickGuiState {
     public void selectCategory(ModuleCategory category) {
         this.selectedCategory = Objects.requireNonNull(category, "category");
         showingActiveModules = false;
+        showingFavorites = false;
     }
 
     /** Shows the currently enabled modules across every category. */
     public void selectActiveModules() {
         showingActiveModules = true;
+        showingFavorites = false;
         selectedModule = null;
     }
 
     public boolean isShowingActiveModules() {
         return showingActiveModules && !isSearching();
+    }
+
+    public void selectFavoriteModules(Set<String> favoriteModuleIds) {
+        this.favoriteModuleIds = Set.copyOf(Objects.requireNonNull(favoriteModuleIds, "favoriteModuleIds"));
+        showingFavorites = true;
+        showingActiveModules = false;
+        selectedModule = null;
+    }
+
+    public boolean isShowingFavoriteModules() {
+        return showingFavorites && !isSearching();
     }
 
     /** Selects the next or previous category, wrapping at either end. */
@@ -56,6 +72,7 @@ public final class ClickGuiState {
         selectedCategory = categories[next];
         selectedModule = null;
         showingActiveModules = false;
+        showingFavorites = false;
     }
 
     public String searchQuery() {
@@ -82,6 +99,9 @@ public final class ClickGuiState {
         }
         if (showingActiveModules) {
             return registry.all().stream().filter(Module::isEnabled).toList();
+        }
+        if (showingFavorites) {
+            return registry.all().stream().filter(module -> favoriteModuleIds.contains(module.id())).toList();
         }
         return registry.all().stream()
                 .filter(module -> module.category() == selectedCategory)

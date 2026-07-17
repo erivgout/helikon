@@ -4,9 +4,23 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ClickGuiWindowStateTest {
+    @Test
+    void favoritesAreBoundedValidatedAndResettable() {
+        ClickGuiWindowState state = new ClickGuiWindowState();
+        state.setFavorite("enderman_aura", true);
+        state.setFavorite("zoom", true);
+        assertTrue(state.isFavorite("enderman_aura"));
+        assertEquals(java.util.Set.of("enderman_aura", "zoom"), state.favoriteModuleIds());
+        state.setFavorite("zoom", false);
+        assertFalse(state.isFavorite("zoom"));
+        assertThrows(IllegalArgumentException.class, () -> state.setFavorite("Bad ID", true));
+        state.reset();
+        assertTrue(state.favoriteModuleIds().isEmpty());
+    }
     @Test
     void unsetWindowCentersWithinViewport() {
         ClickGuiWindowState state = new ClickGuiWindowState();

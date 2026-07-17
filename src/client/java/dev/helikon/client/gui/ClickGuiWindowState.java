@@ -23,6 +23,7 @@ public final class ClickGuiWindowState {
     private ClickGuiTheme theme = ClickGuiTheme.MIDNIGHT;
     private float interfaceScale = 1.0F;
     private boolean reducedAnimations;
+    private final java.util.LinkedHashSet<String> favoriteModuleIds = new java.util.LinkedHashSet<>();
 
     public boolean isPositioned() {
         return positioned;
@@ -53,6 +54,40 @@ public final class ClickGuiWindowState {
     public float interfaceScale() { return interfaceScale; }
 
     public boolean reducedAnimations() { return reducedAnimations; }
+
+    public java.util.Set<String> favoriteModuleIds() {
+        return java.util.Set.copyOf(favoriteModuleIds);
+    }
+
+    public boolean isFavorite(String moduleId) {
+        return favoriteModuleIds.contains(java.util.Objects.requireNonNull(moduleId, "moduleId"));
+    }
+
+    public void setFavorite(String moduleId, boolean favorite) {
+        java.util.Objects.requireNonNull(moduleId, "moduleId");
+        if (!moduleId.matches("[a-z][a-z0-9_]*")) {
+            throw new IllegalArgumentException("Favorite module ID is invalid");
+        }
+        if (favorite) {
+            if (favoriteModuleIds.size() < 512) {
+                favoriteModuleIds.add(moduleId);
+            }
+        } else {
+            favoriteModuleIds.remove(moduleId);
+        }
+    }
+
+    public void replaceFavorites(java.util.Collection<String> moduleIds) {
+        favoriteModuleIds.clear();
+        if (moduleIds == null) {
+            return;
+        }
+        for (String moduleId : moduleIds) {
+            if (moduleId != null && moduleId.matches("[a-z][a-z0-9_]*")) {
+                setFavorite(moduleId, true);
+            }
+        }
+    }
 
     public void setTheme(ClickGuiTheme theme) { this.theme = java.util.Objects.requireNonNull(theme, "theme"); }
 
@@ -95,6 +130,7 @@ public final class ClickGuiWindowState {
         theme = ClickGuiTheme.MIDNIGHT;
         interfaceScale = 1.0F;
         reducedAnimations = false;
+        favoriteModuleIds.clear();
     }
 
     /** Clears only the saved position while retaining the selected dimensions. */

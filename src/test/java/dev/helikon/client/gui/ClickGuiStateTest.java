@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -67,6 +68,18 @@ class ClickGuiStateTest {
         state.selectCategory(ModuleCategory.MOVEMENT);
         assertFalse(state.isShowingActiveModules());
         assertEquals(List.of(sprint), state.visibleModules());
+    }
+
+    @Test
+    void favoritesSectionShowsOnlyPersistedIdsAcrossCategories() {
+        ClickGuiState state = new ClickGuiState(registry);
+
+        state.selectFavoriteModules(Set.of(timestamps.id(), fullbright.id()));
+
+        assertTrue(state.isShowingFavoriteModules());
+        assertEquals(List.of(fullbright, timestamps), state.visibleModules());
+        state.selectCategory(ModuleCategory.MOVEMENT);
+        assertFalse(state.isShowingFavoriteModules());
     }
 
     @Test

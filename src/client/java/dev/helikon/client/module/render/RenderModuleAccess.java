@@ -10,13 +10,16 @@ import java.util.Objects;
 public final class RenderModuleAccess {
     private static volatile AntiBlind antiBlind;
     private static volatile BetterCrosshair betterCrosshair;
+    private static volatile AntiTotemAnimation antiTotemAnimation;
 
     private RenderModuleAccess() {
     }
 
-    public static void install(AntiBlind antiBlindModule, BetterCrosshair crosshairModule) {
+    public static void install(AntiBlind antiBlindModule, BetterCrosshair crosshairModule,
+                               AntiTotemAnimation antiTotemAnimationModule) {
         antiBlind = Objects.requireNonNull(antiBlindModule, "antiBlindModule");
         betterCrosshair = Objects.requireNonNull(crosshairModule, "crosshairModule");
+        antiTotemAnimation = Objects.requireNonNull(antiTotemAnimationModule, "antiTotemAnimationModule");
     }
 
     public static boolean hideMobEffectFog(Holder<MobEffect> effect) {
@@ -39,5 +42,10 @@ public final class RenderModuleAccess {
 
     public static boolean hideVanillaCrosshair() {
         return betterCrosshair != null && betterCrosshair.hidesVanillaCrosshair();
+    }
+
+    public static boolean shouldHideItemActivation(boolean hasDeathProtection) {
+        AntiTotemAnimation module = antiTotemAnimation;
+        return module != null && module.shouldSuppressItemActivation(hasDeathProtection);
     }
 }

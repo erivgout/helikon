@@ -11,6 +11,7 @@
     "EntityMovementMixin",
     "FogRendererMixin",
     "FishingHookAccessor",
+    "GameRendererMixin",
     "HudMixin",
     "KeyMappingAccessor",
     "KeyboardInputMixin",

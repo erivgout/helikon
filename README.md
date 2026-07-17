@@ -13,6 +13,10 @@ saturation. It changes no food state and sends no packet or request.
 Better Nametags adds only local billboard facts for nearby visible players. It
 does not change vanilla name tags, player data, packets, or server visibility.
 
+AntiTotemAnimation hides only the local death-protection item activation
+overlay. It leaves totem gameplay, particles, sound, and server processing
+unchanged.
+
 The internal event bus uses typed, Minecraft-free event models. Its currently
 wired lifecycle bridge covers ticks, local world connections, identity-aware
 screen changes, accepted ordinary chat, world rendering, and local player-state
@@ -29,9 +33,10 @@ branding, or configuration formats from that project.
 
 ## Status
 
-Helikon currently includes sixteen client-only render modules: Fullbright restores
+Helikon currently includes seventeen client-only render modules: Fullbright restores
 the previous gamma and Night Vision state when disabled; AntiBlind selectively
-hides local impairment visuals; and BetterCrosshair draws a local configurable
+and AntiTotemAnimation hides the local death-protection activation overlay;
+BetterCrosshair draws a local configurable
 HUD crosshair. EntityESP, BlockESP, Tracers, and Breadcrumbs use Minecraft's
 local world-render Gizmo phase only: they never alter entities, blocks, client
 movement, or packets. BlockESP deliberately scans a bounded cube at a bounded

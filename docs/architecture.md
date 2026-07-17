@@ -32,6 +32,10 @@ selection for Blindness/Darkness, the Darkness lightmap blend, and the exact
 HUD calls for Nausea, pumpkin, and powder-snow overlays. BetterCrosshair is a
 Fabric HUD element with Minecraft-free arm geometry; a separate HUD mixin
 suppresses the vanilla crosshair only when its local setting requests it.
+AntiTotemAnimation uses one separate `GameRenderer.displayItemActivation`
+head mixin. It cancels only an item activation with the verified
+`DEATH_PROTECTION` component while the module is enabled; the client still
+handles the totem event, particles, sound, and every normal server packet.
 
 AutoWalk uses one narrow `KeyboardInput.tick` tail mixin after Minecraft has
 freshly polled the user's physical keys. Its transformation is a tested,

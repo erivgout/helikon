@@ -121,6 +121,7 @@ import dev.helikon.client.mixin.FishingHookAccessor;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
 import dev.helikon.client.module.render.AntiBlind;
+import dev.helikon.client.module.render.AntiTotemAnimation;
 import dev.helikon.client.module.render.BetterCrosshair;
 import dev.helikon.client.module.render.BetterNametags;
 import dev.helikon.client.module.render.BlockEsp;
@@ -260,6 +261,7 @@ public final class HelikonClient implements ClientModInitializer {
         Fullbright fullbright = new Fullbright(new MinecraftGammaAccess(), new MinecraftNightVisionAccess());
         modules.register(fullbright);
         AntiBlind antiBlind = new AntiBlind();
+        AntiTotemAnimation antiTotemAnimation = new AntiTotemAnimation();
         BetterCrosshair betterCrosshair = new BetterCrosshair();
         BetterNametags betterNametags = new BetterNametags();
         EntityEsp entityEsp = new EntityEsp();
@@ -275,6 +277,7 @@ public final class HelikonClient implements ClientModInitializer {
         DamageIndicators damageIndicators = new DamageIndicators();
         Breadcrumbs breadcrumbs = new Breadcrumbs();
         modules.register(antiBlind);
+        modules.register(antiTotemAnimation);
         modules.register(betterCrosshair);
         modules.register(betterNametags);
         modules.register(entityEsp);
@@ -289,7 +292,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(miniPlayer);
         modules.register(damageIndicators);
         modules.register(breadcrumbs);
-        RenderModuleAccess.install(antiBlind, betterCrosshair);
+        RenderModuleAccess.install(antiBlind, betterCrosshair, antiTotemAnimation);
         AutoSprint autoSprint = new AutoSprint();
         AutoWalk autoWalk = new AutoWalk();
         AutoSneak autoSneak = new AutoSneak();

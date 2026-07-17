@@ -30,8 +30,9 @@ the world-render smoke checklist to verify local frustum/range behavior.
 Fullbright's gamma restoration, setting-driven Night Vision lifecycle, and
 identity-safe effect restoration are covered by `FullbrightGammaControllerTest`,
 `FullbrightTest`, and `ClientEffectOverrideStateTest`.
-AntiBlind setting gating, BetterCrosshair geometry, and strict ARGB color
-settings are covered by `AntiBlindTest`, `BetterCrosshairTest`,
+AntiBlind and AntiTotemAnimation enable-state gating, BetterCrosshair geometry,
+and strict ARGB color settings are covered by `AntiBlindTest`,
+`AntiTotemAnimationTest`, `BetterCrosshairTest`,
 `CrosshairGeometryTest`, and `SettingTest`.
 `SettingTest` also covers integral and range bounds, keybind JSON recovery,
 immutable bounded string/identifier lists, item/block/entity selector tokens,
@@ -124,6 +125,18 @@ key (`ConfigurationManagerTest`).
    saturation, packets, or server-visible state.
 3. Run `.panic` and verify the readout hides with the other custom HUD; run
    `.panic restorehud` and verify it returns while the module remains enabled.
+
+## Manual AntiTotemAnimation smoke test
+
+1. Run `./gradlew.bat runClient`, join a local/test world, and arrange a safe
+   totem-pop test. With **AntiTotemAnimation** disabled, verify Minecraft's
+   normal centered death-protection item activation overlay appears.
+2. Enable **AntiTotemAnimation** and repeat the same test. Verify only the
+   centered item activation overlay is absent: the normal totem protection,
+   particles, sound, effects, inventory change, and server-visible outcome
+   still occur.
+3. Disable the module and repeat once more. Verify Minecraft's normal item
+   activation overlay returns immediately without reconnecting.
 
 ## Manual ClickGUI smoke test
 

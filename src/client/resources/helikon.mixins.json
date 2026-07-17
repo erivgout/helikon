@@ -9,6 +9,7 @@
     "ChatComponentMixin",
     "ChatComponentAccessor",
     "ClientChunkCacheEventMixin",
+    "ClientPacketListenerKnockbackDelayMixin",
     "AnnouncerAdvancementMixin",
     "AnnouncerGameModeMixin",
     "AnnouncerItemEntityMixin",

@@ -141,10 +141,12 @@ import dev.helikon.client.module.miscellaneous.DeathCoordinates;
 import dev.helikon.client.module.miscellaneous.DebugOverlay;
 import dev.helikon.client.module.miscellaneous.DurabilityWarnings;
 import dev.helikon.client.module.miscellaneous.InventoryPreview;
+import dev.helikon.client.module.miscellaneous.KnockbackDelay;
 import dev.helikon.client.module.miscellaneous.LogoutCoordinates;
 import dev.helikon.client.module.miscellaneous.LocalCape;
 import dev.helikon.client.module.miscellaneous.LocalCosmetics;
 import dev.helikon.client.module.miscellaneous.MinecraftMiscellaneousAccess;
+import dev.helikon.client.module.miscellaneous.MinecraftKnockbackDelayAccess;
 import dev.helikon.client.module.miscellaneous.MinecraftSkinLayerAccess;
 import dev.helikon.client.module.miscellaneous.OneClickFriends;
 import dev.helikon.client.module.miscellaneous.SkinBlinker;
@@ -488,6 +490,7 @@ public final class HelikonClient implements ClientModInitializer {
         ReachDisplay reachDisplay = new ReachDisplay();
         RightClicker rightClicker = new RightClicker();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
+        KnockbackDelay knockbackDelay = new KnockbackDelay(MinecraftKnockbackDelayAccess::apply);
         Annoy annoy = new Annoy();
         OneClickFriends oneClickFriends = new OneClickFriends();
         SkinBlinker skinBlinker = new SkinBlinker(new MinecraftSkinLayerAccess());
@@ -572,6 +575,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(crystalAura);
         modules.register(reachDisplay);
         modules.register(rightClicker);
+        modules.register(knockbackDelay);
         modules.register(annoy);
         modules.register(oneClickFriends);
         modules.register(skinBlinker);
@@ -585,6 +589,7 @@ public final class HelikonClient implements ClientModInitializer {
         ChatDisplayAccess.install(chatTimestamps);
         ChatDisplayAccess.install(chatColor);
         BetterChatDisplayAccess.install(betterChat, privateMessageHelper, antiSpam);
+        MinecraftKnockbackDelayAccess.install(knockbackDelay);
         MinecraftHitFlickAccess.install(hitFlick, friends);
         MinecraftHitFlickAccess.install(hitFlick, friends);
         AnnouncerAccess.install(announcer, normalChatSender);
@@ -652,6 +657,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(annoy, "tick", () -> MinecraftMiscellaneousAccess.tickAnnoy(minecraft, annoy, clientTick));
                 modules.runGuarded(skinBlinker, "tick", () -> skinBlinker.tick(clientTick, minecraft.player != null,
                         minecraft.gui.screen() != null));
+                modules.runGuarded(knockbackDelay, "tick", () -> MinecraftKnockbackDelayAccess.tick(clientTick));
                 combatAttackStarted.set(false);
                 combatSnapshot.set(MinecraftCombatAccess.Snapshot.unavailable());
                 modules.runGuarded(hitFlick, "restore", MinecraftHitFlickAccess::tickRestore);
@@ -811,6 +817,7 @@ public final class HelikonClient implements ClientModInitializer {
             modules.runGuarded(announcer, "leave", () -> announcer.messageFor(AnnouncementTrigger.LEAVE,
                     "left the world", System.currentTimeMillis(), false).ifPresent(notifier::info));
             AnnouncerAccess.reset();
+            MinecraftKnockbackDelayAccess.reset();
             WTapAccess.onPlayerUnavailable();
             try {
                 chatHistory.saveIfNeeded();

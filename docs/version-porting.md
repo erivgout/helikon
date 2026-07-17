@@ -148,5 +148,15 @@ When porting:
     dependency report, and repeat the focused live-client smoke checks before
     packaging a release for the target version.
 
+36. Revalidate `Connection.send(Packet, ChannelFutureListener, boolean)` and the
+    `ServerboundMovePlayerPacket` family (`Pos`, `Rot`, `PosRot`, `StatusOnly`)
+    before changing Blink. `ConnectionBlinkMixin` must stay a HEAD, cancellable
+    inject that only cancels a movement send Blink chooses to hold; the actual
+    buffering and ordered re-send remain in `BlinkPacketAccess`, which resends
+    through the normal `LocalPlayer.connection.send` path under a re-entrancy
+    guard. Keep it a send-timing hold only: never construct, reorder, malform,
+    or replay a synthetic packet, and keep the buffer bounded by the module's
+    cap with a disconnect discard.
+
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

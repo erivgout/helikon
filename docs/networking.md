@@ -109,6 +109,17 @@ its bounded loaded-cactus collision observation predicts an intersection. It
 does not send, fabricate, suppress, or alter a movement packet; cactus damage
 and the final movement outcome remain server-authoritative.
 
+Blink changes only the timing of ordinary local movement sends. While enabled it
+cancels the outgoing `ServerboundMovePlayerPacket` at Minecraft's normal
+connection boundary and holds the unmodified packet in a bounded local buffer;
+disabling, reaching the safety cap, or leaving the world releases those exact
+packets in send order back through Minecraft's ordinary
+`ClientPacketListener.send` path (a disconnect discards them because the
+connection is gone). It never constructs, reorders, duplicates, malforms, or
+replays a synthetic packet, and holds no other packet type; the server receives
+only genuine vanilla movement packets and remains authoritative over the
+resulting position, so it may reject, correct, rubber-band, or kick.
+
 Freecam is entirely local: its camera entity is not added to the client level,
 suppresses player movement keys, never moves the player, and never sends a
 position, rotation, or camera packet.

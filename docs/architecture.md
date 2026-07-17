@@ -150,6 +150,17 @@ Scaffold is similarly constrained to a selected player-provided hotbar block,
 a loaded replaceable target with local support, an existing vanilla use
 cooldown, and one normal held-block interaction.
 
+Blink keeps its hold/release decision in the Minecraft-free `Blink` module and a
+generic bounded `BlinkBuffer`. The only version-sensitive edge is
+`ConnectionBlinkMixin`, a HEAD cancellable inject that hands each outgoing
+`ServerboundMovePlayerPacket` to `BlinkPacketAccess`; the bridge buffers the
+unmodified packet while enabled and, each client tick, releases the held packets
+in send order once the module is disabled or its safety cap is reached. Release
+resends through Minecraft's ordinary `LocalPlayer.connection.send` path behind a
+re-entrancy guard so its own sends are not re-held, and a disconnect discards the
+buffer instead of sending to a dead connection. It never constructs, reorders, or
+malforms a packet; the server stays authoritative over the resulting movement.
+
 Combat uses `CombatTarget`, `CombatTargetFilter`, `CombatAim`, and
 `AutoPotion`'s candidate/action policy without Minecraft types. The combat
 adapter collects only rendered living entities and local tab-list/profile facts,

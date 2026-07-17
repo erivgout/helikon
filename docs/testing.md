@@ -24,6 +24,10 @@ identity-safe effect restoration are covered by `FullbrightGammaControllerTest`,
 AntiBlind setting gating, BetterCrosshair geometry, and strict ARGB color
 settings are covered by `AntiBlindTest`, `BetterCrosshairTest`,
 `CrosshairGeometryTest`, and `SettingTest`.
+`SettingTest` also covers integral and range bounds, keybind JSON recovery,
+immutable bounded string/identifier lists, item/block/entity selector tokens,
+stable multi-select enum JSON, safe-regex rejection, visibility predicates,
+and validated change listeners.
 AutoSprint's hunger, collision, direction, and reversible ownership decisions,
 plus AutoWalk's GUI and steering input policy, are covered by
 `AutoSprintTest` and `AutoWalkTest`.

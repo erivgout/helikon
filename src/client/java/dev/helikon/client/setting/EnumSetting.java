@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 /** A closed set of named enum values, persisted as stable lowercase tokens. */
 public final class EnumSetting<E extends Enum<E>> extends Setting<E> {
@@ -20,7 +21,18 @@ public final class EnumSetting<E extends Enum<E>> extends Setting<E> {
             Class<E> enumType,
             E defaultValue
     ) {
-        super(id, name, description, requireDefault(enumType, defaultValue));
+        this(id, name, description, enumType, defaultValue, () -> true);
+    }
+
+    public EnumSetting(
+            String id,
+            String name,
+            String description,
+            Class<E> enumType,
+            E defaultValue,
+            BooleanSupplier visibilityPredicate
+    ) {
+        super(id, name, description, requireDefault(enumType, defaultValue), visibilityPredicate);
         E[] constants = enumType.getEnumConstants();
         if (constants == null || constants.length == 0) {
             throw new IllegalArgumentException("enumType must declare at least one value");

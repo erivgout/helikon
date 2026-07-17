@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.BooleanSupplier;
 
 /**
  * A validated, serializable module setting. Concrete setting types own their
@@ -16,15 +17,27 @@ public abstract class Setting<T> {
     private final String name;
     private final String description;
     private final T defaultValue;
+    private final BooleanSupplier visibilityPredicate;
     private final List<Consumer<T>> changeListeners = new ArrayList<>();
 
     private T value;
 
     protected Setting(String id, String name, String description, T defaultValue) {
+        this(id, name, description, defaultValue, () -> true);
+    }
+
+    protected Setting(
+            String id,
+            String name,
+            String description,
+            T defaultValue,
+            BooleanSupplier visibilityPredicate
+    ) {
         this.id = requireIdentifier(id, "id");
         this.name = requireText(name, "name");
         this.description = requireText(description, "description");
         this.defaultValue = Objects.requireNonNull(defaultValue, "defaultValue");
+        this.visibilityPredicate = Objects.requireNonNull(visibilityPredicate, "visibilityPredicate");
 
         this.value = defaultValue;
     }
@@ -49,15 +62,21 @@ public abstract class Setting<T> {
         return value;
     }
 
+    /** Whether this setting should currently be exposed by a settings editor. */
+    public final boolean isVisible() {
+        return visibilityPredicate.getAsBoolean();
+    }
+
     public final void set(T value) {
         Objects.requireNonNull(value, "value");
 
-        if (!isValid(value)) {
-            throw new IllegalArgumentException("Invalid value for setting '" + id + "': " + value);
+        T normalized = normalize(value);
+        if (!isValid(normalized)) {
+            throw new IllegalArgumentException("Invalid value for setting '" + id + "': " + normalized);
         }
 
-        this.value = value;
-        notifyListeners(value);
+        this.value = normalized;
+        notifyListeners(normalized);
     }
 
     public final void reset() {
@@ -91,6 +110,11 @@ public abstract class Setting<T> {
     protected abstract JsonElement serialize(T value);
 
     protected abstract T deserialize(JsonElement element);
+
+    /** Allows collection-backed settings to store an immutable defensive copy. */
+    protected T normalize(T value) {
+        return value;
+    }
 
     private void notifyListeners(T newValue) {
         for (Consumer<T> listener : List.copyOf(changeListeners)) {

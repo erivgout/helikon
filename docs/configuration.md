@@ -38,6 +38,18 @@ only that setting to its default and are logged. They appear as validated text
 boxes in the ClickGUI; `.setting` accepts a single non-space text token. AutoEat
 uses one for its bounded comma-separated food identifier avoid list.
 
+`IntegerSetting`, `KeybindSetting`, `StringListSetting`, block/item/entity
+selector settings, `MultiSelectEnumSetting`, `RangeSetting`, and `RegexSetting`
+share the same per-setting recovery path. Integers reject fractional JSON;
+keybinds use the validated local keyboard token set; text lists and selectors
+have bounded immutable entries; selector IDs are normalized lowercase resource
+tokens; enum selections reject unknown or duplicate tokens; ranges require
+finite ordered values inside their configured bounds; and regex settings reject
+syntax errors, backreferences, lookarounds, and quantified groups. These types
+are ready for modules and configuration now. Their dedicated ClickGUI controls
+and `.setting` command syntax will be added with the editor/command completion
+work rather than accepting unvalidated ad-hoc text.
+
 The Active Modules HUD has its own schema-versioned `hud.json` in the same
 directory. It stores only the element's enabled state and top-left scaled-GUI
 coordinates. The HUD editor saves it when closed; normal client shutdown also

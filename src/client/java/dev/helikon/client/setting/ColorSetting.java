@@ -3,10 +3,22 @@ package dev.helikon.client.setting;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
+import java.util.function.BooleanSupplier;
+
 /** A validated ARGB color setting stored as a portable {@code #AARRGGBB} token. */
 public final class ColorSetting extends Setting<Integer> {
     public ColorSetting(String id, String name, String description, int defaultValue) {
-        super(id, name, description, defaultValue);
+        this(id, name, description, defaultValue, () -> true);
+    }
+
+    public ColorSetting(
+            String id,
+            String name,
+            String description,
+            int defaultValue,
+            BooleanSupplier visibilityPredicate
+    ) {
+        super(id, name, description, defaultValue, visibilityPredicate);
     }
 
     @Override

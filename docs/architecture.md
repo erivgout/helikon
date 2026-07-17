@@ -265,6 +265,16 @@ human-readable `global.json` using a temporary file and atomic replacement when
 the filesystem supports it. The previous good file is copied to `global.json.bak`.
 Malformed JSON is retained as `global.corrupt-<timestamp>.json` for inspection.
 
+The core setting layer has no Minecraft imports. It supports boolean, integer,
+decimal, enum, color, keybind, bounded string/string-list, block/item/entity
+identifier selector, multi-select enum, numeric-range, and safe-regex values.
+Collection-backed settings store defensive immutable copies; all types serialize
+their own JSON and reset only themselves after malformed input. Settings can
+also expose a pure `BooleanSupplier` visibility predicate and notify local
+change listeners after a validated change. Editors decide how to present a
+type, while configuration remains type-agnostic through `Setting.toJson()` and
+`Setting.applyJson()`.
+
 `ProfileManager` stores named module and ClickGUI snapshots below
 `config/helikon/profiles/`. It reuses the global configuration codec so profile
 activation has the same schema and individual-setting validation. Names are

@@ -3,10 +3,22 @@ package dev.helikon.client.setting;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
+import java.util.function.BooleanSupplier;
+
 /** A boolean module setting. */
 public final class BooleanSetting extends Setting<Boolean> {
     public BooleanSetting(String id, String name, String description, boolean defaultValue) {
-        super(id, name, description, defaultValue);
+        this(id, name, description, defaultValue, () -> true);
+    }
+
+    public BooleanSetting(
+            String id,
+            String name,
+            String description,
+            boolean defaultValue,
+            BooleanSupplier visibilityPredicate
+    ) {
+        super(id, name, description, defaultValue, visibilityPredicate);
     }
 
     @Override

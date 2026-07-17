@@ -100,6 +100,10 @@ Selecting a module shows its name, category, ID, description, an enabled
 toggle, and controls for its `BooleanSetting`, `NumberSetting`, `ColorSetting`,
 and finite `EnumSetting` values. Colors use strict `#AARRGGBB` tokens; click
 an enum row to cycle its documented choices.
+The core also serializes validated integer, keybind, string-list, selector,
+multi-select enum, range, and regex settings. Those types deliberately remain
+read-only in the current ClickGUI until their specific controls and local
+command syntax are introduced; configuration never bypasses their validation.
 Toggles are dispatched through `ModuleRegistry`, so a module that throws
 during `onEnable`/`onDisable` is isolated and force-disabled instead of
 crashing the client. Setting edits and enabled state persist to

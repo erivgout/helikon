@@ -7,6 +7,11 @@ an internal event bus, a functional Right Shift ClickGUI, local chat commands,
 module keybinds, an Active Modules HUD, local profiles, local friends, local
 waypoints, local macros, and tests.
 
+Its local settings API supports booleans, integers and decimals, enums,
+colors, keyboard binds, bounded text and text lists, block/item/entity ID
+selections, enum multi-selections, numeric ranges, and bounded safe regular
+expressions. Every value is validated and stored only in local JSON.
+
 It is not affiliated with Aristois, and it does not contain copied code, assets,
 branding, or configuration formats from that project.
 

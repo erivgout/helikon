@@ -3,6 +3,8 @@ package dev.helikon.client.setting;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
+import java.util.function.BooleanSupplier;
+
 /** A finite decimal setting constrained to an inclusive range. */
 public final class NumberSetting extends Setting<Double> {
     private final double minimum;
@@ -16,7 +18,19 @@ public final class NumberSetting extends Setting<Double> {
             double minimum,
             double maximum
     ) {
-        super(id, name, description, defaultValue);
+        this(id, name, description, defaultValue, minimum, maximum, () -> true);
+    }
+
+    public NumberSetting(
+            String id,
+            String name,
+            String description,
+            double defaultValue,
+            double minimum,
+            double maximum,
+            BooleanSupplier visibilityPredicate
+    ) {
+        super(id, name, description, defaultValue, visibilityPredicate);
         if (!Double.isFinite(minimum) || !Double.isFinite(maximum) || minimum > maximum) {
             throw new IllegalArgumentException("Number setting bounds must be finite and ordered");
         }

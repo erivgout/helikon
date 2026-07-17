@@ -13,6 +13,7 @@ import java.util.Objects;
 /** Narrow static bridge used only by verified client-render mixins. */
 public final class RenderModuleAccess {
     private static volatile AntiBlind antiBlind;
+    private static volatile NoFog noFog;
     private static volatile BetterCrosshair betterCrosshair;
     private static volatile AntiTotemAnimation antiTotemAnimation;
     private static volatile Dinnerbone dinnerbone;
@@ -43,6 +44,15 @@ public final class RenderModuleAccess {
 
     public static boolean hideNausea() {
         return antiBlind != null && antiBlind.hidesNausea();
+    }
+
+    public static void installNoFog(NoFog module) {
+        noFog = Objects.requireNonNull(module, "module");
+    }
+
+    public static NoFog.FogPlanes extendFog(NoFog.FogPlanes vanillaPlanes) {
+        NoFog module = noFog;
+        return module == null ? vanillaPlanes : module.extend(vanillaPlanes);
     }
 
     public static boolean hidePumpkinOverlay() {

@@ -169,7 +169,13 @@ does not fire it. AntiBot is an in-memory heuristic filter, not a remote lookup.
 TargetHUD and ReachDisplay render session-only observed data; the latter records
 only Helikon's normal attack request distance and does not imply server reach.
 KillAura applies the same bounded local rotation policy before its normal attack
-cycle. TargetHUD retains the last crosshair or Helikon attack target while it
+cycle. HitFlick keeps its flick geometry in the Minecraft-free `HitFlickPolicy`;
+`MinecraftHitFlickAccess` listens to Fabric's ordinary `AttackEntityCallback` and,
+for a non-friend living target, sends one well-formed vanilla rotation packet with
+the flicked yaw before the attack packet, then a restore rotation packet the next
+tick. It never changes the local player's own yaw, edits an entity, or builds a
+malformed packet, and it steers only the server's sprint/knockback bonus, which the
+server still authorizes. TargetHUD retains the last crosshair or Helikon attack target while it
 remains in the current locally rendered target set, then clears it on absence or
 world loss; it does not flash a non-crosshair target for only one frame. BlockHit
 keeps its threat-in-range, screen, shield, and unblock-window decision in a

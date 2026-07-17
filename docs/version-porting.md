@@ -119,7 +119,11 @@ When porting:
     held-potion `useItem`, potion components/effects, bow rotation setters, and
     Gizmo cuboids before changing combat modules. Preserve the single ordinary
     Helikon attack-per-tick guard, line-of-sight rule, user-held bow rule, and
-    no-packet policy.
+    no-packet policy. For HitFlick also revalidate Fabric's `AttackEntityCallback`,
+    the `ServerboundMovePlayerPacket.Rot(float, float, boolean, boolean)`
+    constructor, and `ClientPacketListener.send`. Keep it sending only well-formed
+    vanilla rotation packets (a flicked yaw before the attack, a restore yaw the
+    next tick); never change local aim or build a custom/malformed packet.
 29. Revalidate `KeyboardInput.tick` fresh input records for Twerk, plus
     `LocalPlayer.swing(InteractionHand)`, `Options.setModelPart`, and
     `Options.isModelPartEnabled` for Annoy and SkinBlinker. Preserve Twerk's

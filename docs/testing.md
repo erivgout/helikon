@@ -20,6 +20,8 @@ load, atomic backup, malformed-file recovery, safe profile names, and local
 command wiring are covered by `ProfileManagerTest` and `ProfileCommandTest`.
 `EventBusTest` covers typed dispatch, subscription removal, listener-failure
 isolation, event-catalog coverage, and malformed event-payload rejection.
+`ClientEventAccessTest` covers verified keyboard, mouse, scroll, chunk, and
+resource-reload bridge normalization without requiring a running game client.
 `PlayerStateEventTrackerTest` covers lifecycle, movement, rotation, inventory
 revision, and world-absence baseline transitions without Minecraft classes.
 `SaturationHudTest` covers finite saturation formatting and invalid-fact

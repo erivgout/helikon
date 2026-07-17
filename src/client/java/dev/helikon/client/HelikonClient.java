@@ -26,6 +26,7 @@ import dev.helikon.client.config.HudConfigurationManager;
 import dev.helikon.client.config.PanicConfigurationManager;
 import dev.helikon.client.config.ProfileManager;
 import dev.helikon.client.event.ClientTickEvent;
+import dev.helikon.client.event.ClientEventAccess;
 import dev.helikon.client.event.ChatEvent;
 import dev.helikon.client.event.EventBus;
 import dev.helikon.client.event.ScreenEvent;
@@ -321,6 +322,7 @@ public final class HelikonClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        ClientEventAccess.install(events);
         modules.setTimingMetrics(timingMetrics);
         modules.addFailureHandler((module, operation, exception) ->
                 LOGGER.warning(() -> "Disabled module '" + module.id() + "' after a failed " + operation)

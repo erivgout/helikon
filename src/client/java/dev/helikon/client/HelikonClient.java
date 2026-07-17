@@ -86,6 +86,8 @@ import dev.helikon.client.module.combat.TriggerBot;
 import dev.helikon.client.module.movement.AutoSprint;
 import dev.helikon.client.module.movement.AutoSneak;
 import dev.helikon.client.module.movement.AutoWalk;
+import dev.helikon.client.module.movement.AntiWaterPush;
+import dev.helikon.client.module.movement.AntiWaterPushAccess;
 import dev.helikon.client.module.movement.AutoParkour;
 import dev.helikon.client.module.movement.InventoryWalk;
 import dev.helikon.client.module.movement.AntiAfk;
@@ -396,6 +398,7 @@ public final class HelikonClient implements ClientModInitializer {
         InventoryWalk inventoryWalk = new InventoryWalk();
         AntiAfk antiAfk = new AntiAfk();
         NoSlow noSlow = new NoSlow();
+        AntiWaterPush antiWaterPush = new AntiWaterPush();
         FastLadders fastLadders = new FastLadders();
         WaterJump waterJump = new WaterJump();
         Jesus jesus = new Jesus();
@@ -475,6 +478,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(inventoryWalk);
         modules.register(antiAfk);
         modules.register(noSlow);
+        modules.register(antiWaterPush);
         modules.register(fastLadders);
         modules.register(waterJump);
         modules.register(jesus);
@@ -548,6 +552,7 @@ public final class HelikonClient implements ClientModInitializer {
         AdvancedMovementInputAccess.install(bunnyHop, scaffold);
         FreecamAccess.install(freecam);
         NoSlowAccess.install(noSlow);
+        AntiWaterPushAccess.install(antiWaterPush);
         StepAccess.install(step);
         AntiCactusAccess.install(antiCactus);
         WaterJumpAccess.install(waterJump);

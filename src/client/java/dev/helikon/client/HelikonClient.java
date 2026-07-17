@@ -205,6 +205,8 @@ import dev.helikon.client.module.player.ToolCandidate;
 import dev.helikon.client.module.player.AutoEat;
 import dev.helikon.client.module.player.FoodCandidate;
 import dev.helikon.client.module.player.MinecraftUseKeyAccess;
+import dev.helikon.client.module.player.MinecraftThrowDebuffAccess;
+import dev.helikon.client.module.player.ThrowDebuff;
 import dev.helikon.client.module.chat.ChatPrefix;
 import dev.helikon.client.module.chat.ChatSuffix;
 import dev.helikon.client.module.chat.ChatMute;
@@ -592,6 +594,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoLeave autoLeave = new AutoLeave();
         AutoSoup autoSoup = new AutoSoup();
         ClickAura clickAura = new ClickAura();
+        ThrowDebuff throwDebuff = new ThrowDebuff();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
         Reach reach = new Reach();
@@ -704,6 +707,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoLeave);
         modules.register(autoSoup);
         modules.register(clickAura);
+        modules.register(throwDebuff);
         modules.register(targetHud);
         modules.register(killAura);
         modules.register(reach);
@@ -830,6 +834,8 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(hitSwap, "restore", MinecraftHitSwapAccess::tickRestore);
                 modules.runGuarded(hitFlick, "restore", MinecraftHitFlickAccess::tickRestore);
                 modules.runGuarded(antiBot, "observe", () -> combatSnapshot.set(MinecraftCombatAccess.observe(friends, antiBot, targetFilter)));
+                modules.runGuarded(throwDebuff, "tick",
+                        () -> MinecraftThrowDebuffAccess.tick(clientTick, throwDebuff, combatSnapshot.get()));
                 modules.runGuarded(targetHud, "tick", () -> MinecraftCombatAccess.observeTarget(targetHud,
                         combatSnapshot.get(), combatTracker));
                 modules.runGuarded(autoRespawn, "tick", () -> MinecraftAutoRespawnAccess.tick(clientTick, autoRespawn));

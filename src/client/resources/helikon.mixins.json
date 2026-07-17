@@ -28,6 +28,7 @@
     "HudMixin",
     "IndigoXRayMixin",
     "ItemFeatureRendererMixin",
+    "ItemInHandRendererMixin",
     "KeyMappingAccessor",
     "KeyboardInputMixin",
     "KeyboardEventMixin",

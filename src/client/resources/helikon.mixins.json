@@ -9,6 +9,7 @@
     "ChatComponentMixin",
     "ChatComponentAccessor",
     "CameraNoClipMixin",
+    "ClientPacketListenerVelocityMixin",
     "ClientChunkCacheEventMixin",
     "EntityRendererChamsOutlineMixin",
     "MinecraftChamsGlowMixin",

@@ -12,7 +12,7 @@ branding, or configuration formats from that project.
 
 ## Status
 
-Helikon currently includes seven client-only render modules: Fullbright restores
+Helikon currently includes ten client-only render modules: Fullbright restores
 the previous gamma and Night Vision state when disabled; AntiBlind selectively
 hides local impairment visuals; and BetterCrosshair draws a local configurable
 HUD crosshair. EntityESP, BlockESP, Tracers, and Breadcrumbs use Minecraft's
@@ -27,6 +27,13 @@ hotbar food and holds Minecraft's ordinary Use key only while its local
 threshold and combat rules permit it. Other gameplay automation, combat tools, packet manipulation,
 external networking, telemetry, a custom backend, and a server-side component
 remain unimplemented.
+
+Trajectories predicts only frustum-visible in-flight arrows, tridents, and
+thrown items through a local block-collision simulation; it does not alter
+projectile physics or generate an aiming preview. TrueSight makes selected
+invisible entities locatable with transparent local boxes, without changing
+vanilla model rendering. Radar is a fixed-position local HUD for selected
+nearby entities. None of these features sends data or changes the server game.
 
 ChatPrefix and ChatSuffix can format only ordinary outgoing chat, with explicit
 guards for Helikon commands, slash commands, private messages, and likely

@@ -38,8 +38,15 @@ When porting:
 11. Revalidate `ClientLevel.entitiesForRendering`, loaded-chunk checks,
    `BlockState.getBlock`, registry ID lookup, and local player/entity bounding
    box APIs used by the bounded BlockESP scanner and entity visualizers.
-12. Run the manual smoke test in an empty profile and with no internet access.
-13. Document compatibility changes and retained limitations before release.
+12. Revalidate projectile package names, `getDeltaMovement`, local block
+   `ClipContext`, and the drag/gravity bytecode for each Trajectories family.
+   Preserve its observed-in-flight-only behavior and stop prediction at the
+   first local block hit.
+13. Revalidate `Entity.isInvisible`, HUD extraction, and the entity state
+   available to TrueSight/Radar. Keep TrueSight as a local overlay unless a
+   separately verified reversible model-render path is introduced.
+14. Run the manual smoke test in an empty profile and with no internet access.
+15. Document compatibility changes and retained limitations before release.
 
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

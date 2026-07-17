@@ -28,3 +28,7 @@ EntityESP, BlockESP, Tracers, and Breadcrumbs use only the entities, blocks,
 and local player positions that Minecraft has already loaded for the current
 session. Their bounded caches and trails are not written to disk or transmitted
 to a server or service.
+
+Trajectories, TrueSight, and Radar similarly consume only already-loaded local
+world state for the active session. Their predicted paths, invisible-entity
+boxes, and radar points are never persisted or transmitted.

@@ -22,6 +22,11 @@ client world and emit local render Gizmos. They do not request chunks, send
 coordinates, modify entity/block state, or create any network traffic. The
 BlockESP cache and Breadcrumb trail are bounded in-memory state only.
 
+Trajectories, TrueSight, and Radar likewise read only current client-side
+entity/projectile/block state to create local overlay geometry or HUD points.
+They do not request additional chunks, send coordinates, or modify packets,
+entity state, projectile movement, or normal server interactions.
+
 AutoSprint, AutoWalk, and AutoSneak use ordinary local client input and player
 sprint state. They do not construct, alter, replay, or bypass Minecraft
 packets; the connected server remains authoritative for all resulting movement.

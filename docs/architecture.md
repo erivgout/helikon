@@ -279,6 +279,17 @@ bounded session-only deque and clears it when the level instance changes.
 None of these visualizers changes entity state, block state, input, packets,
 or disk storage.
 
+The same renderer draws Trajectories and TrueSight during the Gizmo phase. Both
+consult the render state's current frustum before emitting any Gizmos; an
+unavailable frustum means no new overlay is emitted.
+`TrajectorySimulator` owns finite-vector, drag/gravity-order, bounded-step,
+and injected-collision decisions without Minecraft imports; the adapter only
+maps observed in-flight projectile state to verified 26.2 block clipping.
+TrueSight deliberately leaves vanilla entity render state untouched and uses
+bounded transparent local boxes only when entities are invisible to the local
+player. `RadarProjection` is also Minecraft-free; `RadarHud` projects currently
+loaded local entities onto a bounded fixed-position HUD surface.
+
 The Right Shift keybind opens `HelikonClickGuiScreen`, a vanilla `Screen`
 subclass that uses only supported Minecraft/Fabric GUI APIs (`EditBox`
 widgets, `GuiGraphicsExtractor` fills/text/scissor). The screen is a thin

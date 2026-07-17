@@ -5,10 +5,13 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.Breadcrumbs;
 import dev.helikon.client.module.render.EntityEsp;
+import dev.helikon.client.module.render.Trajectories;
 import dev.helikon.client.module.render.Tracers;
+import dev.helikon.client.module.render.TrueSight;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gizmos.GizmoProperties;
@@ -20,11 +23,21 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEgg;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownSplashPotion;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Narrow 26.2 client adapter for the supported Fabric level Gizmo phase.
@@ -32,12 +45,23 @@ import java.util.Objects;
  */
 public final class MinecraftWorldVisualizationRenderer {
     private static final int MAXIMUM_CACHED_BLOCKS = 512;
+    private static final TrajectorySimulator.Physics ARROW_PHYSICS = new TrajectorySimulator.Physics(
+            0.05D, 0.99D, TrajectorySimulator.GravityOrder.AFTER_DRAG, TrajectorySimulator.UpdateTiming.AFTER_MOVE
+    );
+    private static final TrajectorySimulator.Physics THROWN_PHYSICS = new TrajectorySimulator.Physics(
+            0.03D, 0.99D, TrajectorySimulator.GravityOrder.BEFORE_DRAG, TrajectorySimulator.UpdateTiming.BEFORE_MOVE
+    );
+    private static final TrajectorySimulator.Physics POTION_PHYSICS = new TrajectorySimulator.Physics(
+            0.05D, 0.99D, TrajectorySimulator.GravityOrder.BEFORE_DRAG, TrajectorySimulator.UpdateTiming.BEFORE_MOVE
+    );
 
     private final ModuleRegistry modules;
     private final FriendManager friends;
     private final EntityEsp entityEsp;
     private final BlockEsp blockEsp;
     private final Tracers tracers;
+    private final Trajectories trajectories;
+    private final TrueSight trueSight;
     private final Breadcrumbs breadcrumbs;
     private final BlockEspScanCursor blockCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor blockAnchor = new BlockEspScanAnchor();
@@ -47,12 +71,15 @@ public final class MinecraftWorldVisualizationRenderer {
     private boolean blockScannerWasEnabled;
 
     public MinecraftWorldVisualizationRenderer(ModuleRegistry modules, FriendManager friends, EntityEsp entityEsp,
-                                                BlockEsp blockEsp, Tracers tracers, Breadcrumbs breadcrumbs) {
+                                                BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
+                                                TrueSight trueSight, Breadcrumbs breadcrumbs) {
         this.modules = Objects.requireNonNull(modules, "modules");
         this.friends = Objects.requireNonNull(friends, "friends");
         this.entityEsp = Objects.requireNonNull(entityEsp, "entityEsp");
         this.blockEsp = Objects.requireNonNull(blockEsp, "blockEsp");
         this.tracers = Objects.requireNonNull(tracers, "tracers");
+        this.trajectories = Objects.requireNonNull(trajectories, "trajectories");
+        this.trueSight = Objects.requireNonNull(trueSight, "trueSight");
         this.breadcrumbs = Objects.requireNonNull(breadcrumbs, "breadcrumbs");
         this.blockEsp.setCacheClearer(this::resetBlockScanner);
     }
@@ -99,6 +126,13 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (tracers.isEnabled()) {
             modules.runGuarded(tracers, "render", () -> renderTracers(client.level, client.player));
+        }
+        Frustum frustum = context.levelState().cameraRenderState.cullFrustum;
+        if (trajectories.isEnabled()) {
+            modules.runGuarded(trajectories, "render", () -> renderTrajectories(client.level, frustum));
+        }
+        if (trueSight.isEnabled()) {
+            modules.runGuarded(trueSight, "render", () -> renderTrueSight(client.level, client.player, frustum));
         }
         if (blockEsp.isEnabled()) {
             modules.runGuarded(blockEsp, "render", () -> renderBlocks(client.player));
@@ -166,6 +200,57 @@ public final class MinecraftWorldVisualizationRenderer {
         }
     }
 
+    private void renderTrajectories(ClientLevel level, Frustum frustum) {
+        int rendered = 0;
+        for (Entity entity : level.entitiesForRendering()) {
+            if (!(entity instanceof Projectile projectile)) {
+                continue;
+            }
+            Optional<Trajectories.ProjectileType> type = projectileType(projectile);
+            if (type.isEmpty() || !trajectories.includes(type.get())) {
+                continue;
+            }
+            if (!isFrustumVisible(frustum, projectile)) {
+                continue;
+            }
+            TrajectorySimulator.Physics physics = switch (type.get()) {
+                case ARROW, TRIDENT -> ARROW_PHYSICS;
+                case SPLASH_POTION -> POTION_PHYSICS;
+                case SNOWBALL, EGG, ENDER_PEARL -> THROWN_PHYSICS;
+            };
+            TrajectorySimulator.TraceResult result = TrajectorySimulator.trace(
+                    trajectoryVector(projectile.position()), trajectoryVector(projectile.getDeltaMovement()), physics,
+                    trajectories.maximumSteps(), (from, to) -> firstBlockCollision(level, projectile, from, to),
+                    (from, to) -> Gizmos.line(minecraftVector(from), minecraftVector(to), trajectories.color(),
+                            trajectories.lineWidth()).setAlwaysOnTop()
+            );
+            if (result.collided()) {
+                Gizmos.point(minecraftVector(result.terminalPoint()), trajectories.impactColor(), 3.0F).setAlwaysOnTop();
+            }
+            if (++rendered >= trajectories.maximumProjectiles()) {
+                return;
+            }
+        }
+    }
+
+    private void renderTrueSight(ClientLevel level, Player localPlayer, Frustum frustum) {
+        EntityRenderFilter.Options options = trueSight.options();
+        GizmoStyle style = GizmoStyle.strokeAndFill(trueSight.transparentColor(), trueSight.lineWidth(),
+                trueSight.transparentColor());
+        int rendered = 0;
+        for (Entity entity : level.entitiesForRendering()) {
+            if (!entity.isInvisibleTo(localPlayer) || !isFrustumVisible(frustum, entity)
+                    || !EntityRenderFilter.shouldRender(options, entityType(entity), false,
+                    entity == localPlayer, entity.position().distanceToSqr(localPlayer.position()))) {
+                continue;
+            }
+            Gizmos.cuboid(entity.getBoundingBox().inflate(0.05D), style).setAlwaysOnTop();
+            if (++rendered >= trueSight.maximumEntities()) {
+                return;
+            }
+        }
+    }
+
     private void renderBlocks(Player localPlayer) {
         GizmoStyle style = GizmoStyle.strokeAndFill(blockEsp.color(), blockEsp.lineWidth(), blockEsp.fillColor());
         Vec3 start = blockEsp.tracersEnabled() ? localPlayer.getEyePosition() : null;
@@ -181,6 +266,11 @@ public final class MinecraftWorldVisualizationRenderer {
         }
     }
 
+    /** A missing render frustum is treated as not renderable to preserve the local render boundary. */
+    private static boolean isFrustumVisible(Frustum frustum, Entity entity) {
+        return frustum != null && frustum.isVisible(entity.getBoundingBox());
+    }
+
     private void renderBreadcrumbs() {
         BreadcrumbTrail.Point previous = null;
         for (BreadcrumbTrail.Point point : breadcrumbs.points()) {
@@ -193,6 +283,43 @@ public final class MinecraftWorldVisualizationRenderer {
             }
             previous = point;
         }
+    }
+
+    private static Optional<TrajectoryVector> firstBlockCollision(ClientLevel level, Projectile projectile,
+                                                                    TrajectoryVector from, TrajectoryVector to) {
+        BlockHitResult hit = level.clip(new ClipContext(minecraftVector(from), minecraftVector(to),
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, projectile));
+        return hit.getType() == HitResult.Type.MISS ? Optional.empty() : Optional.of(trajectoryVector(hit.getLocation()));
+    }
+
+    private static Optional<Trajectories.ProjectileType> projectileType(Projectile projectile) {
+        if (projectile instanceof ThrownTrident) {
+            return Optional.of(Trajectories.ProjectileType.TRIDENT);
+        }
+        if (projectile instanceof AbstractArrow) {
+            return Optional.of(Trajectories.ProjectileType.ARROW);
+        }
+        if (projectile instanceof Snowball) {
+            return Optional.of(Trajectories.ProjectileType.SNOWBALL);
+        }
+        if (projectile instanceof ThrownEgg) {
+            return Optional.of(Trajectories.ProjectileType.EGG);
+        }
+        if (projectile instanceof ThrownEnderpearl) {
+            return Optional.of(Trajectories.ProjectileType.ENDER_PEARL);
+        }
+        if (projectile instanceof ThrownSplashPotion) {
+            return Optional.of(Trajectories.ProjectileType.SPLASH_POTION);
+        }
+        return Optional.empty();
+    }
+
+    private static TrajectoryVector trajectoryVector(Vec3 vector) {
+        return new TrajectoryVector(vector.x(), vector.y(), vector.z());
+    }
+
+    private static Vec3 minecraftVector(TrajectoryVector vector) {
+        return new Vec3(vector.x(), vector.y(), vector.z());
     }
 
     private boolean isFriend(Entity entity) {

@@ -51,6 +51,9 @@ and disconnect stop are covered by
 Entity category/friend/range gating, local block-ID parsing, incremental cube
 scan order, cache eviction, and Breadcrumb sampling/age bounds are covered by
 `EntityRenderFilterTest`, `BlockEspPolicyTest`, and `BreadcrumbTrailTest`.
+Trajectory drag/gravity ordering, collision stopping, radar projection/clipping,
+and ARGB transparency are covered by `TrajectorySimulatorTest`,
+`RadarProjectionTest`, and `RenderColorTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -256,6 +259,19 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     local line follows sampled positions, respects its point/age limits, and
     clears after disable or a world change. Verify none of these changes are
     visible to another player or affect normal interaction.
+34. In a permitted local/test world, enable **Trajectories** while arrows,
+    tridents, snowballs, eggs, ender pearls, or splash potions are in flight.
+    Verify each configured type draws a local path that ends at its first block
+    impact marker, and that disabling it immediately removes the preview.
+    Use an invisible entity in a controlled world to verify **TrueSight** draws
+    only its configured translucent local box, then toggle player/hostile/
+    passive filters and transparency. Verify a friendly-team entity that is
+    visible to the local player does not gain a box. Turn away from a candidate
+    to verify its trajectory/TrueSight overlay is frustum-culled. Enable
+    **Radar**, verify circle/square,
+    rotation, zoom, local friend color, and category filters, and confirm no
+    unloaded or out-of-range entities appear. None of these results should be
+    visible to another player or change a normal projectile/entity interaction.
 
 ## Manual command and keybind smoke test
 

@@ -29,6 +29,7 @@ import dev.helikon.client.gui.HelikonThemeEditorScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
 import dev.helikon.client.hud.BetterCrosshairHud;
 import dev.helikon.client.hud.HudLayout;
+import dev.helikon.client.hud.RadarHud;
 import dev.helikon.client.hud.WaypointHud;
 import dev.helikon.client.input.HelikonKeybinds;
 import dev.helikon.client.input.KeybindManager;
@@ -74,7 +75,10 @@ import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.MinecraftGammaAccess;
 import dev.helikon.client.module.render.MinecraftNightVisionAccess;
 import dev.helikon.client.module.render.RenderModuleAccess;
+import dev.helikon.client.module.render.Radar;
+import dev.helikon.client.module.render.Trajectories;
 import dev.helikon.client.module.render.Tracers;
+import dev.helikon.client.module.render.TrueSight;
 import dev.helikon.client.notification.ChatNotifier;
 import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.panic.PanicState;
@@ -169,12 +173,18 @@ public final class HelikonClient implements ClientModInitializer {
         EntityEsp entityEsp = new EntityEsp();
         BlockEsp blockEsp = new BlockEsp();
         Tracers tracers = new Tracers();
+        Trajectories trajectories = new Trajectories();
+        TrueSight trueSight = new TrueSight();
+        Radar radar = new Radar();
         Breadcrumbs breadcrumbs = new Breadcrumbs();
         modules.register(antiBlind);
         modules.register(betterCrosshair);
         modules.register(entityEsp);
         modules.register(blockEsp);
         modules.register(tracers);
+        modules.register(trajectories);
+        modules.register(trueSight);
+        modules.register(radar);
         modules.register(breadcrumbs);
         RenderModuleAccess.install(antiBlind, betterCrosshair);
         AutoSprint autoSprint = new AutoSprint();
@@ -220,7 +230,7 @@ public final class HelikonClient implements ClientModInitializer {
         BetterChatDisplayAccess.install(betterChat);
         MovementModuleAccess.install(autoWalk, autoSneak);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
-                modules, friends, entityEsp, blockEsp, tracers, breadcrumbs
+                modules, friends, entityEsp, blockEsp, tracers, trajectories, trueSight, breadcrumbs
         );
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
@@ -288,6 +298,8 @@ public final class HelikonClient implements ClientModInitializer {
                 new WaypointHud(waypoints, waypointLocations, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "better_crosshair"),
                 new BetterCrosshairHud(betterCrosshair, panicState));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "radar"),
+                new RadarHud(radar, friends, panicState));
         LevelRenderEvents.BEFORE_GIZMOS.register(worldVisuals::render);
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             screenWasOpenAtTickStart = client.gui.screen() != null;

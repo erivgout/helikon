@@ -31,8 +31,15 @@ When porting:
 9. Revalidate `ClientPacketListener.sendChat` and its 256-character ordinary
    chat limit. Keep ChatSpammer on that normal send path and retain its local
    delay/cap safeguards.
-10. Run the manual smoke test in an empty profile and with no internet access.
-11. Document compatibility changes and retained limitations before release.
+10. Revalidate Fabric's `LevelRenderEvents.BEFORE_GIZMOS` phase and the 26.2
+   `Gizmos` box/line APIs before changing EntityESP, BlockESP, Tracers, or
+   Breadcrumbs. Keep visualizers in that supported render phase; do not
+   replace them with legacy OpenGL calls or stateful shader hooks.
+11. Revalidate `ClientLevel.entitiesForRendering`, loaded-chunk checks,
+   `BlockState.getBlock`, registry ID lookup, and local player/entity bounding
+   box APIs used by the bounded BlockESP scanner and entity visualizers.
+12. Run the manual smoke test in an empty profile and with no internet access.
+13. Document compatibility changes and retained limitations before release.
 
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

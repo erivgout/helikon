@@ -265,6 +265,20 @@ in `PanicConfigurationManager`.
 
 ## Rendering, GUI, and HUD
 
+`MinecraftWorldVisualizationRenderer` is the only 26.2 world-render port for
+the first render-utility slice. It registers with Fabric's verified
+`LevelRenderEvents.BEFORE_GIZMOS` phase and emits only supported local
+`Gizmos` boxes and lines. `EntityRenderFilter`, `BlockIdList`,
+`BlockEspScanCursor`, `BlockEspCache`, and `BreadcrumbTrail` are Minecraft-free
+and unit-tested. EntityESP and Tracers iterate only already-rendered local
+entities with configurable category/range/frame caps; local friend names are
+looked up through `FriendManager`. BlockESP advances a bounded cube cursor on
+the client tick, checks only loaded chunks, and retains at most 512 matching
+coordinates for rendering. Breadcrumbs samples the local player into a
+bounded session-only deque and clears it when the level instance changes.
+None of these visualizers changes entity state, block state, input, packets,
+or disk storage.
+
 The Right Shift keybind opens `HelikonClickGuiScreen`, a vanilla `Screen`
 subclass that uses only supported Minecraft/Fabric GUI APIs (`EditBox`
 widgets, `GuiGraphicsExtractor` fills/text/scissor). The screen is a thin

@@ -48,6 +48,9 @@ ChatSpammer's command rejection, sequential/random selection, minimum-delay
 countdown (including toggles), screen pause, session cap, cancellation stop,
 and disconnect stop are covered by
 `ChatSpammerTest`.
+Entity category/friend/range gating, local block-ID parsing, incremental cube
+scan order, cache eviction, and Breadcrumb sampling/age bounds are covered by
+`EntityRenderFilterTest`, `BlockEspPolicyTest`, and `BreadcrumbTrailTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -243,6 +246,16 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     fade, compact mode, and smooth scroll; verify unfocused chat timing,
     line-height, and multi-line scroll easing change locally. Relaunch and
     verify settings persist but no old chat lines do.
+33. In a permitted local/test world, enable **EntityESP** and **Tracers**.
+    Verify selected nearby player/hostile categories draw local boxes or lines,
+    locally saved friends use the friend color, and entities outside the range
+    do not render. Enable **BlockESP** with a harmless known block ID and
+    verify its box appears after a bounded scan pass; move, change the ID list,
+    or break/place a target and verify the cache eventually refreshes without
+    a frame hitch. Enable **Breadcrumbs**, walk a short path, and verify a
+    local line follows sampled positions, respects its point/age limits, and
+    clears after disable or a world change. Verify none of these changes are
+    visible to another player or affect normal interaction.
 
 ## Manual command and keybind smoke test
 

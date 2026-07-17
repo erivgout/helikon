@@ -23,3 +23,8 @@ client session. Its `.chat search`, `.chat history`, and explicit `.chat copy`
 operations read that in-memory display list; the copied selection goes only to
 the local system clipboard. BetterChat does not create a chat-log file, persist
 chat content, transmit search text, or send display settings anywhere.
+
+EntityESP, BlockESP, Tracers, and Breadcrumbs use only the entities, blocks,
+and local player positions that Minecraft has already loaded for the current
+session. Their bounded caches and trails are not written to disk or transmitted
+to a server or service.

@@ -68,13 +68,18 @@ import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
 import dev.helikon.client.module.render.AntiBlind;
 import dev.helikon.client.module.render.BetterCrosshair;
+import dev.helikon.client.module.render.BlockEsp;
+import dev.helikon.client.module.render.Breadcrumbs;
+import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.MinecraftGammaAccess;
 import dev.helikon.client.module.render.MinecraftNightVisionAccess;
 import dev.helikon.client.module.render.RenderModuleAccess;
+import dev.helikon.client.module.render.Tracers;
 import dev.helikon.client.notification.ChatNotifier;
 import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.privatechat.PrivateMessageHistory;
+import dev.helikon.client.render.MinecraftWorldVisualizationRenderer;
 import dev.helikon.client.waypoint.MinecraftWaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointManager;
@@ -84,6 +89,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -160,8 +166,16 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(fullbright);
         AntiBlind antiBlind = new AntiBlind();
         BetterCrosshair betterCrosshair = new BetterCrosshair();
+        EntityEsp entityEsp = new EntityEsp();
+        BlockEsp blockEsp = new BlockEsp();
+        Tracers tracers = new Tracers();
+        Breadcrumbs breadcrumbs = new Breadcrumbs();
         modules.register(antiBlind);
         modules.register(betterCrosshair);
+        modules.register(entityEsp);
+        modules.register(blockEsp);
+        modules.register(tracers);
+        modules.register(breadcrumbs);
         RenderModuleAccess.install(antiBlind, betterCrosshair);
         AutoSprint autoSprint = new AutoSprint();
         AutoWalk autoWalk = new AutoWalk();
@@ -205,6 +219,9 @@ public final class HelikonClient implements ClientModInitializer {
         ChatDisplayAccess.install(chatColor);
         BetterChatDisplayAccess.install(betterChat);
         MovementModuleAccess.install(autoWalk, autoSneak);
+        MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
+                modules, friends, entityEsp, blockEsp, tracers, breadcrumbs
+        );
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
                 modules.runGuarded(fullbright, "tick", fullbright::tick);
@@ -271,6 +288,7 @@ public final class HelikonClient implements ClientModInitializer {
                 new WaypointHud(waypoints, waypointLocations, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "better_crosshair"),
                 new BetterCrosshairHud(betterCrosshair, panicState));
+        LevelRenderEvents.BEFORE_GIZMOS.register(worldVisuals::render);
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             screenWasOpenAtTickStart = client.gui.screen() != null;
             helikonScreenWasOpenAtTickStart = isHelikonScreen(client);
@@ -279,6 +297,7 @@ public final class HelikonClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             events.post(new ClientTickEvent(ClientTickEvent.Phase.POST));
             BetterChatDisplayAccess.tickSmoothScroll();
+            worldVisuals.tick(client);
 
             boolean anyScreenOpen = screenWasOpenAtTickStart || client.gui.screen() != null;
             boolean panicTriggered = panicKeybinds.tick(

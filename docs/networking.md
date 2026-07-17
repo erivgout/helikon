@@ -17,6 +17,11 @@ does not construct, alter, or send a Minecraft packet.
 AntiBlind and BetterCrosshair likewise filter or add only local render state;
 they do not remove server effects, change hit detection, or send packets.
 
+EntityESP, BlockESP, Tracers, and Breadcrumbs inspect only the already-loaded
+client world and emit local render Gizmos. They do not request chunks, send
+coordinates, modify entity/block state, or create any network traffic. The
+BlockESP cache and Breadcrumb trail are bounded in-memory state only.
+
 AutoSprint, AutoWalk, and AutoSneak use ordinary local client input and player
 sprint state. They do not construct, alter, replay, or bypass Minecraft
 packets; the connected server remains authoritative for all resulting movement.

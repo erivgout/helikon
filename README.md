@@ -12,10 +12,14 @@ branding, or configuration formats from that project.
 
 ## Status
 
-Helikon currently includes three client-only render modules: Fullbright restores
+Helikon currently includes seven client-only render modules: Fullbright restores
 the previous gamma and Night Vision state when disabled; AntiBlind selectively
 hides local impairment visuals; and BetterCrosshair draws a local configurable
-HUD crosshair. AutoSprint, AutoWalk, and AutoSneak apply only normal local
+HUD crosshair. EntityESP, BlockESP, Tracers, and Breadcrumbs use Minecraft's
+local world-render Gizmo phase only: they never alter entities, blocks, client
+movement, or packets. BlockESP deliberately scans a bounded cube at a bounded
+per-tick budget, so newly loaded or changed blocks can take one scan pass to
+appear. AutoSprint, AutoWalk, and AutoSneak apply only normal local
 movement input and sprint state; AutoTool selects a safe local hotbar tool only
 while the user is already mining; and FastPlace can lower Minecraft's transient
 local use cooldown only while the user holds Use. AutoEat selects existing safe

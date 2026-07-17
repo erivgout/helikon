@@ -77,6 +77,7 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.ModuleTimingMetrics;
 import dev.helikon.client.module.combat.AntiBot;
 import dev.helikon.client.module.combat.AutoPotion;
+import dev.helikon.client.module.combat.ClickAura;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.KillAura;
@@ -452,6 +453,7 @@ public final class HelikonClient implements ClientModInitializer {
         BowAimAssist bowAimAssist = new BowAimAssist();
         CriticalAssist criticalAssist = new CriticalAssist();
         AutoPotion autoPotion = new AutoPotion();
+        ClickAura clickAura = new ClickAura();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
         ReachDisplay reachDisplay = new ReachDisplay();
@@ -524,6 +526,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(bowAimAssist);
         modules.register(criticalAssist);
         modules.register(autoPotion);
+        modules.register(clickAura);
         modules.register(targetHud);
         modules.register(killAura);
         modules.register(reachDisplay);
@@ -612,6 +615,12 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(triggerBot, "tick", () -> {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftCombatAccess.tickTriggerBot(clientTick, triggerBot,
+                                combatSnapshot.get(), combatTracker));
+                    }
+                });
+                modules.runGuarded(clickAura, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftCombatAccess.tickClickAura(clientTick, clickAura,
                                 combatSnapshot.get(), combatTracker));
                     }
                 });

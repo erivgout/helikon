@@ -86,11 +86,13 @@ import dev.helikon.client.module.combat.HitFlick;
 import dev.helikon.client.module.combat.HitSelect;
 import dev.helikon.client.module.combat.JumpReset;
 import dev.helikon.client.module.combat.JumpResetAccess;
+import dev.helikon.client.module.combat.CrystalAura;
 import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MinecraftBlockHitUseKey;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
 import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
+import dev.helikon.client.module.combat.MinecraftCrystalAccess;
 import dev.helikon.client.module.combat.ReachDisplay;
 import dev.helikon.client.module.combat.RightClicker;
 import dev.helikon.client.module.combat.SilentAura;
@@ -482,6 +484,7 @@ public final class HelikonClient implements ClientModInitializer {
         HitSelect hitSelect = new HitSelect();
         SilentAura silentAura = new SilentAura();
         WTap wtap = new WTap();
+        CrystalAura crystalAura = new CrystalAura();
         ReachDisplay reachDisplay = new ReachDisplay();
         RightClicker rightClicker = new RightClicker();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
@@ -566,6 +569,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(hitSelect);
         modules.register(silentAura);
         modules.register(wtap);
+        modules.register(crystalAura);
         modules.register(reachDisplay);
         modules.register(rightClicker);
         modules.register(annoy);
@@ -704,6 +708,12 @@ public final class HelikonClient implements ClientModInitializer {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftCombatAccess.tickSilentAura(clientTick, silentAura,
                                 combatSnapshot.get(), combatTracker));
+                    }
+                });
+                modules.runGuarded(crystalAura, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftCrystalAccess.tick(clientTick, crystalAura,
+                                combatSnapshot.get()));
                     }
                 });
             }

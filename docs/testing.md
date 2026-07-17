@@ -57,6 +57,9 @@ and ARGB transparency are covered by `TrajectorySimulatorTest`,
 XRay target filtering, opacity validation, reversible renderer-invalidation
 decisions, and StorageESP target-family parsing are covered by
 `XRayRenderStateTest`, `XRayTest`, and `StorageEspTargetsTest`.
+MiniPlayer's fixed geometry and DamageIndicators' confirmed health-loss,
+bounded-label, fade, and rise decisions are covered by `MiniPlayerLayoutTest`
+and `DamageIndicatorTrackerTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -282,6 +285,13 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     fully returns. Enable **StorageESP** near known selected storage, then
     verify its box appears after a bounded scan pass, is culled when offscreen,
     honors category/custom-ID settings, and never opens or changes a container.
+36. In a local/test world, enable **MiniPlayer** and verify the local player
+    model appears in its fixed HUD panel, responds to rotation/scale/background
+    settings, and armor on/off changes only the panel. Enable **DamageIndicators**
+    near an eligible mob/player, observe a normal local health loss, and verify
+    one amount rises and fades with the configured duration/color. Verify a
+    target outside range or behind the camera has no label, no damage changes
+    occur without a local health decrease, and neither feature affects combat.
 
 ## Manual command and keybind smoke test
 

@@ -12,7 +12,7 @@ branding, or configuration formats from that project.
 
 ## Status
 
-Helikon currently includes twelve client-only render modules: Fullbright restores
+Helikon currently includes fourteen client-only render modules: Fullbright restores
 the previous gamma and Night Vision state when disabled; AntiBlind selectively
 hides local impairment visuals; and BetterCrosshair draws a local configurable
 HUD crosshair. EntityESP, BlockESP, Tracers, and Breadcrumbs use Minecraft's
@@ -41,6 +41,12 @@ its block list/opacity rebuilds the geometry again, including a full restoration
 on disable. StorageESP uses a separate bounded loaded-chunk scan for selected
 block entities and draws only frustum-visible local boxes. Neither feature
 requests chunks, modifies blocks, or sends packets.
+
+MiniPlayer renders the current local player model in a fixed HUD panel with
+local rotation, scale, armor, and background controls. DamageIndicators tracks
+only observed nearby local health decreases while the target has a current
+hurt indication, then draws a bounded fading/rising amount. Neither changes
+entity health, combat, packets, or server-side UI.
 
 ChatPrefix and ChatSuffix can format only ordinary outgoing chat, with explicit
 guards for Helikon commands, slash commands, private messages, and likely

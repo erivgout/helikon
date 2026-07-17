@@ -36,3 +36,7 @@ boxes, and radar points are never persisted or transmitted.
 XRay's compiled-geometry snapshot and StorageESP's bounded block-position
 cache are in-memory-only local render state. They are not stored, transmitted,
 or used to request chunks or access inventories.
+
+MiniPlayer's temporary render state and DamageIndicators' bounded health
+snapshot/label state are session-only memory. They are never persisted,
+transmitted, or used to query player inventories or server combat history.

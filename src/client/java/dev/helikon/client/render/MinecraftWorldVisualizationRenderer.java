@@ -4,6 +4,7 @@ import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.Breadcrumbs;
+import dev.helikon.client.module.render.DamageIndicators;
 import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.StorageEsp;
 import dev.helikon.client.module.render.Trajectories;
@@ -18,6 +19,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gizmos.GizmoProperties;
 import net.minecraft.gizmos.GizmoStyle;
 import net.minecraft.gizmos.Gizmos;
+import net.minecraft.gizmos.TextGizmo;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -37,8 +39,11 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.PriorityQueue;
 
 /**
  * Narrow 26.2 client adapter for the supported Fabric level Gizmo phase.
@@ -64,6 +69,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final Trajectories trajectories;
     private final TrueSight trueSight;
     private final StorageEsp storageEsp;
+    private final DamageIndicators damageIndicators;
     private final Breadcrumbs breadcrumbs;
     private final BlockEspScanCursor blockCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor blockAnchor = new BlockEspScanAnchor();
@@ -79,7 +85,8 @@ public final class MinecraftWorldVisualizationRenderer {
 
     public MinecraftWorldVisualizationRenderer(ModuleRegistry modules, FriendManager friends, EntityEsp entityEsp,
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
-                                                TrueSight trueSight, StorageEsp storageEsp, Breadcrumbs breadcrumbs) {
+                                                TrueSight trueSight, StorageEsp storageEsp, DamageIndicators damageIndicators,
+                                                Breadcrumbs breadcrumbs) {
         this.modules = Objects.requireNonNull(modules, "modules");
         this.friends = Objects.requireNonNull(friends, "friends");
         this.entityEsp = Objects.requireNonNull(entityEsp, "entityEsp");
@@ -88,6 +95,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.trajectories = Objects.requireNonNull(trajectories, "trajectories");
         this.trueSight = Objects.requireNonNull(trueSight, "trueSight");
         this.storageEsp = Objects.requireNonNull(storageEsp, "storageEsp");
+        this.damageIndicators = Objects.requireNonNull(damageIndicators, "damageIndicators");
         this.breadcrumbs = Objects.requireNonNull(breadcrumbs, "breadcrumbs");
         this.blockEsp.setCacheClearer(this::resetBlockScanner);
         this.storageEsp.setCacheClearer(this::resetStorageScanner);
@@ -99,6 +107,7 @@ public final class MinecraftWorldVisualizationRenderer {
         if (client.level != observedLevel) {
             observedLevel = client.level;
             breadcrumbs.clearTrail();
+            damageIndicators.clear();
             resetBlockScanner();
             resetStorageScanner();
         }
@@ -108,6 +117,10 @@ public final class MinecraftWorldVisualizationRenderer {
         if (breadcrumbs.isEnabled()) {
             modules.runGuarded(breadcrumbs, "tick", () -> breadcrumbs.sample(
                     client.player.getX(), client.player.getY(), client.player.getZ(), System.currentTimeMillis()));
+        }
+        if (damageIndicators.isEnabled()) {
+            modules.runGuarded(damageIndicators, "tick", () -> observeDamage(client.level, client.player,
+                    System.currentTimeMillis()));
         }
         if (!blockEsp.isEnabled()) {
             if (blockScannerWasEnabled) {
@@ -163,6 +176,10 @@ public final class MinecraftWorldVisualizationRenderer {
         if (storageEsp.isEnabled()) {
             modules.runGuarded(storageEsp, "render", () -> renderStorage(client.player, frustum));
         }
+        if (damageIndicators.isEnabled()) {
+            modules.runGuarded(damageIndicators, "render", () -> renderDamageIndicators(client.level, client.player,
+                    frustum, System.currentTimeMillis()));
+        }
         if (breadcrumbs.isEnabled()) {
             modules.runGuarded(breadcrumbs, "render", this::renderBreadcrumbs);
         }
@@ -214,6 +231,41 @@ public final class MinecraftWorldVisualizationRenderer {
             String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
             storageCache.observe(position, state.hasBlockEntity() && storageEsp.targetBlocks().contains(blockId));
         }
+    }
+
+    private void observeDamage(ClientLevel level, Player localPlayer, long nowMillis) {
+        EntityRenderFilter.Options options = damageIndicators.options();
+        int capacity = damageIndicators.maximumTrackedEntities();
+        PriorityQueue<LivingEntity> nearest = new PriorityQueue<>(capacity,
+                (left, right) -> compareDamageCandidates(right, left, localPlayer));
+        for (Entity entity : level.entitiesForRendering()) {
+            if (!(entity instanceof LivingEntity living)
+                    || !EntityRenderFilter.shouldRender(options, entityType(entity), false, entity == localPlayer,
+                    entity.position().distanceToSqr(localPlayer.position()))) {
+                continue;
+            }
+            if (nearest.size() < capacity) {
+                nearest.add(living);
+            } else if (compareDamageCandidates(living, nearest.peek(), localPlayer) < 0) {
+                nearest.poll();
+                nearest.add(living);
+            }
+        }
+        List<LivingEntity> selected = new ArrayList<>(nearest);
+        selected.sort((left, right) -> compareDamageCandidates(left, right, localPlayer));
+        List<DamageIndicatorTracker.ObservedEntity> observed = new ArrayList<>(selected.size());
+        for (LivingEntity living : selected) {
+            observed.add(new DamageIndicatorTracker.ObservedEntity(living.getId(), living.getX(),
+                    living.getY() + living.getBbHeight(), living.getZ(), living.getHealth(), living.hurtTime));
+        }
+        damageIndicators.observe(observed, nowMillis);
+    }
+
+    /** Orders local damage candidates nearest-first, then by stable entity ID. */
+    private static int compareDamageCandidates(LivingEntity left, LivingEntity right, Player localPlayer) {
+        int distance = Double.compare(left.position().distanceToSqr(localPlayer.position()),
+                right.position().distanceToSqr(localPlayer.position()));
+        return distance != 0 ? distance : Integer.compare(left.getId(), right.getId());
     }
 
     private void renderEntityEsp(ClientLevel level, Player localPlayer) {
@@ -328,6 +380,21 @@ public final class MinecraftWorldVisualizationRenderer {
                 continue;
             }
             Gizmos.cuboid(bounds, style).setAlwaysOnTop();
+        }
+    }
+
+    private void renderDamageIndicators(ClientLevel level, Player localPlayer, Frustum frustum, long nowMillis) {
+        for (DamageIndicatorTracker.RenderedIndicator indicator : damageIndicators.renderedIndicators(nowMillis)) {
+            Entity entity = level.getEntity(indicator.entityId());
+            if (entity == null || !isFrustumVisible(frustum, entity)
+                    || !EntityRenderFilter.shouldRender(damageIndicators.options(), entityType(entity), false,
+                    entity == localPlayer, entity.position().distanceToSqr(localPlayer.position()))) {
+                continue;
+            }
+            int color = RenderColor.withAlpha(damageIndicators.color(), indicator.alpha());
+            String text = String.format(java.util.Locale.ROOT, "-%.1f", indicator.damage());
+            Gizmos.billboardText(text, new Vec3(indicator.x(), indicator.y(), indicator.z()),
+                    TextGizmo.Style.forColorAndCentered(color)).setAlwaysOnTop();
         }
     }
 

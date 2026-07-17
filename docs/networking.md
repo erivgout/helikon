@@ -32,6 +32,11 @@ reads only already-loaded block states while advancing its bounded local scan.
 Neither requests chunks, opens inventories, reads server storage contents,
 changes blocks, or sends custom/modified packets.
 
+MiniPlayer extracts the existing local player render state for the HUD only.
+DamageIndicators reads already-received local health and hurt-state fields from
+nearby loaded entities. Neither opens inventories, changes equipment or health,
+requests combat data, or sends packets.
+
 AutoSprint, AutoWalk, and AutoSneak use ordinary local client input and player
 sprint state. They do not construct, alter, replay, or bypass Minecraft
 packets; the connected server remains authoritative for all resulting movement.

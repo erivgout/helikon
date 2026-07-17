@@ -50,8 +50,13 @@ When porting:
    before changing XRay. Confirm it restores normal chunk geometry on disable.
 15. Revalidate `BlockState.hasBlockEntity`, loaded-chunk checks, and frustum
    visibility before changing StorageESP's bounded scan/render adapter.
-16. Run the manual smoke test in an empty profile and with no internet access.
-17. Document compatibility changes and retained limitations before release.
+16. Revalidate GUI entity-state extraction, `HumanoidRenderState` equipment
+   fields, and `GuiGraphicsExtractor.entity` before changing MiniPlayer. Never
+   replace its temporary render-state change with inventory/equipment mutation.
+17. Revalidate `LivingEntity.getHealth`, `hurtTime`, entity IDs, text Gizmos,
+   and frustum visibility before changing DamageIndicators.
+18. Run the manual smoke test in an empty profile and with no internet access.
+19. Document compatibility changes and retained limitations before release.
 
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

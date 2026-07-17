@@ -302,6 +302,15 @@ reuses the bounded cursor/anchor/cache decision objects but owns a separate
 cache and revision; its Minecraft adapter scans only loaded chunks and renders
 only locally frustum-visible block-entity boxes.
 
+`MiniPlayerLayout` provides the fixed, tested HUD geometry. `MiniPlayerHud`
+extracts a temporary 26.2 player render state, optionally clears only the
+temporary humanoid-equipment fields, and submits it through the supported GUI
+entity extraction API; it never edits inventory or player equipment. Damage
+indicators keep all decision logic in `DamageIndicatorTracker`: health snapshots,
+hurt-state confirmation, indicator caps, fade, and rise calculations are
+Minecraft-free. The world adapter supplies bounded observed living entities and
+draws only current, frustum-visible local text Gizmos.
+
 The Right Shift keybind opens `HelikonClickGuiScreen`, a vanilla `Screen`
 subclass that uses only supported Minecraft/Fabric GUI APIs (`EditBox`
 widgets, `GuiGraphicsExtractor` fills/text/scissor). The screen is a thin

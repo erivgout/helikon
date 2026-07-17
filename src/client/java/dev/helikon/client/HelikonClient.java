@@ -169,6 +169,8 @@ import dev.helikon.client.module.world.AntiCactusAccess;
 import dev.helikon.client.module.world.BlockSelection;
 import dev.helikon.client.module.world.ChestItem;
 import dev.helikon.client.module.world.ChestSteal;
+import dev.helikon.client.module.world.AirPlace;
+import dev.helikon.client.module.world.MinecraftAirPlaceAccess;
 import dev.helikon.client.module.world.MinecraftBuilderAssistAccess;
 import dev.helikon.client.module.world.MinecraftBreakCooldownAccess;
 import dev.helikon.client.module.world.MinecraftMiningAccess;
@@ -422,6 +424,7 @@ public final class HelikonClient implements ClientModInitializer {
         Nuker nuker = new Nuker();
         ChestSteal chestSteal = new ChestSteal();
         BuilderAssist builderAssist = new BuilderAssist();
+        AirPlace airPlace = new AirPlace();
         AntiCactus antiCactus = new AntiCactus();
         BlockSelection blockSelection = new BlockSelection();
         ChatPrefix chatPrefix = new ChatPrefix();
@@ -501,6 +504,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(nuker);
         modules.register(chestSteal);
         modules.register(builderAssist);
+        modules.register(airPlace);
         modules.register(antiCactus);
         modules.register(blockSelection);
         modules.register(chatPrefix);
@@ -594,6 +598,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(nuker, "tick", () -> MinecraftMiningAccess.tickNuker(nuker));
                 modules.runGuarded(chestSteal, "tick", () -> tickChestSteal(chestSteal, clientTick));
                 modules.runGuarded(builderAssist, "tick", () -> MinecraftBuilderAssistAccess.tick(builderAssist, clientTick));
+                modules.runGuarded(airPlace, "tick", () -> MinecraftAirPlaceAccess.tick(airPlace, clientTick));
                 modules.runGuarded(chatSpammer, "tick", () -> tickChatSpammer(chatSpammer));
                 modules.runGuarded(announcer, "tick", HelikonClient::tickAnnouncer);
                 Minecraft minecraft = Minecraft.getInstance();

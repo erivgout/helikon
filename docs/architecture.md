@@ -167,6 +167,13 @@ KillAura applies the same bounded local rotation policy before its normal attack
 cycle. TargetHUD retains the last crosshair or Helikon attack target while it
 remains in the current locally rendered target set, then clears it on absence or
 world loss; it does not flash a non-crosshair target for only one frame.
+AntiFireball keeps its nearest-approaching-visible-in-range selection and delay
+policy Minecraft-free; `MinecraftAntiFireballAccess` observes only rendered
+`LargeFireball`/`SmallFireball` entities, then requests one ordinary
+`MultiPlayerGameMode.attack` and swing for the single selected fireball. It joins
+the same per-tick attack guard, so Helikon still issues at most one ordinary
+attack per client tick, and it never builds a packet or extends reach; the server
+remains authoritative over whether a hit deflects the fireball.
 
 The inventory-automation modules keep armor ranking, item-ID/slot parsing,
 totem restore conditions, chest priority, and conservative manager choices in

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ChatSpammerTest {
     @Test
@@ -93,8 +94,42 @@ class ChatSpammerTest {
         assertEquals(List.of(), sender.messages);
     }
 
+    @Test
+    void appendsSessionCounterAndInjectedTimestampSuffixes() {
+        RecordingSender sender = new RecordingSender();
+        ChatSpammer spammer = enabled(new ChatSpammer(sender, () -> 0, () -> "12:34:56"));
+        stringSetting(spammer, "messages").set("hello");
+        numberSetting(spammer, "delay_ticks").set((double) ChatSpammer.MINIMUM_DELAY_TICKS);
+        booleanSetting(spammer, "counter").set(true);
+        booleanSetting(spammer, "timestamps").set(true);
+
+        assertEquals(ChatSpammer.Action.SENT, spammer.tick(true, false));
+        advanceMinimumDelay(spammer);
+        assertEquals(ChatSpammer.Action.SENT, spammer.tick(true, false));
+
+        assertEquals(List.of("hello [1] [12:34:56]", "hello [2] [12:34:56]"), sender.messages);
+    }
+
+    @Test
+    void truncatesDecoratedMessagesToTheOrdinaryChatLimit() {
+        RecordingSender sender = new RecordingSender();
+        ChatSpammer spammer = enabled(new ChatSpammer(sender, () -> 0, () -> "12:34:56"));
+        stringSetting(spammer, "messages").set("a".repeat(255));
+        booleanSetting(spammer, "counter").set(true);
+        booleanSetting(spammer, "timestamps").set(true);
+
+        assertEquals(ChatSpammer.Action.SENT, spammer.tick(true, false));
+
+        String sent = sender.messages.get(0);
+        assertEquals(256, sent.length());
+        assertTrue(sent.endsWith(" [1] [12:34:56]"));
+    }
+
     private static ChatSpammer enabled(ChatSpammer.ChatSender sender, java.util.function.IntSupplier random) {
-        ChatSpammer spammer = new ChatSpammer(sender, random);
+        return enabled(new ChatSpammer(sender, random));
+    }
+
+    private static ChatSpammer enabled(ChatSpammer spammer) {
         ModuleRegistry registry = new ModuleRegistry();
         registry.register(spammer);
         registry.setEnabled(spammer, true);

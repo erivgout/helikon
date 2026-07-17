@@ -7,10 +7,13 @@ import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.setting.StringSetting;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 /** Sends configured ordinary chat only at a conservative local interval and session cap. */
 public final class ChatSpammer extends Module {
@@ -24,13 +27,17 @@ public final class ChatSpammer extends Module {
     public static final int MINIMUM_DELAY_TICKS = 40;
     public static final int REJECTION_STOP_THRESHOLD = 3;
     private static final int MAX_CHAT_LENGTH = 256;
+    private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final ChatSender sender;
     private final IntSupplier randomIndex;
+    private final Supplier<String> timestampText;
     private final StringSetting messages;
     private final NumberSetting delayTicks;
     private final BooleanSetting randomOrder;
     private final BooleanSetting pauseInGui;
+    private final BooleanSetting counter;
+    private final BooleanSetting timestamps;
     private final NumberSetting sessionMessageCap;
     private int ticksUntilSend;
     private int sentThisSession;
@@ -42,10 +49,15 @@ public final class ChatSpammer extends Module {
     private String activeMessage = "";
 
     public ChatSpammer(ChatSender sender, IntSupplier randomIndex) {
+        this(sender, randomIndex, () -> LocalTime.now().format(TIMESTAMP_FORMAT));
+    }
+
+    public ChatSpammer(ChatSender sender, IntSupplier randomIndex, Supplier<String> timestampText) {
         super("chat_spammer", "ChatSpammer", "Sends capped, delayed ordinary chat; servers may punish spam.",
                 ModuleCategory.CHAT, false, Keybind.unbound());
         this.sender = Objects.requireNonNull(sender, "sender");
         this.randomIndex = Objects.requireNonNull(randomIndex, "randomIndex");
+        this.timestampText = Objects.requireNonNull(timestampText, "timestampText");
         messages = addSetting(new StringSetting("messages", "Messages",
                 "Semicolon-separated ordinary chat messages; commands are rejected.", "", 255, true));
         delayTicks = addSetting(new NumberSetting("delay_ticks", "Delay", "Minimum local delay between messages in ticks.",
@@ -54,6 +66,10 @@ public final class ChatSpammer extends Module {
                 "Choose a random configured message instead of sequential order.", false));
         pauseInGui = addSetting(new BooleanSetting("pause_in_gui", "Pause in GUI",
                 "Pause sending while any screen is open.", true));
+        counter = addSetting(new BooleanSetting("counter", "Counter",
+                "Append this session's message number to each sent message.", false));
+        timestamps = addSetting(new BooleanSetting("timestamps", "Timestamps",
+                "Append the local send time to each sent message.", false));
         sessionMessageCap = addSetting(new NumberSetting("session_message_cap", "Session message cap",
                 "Maximum messages sent until the client is restarted.", 10.0, 1.0, 100.0));
     }
@@ -77,7 +93,7 @@ public final class ChatSpammer extends Module {
             return Action.NONE;
         }
 
-        String message = selectMessage(availableMessages);
+        String message = decorate(selectMessage(availableMessages));
         awaitingCancellation = true;
         activeMessage = message;
         try {
@@ -124,6 +140,23 @@ public final class ChatSpammer extends Module {
             }
         }
         return List.copyOf(parsed);
+    }
+
+    /** Appends the optional counter/timestamp suffixes within the ordinary 256-character chat limit. */
+    private String decorate(String message) {
+        StringBuilder suffix = new StringBuilder();
+        if (counter.value()) {
+            suffix.append(" [").append(sentThisSession + 1).append(']');
+        }
+        if (timestamps.value()) {
+            suffix.append(" [").append(timestampText.get()).append(']');
+        }
+        if (suffix.isEmpty()) {
+            return message;
+        }
+        int available = Math.max(0, MAX_CHAT_LENGTH - suffix.length());
+        String base = message.length() > available ? message.substring(0, available) : message;
+        return base + suffix;
     }
 
     private String selectMessage(List<String> availableMessages) {

@@ -42,6 +42,10 @@ memory. If a user enables a trigger, the resulting configured ordinary chat
 text uses only Minecraft's normal server connection; it is never sent to a
 Helikon service or retained in a Helikon log.
 
+LocalTranslator is disabled by default and sends no text anywhere. Its bounded
+glossary is stored with local module settings. Helikon does not provide or
+contact a translation server, nor store API keys.
+
 EntityESP, BlockESP, Tracers, and Breadcrumbs use only the entities, blocks,
 and local player positions that Minecraft has already loaded for the current
 session. Their bounded caches and trails are not written to disk or transmitted

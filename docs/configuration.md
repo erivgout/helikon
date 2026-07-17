@@ -37,6 +37,8 @@ row is clicked; `.setting` accepts any listed token case-insensitively.
 only that setting to its default and are logged. They appear as validated text
 boxes in the ClickGUI; `.setting` accepts a single non-space text token. AutoEat
 uses one for its bounded comma-separated food identifier avoid list.
+LocalTranslator uses one for its bounded local `glossary`, which has no API,
+provider, credential, or network configuration.
 
 `IntegerSetting`, `KeybindSetting`, `StringListSetting`, block/item/entity
 selector settings, `MultiSelectEnumSetting`, `RangeSetting`, and `RegexSetting`

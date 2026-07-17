@@ -166,6 +166,10 @@ the relevant trigger. It applies a local cooldown and session cap, rejects
 slash/local-command templates, and never constructs or changes a packet. Its
 observed trigger facts and completed-advancement IDs stay only in session memory.
 
+LocalTranslator has no network implementation. It uses only a bounded local
+glossary after the module is enabled; source chat text and translations are
+never sent to a Helikon or third-party service.
+
 ## Future policy
 
 Optional external integrations must be isolated under

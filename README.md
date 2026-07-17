@@ -190,6 +190,10 @@ advancement, low-health, or totem event, subject to a local cooldown, cap, and
 screen pause. A leave trigger uses local Helikon feedback because no valid
 server connection remains after disconnect.
 
+LocalTranslator is off by default and has no external API mode. It displays an
+additional local translation from a bounded exact configured glossary; no chat
+text or credentials leave the client.
+
 PrivateMessageHelper intercepts `.pm` and `.reply` locally, validates a player
 name and a bounded message, then uses Minecraft's normal server-command route
 with configurable `msg` and `r` command tokens. The `.` command itself is

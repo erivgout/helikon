@@ -128,6 +128,7 @@ import dev.helikon.client.module.chat.ChatHistory;
 import dev.helikon.client.module.chat.Announcer;
 import dev.helikon.client.module.chat.AnnouncerAccess;
 import dev.helikon.client.module.chat.AnnouncementTrigger;
+import dev.helikon.client.module.chat.LocalTranslator;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.BuilderAssist;
 import dev.helikon.client.module.world.ChestItem;
@@ -362,6 +363,7 @@ public final class HelikonClient implements ClientModInitializer {
         ChatColor chatColor = new ChatColor();
         BetterChat betterChat = new BetterChat();
         Announcer announcer = new Announcer();
+        LocalTranslator localTranslator = new LocalTranslator();
         ChatHistory chatHistoryModule = new ChatHistory();
         chatHistoryModule.setStorageHooks(
                 () -> chatHistory.activate(chatHistoryModule, currentChatHistoryScope()),
@@ -417,6 +419,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(chatColor);
         modules.register(betterChat);
         modules.register(announcer);
+        modules.register(localTranslator);
         modules.register(chatHistoryModule);
         modules.register(antiBot);
         modules.register(triggerBot);
@@ -548,6 +551,8 @@ public final class HelikonClient implements ClientModInitializer {
             boolean allowed = allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply,
                     normalChatSender, incoming);
             if (allowed && !incoming.overlay()) {
+                modules.runGuarded(localTranslator, "translate", () -> localTranslator.translate(incoming)
+                        .ifPresent(translation -> notifier.info("Translation: " + translation)));
                 chatHistory.recordIncoming(chatHistoryModule, incoming);
             }
             return allowed;
@@ -557,6 +562,8 @@ public final class HelikonClient implements ClientModInitializer {
             boolean allowed = allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply,
                     normalChatSender, incoming);
             if (allowed && !incoming.overlay()) {
+                modules.runGuarded(localTranslator, "translate", () -> localTranslator.translate(incoming)
+                        .ifPresent(translation -> notifier.info("Translation: " + translation)));
                 chatHistory.recordIncoming(chatHistoryModule, incoming);
             }
             return allowed;

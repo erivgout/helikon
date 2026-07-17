@@ -79,6 +79,9 @@ Announcer's per-trigger default-off policy, safe template/cooldown/screen
 gates, and local distance/health/dimension threshold observations are covered
 by `AnnouncerTest` and `AnnouncerObservationTrackerTest`. Its Minecraft hook
 adapters require the smoke check below.
+LocalTranslator's bounded local-glossary parsing and disabled, overlay, and
+oversized-input guards are covered by `LocalGlossaryTest` and
+`LocalTranslatorTest`.
 Entity category/friend/range gating, local block-ID parsing, incremental cube
 scan order, cache eviction, and Breadcrumb sampling/age bounds are covered by
 `EntityRenderFilterTest`, `BlockEspPolicyTest`, and `BreadcrumbTrailTest`.
@@ -512,6 +515,19 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     SHA-256 checksum, and dependency report, then inspect the source-style and
     client-only architecture checks. Confirm that no release workflow publishes
     an untagged build and record any manual checks not performed.
+
+## Manual LocalTranslator smoke test
+
+1. Run `./gradlew.bat runClient`, join a local/test world, enable
+   **LocalTranslator**, and set its glossary to `hello=Bonjour`. Receive a
+   harmless incoming `hello` line and verify Minecraft's original message stays
+   unchanged while a local Helikon translation line appears. Receive a message
+   with no exact entry and verify no translation line is added.
+2. Open a screen, receive an overlay/action-bar message, then disable the
+   module; verify none produces a translation. Set a malformed glossary entry
+   and verify it safely produces no translation.
+3. Confirm no network request, API-key prompt, outgoing message, or server-side
+   visible formatting occurs. This module has no provider or API selection.
 
 ## Manual command and keybind smoke test
 

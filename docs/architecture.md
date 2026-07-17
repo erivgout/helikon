@@ -264,6 +264,11 @@ Confirmed kills are deliberately conservative (a direct local melee attempt
 followed by that entity unloading dead), while a post-disconnect leave is local
 Helikon feedback because the normal connection is no longer valid.
 
+`LocalTranslator` runs only after the existing incoming filters have allowed a
+non-overlay message. It returns an optional local display line from a bounded
+exact glossary. This path contains no HTTP client, API key, remote endpoint,
+downloaded model, runtime extension discovery, or outgoing chat modification.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

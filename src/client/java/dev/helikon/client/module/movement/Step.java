@@ -13,7 +13,7 @@ public final class Step extends Module {
         super("step", "Step", "Raises local normal collision step height without packet bypasses.",
                 ModuleCategory.MOVEMENT, false, Keybind.unbound());
         stepHeight = addSetting(new NumberSetting("step_height", "Step height",
-                "Maximum local collision step height in blocks.", 1.0D, 0.6D, 1.5D));
+                "Maximum local collision step height in blocks.", 1.0D, 0.6D, 3.0D));
     }
 
     public float stepHeight(float vanillaHeight) {

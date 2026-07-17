@@ -47,13 +47,17 @@ public final class FreecamAccess {
             return;
         }
         if (camera == null || camera.level() != client.level) {
-            camera = new ArmorStand(client.level, client.player.getX(), client.player.getY(), client.player.getZ());
+            camera = new ArmorStand(client.level, client.player.getX(), client.player.getEyeY(), client.player.getZ());
             camera.noPhysics = true;
             camera.setNoGravity(true);
             camera.setInvisible(true);
             camera.setYRot(client.player.getYRot());
             camera.setXRot(client.player.getXRot());
         }
+        // The camera entity is never added to the level, so nothing ticks it: without
+        // this per-tick old-pose sync the renderer interpolates from the constructor
+        // default (0,0,0) and the camera flickers wildly.
+        camera.setOldPosAndRot();
         if (client.getCameraEntity() != camera) {
             client.setCameraEntity(camera);
         }

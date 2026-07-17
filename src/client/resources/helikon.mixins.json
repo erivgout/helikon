@@ -28,6 +28,7 @@
     "LightmapRenderStateExtractorMixin",
     "LevelRendererEventMixin",
     "LivingEntityRendererMixin",
+    "LivingEntityStepMixin",
     "LocalPlayerNoSlowMixin",
     "ModelBlockRendererXRayMixin",
     "MouseFreecamMixin",

@@ -134,6 +134,7 @@ import dev.helikon.client.module.movement.Jetpack;
 import dev.helikon.client.module.movement.Clutch;
 import dev.helikon.client.module.movement.Fish;
 import dev.helikon.client.module.movement.Glide;
+import dev.helikon.client.module.movement.HighJump;
 import dev.helikon.client.module.movement.MinecraftAdvancedMovementAccess;
 import dev.helikon.client.module.movement.MinecraftAutoSwimAccess;
 import dev.helikon.client.module.movement.MinecraftFollowAccess;
@@ -475,6 +476,7 @@ public final class HelikonClient implements ClientModInitializer {
         Fish fish = new Fish();
         Jesus jesus = new Jesus();
         Spider spider = new Spider();
+        HighJump highJump = new HighJump();
         Step step = new Step();
         Speed speed = new Speed();
         BunnyHop bunnyHop = new BunnyHop();
@@ -583,6 +585,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(fish);
         modules.register(jesus);
         modules.register(spider);
+        modules.register(highJump);
         modules.register(step);
         modules.register(speed);
         modules.register(bunnyHop);
@@ -714,6 +717,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(jesus, "tick", () -> MinecraftAdvancedMovementAccess.tickJesus(jesus));
                 modules.runGuarded(fish, "tick", () -> MinecraftAdvancedMovementAccess.tickFish(fish));
                 modules.runGuarded(spider, "tick", () -> MinecraftAdvancedMovementAccess.tickSpider(spider));
+                modules.runGuarded(highJump, "tick", () -> MinecraftAdvancedMovementAccess.tickHighJump(highJump));
                 modules.runGuarded(speed, "tick", () -> MinecraftAdvancedMovementAccess.tickSpeed(speed));
                 modules.runGuarded(bunnyHop, "tick", () -> MinecraftAdvancedMovementAccess.tickBunnyHop(bunnyHop));
                 modules.runGuarded(flight, "tick", () -> MinecraftAdvancedMovementAccess.tickFlight(flight));

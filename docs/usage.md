@@ -4,14 +4,18 @@
 
 Press **Right Shift** in game to open the ClickGUI.
 
-- Click a category to list its modules; click a module to inspect and edit its
-  settings; click the square at the right of a row to toggle it.
+- Click a category to list its modules. **Active** at the top shows every
+  enabled utility across categories; click a row's square there to turn it
+  off. Click a module to inspect and edit its settings.
 - The search box at the top filters across module names, IDs, and
   descriptions in every category.
 - In a module's settings panel, click **Bind** and press a key to assign a
   keybind; Backspace/Delete removes the bind and Escape cancels. Held
   modifiers are captured.
 - Every setting and module has a reset control.
+- Hover the right-hand settings panel and use the mouse wheel to scroll long
+  setting groups. Editable fields remain aligned with their setting as you
+  scroll.
 - Drag the window by an empty part of its header, and drag its bottom-right
   handle to resize. Position and size are clamped to the screen and restored
   when it is reopened.

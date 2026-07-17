@@ -93,7 +93,7 @@ ordinary local Use binding. It never directly invokes, repeats, or fabricates
 an interaction or packet; normal client interaction rules and all server-side
 food, inventory, and combat rules remain authoritative.
 
-NoSlow, FastLadders, WaterJump, Step, Speed, BunnyHop, ExtraElytra, and Timer
+NoSlow, FastLadders, WaterJump, Jesus, Spider, Step, Speed, BunnyHop, ExtraElytra, and Timer
 change only local movement/input, collision, view, or client-time calculations.
 WaterJump adds only an ordinary local Jump request after loaded water-edge
 checks. They do not create, modify, replay, or spoof movement packets, and a
@@ -118,10 +118,11 @@ checks. It does not choose blocks outside the hotbar or construct placement
 packets.
 
 Combat modules do not construct, modify, replay, or spoof packets. TriggerBot,
-CriticalAssist, and KillAura may ask Minecraft to perform one ordinary local
-attack after their local cooldown, target, and line-of-sight checks; the shared
-bridge permits at most one such request per tick and the server remains fully
-authoritative for damage, reach, cooldown, and validation. BowAimAssist only
+CriticalAssist, and KillAura may ask Minecraft to perform ordinary local
+attacks after their local cooldown, target, and line-of-sight checks. KillAura's
+Multi mode bounds each cycle with its configured target limit; the shared bridge
+still permits only one combat module to begin attacks in a tick, and the server
+remains fully authoritative for damage, reach, cooldown, and validation. BowAimAssist only
 changes local view rotation while the user holds a bow and never fires it.
 AutoPotion selects an existing restorative hotbar potion and calls Minecraft's
 normal held-item Use method; no inventory or potion packet is fabricated.

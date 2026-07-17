@@ -40,8 +40,11 @@ class AdvancedMovementPolicyTest {
     @Test
     void speedAndBunnyHopUseCappedLocalMotionOnlyWhileEnabled() {
         Speed speed = enabled(new Speed());
-        assertEquals(0.015D, speed.adjust(new HorizontalVelocity(0.0D, 0.0D),
+        assertEquals(0.90D, speed.adjust(new HorizontalVelocity(0.30D, 0.0D),
                 new HorizontalVelocity(1.0D, 0.0D), true).x(), 0.0001D);
+        assertEquals(3.0D, numberSetting(speed, "multiplier").value());
+        assertEquals(0.08D, numberSetting(speed, "acceleration").value());
+        assertEquals(0.90D, numberSetting(speed, "maximum_speed").value());
         BunnyHop hop = enabled(new BunnyHop());
         assertTrue(hop.shouldJump(true, true, false));
         assertFalse(hop.shouldJump(false, true, false));

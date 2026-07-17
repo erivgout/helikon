@@ -126,13 +126,19 @@ public final class MinecraftCombatAccess {
         if (!readyForAttack(client, snapshot)) {
             return false;
         }
-        return killAura.nextAttack(tick, snapshot.targets(), attackReady(client.player)).map(target -> {
-            CombatAim.Rotation rotation = killAura.rotateToward(target,
-                    new CombatAim.Rotation(client.player.getYRot(), client.player.getXRot()));
-            client.player.setYRot(rotation.yaw());
-            client.player.setXRot(rotation.pitch());
-            return attack(client, snapshot.entities().get(target.id()), target, tracker);
-        }).orElse(false);
+        List<CombatTarget> targets = killAura.nextAttacks(tick, snapshot.targets(), attackReady(client.player));
+        if (targets.isEmpty()) {
+            return false;
+        }
+        CombatAim.Rotation rotation = killAura.rotateToward(targets.getFirst(),
+                new CombatAim.Rotation(client.player.getYRot(), client.player.getXRot()));
+        client.player.setYRot(rotation.yaw());
+        client.player.setXRot(rotation.pitch());
+        boolean attacked = false;
+        for (CombatTarget target : targets) {
+            attacked |= attack(client, snapshot.entities().get(target.id()), target, tracker);
+        }
+        return attacked;
     }
 
     private static boolean readyForAttack(Minecraft client, Snapshot snapshot) {

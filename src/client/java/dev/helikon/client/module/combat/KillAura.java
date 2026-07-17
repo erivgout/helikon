@@ -17,7 +17,8 @@ import java.util.Optional;
 public final class KillAura extends Module {
     public enum TargetMode {
         SINGLE,
-        SWITCH
+        SWITCH,
+        MULTI
     }
 
     private final BooleanSetting players;
@@ -28,6 +29,7 @@ public final class KillAura extends Module {
     private final NumberSetting fieldOfView;
     private final NumberSetting delayTicks;
     private final NumberSetting rotationSpeed;
+    private final NumberSetting maxTargets;
     private final EnumSetting<TargetMode> targetMode;
     private final EnumSetting<CombatTargetFilter.Priority> priority;
     private String currentTargetId;
@@ -48,28 +50,44 @@ public final class KillAura extends Module {
                 4.0D, 2.0D, 40.0D));
         rotationSpeed = addSetting(new NumberSetting("rotation_speed", "Rotation speed",
                 "Maximum local yaw or pitch change toward the selected target per client tick.", 8.0D, 0.25D, 30.0D));
-        targetMode = addSetting(new EnumSetting<>("target_mode", "Target mode", "Keep one target or rotate eligible targets.",
+        targetMode = addSetting(new EnumSetting<>("target_mode", "Target mode",
+                "Keep one target, rotate targets, or attack multiple eligible targets.",
                 TargetMode.class, TargetMode.SINGLE));
+        maxTargets = addSetting(new NumberSetting("max_targets", "Max targets",
+                "Maximum eligible targets attacked during each Multi cycle.", 3.0D, 2.0D, 10.0D));
         priority = addSetting(new EnumSetting<>("priority", "Priority", "Order eligible targets by distance, health, or angle.",
                 CombatTargetFilter.Priority.class, CombatTargetFilter.Priority.DISTANCE));
     }
 
     public Optional<CombatTarget> nextAttack(long tick, List<CombatTarget> candidates, boolean attackReady) {
+        List<CombatTarget> attacks = nextAttacks(tick, candidates, attackReady);
+        return attacks.isEmpty() ? Optional.empty() : Optional.of(attacks.getFirst());
+    }
+
+    /** Selects one target normally or a bounded ordered group while Multi mode is active. */
+    public List<CombatTarget> nextAttacks(long tick, List<CombatTarget> candidates, boolean attackReady) {
         if (tick < 0L || candidates == null) {
             throw new IllegalArgumentException("KillAura inputs are invalid");
         }
         if (!isEnabled() || !attackReady || (lastAttackTick >= 0L && tick - lastAttackTick < Math.round(delayTicks.value()))) {
-            return Optional.empty();
+            return List.of();
         }
         List<CombatTarget> allowed = CombatTargetFilter.ordered(candidates, targetOptions(), priority.value());
         if (allowed.isEmpty()) {
             currentTargetId = null;
-            return Optional.empty();
+            return List.of();
+        }
+        if (targetMode.value() == TargetMode.MULTI) {
+            int count = Math.min(allowed.size(), (int) Math.round(maxTargets.value()));
+            List<CombatTarget> selected = List.copyOf(allowed.subList(0, count));
+            currentTargetId = selected.getFirst().id();
+            lastAttackTick = tick;
+            return selected;
         }
         CombatTarget selected = select(allowed);
         currentTargetId = selected.id();
         lastAttackTick = tick;
-        return Optional.of(selected);
+        return List.of(selected);
     }
 
     /** Returns a bounded local view adjustment for the selected target; it never creates a rotation packet. */

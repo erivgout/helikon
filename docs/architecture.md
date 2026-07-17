@@ -155,15 +155,16 @@ Combat uses `CombatTarget`, `CombatTargetFilter`, `CombatAim`, and
 adapter collects only rendered living entities and local tab-list/profile facts,
 then invokes Minecraft's normal `attack` or held-item `useItem` method after
 the corresponding module policy permits it. A shared per-tick guard permits at
-most one Helikon attack request across TriggerBot, CriticalAssist, and
-KillAura. KillAura/TriggerBot/CriticalAssist require the locally observed
+most one of TriggerBot, CriticalAssist, or KillAura to begin attacks. KillAura's
+Multi mode may issue a bounded group of ordinary attacks within that one cycle.
+KillAura/TriggerBot/CriticalAssist require the locally observed
 line-of-sight fact, so the adapter never requests attacks through solid blocks.
 BowAimAssist only updates the local view while the user holds a normal bow; it
 does not fire it. AntiBot is an in-memory heuristic filter, not a remote lookup.
 TargetHUD and ReachDisplay render session-only observed data; the latter records
 only Helikon's normal attack request distance and does not imply server reach.
 KillAura applies the same bounded local rotation policy before its normal attack
-request. TargetHUD retains the last crosshair or Helikon attack target while it
+cycle. TargetHUD retains the last crosshair or Helikon attack target while it
 remains in the current locally rendered target set, then clears it on absence or
 world loss; it does not flash a non-crosshair target for only one frame.
 

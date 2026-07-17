@@ -43,7 +43,15 @@ public final class ActiveModules {
 
     /** Produces a stable opaque rainbow hue from a caller-provided local tick count. */
     public static int rainbowColor(long tick) {
-        float hue = Math.floorMod(tick, 360L) / 360.0F;
+        return rainbowColor(tick, 0);
+    }
+
+    /** Produces a stable opaque rainbow hue for one line in the active-module list. */
+    public static int rainbowColor(long tick, int lineIndex) {
+        if (lineIndex < 0) {
+            throw new IllegalArgumentException("lineIndex must be non-negative");
+        }
+        float hue = Math.floorMod(tick + lineIndex * 28L, 360L) / 360.0F;
         return 0xFF000000 | java.awt.Color.HSBtoRGB(hue, 0.78F, 1.0F);
     }
 }

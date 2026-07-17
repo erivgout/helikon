@@ -20,6 +20,7 @@ public final class ClickGuiState {
     private ModuleCategory selectedCategory;
     private String searchQuery = "";
     private Module selectedModule;
+    private boolean showingActiveModules;
 
     public ClickGuiState(ModuleRegistry registry) {
         this.registry = Objects.requireNonNull(registry, "registry");
@@ -32,6 +33,17 @@ public final class ClickGuiState {
 
     public void selectCategory(ModuleCategory category) {
         this.selectedCategory = Objects.requireNonNull(category, "category");
+        showingActiveModules = false;
+    }
+
+    /** Shows the currently enabled modules across every category. */
+    public void selectActiveModules() {
+        showingActiveModules = true;
+        selectedModule = null;
+    }
+
+    public boolean isShowingActiveModules() {
+        return showingActiveModules && !isSearching();
     }
 
     /** Selects the next or previous category, wrapping at either end. */
@@ -43,6 +55,7 @@ public final class ClickGuiState {
         int next = Math.floorMod(selectedCategory.ordinal() + Integer.signum(direction), categories.length);
         selectedCategory = categories[next];
         selectedModule = null;
+        showingActiveModules = false;
     }
 
     public String searchQuery() {
@@ -66,6 +79,9 @@ public final class ClickGuiState {
     public List<Module> visibleModules() {
         if (isSearching()) {
             return ModuleSearch.filter(registry.all(), searchQuery);
+        }
+        if (showingActiveModules) {
+            return registry.all().stream().filter(Module::isEnabled).toList();
         }
         return registry.all().stream()
                 .filter(module -> module.category() == selectedCategory)

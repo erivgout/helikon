@@ -63,19 +63,18 @@ public final class ActiveModulesHud implements HudElement {
         long tick = Minecraft.getInstance().level == null
                 ? System.currentTimeMillis() / 50L
                 : Minecraft.getInstance().level.getGameTime();
-        int color = style.colorMode() == ActiveModulesLayout.ColorMode.RAINBOW
-                ? ActiveModules.rainbowColor(tick)
-                : COLOR_TEXT;
+        boolean rainbow = style.colorMode() == ActiveModulesLayout.ColorMode.RAINBOW;
+        int color = rainbow ? ActiveModules.rainbowColor(tick) : COLOR_TEXT;
         long now = System.currentTimeMillis();
         if (!style.animations() || reducedAnimations.getAsBoolean()) {
             visibleSince.clear();
             draw(graphics, font, names, new HudBounds(0, 0, bounds.width(), bounds.height()), color, false,
-                    style.padding(), style.alignment(), style.background(), style.textShadow());
+                    style.padding(), style.alignment(), style.background(), style.textShadow(), rainbow, tick);
         } else {
             names.forEach(name -> visibleSince.putIfAbsent(name, now));
             visibleSince.keySet().removeIf(name -> !names.contains(name));
             drawAnimated(graphics, font, names, new HudBounds(0, 0, bounds.width(), bounds.height()), color,
-                    style.padding(), style.alignment(), style.background(), style.textShadow(), now);
+                    style.padding(), style.alignment(), style.background(), style.textShadow(), rainbow, tick, now);
         }
         graphics.pose().popMatrix();
     }
@@ -125,6 +124,24 @@ public final class ActiveModulesHud implements HudElement {
             boolean background,
             boolean textShadow
     ) {
+        draw(graphics, font, lines, bounds, textColor, selected, padding, alignment, background, textShadow, false, 0L);
+    }
+
+    /** Draws one Active Modules list, optionally with a distinct animated rainbow color per line. */
+    public static void draw(
+            GuiGraphicsExtractor graphics,
+            Font font,
+            List<String> lines,
+            HudBounds bounds,
+            int textColor,
+            boolean selected,
+            int padding,
+            ActiveModulesLayout.Alignment alignment,
+            boolean background,
+            boolean textShadow,
+            boolean rainbow,
+            long rainbowTick
+    ) {
         Objects.requireNonNull(graphics, "graphics");
         Objects.requireNonNull(font, "font");
         Objects.requireNonNull(lines, "lines");
@@ -143,13 +160,14 @@ public final class ActiveModulesHud implements HudElement {
             int x = alignment == ActiveModulesLayout.Alignment.RIGHT
                     ? bounds.x() + padding + textWidth - font.width(line)
                     : bounds.x() + padding;
-            graphics.text(font, line, x, bounds.y() + padding + index * font.lineHeight, textColor, textShadow);
+            int lineColor = rainbow ? ActiveModules.rainbowColor(rainbowTick, index) : textColor;
+            graphics.text(font, line, x, bounds.y() + padding + index * font.lineHeight, lineColor, textShadow);
         }
     }
 
     private void drawAnimated(GuiGraphicsExtractor graphics, Font font, List<String> lines, HudBounds bounds,
                               int textColor, int padding, ActiveModulesLayout.Alignment alignment,
-                              boolean background, boolean textShadow, long now) {
+                              boolean background, boolean textShadow, boolean rainbow, long rainbowTick, long now) {
         if (background) {
             graphics.fill(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + bounds.height(), COLOR_BACKGROUND);
         }
@@ -159,8 +177,9 @@ public final class ActiveModulesHud implements HudElement {
             int x = alignment == ActiveModulesLayout.Alignment.RIGHT
                     ? bounds.x() + padding + textWidth - font.width(line) : bounds.x() + padding;
             float progress = entryOpacity(visibleSince.getOrDefault(line, now), now);
-            int alpha = Math.round(((textColor >>> 24) & 0xFF) * progress);
-            int fadedColor = textColor & 0x00FFFFFF | alpha << 24;
+            int lineColor = rainbow ? ActiveModules.rainbowColor(rainbowTick, index) : textColor;
+            int alpha = Math.round(((lineColor >>> 24) & 0xFF) * progress);
+            int fadedColor = lineColor & 0x00FFFFFF | alpha << 24;
             graphics.text(font, line, x, bounds.y() + padding + index * font.lineHeight, fadedColor, textShadow);
         }
     }

@@ -344,6 +344,12 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     view, then use Enter and Space to toggle the selected module. Click the
     search or a number field and verify its normal keyboard editing continues
     to take priority.
+15. Enable two modules from different categories, click **Active** above the
+    category list, and verify it shows only those modules. Toggle one there and
+    verify it immediately disappears while the other remains. Select a module
+    with enough settings to exceed the right-hand panel, then hover that panel
+    and scroll: its scrollbar, rows, and editable fields must move together
+    without drawing outside the panel.
 15. Select **BetterCrosshair**, enable it, and verify its custom crosshair
     replaces the vanilla one. Change its size, gap, thickness, outline, and
     `#AARRGGBB` color text field; drag each alpha/red/green/blue picker track
@@ -542,9 +548,9 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     passive filters and transparency. Verify a friendly-team entity that is
     visible to the local player does not gain a box. Turn away from a candidate
     to verify its trajectory/TrueSight overlay is frustum-culled. Enable
-    **Radar**, verify circle/square,
-    rotation, zoom, local friend color, and category filters, and confirm no
-    unloaded or out-of-range entities appear. None of these results should be
+    **Radar**, verify circle/square, toggle the terrain minimap on and off, then
+    verify rotation, zoom, local friend color, and category filters. Confirm no
+    unloaded terrain or out-of-range entities appear. None of these results should be
     visible to another player or change a normal projectile/entity interaction.
 37. In a disposable local/test world, enable **XRay** and verify only its
     configured locally loaded block models remain visible after the geometry
@@ -605,13 +611,20 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     into a loaded sturdy one-block bank with two clear blocks above it: verify
     it requests only normal Jump input. Test backward movement, air, an
     obstructed bank, an unloaded boundary, and every open screen; none may
-    request a jump. Verify **Step** honors its 1.5-block cap through normal
-    collisions, and **Speed**/**BunnyHop** remain within their configured caps
-    and do nothing in screens. On a creative/spectator or otherwise permitted
-    test environment, verify **Flight** enables normal permitted flight then
-    restores its own speed/state; enable **Freecam**, move and look around,
-    confirm the player does not move, then disable it and confirm the camera
-    returns. In Survival, enable **NoFall**, drop far enough to take damage,
+    request a jump. Verify **Jesus** holds a steady, non-bobbing water surface,
+    Jump releases upward, and Sneak permits normal diving. Walk into a wall with
+    **Spider** and verify forward/side
+    movement climbs while Sneak, ladders, and open screens do not. Verify
+    **Step** honors its configured cap through normal collisions, and
+    **Speed** defaults to its 3.0× multiplier with a 0.90 horizontal cap;
+    **Speed**/**BunnyHop** must remain within configured caps and do nothing in
+    screens. On a creative/spectator or otherwise permitted test environment,
+    verify **Flight** enables normal permitted flight then restores its own
+    speed/state. For Flight, Boat Flight, Speed, and Freecam, face south and
+    verify A moves east/left and D moves west/right rather than being inverted.
+    Enable **Freecam**, move and look around, confirm the player does not move,
+    then disable it and confirm the camera returns. In Survival, enable
+    **NoFall**, drop far enough to take damage,
     and verify health is unchanged. While gliding,
     verify **ExtraElytra**'s gradual pitch/near-ground adjustment, speed HUD,
     durability warning, and panic hide. With player-provided hotbar blocks,
@@ -629,9 +642,11 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     the outline on disable/world leave. While falling normally with Attack
     held, verify **CriticalAssist** requests no attack when grounded, in water,
     climbing, or fall-flying. Verify **KillAura** respects its range/FOV,
-    friend/bot exclusions (including the configured invisible heuristic), delay, bounded rotation speed, priority, and single/switch mode, never
-    selects a target behind a solid block, and makes no more than one ordinary
-    Helikon attack request in a tick alongside the other combat modules. Put a
+    friend/bot exclusions (including the configured invisible heuristic), delay,
+    bounded rotation speed, priority, and single/switch/multi modes; Multi must
+    never exceed its configured target limit. Confirm it never selects a target
+    behind a solid block and that no other combat module begins an attack in the
+    same tick. Put a
     healing splash/drink potion and a non-healing potion in the hotbar; verify
     **AutoPotion** selects only the configured healing potion below its health
     threshold, uses Minecraft's normal item path, then restores its owned slot.
@@ -672,7 +687,7 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
    unchanged. Release Attack, open a screen, disable the module, and verify no
    new mining action is started and Minecraft's normal cooldown behavior
    returns.
-2. Keep **Nuker** disabled or leave its whitelist blank and hold Attack near
+2. Keep **Nuker** disabled and hold Attack near
    blocks: verify it does nothing. In a disposable local/test world, whitelist
    one harmless block ID, keep the default one-request safety limit, hold
    Attack, and verify only loaded, reachable matching blocks receive ordinary

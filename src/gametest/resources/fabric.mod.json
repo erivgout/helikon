@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "helikon_gametest",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "Helikon Client GameTests",
   "description": "In-engine client gametests for Helikon; never shipped in release JARs.",
   "license": "MIT",

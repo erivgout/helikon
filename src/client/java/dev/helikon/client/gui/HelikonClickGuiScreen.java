@@ -90,6 +90,7 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private EditBox searchField;
     private double listScroll;
+    private double settingsScroll;
     private String keybindStatus = "";
 
     private int panelX;
@@ -167,19 +168,7 @@ public final class HelikonClickGuiScreen extends Screen {
             searchField.setY(panelY + 4);
         }
 
-        Module module = state.selectedModule().orElse(null);
-        if (module == null) {
-            return;
-        }
-        for (SettingRow row : settingRows(module)) {
-            if (SettingText.isEditable(row.setting())) {
-                EditBox field = textFields.get(row.setting());
-                if (field != null) {
-                    field.setX(settingsX + 6);
-                    field.setY(row.y() + 12);
-                }
-            }
-        }
+        syncSettingWidgetPositions();
     }
 
     @Override
@@ -338,6 +327,11 @@ public final class HelikonClickGuiScreen extends Screen {
             listScroll = clampScroll(listScroll - vertical * ROW_HEIGHT);
             return true;
         }
+        if (mouseX >= settingsX && mouseX < panelX + panelWidth && mouseY >= contentTop && mouseY < contentBottom) {
+            settingsScroll = clampSettingsScroll(settingsScroll - vertical * ROW_HEIGHT);
+            syncSettingWidgetPositions();
+            return true;
+        }
         return false;
     }
 
@@ -364,10 +358,19 @@ public final class HelikonClickGuiScreen extends Screen {
     private void drawSidebar(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         graphics.fill(panelX, contentTop, panelX + SIDEBAR_WIDTH, panelY + panelHeight, COLOR_SIDEBAR);
 
+        boolean activeSelected = state.isShowingActiveModules();
+        if (activeSelected) {
+            graphics.fill(panelX, contentTop, panelX + SIDEBAR_WIDTH, contentTop + ROW_HEIGHT, COLOR_ROW_SELECTED);
+        } else if (isInside(mouseX, mouseY, panelX, contentTop, SIDEBAR_WIDTH, ROW_HEIGHT)) {
+            graphics.fill(panelX, contentTop, panelX + SIDEBAR_WIDTH, contentTop + ROW_HEIGHT, COLOR_ROW_HOVER);
+        }
+        graphics.text(font, "Active", panelX + 6, contentTop + 3,
+                activeSelected ? COLOR_ACCENT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT), false);
+
         ModuleCategory[] categories = ModuleCategory.values();
         for (int index = 0; index < categories.length; index++) {
             ModuleCategory category = categories[index];
-            int rowY = contentTop + index * ROW_HEIGHT;
+            int rowY = contentTop + (index + 1) * ROW_HEIGHT;
             if (rowY + ROW_HEIGHT > contentBottom) {
                 break;
             }
@@ -449,8 +452,10 @@ public final class HelikonClickGuiScreen extends Screen {
             return;
         }
 
+        settingsScroll = clampSettingsScroll(settingsScroll);
+        graphics.enableScissor(settingsX, contentTop, panelX + panelWidth, contentBottom);
         int textX = settingsX + 6;
-        int y = contentTop + 4;
+        int y = settingsY(contentTop + 4);
         graphics.text(font, font.plainSubstrByWidth(module.name(), SETTINGS_WIDTH - 12), textX, y, COLOR_ACCENT, false);
         y += 10;
         String meta = module.category().displayName() + " · " + module.id();
@@ -459,7 +464,7 @@ public final class HelikonClickGuiScreen extends Screen {
         graphics.textWithWordWrap(font, Component.literal(module.description()), textX, y,
                 SETTINGS_WIDTH - 12, COLOR_TEXT_DIM);
 
-        int moduleResetY = settingControlsTop(module);
+        int moduleResetY = settingsY(settingControlsTop(module));
         drawWideButton(graphics, Component.translatable("screen.helikon.reset_module"), moduleResetY, mouseX, mouseY);
 
         int bindY = moduleResetY + MODULE_RESET_ROW_HEIGHT;
@@ -474,35 +479,39 @@ public final class HelikonClickGuiScreen extends Screen {
 
         for (SettingRow row : settingRows(module)) {
             Setting<?> setting = row.setting();
+            int rowY = settingsY(row.y());
             String label = font.plainSubstrByWidth(setting.name(), SETTINGS_WIDTH - 38);
-            graphics.text(font, label, textX, row.y() + 3, COLOR_TEXT, false);
-            drawResetButton(graphics, settingResetX(), row.y() + 2, mouseX, mouseY);
+            graphics.text(font, label, textX, rowY + 3, COLOR_TEXT, false);
+            drawResetButton(graphics, settingResetX(), rowY + 2, mouseX, mouseY);
 
             if (setting instanceof BooleanSetting booleanSetting) {
                 drawCheckbox(graphics, settingsCheckboxX(),
-                        row.y() + (BOOLEAN_ROW_HEIGHT - CHECKBOX_SIZE) / 2, booleanSetting.value());
+                        rowY + (BOOLEAN_ROW_HEIGHT - CHECKBOX_SIZE) / 2, booleanSetting.value());
             } else if (setting instanceof NumberSetting numberSetting) {
                 String range = "(" + NumberSettingText.format(numberSetting.minimum())
                         + "–" + NumberSettingText.format(numberSetting.maximum()) + ")";
                 int rangeWidth = font.width(range);
-                graphics.text(font, range, settingResetX() - 4 - rangeWidth, row.y() + 3, COLOR_TEXT_DIM, false);
+                graphics.text(font, range, settingResetX() - 4 - rangeWidth, rowY + 3, COLOR_TEXT_DIM, false);
             } else if (setting instanceof ColorSetting colorSetting) {
                 int swatchX = settingResetX() - 18;
-                graphics.fill(swatchX, row.y() + 3, swatchX + 12, row.y() + 10, colorSetting.value());
-                graphics.outline(swatchX, row.y() + 3, 12, 7, COLOR_TEXT_DIM);
-                drawColorPicker(graphics, colorSetting, row.y());
+                graphics.fill(swatchX, rowY + 3, swatchX + 12, rowY + 10, colorSetting.value());
+                graphics.outline(swatchX, rowY + 3, 12, 7, COLOR_TEXT_DIM);
+                drawColorPicker(graphics, colorSetting, rowY);
             } else if (setting instanceof EnumSetting<?> enumSetting) {
                 String value = enumSetting.valueId();
                 int valueWidth = font.width(value);
-                graphics.text(font, value, settingResetX() - 4 - valueWidth, row.y() + 3, COLOR_TEXT_DIM, false);
+                graphics.text(font, value, settingResetX() - 4 - valueWidth, rowY + 3, COLOR_TEXT_DIM, false);
             }
 
-            if (isInside(mouseX, mouseY, settingResetX(), row.y() + 2, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE)) {
+            if (isInside(mouseX, mouseY, settingResetX(), rowY + 2, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE)) {
                 graphics.setTooltipForNextFrame(font, Component.translatable("screen.helikon.reset_setting", setting.name()), mouseX, mouseY);
-            } else if (isInside(mouseX, mouseY, settingsX, row.y(), SETTINGS_WIDTH, 10)) {
+            } else if (isInside(mouseX, mouseY, settingsX, rowY, SETTINGS_WIDTH, 10)) {
                 graphics.setTooltipForNextFrame(font, Component.literal(setting.description()), mouseX, mouseY);
             }
         }
+        graphics.disableScissor();
+        drawSettingsScrollbar(graphics, module);
+        syncSettingWidgetPositions();
     }
 
     private void drawWideButton(GuiGraphicsExtractor graphics, Component text, int y, int mouseX, int mouseY) {
@@ -554,9 +563,17 @@ public final class HelikonClickGuiScreen extends Screen {
     }
 
     private boolean handleCategoryClick(int mouseX, int mouseY) {
+        if (isInside(mouseX, mouseY, panelX, contentTop, SIDEBAR_WIDTH, ROW_HEIGHT)) {
+            state.selectActiveModules();
+            searchField.setValue("");
+            listScroll = 0;
+            settingsScroll = 0;
+            rebuildSettingWidgets();
+            return true;
+        }
         ModuleCategory[] categories = ModuleCategory.values();
         for (int index = 0; index < categories.length; index++) {
-            int rowY = contentTop + index * ROW_HEIGHT;
+            int rowY = contentTop + (index + 1) * ROW_HEIGHT;
             if (rowY + ROW_HEIGHT > contentBottom) {
                 break;
             }
@@ -564,6 +581,8 @@ public final class HelikonClickGuiScreen extends Screen {
                 state.selectCategory(categories[index]);
                 searchField.setValue("");
                 listScroll = 0;
+                settingsScroll = 0;
+                rebuildSettingWidgets();
                 return true;
             }
         }
@@ -605,6 +624,7 @@ public final class HelikonClickGuiScreen extends Screen {
                 keybindAssignment.cancel();
                 keyCaptureSuppression.clear();
                 state.selectModule(module);
+                settingsScroll = 0;
                 rebuildSettingWidgets();
             }
             return true;
@@ -614,11 +634,12 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private boolean handleSettingsClick(int mouseX, int mouseY) {
         Module module = state.selectedModule().orElse(null);
-        if (module == null || mouseX < settingsX || mouseX >= panelX + panelWidth) {
+        if (module == null || mouseX < settingsX || mouseX >= panelX + panelWidth
+                || mouseY < contentTop || mouseY >= contentBottom) {
             return false;
         }
 
-        int moduleResetY = settingControlsTop(module);
+        int moduleResetY = settingsY(settingControlsTop(module));
         if (isInside(mouseX, mouseY, settingsX + 6, moduleResetY + 2, SETTINGS_WIDTH - 12, 10)) {
             module.resetSettings();
             rebuildSettingWidgets();
@@ -641,18 +662,19 @@ public final class HelikonClickGuiScreen extends Screen {
 
         for (SettingRow row : settingRows(module)) {
             Setting<?> setting = row.setting();
-            if (isInside(mouseX, mouseY, settingResetX(), row.y() + 2, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE)) {
+            int rowY = settingsY(row.y());
+            if (isInside(mouseX, mouseY, settingResetX(), rowY + 2, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE)) {
                 setting.reset();
                 rebuildSettingWidgets();
                 return true;
             }
             if (setting instanceof BooleanSetting booleanSetting
-                    && isInside(mouseX, mouseY, settingsX, row.y(), SETTINGS_WIDTH, BOOLEAN_ROW_HEIGHT)) {
+                    && isInside(mouseX, mouseY, settingsX, rowY, SETTINGS_WIDTH, BOOLEAN_ROW_HEIGHT)) {
                 booleanSetting.set(!booleanSetting.value());
                 return true;
             }
             if (setting instanceof EnumSetting<?> enumSetting
-                    && isInside(mouseX, mouseY, settingsX, row.y(), SETTINGS_WIDTH, BOOLEAN_ROW_HEIGHT)) {
+                    && isInside(mouseX, mouseY, settingsX, rowY, SETTINGS_WIDTH, BOOLEAN_ROW_HEIGHT)) {
                 enumSetting.cycle();
                 return true;
             }
@@ -663,14 +685,15 @@ public final class HelikonClickGuiScreen extends Screen {
     /** Applies an ARGB slider drag through the existing validated ColorSetting path. */
     private boolean updateColorPicker(int mouseX, int mouseY) {
         Module module = state.selectedModule().orElse(null);
-        if (module == null || mouseX < settingsX + 6 || mouseX >= settingsX + SETTINGS_WIDTH - 6) {
+        if (module == null || mouseX < settingsX + 6 || mouseX >= settingsX + SETTINGS_WIDTH - 6
+                || mouseY < contentTop || mouseY >= contentBottom) {
             return false;
         }
         for (SettingRow row : settingRows(module)) {
             if (!(row.setting() instanceof ColorSetting colorSetting)) {
                 continue;
             }
-            int relativeY = mouseY - row.y() - COLOR_PICKER_TOP;
+            int relativeY = mouseY - settingsY(row.y()) - COLOR_PICKER_TOP;
             int channel = relativeY / COLOR_PICKER_CHANNEL_HEIGHT;
             if (relativeY < 0 || channel >= ColorPickerValue.CHANNEL_COUNT) {
                 continue;
@@ -702,6 +725,7 @@ public final class HelikonClickGuiScreen extends Screen {
             keybindAssignment.cancel();
             keyCaptureSuppression.clear();
             ensureSelectedModuleVisible();
+            settingsScroll = 0;
             rebuildSettingWidgets();
             return true;
         }
@@ -752,7 +776,7 @@ public final class HelikonClickGuiScreen extends Screen {
             if (!SettingText.isEditable(setting)) {
                 continue;
             }
-            EditBox field = new EditBox(font, settingsX + 6, row.y() + 12, SETTINGS_WIDTH - 12, 14,
+            EditBox field = new EditBox(font, settingsX + 6, settingsY(row.y()) + 12, SETTINGS_WIDTH - 12, 14,
                     Component.literal(setting.name()));
             field.setMaxLength(SettingText.maximumLength(setting));
             field.setValue(SettingText.format(setting));
@@ -760,6 +784,26 @@ public final class HelikonClickGuiScreen extends Screen {
                     SettingText.tryApply(setting, text) ? COLOR_TEXT : COLOR_INVALID));
             addRenderableWidget(field);
             textFields.put(setting, field);
+        }
+        syncSettingWidgetPositions();
+    }
+
+    /** Keeps editable setting widgets aligned with the clipped settings viewport. */
+    private void syncSettingWidgetPositions() {
+        Module module = state.selectedModule().orElse(null);
+        if (module == null) {
+            return;
+        }
+        for (SettingRow row : settingRows(module)) {
+            EditBox field = textFields.get(row.setting());
+            if (field == null) {
+                continue;
+            }
+            int rowY = settingsY(row.y());
+            int fieldY = rowY + 12;
+            field.setX(settingsX + 6);
+            field.setY(fieldY);
+            field.visible = fieldY >= contentTop && fieldY + 14 <= contentBottom;
         }
     }
 
@@ -779,6 +823,40 @@ public final class HelikonClickGuiScreen extends Screen {
             y += rowHeight;
         }
         return rows;
+    }
+
+    private int settingsY(int unscrolledY) {
+        return unscrolledY - (int) settingsScroll;
+    }
+
+    private double clampSettingsScroll(double scroll) {
+        Module module = state.selectedModule().orElse(null);
+        if (module == null) {
+            return 0.0D;
+        }
+        return Math.clamp(scroll, 0.0D, Math.max(0, settingsContentBottom(module) - contentBottom));
+    }
+
+    private int settingsContentBottom(Module module) {
+        List<SettingRow> rows = settingRows(module);
+        if (!rows.isEmpty()) {
+            SettingRow last = rows.getLast();
+            return last.y() + last.height();
+        }
+        return settingControlsTop(module) + MODULE_RESET_ROW_HEIGHT + BIND_ROW_HEIGHT + ENABLED_ROW_HEIGHT;
+    }
+
+    private void drawSettingsScrollbar(GuiGraphicsExtractor graphics, Module module) {
+        int contentHeight = settingsContentBottom(module) - contentTop;
+        int viewHeight = contentBottom - contentTop;
+        if (contentHeight <= viewHeight) {
+            return;
+        }
+        int barHeight = Math.max(8, viewHeight * viewHeight / contentHeight);
+        int barY = contentTop + (int) ((viewHeight - barHeight) * settingsScroll / (contentHeight - viewHeight));
+        int barX = panelX + panelWidth - 2;
+        graphics.fill(barX, contentTop, barX + 2, contentBottom, COLOR_OUTLINE);
+        graphics.fill(barX, barY, barX + 2, barY + barHeight, COLOR_SCROLLBAR);
     }
 
     private double clampScroll(double scroll) {

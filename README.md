@@ -13,8 +13,8 @@ branding, or configuration formats from that or any other project.
 - **Render** — Fullbright, EntityESP (outline/box/glow/shader), BlockESP,
   StorageESP, XRay, Tracers, Trajectories, TrueSight, Radar, Breadcrumbs,
   BetterNametags, BetterCrosshair, DamageIndicators, MiniPlayer, and more.
-- **Movement** — AutoSprint, AutoWalk, AutoSneak, AutoParkour, NoSlow, Step,
-  Speed, BunnyHop, Flight, Boat Flight, Freecam, NoFall, ExtraElytra, Scaffold,
+- **Movement** — AutoSprint, AutoWalk, AutoSneak, AutoParkour, NoSlow, Jesus,
+  Spider, Step, Speed, BunnyHop, Flight, Boat Flight, Freecam, NoFall, ExtraElytra, Scaffold,
   Timer, and more.
 - **Player automation** — AutoEat, AutoTool, AutoArmor, AutoTotem, AutoFish,
   AutoEject, AutoPotion, AutoReconnect, InventoryManager, ChestSteal,
@@ -24,7 +24,7 @@ branding, or configuration formats from that or any other project.
   Announcer, AntiSpam, PrivateMessageHelper, LocalTranslator.
 - **Combat** — KillAura, TriggerBot, BowAimAssist, CriticalAssist, AutoPotion,
   TargetHUD, ReachDisplay, AntiBot.
-- **Local systems** — ClickGUI with themes and keyboard navigation, HUD
+- **Local systems** — ClickGUI with an Active view, themes, settings scrolling, and keyboard navigation, HUD
   editor, per-server profiles, friends, waypoints, macros, panic key, and a
   local-only debug overlay.
 
@@ -82,7 +82,7 @@ checksums, and the resolved dependency report. See
 
 ## Status
 
-`1.0.0` is the first stable release. The automated test suite, style and
+`1.0.1` is the current stable release. The automated test suite, style and
 client-only architecture checks, and Fabric client game tests pass. The
 additional live-client smoke checklists in [testing.md](docs/testing.md) remain
 recommended for real-world testing on a disposable profile.

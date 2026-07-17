@@ -19,15 +19,15 @@ class NukerTest {
     private static final Nuker.Target DIRT_NEAR = new Nuker.Target(0, 64, 1, "minecraft:dirt", 1.0D, true);
 
     @Test
-    void requiresAnEnabledHeldAttackAndExplicitWhitelist() {
+    void requiresEnabledHeldAttackAndTreatsBlankWhitelistAsAllBlocks() {
         Nuker module = new Nuker();
         List<Nuker.Target> candidates = List.of(STONE_NEAR, DIRT_NEAR);
         assertTrue(module.selectTargets(new Nuker.Context(false, true), candidates).isEmpty());
         assertFalse(module.shouldScan(new Nuker.Context(false, true)));
 
         enable(module);
-        assertTrue(module.selectTargets(new Nuker.Context(false, true), candidates).isEmpty());
-        assertFalse(module.shouldScan(new Nuker.Context(false, true)));
+        assertTrue(module.shouldScan(new Nuker.Context(false, true)));
+        assertEquals(List.of(DIRT_NEAR), module.selectTargets(new Nuker.Context(false, true), candidates));
         stringSetting(module, "whitelist").set("minecraft:stone");
         assertTrue(module.shouldScan(new Nuker.Context(false, true)));
         assertFalse(module.shouldScan(new Nuker.Context(true, true)));
@@ -75,6 +75,16 @@ class NukerTest {
         NukerRotation.Rotation rotation = NukerRotation.toward(0.5D, 65.5D, 0.5D, 1, 64, 0);
         assertEquals(-90.0F, rotation.yaw());
         assertEquals(45.0F, rotation.pitch());
+    }
+
+    @Test
+    void startsNewSurvivalTargetsAndContinuesAnUnchangedTarget() {
+        NukerBreakSequence sequence = new NukerBreakSequence();
+        assertEquals(NukerBreakSequence.Action.START, sequence.next(10L));
+        assertEquals(NukerBreakSequence.Action.CONTINUE, sequence.next(10L));
+        assertEquals(NukerBreakSequence.Action.START, sequence.next(11L));
+        sequence.reset();
+        assertEquals(NukerBreakSequence.Action.START, sequence.next(11L));
     }
 
     private static void enable(Nuker module) {

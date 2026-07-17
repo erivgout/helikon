@@ -54,6 +54,22 @@ class ClickGuiStateTest {
     }
 
     @Test
+    void activeSectionShowsOnlyEnabledModulesAcrossCategories() {
+        registry.setEnabled(fullbright, true);
+        registry.setEnabled(timestamps, true);
+        ClickGuiState state = new ClickGuiState(registry);
+
+        state.selectActiveModules();
+
+        assertTrue(state.isShowingActiveModules());
+        assertEquals(List.of(fullbright, timestamps), state.visibleModules());
+
+        state.selectCategory(ModuleCategory.MOVEMENT);
+        assertFalse(state.isShowingActiveModules());
+        assertEquals(List.of(sprint), state.visibleModules());
+    }
+
+    @Test
     void searchMatchesNameCaseInsensitively() {
         ClickGuiState state = new ClickGuiState(registry);
         state.setSearchQuery("SPRINT");

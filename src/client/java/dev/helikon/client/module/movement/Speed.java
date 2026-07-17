@@ -23,13 +23,13 @@ public final class Speed extends Module {
         super("speed", "Speed", "Conservative local acceleration/strafe assistance with a multiplayer warning.",
                 ModuleCategory.MOVEMENT, false, Keybind.unbound());
         mode = addSetting(new EnumSetting<>("mode", "Mode", "Choose a conservative local motion policy.",
-                Mode.class, Mode.VANILLA_ACCELERATION));
+                Mode.class, Mode.MULTIPLIER));
         multiplier = addSetting(new NumberSetting("multiplier", "Multiplier", "Capped horizontal multiplier.",
-                1.05D, 1.0D, 2.0D));
+                3.0D, 1.0D, 3.0D));
         acceleration = addSetting(new NumberSetting("acceleration", "Acceleration", "Local directional acceleration.",
-                0.015D, 0.0D, 0.08D));
+                0.08D, 0.0D, 0.08D));
         maximumSpeed = addSetting(new NumberSetting("maximum_speed", "Maximum speed", "Hard local horizontal speed cap.",
-                0.35D, 0.05D, 0.60D));
+                0.90D, 0.05D, 0.90D));
     }
 
     public HorizontalVelocity adjust(HorizontalVelocity current, HorizontalVelocity desiredDirection, boolean moving) {

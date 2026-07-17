@@ -9,6 +9,7 @@ import dev.helikon.client.combat.PotionCandidate;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.EnumSetting;
+import dev.helikon.client.setting.NumberSetting;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -81,6 +82,21 @@ class CombatPolicyTest {
     }
 
     @Test
+    void killAuraMultiModeReturnsBoundedPriorityOrderedTargets() {
+        KillAura aura = enabled(new KillAura());
+        enumSetting(aura, "target_mode", KillAura.TargetMode.class).set(KillAura.TargetMode.MULTI);
+        numberSetting(aura, "max_targets").set(2.0D);
+        CombatTarget nearest = target("nearest", CombatEntityType.HOSTILE, false, false, true, 1.5D, 4.0D, 10.0D);
+        CombatTarget second = target("second", CombatEntityType.HOSTILE, false, false, true, 2.5D, 2.0D, 10.0D);
+        CombatTarget third = target("third", CombatEntityType.HOSTILE, false, false, true, 3.5D, 1.0D, 10.0D);
+        CombatTarget blocked = target("blocked", CombatEntityType.HOSTILE, false, false, false, 1.0D, 1.0D, 10.0D);
+
+        assertEquals(List.of(nearest, second),
+                aura.nextAttacks(0L, List.of(third, blocked, second, nearest), true));
+        assertTrue(aura.nextAttacks(1L, List.of(nearest, second, third), true).isEmpty());
+    }
+
+    @Test
     void autoPotionUsesOnlyRestorativeWhitelistedPotionAndRestoresOwnedSlot() {
         AutoPotion autoPotion = enabled(new AutoPotion());
         PotionCandidate safe = new PotionCandidate(3, "healing", PotionCandidate.Kind.SPLASH, true);
@@ -129,5 +145,9 @@ class CombatPolicyTest {
     @SuppressWarnings("unchecked")
     private static <E extends Enum<E>> EnumSetting<E> enumSetting(Module module, String id, Class<E> ignored) {
         return (EnumSetting<E>) module.settings().stream().filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
+    }
+
+    private static NumberSetting numberSetting(Module module, String id) {
+        return (NumberSetting) module.settings().stream().filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
     }
 }

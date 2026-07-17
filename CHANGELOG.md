@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.1
+
+- Adds Jesus water-surface walking and Spider wall climbing as independent
+  Movement modules. Jesus now holds the exact fluid surface without bobbing,
+  while Jump and Sneak retain their expected escape and diving behavior.
+- Corrects left/right movement in Flight, Boat Flight, Speed, and Freecam, and
+  updates Speed's default multiplier and maximum to 3×.
+- Adds KillAura multi-target mode with a configurable target cap, and fixes
+  Nuker so a blank whitelist targets all non-air blocks and Survival mining
+  continues the same block instead of repeatedly restarting.
+- Adds an optional cached terrain minimap beneath Radar entity markers.
+- Makes long ClickGUI settings panels scrollable and adds an Active category
+  for quickly reviewing and disabling enabled utilities.
+- Adds per-line animated rainbow colors to the Active Modules HUD and clarifies
+  its editor control.
+
 ## 1.0.0
 
 - Fixes XRay rendering under Fabric Indigo, keeps configured ores visible and

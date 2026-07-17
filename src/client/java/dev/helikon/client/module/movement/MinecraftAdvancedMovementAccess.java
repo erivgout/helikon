@@ -8,6 +8,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Abilities;
@@ -21,6 +22,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalDouble;
 
 /** Thin 26.2 client bridge for conservative advanced-movement decisions. */
 public final class MinecraftAdvancedMovementAccess {
@@ -36,6 +38,41 @@ public final class MinecraftAdvancedMovementAccess {
         Vec3 velocity = player.getDeltaMovement();
         module.verticalVelocity(player.onClimbable(), player.input.keyPresses.forward(), player.input.keyPresses.jump(),
                         player.input.keyPresses.shift(), velocity.y)
+                .ifPresent(y -> player.setDeltaMovement(velocity.x, y, velocity.z));
+    }
+
+    /** Holds an eligible local player at water level while keeping every vanilla opt-out intact. */
+    public static void tickJesus(Jesus module) {
+        Minecraft client = Minecraft.getInstance();
+        if (!isInteractive(client)) {
+            return;
+        }
+        LocalPlayer player = client.player;
+        Vec3 velocity = player.getDeltaMovement();
+        OptionalDouble surface = waterSurfaceY(client, player);
+        module.surfaceHeight(surface.isPresent(), player.input.keyPresses.shift(), player.input.keyPresses.jump(),
+                        player.isPassenger(), player.getAbilities().flying, player.isFallFlying(), player.getY(),
+                        surface.orElse(player.getY()), velocity.y)
+                .ifPresent(y -> {
+                    player.setPos(player.getX(), y, player.getZ());
+                    player.setDeltaMovement(velocity.x, 0.0D, velocity.z);
+                    player.setOnGround(true);
+                    player.fallDistance = 0.0F;
+                });
+    }
+
+    public static void tickSpider(Spider module) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) {
+            return;
+        }
+        LocalPlayer player = client.player;
+        Vec2 input = player.input.getMoveVector();
+        boolean moving = input.x != 0.0F || input.y != 0.0F;
+        Vec3 velocity = player.getDeltaMovement();
+        module.verticalVelocity(client.gui.screen() != null, player.horizontalCollision, moving,
+                        player.onClimbable(), player.input.keyPresses.shift(), player.isPassenger(),
+                        player.getAbilities().flying, player.isFallFlying(), velocity.y)
                 .ifPresent(y -> player.setDeltaMovement(velocity.x, y, velocity.z));
     }
 
@@ -212,9 +249,7 @@ public final class MinecraftAdvancedMovementAccess {
 
     private static HorizontalVelocity desiredDirection(LocalPlayer player, Vec2 input) {
         Vec3 forward = player.getViewVector(1.0F);
-        double x = forward.x * input.y - forward.z * input.x;
-        double z = forward.z * input.y + forward.x * input.x;
-        return new HorizontalVelocity(x, z);
+        return MovementDirections.fromView(forward.x, forward.z, input.x, input.y);
     }
 
     private static Optional<BlockHitResult> placementHit(Minecraft client, BlockPos target) {
@@ -225,6 +260,24 @@ public final class MinecraftAdvancedMovementAccess {
             }
         }
         return Optional.empty();
+    }
+
+    /** Finds only the top of a loaded water column at the player's horizontal position. */
+    private static OptionalDouble waterSurfaceY(Minecraft client, LocalPlayer player) {
+        int x = (int) Math.floor(player.getX());
+        int z = (int) Math.floor(player.getZ());
+        int topCandidateY = (int) Math.floor(player.getY() + 0.01D);
+        for (int offset = 0; offset <= 1; offset++) {
+            BlockPos position = new BlockPos(x, topCandidateY - offset, z);
+            if (!client.level.isLoaded(position)) {
+                continue;
+            }
+            var fluid = client.level.getFluidState(position);
+            if (fluid.is(FluidTags.WATER) && !client.level.getFluidState(position.above()).is(FluidTags.WATER)) {
+                return OptionalDouble.of(position.getY() + fluid.getHeight(client.level, position));
+            }
+        }
+        return OptionalDouble.empty();
     }
 
     private static boolean isReplaceableLoaded(Minecraft client, BlockPos position) {

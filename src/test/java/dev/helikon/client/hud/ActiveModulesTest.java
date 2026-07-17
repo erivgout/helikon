@@ -52,9 +52,11 @@ class ActiveModulesTest {
     void rainbowColorChangesAcrossHueCycleAndStaysOpaque() {
         int first = ActiveModules.rainbowColor(0);
         int second = ActiveModules.rainbowColor(120);
+        int nextLine = ActiveModules.rainbowColor(0, 1);
 
         assertEquals(0xFF000000, first & 0xFF000000);
         assertNotEquals(first, second);
+        assertNotEquals(first, nextLine);
     }
 
     @Test

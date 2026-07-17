@@ -20,6 +20,7 @@ import java.util.List;
 /** Narrow 26.2 adapter for already-loaded, normal block-destroy input paths. */
 public final class MinecraftMiningAccess {
     private static final int MAXIMUM_LINE_OF_SIGHT_CANDIDATES = 32;
+    private static final NukerBreakSequence NUKER_BREAK_SEQUENCE = new NukerBreakSequence();
 
     private MinecraftMiningAccess() {
     }
@@ -41,12 +42,14 @@ public final class MinecraftMiningAccess {
     public static void tickNuker(Nuker module) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null || client.gameMode == null) {
+            NUKER_BREAK_SEQUENCE.reset();
             return;
         }
         LocalPlayer player = client.player;
         boolean screenOpen = client.gui.screen() != null;
         Nuker.Context context = new Nuker.Context(screenOpen, client.options.keyAttack.isDown());
         if (!module.shouldScan(context)) {
+            NUKER_BREAK_SEQUENCE.reset();
             applyToolAction(player, module.toolAction(false, player.getInventory().getSelectedSlot(), List.of()));
             return;
         }
@@ -55,10 +58,13 @@ public final class MinecraftMiningAccess {
         applyToolAction(player, module.toolAction(!targets.isEmpty(), player.getInventory().getSelectedSlot(),
                 targets.isEmpty() ? List.of() : toolCandidates(player, client.level.getBlockState(blockPos(targets.getFirst())))));
         if (targets.isEmpty() || screenOpen || !client.options.keyAttack.isDown()) {
+            NUKER_BREAK_SEQUENCE.reset();
             return;
         }
 
-        for (Nuker.Target target : targets) {
+        int actionCount = player.isCreative() ? targets.size() : 1;
+        for (int index = 0; index < actionCount; index++) {
+            Nuker.Target target = targets.get(index);
             BlockPos position = blockPos(target);
             if (!client.level.isLoaded(position) || !player.isWithinBlockInteractionRange(position, 0.0D)
                     || client.level.getBlockState(position).isAir()) {
@@ -74,7 +80,15 @@ public final class MinecraftMiningAccess {
             // Minecraft's normal API applies its own prediction and packet format. Resetting only this transient
             // client cooldown lets the module's separately bounded action cap take effect without fabricating packets.
             ((MultiPlayerGameModeAccessor) client.gameMode).helikon$setDestroyDelay(0);
-            client.gameMode.startDestroyBlock(position, targetFace(client, position));
+            Direction face = targetFace(client, position);
+            if (player.isCreative() || NUKER_BREAK_SEQUENCE.next(position.asLong()) == NukerBreakSequence.Action.START) {
+                client.gameMode.startDestroyBlock(position, face);
+            } else {
+                client.gameMode.continueDestroyBlock(position, face);
+            }
+        }
+        if (player.isCreative()) {
+            NUKER_BREAK_SEQUENCE.reset();
         }
     }
 

@@ -13,6 +13,7 @@ import dev.helikon.client.setting.NumberSetting;
 /** Configures a compact local entity radar HUD. */
 public final class Radar extends Module {
     private final EnumSetting<RadarProjection.Shape> shape;
+    private final BooleanSetting minimap;
     private final BooleanSetting rotate;
     private final NumberSetting zoom;
     private final BooleanSetting players;
@@ -30,6 +31,8 @@ public final class Radar extends Module {
                 ModuleCategory.RENDER, false, Keybind.unbound());
         shape = addSetting(new EnumSetting<>("shape", "Shape", "Radar boundary shape.",
                 RadarProjection.Shape.class, RadarProjection.Shape.CIRCLE));
+        minimap = addSetting(new BooleanSetting("minimap", "Minimap",
+                "Draw nearby surface terrain beneath the radar entity points.", false));
         rotate = addSetting(new BooleanSetting("rotate", "Rotate", "Rotate local radar points with player yaw.", true));
         zoom = addSetting(new NumberSetting("zoom", "Zoom", "Horizontal local radar range in blocks.",
                 64.0D, 8.0D, 192.0D));
@@ -59,6 +62,8 @@ public final class Radar extends Module {
     }
 
     public RadarProjection.Shape shape() { return shape.value(); }
+
+    public boolean minimap() { return minimap.value(); }
 
     public boolean rotate() { return rotate.value(); }
 

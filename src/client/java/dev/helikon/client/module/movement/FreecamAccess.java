@@ -80,12 +80,12 @@ public final class FreecamAccess {
         if (horizontalForward.lengthSqr() > 0.0D) {
             horizontalForward = horizontalForward.normalize();
         }
-        Vec3 side = new Vec3(-horizontalForward.z, 0.0D, horizontalForward.x);
         double forwardInput = (capturedInput.forward() ? 1.0D : 0.0D) - (capturedInput.backward() ? 1.0D : 0.0D);
         double sideInput = (capturedInput.left() ? 1.0D : 0.0D) - (capturedInput.right() ? 1.0D : 0.0D);
         double vertical = (capturedInput.jump() ? 1.0D : 0.0D) - (capturedInput.shift() ? 1.0D : 0.0D);
-        Vec3 movement = horizontalForward.scale(forwardInput * speed).add(side.scale(sideInput * speed))
-                .add(0.0D, vertical * speed, 0.0D);
+        HorizontalVelocity horizontal = MovementDirections.fromView(
+                horizontalForward.x, horizontalForward.z, sideInput, forwardInput).scale(speed);
+        Vec3 movement = new Vec3(horizontal.x(), vertical * speed, horizontal.z());
         if (movement.lengthSqr() > 0.0D) {
             camera.setPos(camera.position().add(movement));
         }

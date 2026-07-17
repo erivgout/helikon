@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.OptionalInt;
 import java.util.Set;
 
-/** Selects a small, explicitly whitelisted set of ordinary local block-destroy requests. */
+/** Selects a small, locally filtered set of ordinary block-destroy requests. */
 public final class Nuker extends Module {
     public static final int HARD_MAXIMUM_ACTIONS_PER_TICK = 2;
 
@@ -61,14 +61,14 @@ public final class Nuker extends Module {
     private Set<String> blockedBlocks;
 
     public Nuker() {
-        super("nuker", "Nuker", "Makes a bounded set of ordinary destroy requests for explicitly whitelisted blocks.",
+        super("nuker", "Nuker", "Breaks nearby loaded blocks through Minecraft's ordinary destroy path while Attack is held.",
                 ModuleCategory.WORLD, false, Keybind.unbound());
         radius = addSetting(new NumberSetting("radius", "Radius", "Loaded local block radius to consider.",
                 2.0D, 1.0D, 4.0D));
         blocksPerTick = addSetting(new NumberSetting("blocks_per_tick", "Blocks per tick",
                 "Maximum ordinary destroy requests considered each tick.", 1.0D, 1.0D, HARD_MAXIMUM_ACTIONS_PER_TICK));
         whitelist = addSetting(new StringSetting("whitelist", "Whitelist",
-                "Required semicolon-separated block IDs; blank disables Nuker for safety.", "", 1_024, true));
+                "Optional semicolon-separated block IDs; blank targets every non-air block.", "", 1_024, true));
         blacklist = addSetting(new StringSetting("blacklist", "Blacklist",
                 "Semicolon-separated block IDs never selected locally.", "", 1_024, true));
         toolSelection = addSetting(new BooleanSetting("tool_selection", "Tool selection",
@@ -108,7 +108,7 @@ public final class Nuker extends Module {
 
     /** Avoids even local world scanning until every explicit user-activation guard is satisfied. */
     public boolean shouldScan(Context context) {
-        return context != null && isEnabled() && !context.screenOpen() && context.attackHeld() && !allowedBlocks.isEmpty();
+        return context != null && isEnabled() && !context.screenOpen() && context.attackHeld();
     }
 
     /** Owns a temporary hotbar selection only while a safe target remains active. */
@@ -156,7 +156,9 @@ public final class Nuker extends Module {
 
     /** Lets the narrow scanner avoid retaining irrelevant targets before bounded local ray checks. */
     public boolean isConfiguredTarget(String blockId) {
-        return blockId != null && allowedBlocks.contains(blockId) && !blockedBlocks.contains(blockId);
+        return blockId != null && !blockId.isBlank()
+                && (allowedBlocks.isEmpty() || allowedBlocks.contains(blockId))
+                && !blockedBlocks.contains(blockId);
     }
 
     @Override

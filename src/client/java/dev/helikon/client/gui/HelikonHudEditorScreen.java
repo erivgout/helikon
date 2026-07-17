@@ -98,7 +98,9 @@ public final class HelikonHudEditorScreen extends Screen {
         ActiveModulesHud.draw(graphics, font, previewLines(), new HudBounds(0, 0,
                 unscaledPreviewBounds().width(), unscaledPreviewBounds().height()),
                 style.enabled() ? previewColor() : COLOR_DISABLED, true, style.padding(), style.alignment(),
-                style.background(), style.textShadow());
+                style.background(), style.textShadow(),
+                style.enabled() && style.colorMode() == ActiveModulesLayout.ColorMode.RAINBOW,
+                System.currentTimeMillis() / 50L);
         graphics.pose().popMatrix();
         drawElementPreview(graphics);
         super.extractRenderState(graphics, mouseX, mouseY, delta);
@@ -287,7 +289,9 @@ public final class HelikonHudEditorScreen extends Screen {
         graphics.text(font, Component.translatable("screen.helikon.hud_editor.active_modules"), 27, 31, COLOR_TEXT, false);
         graphics.text(font, "Sort: " + style.sort().name().toLowerCase(), 14, 48, COLOR_TEXT_DIM, false);
         graphics.text(font, "Alignment: " + style.alignment().name().toLowerCase(), 14, 61, COLOR_TEXT_DIM, false);
-        graphics.text(font, "Color: " + style.colorMode().name().toLowerCase(), 14, 74, COLOR_TEXT_DIM, false);
+        boolean activeRainbow = style.colorMode() == ActiveModulesLayout.ColorMode.RAINBOW;
+        graphics.text(font, "Active-list rainbow: " + (activeRainbow ? "on" : "off") + " (click)",
+                14, 74, activeRainbow ? COLOR_ACCENT : COLOR_TEXT_DIM, false);
         graphics.text(font, "Background: " + (style.background() ? "on" : "off"), 14, 87, COLOR_TEXT_DIM, false);
         graphics.text(font, "Text shadow: " + (style.textShadow() ? "on" : "off"), 14, 100, COLOR_TEXT_DIM, false);
         graphics.text(font, "Animation: " + (style.animations() ? "on" : "off"), 194, 100, COLOR_TEXT_DIM, false);

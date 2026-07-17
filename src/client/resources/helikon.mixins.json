@@ -39,6 +39,7 @@
     "MultiPlayerGameModeEventMixin",
     "MultiPlayerGameModeAccessor",
     "SectionCompilerXRayMixin",
+    "ScreenEffectRendererMixin",
     "ConnectionPacketObservationMixin",
     "MinecraftAccessor"
   ],

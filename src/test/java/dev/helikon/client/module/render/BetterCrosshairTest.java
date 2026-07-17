@@ -38,7 +38,7 @@ class BetterCrosshairTest {
         PanicState panic = new PanicState();
         ModuleRegistry registry = new ModuleRegistry();
         registry.register(crosshair);
-        RenderModuleAccess.install(new AntiBlind(), crosshair, new AntiTotemAnimation(), new Dinnerbone(),
+        RenderModuleAccess.install(new AntiBlind(), new NoFireOverlay(), crosshair, new AntiTotemAnimation(), new Dinnerbone(),
                 new RainbowEnchant(), layout, panic);
 
         registry.setEnabled(crosshair, true);

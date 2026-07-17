@@ -59,8 +59,8 @@ the world-render smoke checklist to verify local frustum/range behavior.
 Fullbright's gamma restoration, setting-driven Night Vision lifecycle, and
 identity-safe effect restoration are covered by `FullbrightGammaControllerTest`,
 `FullbrightTest`, and `ClientEffectOverrideStateTest`.
-AntiBlind and AntiTotemAnimation enable-state gating, BetterCrosshair geometry,
-and strict ARGB color settings are covered by `AntiBlindTest`,
+AntiBlind, NoFireOverlay, and AntiTotemAnimation enable-state gating, BetterCrosshair geometry,
+and strict ARGB color settings are covered by `AntiBlindTest`, `NoFireOverlayTest`,
 `AntiTotemAnimationTest`, `BetterCrosshairTest`,
 `CrosshairGeometryTest`, and `SettingTest`.
 Dinnerbone's selected-category enable-state policy and RainbowEnchant's

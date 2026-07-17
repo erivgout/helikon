@@ -7,6 +7,11 @@ an internal event bus, a functional Right Shift ClickGUI, local chat commands,
 module keybinds, an Active Modules HUD, local profiles, local friends, local
 waypoints, local macros, and tests.
 
+The internal event bus uses typed, Minecraft-free event models. Its currently
+wired lifecycle bridge covers ticks, local world connections, identity-aware
+screen changes, and accepted ordinary chat; the remaining event models await
+target-version-specific adapter verification.
+
 Its local settings API supports booleans, integers and decimals, enums,
 colors, keyboard binds, bounded text and text lists, block/item/entity ID
 selections, enum multi-selections, numeric ranges, and bounded safe regular

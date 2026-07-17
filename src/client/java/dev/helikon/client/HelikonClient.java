@@ -21,7 +21,11 @@ import dev.helikon.client.config.HudConfigurationManager;
 import dev.helikon.client.config.PanicConfigurationManager;
 import dev.helikon.client.config.ProfileManager;
 import dev.helikon.client.event.ClientTickEvent;
+import dev.helikon.client.event.ChatEvent;
 import dev.helikon.client.event.EventBus;
+import dev.helikon.client.event.ScreenEvent;
+import dev.helikon.client.event.ScreenTransitionTracker;
+import dev.helikon.client.event.WorldEvent;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.friend.FriendToggleGesture;
 import dev.helikon.client.gui.ClickGuiWindowState;
@@ -232,6 +236,7 @@ public final class HelikonClient implements ClientModInitializer {
     private final AtomicReference<Runnable> pendingScreenAction = new AtomicReference<>();
     private boolean screenWasOpenAtTickStart;
     private boolean helikonScreenWasOpenAtTickStart;
+    private final ScreenTransitionTracker screenTransitions = new ScreenTransitionTracker();
     private long clientTick;
     private ServerData reconnectServer;
     private ServerData lastConnectedServer;
@@ -475,21 +480,29 @@ public final class HelikonClient implements ClientModInitializer {
                 () -> ThreadLocalRandom.current().nextInt());
         ClientSendMessageEvents.MODIFY_CHAT.register(outgoingChat::format);
         ClientSendMessageEvents.CHAT_CANCELED.register(chatSpammer::reportRejected);
-        ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, chatType, receivedAt) ->
-                allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply, normalChatSender,
-                        IncomingMessageAdapter.chat(message, signedMessage, sender, receivedAt.toEpochMilli()))
-        );
-        ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) ->
-                allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply, normalChatSender,
-                        IncomingMessageAdapter.game(message, overlay, System.currentTimeMillis()))
-        );
+        ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, chatType, receivedAt) -> {
+            IncomingChatMessage incoming = IncomingMessageAdapter.chat(message, signedMessage, sender, receivedAt.toEpochMilli());
+            return allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply, normalChatSender, incoming);
+        });
+        ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
+            IncomingChatMessage incoming = IncomingMessageAdapter.game(message, overlay, System.currentTimeMillis());
+            return allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply, normalChatSender, incoming);
+        });
+        ClientSendMessageEvents.CHAT.register(message ->
+                events.post(new ChatEvent(ChatEvent.Direction.SEND, message, false)));
+        ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, chatType, receivedAt) ->
+                events.post(new ChatEvent(ChatEvent.Direction.RECEIVE, message.getString(), false)));
+        ClientReceiveMessageEvents.GAME.register((message, overlay) ->
+                events.post(new ChatEvent(ChatEvent.Direction.RECEIVE, message.getString(), true)));
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             reconnectServer = null;
             lastConnectedServer = client.getCurrentServer();
             reconnectAttemptInFlight = false;
+            events.post(new WorldEvent(WorldEvent.Phase.JOIN, serverAddress(lastConnectedServer)));
             modules.runGuarded(autoReconnect, "connect", autoReconnect::onConnected);
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            events.post(new WorldEvent(WorldEvent.Phase.LEAVE, serverAddress(lastConnectedServer)));
             modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));
             if (timer.isEnabled()) {
                 modules.setEnabled(timer, false);
@@ -515,6 +528,7 @@ public final class HelikonClient implements ClientModInitializer {
                 new ReachDisplayHud(reachDisplay, combatTracker, panicState));
         LevelRenderEvents.BEFORE_GIZMOS.register(worldVisuals::render);
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            observeScreenTransition(client);
             screenWasOpenAtTickStart = client.gui.screen() != null;
             helikonScreenWasOpenAtTickStart = isHelikonScreen(client);
             events.post(new ClientTickEvent(ClientTickEvent.Phase.PRE));
@@ -557,6 +571,17 @@ public final class HelikonClient implements ClientModInitializer {
         Minecraft.getInstance().setScreenAndShow(new HelikonClickGuiScreen(
                 modules, configuration, clickGuiWindow, hudLayout, hudConfiguration
         ));
+    }
+
+    /** Publishes screen changes at a tick boundary without retaining a Minecraft screen object in the event layer. */
+    private void observeScreenTransition(Minecraft client) {
+        Screen screen = client.gui.screen();
+        String nextScreenId = screen == null ? "" : screen.getClass().getName();
+        screenTransitions.update(screen, nextScreenId).forEach(events::post);
+    }
+
+    private static String serverAddress(ServerData server) {
+        return server == null || server.ip == null ? "" : server.ip;
     }
 
     private void activatePanic() {

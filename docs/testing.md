@@ -18,6 +18,8 @@ configuration recovery (`ActiveModulesTest`, `HudEditorStateTest`,
 category/module wrapping and empty-search selection handling. Profile save,
 load, atomic backup, malformed-file recovery, safe profile names, and local
 command wiring are covered by `ProfileManagerTest` and `ProfileCommandTest`.
+`EventBusTest` covers typed dispatch, subscription removal, listener-failure
+isolation, event-catalog coverage, and malformed event-payload rejection.
 Fullbright's gamma restoration, setting-driven Night Vision lifecycle, and
 identity-safe effect restoration are covered by `FullbrightGammaControllerTest`,
 `FullbrightTest`, and `ClientEffectOverrideStateTest`.

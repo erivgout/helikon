@@ -220,8 +220,17 @@ non-persistent current-display provider; no chat text is written to disk.
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection
-or classpath scanning, including during ticks and renders. Fabric lifecycle
-events are bridged into `ClientTickEvent` during the bootstrap.
+or classpath scanning, including during ticks and renders. Its Minecraft-free
+catalog models tick pre/post; world join/leave; player death/respawn; screen
+open/close; keyboard, mouse-button, and scroll input; HUD/world/entity/block
+outline rendering; player movement/rotation; item use, attack, block break, and
+block place; inventory updates; chat send/receive; packet observation; chunk
+load/unload; and resource reload boundaries. The current Fabric bridge publishes
+tick, world connection, identity-aware screen transitions, and accepted normal
+chat observations. The catalog is intentionally ahead of adapter coverage:
+future version-specific adapters must publish the remaining boundaries only
+after their 26.2 hooks are verified. Event payloads deliberately contain local primitives
+and IDs, never Minecraft packet, screen, entity, or world objects.
 
 ## Commands
 

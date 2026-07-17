@@ -134,6 +134,8 @@ import dev.helikon.client.module.movement.Scaffold;
 import dev.helikon.client.module.movement.SprintContext;
 import dev.helikon.client.module.movement.Step;
 import dev.helikon.client.module.movement.StepAccess;
+import dev.helikon.client.module.movement.Blink;
+import dev.helikon.client.module.movement.BlinkPacketAccess;
 import dev.helikon.client.module.movement.Speed;
 import dev.helikon.client.module.movement.Spider;
 import dev.helikon.client.module.movement.Timer;
@@ -461,6 +463,7 @@ public final class HelikonClient implements ClientModInitializer {
         Scaffold scaffold = new Scaffold();
         TpClick tpClick = new TpClick();
         Timer timer = new Timer();
+        Blink blink = new Blink();
         AutoEat autoEat = new AutoEat(new MinecraftUseKeyAccess());
         AutoTool autoTool = new AutoTool();
         AutoArmor autoArmor = new AutoArmor();
@@ -556,6 +559,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(scaffold);
         modules.register(tpClick);
         modules.register(timer);
+        modules.register(blink);
         modules.register(autoEat);
         modules.register(autoTool);
         modules.register(autoArmor);
@@ -637,6 +641,7 @@ public final class HelikonClient implements ClientModInitializer {
         JumpResetAccess.install(jumpReset);
         WTapAccess.install(wtap, friends);
         TimerModuleAccess.install(timer);
+        BlinkPacketAccess.install(blink);
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, chams, betterNametags, blockEsp, tracers, trajectories, projectileWarning,
@@ -667,6 +672,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(jetpack, "tick", () -> MinecraftAdvancedMovementAccess.tickJetpack(jetpack));
                 modules.runGuarded(freecam, "tick", () -> FreecamAccess.tick(Minecraft.getInstance()));
                 modules.runGuarded(noFall, "tick", () -> MinecraftAdvancedMovementAccess.tickNoFall(noFall));
+                modules.runGuarded(blink, "tick", BlinkPacketAccess::tick);
                 modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));
                 modules.runGuarded(scaffold, "tick", () -> MinecraftAdvancedMovementAccess.tickScaffold(scaffold, clientTick));
                 modules.runGuarded(tpClick, "tick", () -> MinecraftTpClickAccess.tick(tpClick, INPUT_READER));
@@ -870,6 +876,10 @@ public final class HelikonClient implements ClientModInitializer {
             modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));
             if (timer.isEnabled()) {
                 modules.setEnabled(timer, false);
+            }
+            BlinkPacketAccess.discard();
+            if (blink.isEnabled()) {
+                modules.setEnabled(blink, false);
             }
             coordinateTracker.clearObservedLocation();
         });

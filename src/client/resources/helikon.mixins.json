@@ -46,6 +46,7 @@
     "ConnectionPacketObservationMixin",
     "ConnectionBackTrackMixin",
     "ClientboundMoveEntityPacketAccessor",
+    "ConnectionBlinkMixin",
     "MinecraftAccessor"
   ],
   "injectors": {

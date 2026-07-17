@@ -169,7 +169,8 @@ hotbar selection, and safe timer multiplier are covered by
 by the live-client checklist below because it relies on verified 26.2 client
 hooks.
 
-`WaterJumpTest` independently covers its disabled default and every required
+`AntiWaterPushTest` covers its disabled default and reversible water-current
+policy. `WaterJumpTest` independently covers its disabled default and every required
 Minecraft-free water-edge fact. Its 26.2 input adapter is covered by the
 advanced-movement smoke check below.
 Combat filtering, deterministic selection, bounded bow smoothing, legitimate
@@ -615,7 +616,10 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
 44. In a disposable local/test world, enable each Advanced Movement module
     separately. With **NoSlow**, verify each enabled food/block/bow/sneak/
     soul-sand/honey/cobweb category changes only local responsiveness and no
-    other entity is affected. Verify **FastLadders** changes only normal
+    other entity is affected. Enable **AntiWaterPush** in a flowing-water test
+    area and verify only the local water-current velocity is suppressed; water
+    contact, swimming, splash behavior, bubble columns, lava currents, and
+    disabled behavior remain vanilla. Verify **FastLadders** changes only normal
     climbable movement. Enable **WaterJump** in shallow water and move forward
     into a loaded sturdy one-block bank with two clear blocks above it: verify
     it requests only normal Jump input. Test backward movement, air, an

@@ -87,6 +87,11 @@ an obstructed two-block exit, or any open screen, then can request only
 Minecraft's ordinary local Jump input. It does not set position or velocity,
 interact with a block, or construct a packet.
 
+AntiWaterPush keeps its enable-state decision Minecraft-free. Its narrow
+`Entity.updateFluidInteraction` mixin suppresses only the local player's
+verified `EntityFluidInteraction.applyCurrentTo` water call, preserving water
+contact processing and the separate lava-current path.
+
 AutoTool separates hotbar candidates and deterministic scoring from the small
 Minecraft adapter. The adapter runs only while the user is normally mining a
 block through Minecraft's own game mode, selects an existing hotbar slot, and

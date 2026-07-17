@@ -25,6 +25,7 @@ import dev.helikon.client.config.ConfigurationManager;
 import dev.helikon.client.config.HudConfigurationManager;
 import dev.helikon.client.config.PanicConfigurationManager;
 import dev.helikon.client.config.ProfileManager;
+import dev.helikon.client.config.ProfileSelection;
 import dev.helikon.client.event.ClientTickEvent;
 import dev.helikon.client.event.ClientEventAccess;
 import dev.helikon.client.event.ChatEvent;
@@ -604,6 +605,7 @@ public final class HelikonClient implements ClientModInitializer {
         if (configurationResult != ConfigurationManager.LoadResult.LOADED) {
             modules.enableDefaultModules();
         }
+        applyStartupProfile();
         hudConfiguration.load(hudLayout);
         try {
             friends.load();
@@ -680,6 +682,7 @@ public final class HelikonClient implements ClientModInitializer {
             coordinateTracker.clearObservedLocation();
             AnnouncerAccess.enqueue(AnnouncementTrigger.JOIN, "joined the world");
             chatHistory.switchScope(chatHistoryModule, currentChatHistoryScope());
+            applyProfileForConnection(client);
             events.post(new WorldEvent(WorldEvent.Phase.JOIN, serverAddress(lastConnectedServer)));
             modules.runGuarded(autoReconnect, "connect", autoReconnect::onConnected);
         });
@@ -819,6 +822,42 @@ public final class HelikonClient implements ClientModInitializer {
 
     private static String serverAddress(ServerData server) {
         return server == null || server.ip == null ? "" : server.ip;
+    }
+
+    private void applyProfileForConnection(Minecraft client) {
+        try {
+            java.util.Optional<String> scoped = client.isLocalServer()
+                    ? singleplayerWorldId(client).flatMap(profiles::singleplayerProfile)
+                    : profiles.serverProfile(serverAddress(client.getCurrentServer()));
+            applyProfile(ProfileSelection.atConnection(scoped), client.isLocalServer() ? "world" : "server");
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to read local profile preferences for this connection; retaining the current state", exception);
+        }
+    }
+
+    private void applyStartupProfile() {
+        try {
+            applyProfile(ProfileSelection.atStartup(profiles.defaultProfile()), "default");
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to read the default local profile preference; retaining the current state", exception);
+        }
+    }
+
+    private void applyProfile(java.util.Optional<String> name, String source) {
+        name.ifPresent(profile -> {
+            ProfileManager.LoadResult result = profiles.load(profile, modules, clickGuiWindow);
+            if (result != ProfileManager.LoadResult.LOADED) {
+                LOGGER.warning("Unable to apply " + source + " profile '" + profile + "': " + result);
+            }
+        });
+    }
+
+    private static java.util.Optional<String> singleplayerWorldId(Minecraft client) {
+        if (!client.isLocalServer() || client.getSingleplayerServer() == null) {
+            return java.util.Optional.empty();
+        }
+        String name = client.getSingleplayerServer().getWorldData().getLevelName();
+        return name == null || name.isBlank() ? java.util.Optional.empty() : java.util.Optional.of(name);
     }
 
     private static void tickAnnouncer() {

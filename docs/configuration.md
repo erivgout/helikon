@@ -95,9 +95,11 @@ paths.
 `profiles.json` stores the optional default profile with the same atomic write,
 backup, and corrupt-file recovery rules. Renaming or deleting the default
 updates or clears that local preference. The same manifest stores optional
-server-address and singleplayer-world associations. Addresses are normalized
-case-insensitively; world identifiers are trimmed but otherwise case-preserved. Renaming/deleting
-a profile updates or clears every association that points to it.
+server-address and singleplayer-world associations. The default profile applies
+after global configuration at startup; on a matching world join, a scoped
+association overrides it. Addresses are normalized case-insensitively; world
+identifiers are trimmed but otherwise case-preserved. Renaming/deleting a
+profile updates or clears every association that points to it.
 
 Configuration is written when the ClickGUI closes and on normal client
 shutdown — never per frame or per tick. Writes use a temporary file followed

@@ -321,9 +321,9 @@ sent to the server:
 | `.profile list` | Lists saved local profiles. |
 | `.profile save\|load\|delete <name>` | Saves, loads, or deletes a local module/ClickGUI snapshot. |
 | `.profile duplicate\|rename <from> <to>` | Creates a named copy or renames a local profile. |
-| `.profile default <name\|clear>` | Sets or clears the locally persisted default profile. |
-| `.profile server <address> <profile\|clear>` | Associates a local profile with a server address. |
-| `.profile world <id> <profile\|clear>` | Associates a local profile with a singleplayer world ID. |
+| `.profile default <name\|clear>` | Sets or clears the locally persisted startup profile. |
+| `.profile server <address> <profile\|clear>` | Associates a local profile with a server address; it overrides the default on matching joins. |
+| `.profile world <id> <profile\|clear>` | Associates a local profile with a singleplayer world name; it overrides the default on matching joins. |
 | `.profile import <file> <name>` / `.profile export <name> <file>` | Imports from `imports/` or exports to `exports/` below the Helikon config directory. |
 | `.friend list\|add\|remove <player>` | Lists or changes local player-name friends. |
 | `.friend color <player> <#RRGGBB\|#AARRGGBB>` | Sets the local friend render color. |

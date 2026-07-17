@@ -43,6 +43,7 @@
     "LivingEntityStepMixin",
     "LivingEntityEffectParticleMixin",
     "LocalPlayerNoSlowMixin",
+    "LocalPlayerPortalGuiMixin",
     "ModelBlockRendererXRayMixin",
     "MouseFreecamMixin",
     "MouseEventMixin",

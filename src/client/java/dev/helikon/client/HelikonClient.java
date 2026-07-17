@@ -661,6 +661,12 @@ public final class HelikonClient implements ClientModInitializer {
         AntiPotion antiPotion = new AntiPotion();
         CommandBlock commandBlock = new CommandBlock();
         FastEat fastEat = new FastEat();
+        dev.helikon.client.module.player.PortalGui portalGui = new dev.helikon.client.module.player.PortalGui();
+        dev.helikon.client.module.player.PotionSaver potionSaver = new dev.helikon.client.module.player.PotionSaver();
+        dev.helikon.client.module.player.MinecraftPotionSaverAccess potionSaverAccess =
+                new dev.helikon.client.module.player.MinecraftPotionSaverAccess();
+        dev.helikon.client.module.miscellaneous.TooManyHax tooManyHax =
+                new dev.helikon.client.module.miscellaneous.TooManyHax();
         ItemGenerator itemGenerator = new ItemGenerator();
         KillPotion killPotion = new KillPotion();
         TrollPotion trollPotion = new TrollPotion();
@@ -825,6 +831,10 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(antiPotion);
         modules.register(commandBlock);
         modules.register(fastEat);
+        modules.register(portalGui);
+        modules.register(potionSaver);
+        modules.register(tooManyHax);
+        dev.helikon.client.module.player.PortalGuiAccess.install(portalGui);
         modules.register(itemGenerator);
         modules.register(killPotion);
         modules.register(trollPotion);
@@ -1028,6 +1038,9 @@ public final class HelikonClient implements ClientModInitializer {
                         () -> MinecraftLegacyPlayerAccess.tickAntiPotion(clientTick, antiPotion));
                 modules.runGuarded(fastEat, "tick",
                         () -> MinecraftLegacyPlayerAccess.tickFastEat(clientTick, fastEat));
+                modules.runGuarded(potionSaver, "tick", () -> potionSaverAccess.tick(potionSaver));
+                modules.runGuarded(tooManyHax, "tick",
+                        () -> dev.helikon.client.module.miscellaneous.MinecraftTooManyHaxAccess.tick(tooManyHax, modules));
                 for (CreativeItemModule creativeItem : List.of(itemGenerator, killPotion, trollPotion, commandBlock)) {
                     modules.runGuarded(creativeItem, "tick",
                             () -> MinecraftCreativeItemAccess.tick(creativeItem));

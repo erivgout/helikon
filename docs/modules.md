@@ -164,6 +164,9 @@
 | `inventory_manager` | Player | Conservatively organizes existing inventory contents with normal clicks. | `sort_inventory`, `drop_junk`, `junk_items`, `preferred_hotbar`, `preserve_named`, `preserve_enchanted`, `minimum_durability`, `delay_ticks` | It runs only in the player's open vanilla inventory. The initial sorter makes one deterministic adjacent item-ID improvement at a time; protected named/enchanted/low-durability items are not dropped. |
 | `inventory_fill` | Player | Refills configured hotbar slots from matching inventory reserves through normal vanilla clicks. | `fill_targets`, `minimum_count`, `preserve_named`, `preserve_enchanted`, `delay_ticks` | It runs only in the player's open vanilla inventory with an empty carried cursor and defaults off. Each action is one throttled normal swap that fills an empty target or merges onto a partial one; it never displaces a different item, never draws from another managed target slot, and never uses protected named/enchanted reserves. The server stays authoritative and may reject, correct, or rubber-band any move. |
 
+| `portal_gui` | Player | Keeps the current interface open while a portal transition begins. | none | It changes only the local screen-allowance check; the server still controls teleport timing and containers may become invalid across dimensions. |
+| `potion_saver` | Player | Pauses an integrated single-player server after standing still with a beneficial effect. | `idle_ticks` | Only single-player can truly pause potion timers; multiplayer servers continue ticking and are deliberately not spoofed. |
+
 ## World modules
 
 | ID | Category | Description | Settings | Limitation |
@@ -244,6 +247,7 @@ Module IDs are lowercase and stable; display names are not used as identifiers.
 | `head_roll` | Miscellaneous | Animates a circular pitch/yaw approximation of a head roll. | `speed`, `amount` | Vanilla exposes pitch and yaw but no networked roll axis. |
 | `miley_cyrus` | Miscellaneous | Repeatedly swings both local hands. | `interval` | Uses ordinary bounded swing actions and does not target entities. |
 | `tired` | Miscellaneous | Keeps the local player in a prone swimming pose. | none | The pose is restored on disable; servers can correct it. |
+| `too_many_hax` | Miscellaneous | Prevents known movement, aura, and packet-buffer incompatibilities. | none | It deterministically retains the first enabled module in each documented group and disables later conflicts. |
 
 ## ClickGUI
 

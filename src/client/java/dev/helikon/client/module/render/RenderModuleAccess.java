@@ -15,6 +15,7 @@ public final class RenderModuleAccess {
     private static volatile AntiBlind antiBlind;
     private static volatile CameraNoClip cameraNoClip;
     private static volatile NoFireOverlay noFireOverlay;
+    private static volatile NoFog noFog;
     private static volatile BetterCrosshair betterCrosshair;
     private static volatile AntiTotemAnimation antiTotemAnimation;
     private static volatile Dinnerbone dinnerbone;
@@ -55,6 +56,15 @@ public final class RenderModuleAccess {
     public static boolean useUnclippedCameraDistance() {
         CameraNoClip module = cameraNoClip;
         return module != null && module.usesUnclippedCameraDistance();
+    }
+
+    public static void installNoFog(NoFog module) {
+        noFog = Objects.requireNonNull(module, "module");
+    }
+
+    public static NoFog.FogPlanes extendFog(NoFog.FogPlanes vanillaPlanes) {
+        NoFog module = noFog;
+        return module == null ? vanillaPlanes : module.extend(vanillaPlanes);
     }
 
     public static boolean hidePumpkinOverlay() {

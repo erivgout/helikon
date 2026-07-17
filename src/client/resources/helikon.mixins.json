@@ -21,6 +21,7 @@
     "EntityRendererEntityEspOutlineMixin",
     "EntityMovementMixin",
     "FogRendererMixin",
+    "NoFogMixin",
     "FishingHookAccessor",
     "GameRendererMixin",
     "HudMixin",

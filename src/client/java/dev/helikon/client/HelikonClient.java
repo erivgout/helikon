@@ -724,6 +724,7 @@ public final class HelikonClient implements ClientModInitializer {
         TriggerBot triggerBot = new TriggerBot();
         BowAimAssist bowAimAssist = new BowAimAssist();
         ArrowDmg arrowDmg = new ArrowDmg();
+        dev.helikon.client.module.combat.FastBow fastBow = new dev.helikon.client.module.combat.FastBow();
         MinecraftArrowDmgAccess.install(arrowDmg);
         AimAssist aimAssist = new AimAssist();
         CriticalAssist criticalAssist = new CriticalAssist();
@@ -876,6 +877,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(triggerBot);
         modules.register(bowAimAssist);
         modules.register(arrowDmg);
+        modules.register(fastBow);
         modules.register(aimAssist);
         modules.register(criticalAssist);
         modules.register(maceDmg);
@@ -1090,6 +1092,8 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(autoSoup, "tick", () -> MinecraftCombatAccess.tickAutoSoup(clientTick, autoSoup));
                 modules.runGuarded(bowAimAssist, "tick", () -> MinecraftCombatAccess.tickBowAim(bowAimAssist,
                         combatSnapshot.get()));
+                modules.runGuarded(fastBow, "tick",
+                        () -> dev.helikon.client.module.combat.MinecraftFastBowAccess.tick(fastBow));
                 modules.runGuarded(aimAssist, "tick", () -> MinecraftCombatAccess.tickAimAssist(aimAssist,
                         combatSnapshot.get()));
                 modules.runGuarded(antiFireball, "tick", () -> {

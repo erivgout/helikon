@@ -52,6 +52,13 @@ message categories. It has no server effect and never changes protocol traffic.
 The first slice records duplicate counts for a later display-level stacker; it
 does not yet replace shown chat lines with a visible counter.
 
+ChatTimestamps is off by default and prepends a locally rendered timestamp to
+incoming player and server-system chat lines. It supports 12/24-hour time,
+seconds, brackets, a local color, and a session-relative label mode. The
+original message component is preserved; no timestamp is transmitted to a
+server. Minecraft logs the original message before Helikon decorates the
+locally stored display line.
+
 PrivateMessageHelper intercepts `.pm` and `.reply` locally, validates a player
 name and a bounded message, then uses Minecraft's normal server-command route
 with configurable `msg` and `r` command tokens. The `.` command itself is

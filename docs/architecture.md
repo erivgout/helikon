@@ -128,6 +128,15 @@ produce a notification or outgoing response. A future chat-display adapter can
 use the retained repeat count to replace duplicate lines with a counter without
 coupling detection to Minecraft rendering.
 
+`ChatTimestampFormat` owns the deterministic 12/24-hour, seconds, brackets,
+and session-relative label rules without Minecraft imports. `ChatTimestamps`
+contains its validated local settings. A narrow `ChatComponent` mixin modifies
+only the verified `GuiMessage` arguments sent to `addMessageToDisplayQueue`
+and `addMessageToQueue`, after Minecraft has logged the original content.
+`ChatDisplayAccess` prepends a separately styled timestamp component inside an
+unstyled wrapper while retaining the original component as a sibling. It cannot
+modify a received packet, Minecraft's original chat-log text, or another client.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

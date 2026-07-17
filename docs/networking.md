@@ -72,6 +72,11 @@ should show a repeated, rapid, or same-type join/leave message. It neither
 acknowledges nor changes messages at the protocol layer, and sends no data to
 the server or another service.
 
+ChatTimestamps changes only the local component handed to Minecraft's chat
+display after Minecraft has logged the original incoming content. The original
+server message, signature, client log text, and all network traffic are
+unchanged.
+
 ## Future policy
 
 Optional external integrations must be isolated under

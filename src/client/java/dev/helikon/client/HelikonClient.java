@@ -7,6 +7,7 @@ import dev.helikon.client.command.HelikonCommands;
 import dev.helikon.client.command.MinecraftServerCommandSender;
 import dev.helikon.client.command.MinecraftKeyNameResolver;
 import dev.helikon.client.chat.OutgoingChatFormatter;
+import dev.helikon.client.chat.ChatDisplayAccess;
 import dev.helikon.client.chat.IncomingChatMessage;
 import dev.helikon.client.chat.IncomingMessageAdapter;
 import dev.helikon.client.config.ConfigurationException;
@@ -56,6 +57,7 @@ import dev.helikon.client.module.chat.PrivateMessageHelper;
 import dev.helikon.client.module.chat.MentionNotifier;
 import dev.helikon.client.module.chat.AutoReply;
 import dev.helikon.client.module.chat.AntiSpam;
+import dev.helikon.client.module.chat.ChatTimestamps;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
@@ -173,6 +175,7 @@ public final class HelikonClient implements ClientModInitializer {
         MentionNotifier mentionNotifier = new MentionNotifier();
         AutoReply autoReply = new AutoReply();
         AntiSpam antiSpam = new AntiSpam();
+        ChatTimestamps chatTimestamps = new ChatTimestamps();
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
@@ -188,6 +191,8 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(mentionNotifier);
         modules.register(autoReply);
         modules.register(antiSpam);
+        modules.register(chatTimestamps);
+        ChatDisplayAccess.install(chatTimestamps);
         MovementModuleAccess.install(autoWalk, autoSneak);
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {

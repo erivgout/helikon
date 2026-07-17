@@ -210,6 +210,12 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     message type visible. Enable join/leave collapsing and verify a same-type
     burst is hidden locally. The first slice intentionally does not display a
     duplicate counter yet.
+30. Enable **ChatTimestamps** and receive a normal player message plus a
+    server-system message. Verify the local bracketed timestamp precedes each
+    line without altering the original content, then switch 12/24-hour time,
+    seconds, color, and session-relative mode. Verify Helikon's own local
+    command feedback is not timestamped and no timestamp is visible to another
+    player or sent to the server.
 
 ## Manual command and keybind smoke test
 

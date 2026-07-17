@@ -141,6 +141,25 @@ public final class MinecraftCombatAccess {
         return attacked;
     }
 
+    public static void tickBlockHit(long tick, BlockHit blockHit, Snapshot snapshot) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) {
+            blockHit.onPlayerUnavailable();
+            return;
+        }
+        LocalPlayer player = client.player;
+        boolean shieldReady = holdsBlockingItem(player);
+        boolean attackHeld = client.options.keyAttack.isDown();
+        boolean screenOpen = client.gui.screen() != null;
+        List<CombatTarget> targets = snapshot.available() ? snapshot.targets() : List.of();
+        blockHit.tick(tick, new BlockHit.Context(shieldReady, attackHeld, attackReady(player), screenOpen, targets));
+    }
+
+    private static boolean holdsBlockingItem(LocalPlayer player) {
+        return player.getMainHandItem().has(DataComponents.BLOCKS_ATTACKS)
+                || player.getOffhandItem().has(DataComponents.BLOCKS_ATTACKS);
+    }
+
     private static boolean readyForAttack(Minecraft client, Snapshot snapshot) {
         return snapshot.available() && client.player != null && client.gameMode != null && client.gui.screen() == null;
     }

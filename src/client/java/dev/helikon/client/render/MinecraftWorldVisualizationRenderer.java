@@ -10,6 +10,7 @@ import dev.helikon.client.module.render.BetterNametags;
 import dev.helikon.client.module.render.Breadcrumbs;
 import dev.helikon.client.module.render.Chams;
 import dev.helikon.client.module.render.ChamsRenderAccess;
+import dev.helikon.client.module.render.CaveFinder;
 import dev.helikon.client.module.render.DamageIndicators;
 import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.EntityEspMode;
@@ -64,6 +65,7 @@ import net.minecraft.world.item.component.ChargedProjectiles;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -101,6 +103,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final BetterNametags betterNametags;
     private final BaseFinder baseFinder;
     private final BlockEsp blockEsp;
+    private final CaveFinder caveFinder;
     private final Tracers tracers;
     private final Trajectories trajectories;
     private final ProjectileWarning projectileWarning;
@@ -123,20 +126,26 @@ public final class MinecraftWorldVisualizationRenderer {
     private final BlockEspScanCursor baseFinderCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor baseFinderAnchor = new BlockEspScanAnchor();
     private final BlockEspCache baseFinderCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
+    private long observedBaseFinderScanRevision = Long.MIN_VALUE;
+    private boolean baseFinderScannerWasEnabled;
+    private final BlockEspScanCursor caveCursor = new BlockEspScanCursor();
+    private final BlockEspScanAnchor caveAnchor = new BlockEspScanAnchor();
+    private final BlockEspCache caveCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
     private ClientLevel observedLevel;
     private long observedBlockScanRevision = Long.MIN_VALUE;
     private long observedStorageScanRevision = Long.MIN_VALUE;
-    private long observedBaseFinderScanRevision = Long.MIN_VALUE;
+    private long observedCaveScanRevision = Long.MIN_VALUE;
     private boolean blockScannerWasEnabled;
     private boolean storageScannerWasEnabled;
-    private boolean baseFinderScannerWasEnabled;
+    private boolean caveScannerWasEnabled;
     private boolean nativeOutlineWasInstalled;
     private boolean chamsWasInstalled;
 
     public MinecraftWorldVisualizationRenderer(ModuleRegistry modules, FriendManager friends, EntityEsp entityEsp,
                                                 Chams chams, BetterNametags betterNametags,
                                                 BaseFinder baseFinder,
-                                                BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
+                                                BlockEsp blockEsp, CaveFinder caveFinder,
+                                                Tracers tracers, Trajectories trajectories,
                                                 ProjectileWarning projectileWarning, ProjectilePreview projectilePreview,
                                                 TrueSight trueSight,
                                                 StorageEsp storageEsp, DamageIndicators damageIndicators,
@@ -149,6 +158,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.betterNametags = Objects.requireNonNull(betterNametags, "betterNametags");
         this.baseFinder = Objects.requireNonNull(baseFinder, "baseFinder");
         this.blockEsp = Objects.requireNonNull(blockEsp, "blockEsp");
+        this.caveFinder = Objects.requireNonNull(caveFinder, "caveFinder");
         this.tracers = Objects.requireNonNull(tracers, "tracers");
         this.trajectories = Objects.requireNonNull(trajectories, "trajectories");
         this.projectileWarning = Objects.requireNonNull(projectileWarning, "projectileWarning");
@@ -165,6 +175,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.blockEsp.setCacheClearer(this::resetBlockScanner);
         this.storageEsp.setCacheClearer(this::resetStorageScanner);
         this.baseFinder.setCacheClearer(this::resetBaseFinderScanner);
+        this.caveFinder.setCacheClearer(this::resetCaveScanner);
     }
 
     /** Samples the trail and advances the bounded block cache from the client tick bridge. */
@@ -177,6 +188,7 @@ public final class MinecraftWorldVisualizationRenderer {
             resetBlockScanner();
             resetStorageScanner();
             resetBaseFinderScanner();
+            resetCaveScanner();
             clearNativeOutlineTargets();
             clearChamsTargets();
         }
@@ -244,6 +256,15 @@ public final class MinecraftWorldVisualizationRenderer {
                 modules.runGuarded(baseFinder, "scan", () -> scanBaseEvidence(client.level, client.player));
             }
         }
+        if (!caveFinder.isEnabled()) {
+            if (caveScannerWasEnabled) {
+                resetCaveScanner();
+                caveScannerWasEnabled = false;
+            }
+        } else {
+            caveScannerWasEnabled = true;
+            modules.runGuarded(caveFinder, "scan", () -> scanCaves(client.level, client.player));
+        }
     }
 
     /** Registered for Fabric's verified {@code BEFORE_GIZMOS} level-render phase. */
@@ -292,6 +313,9 @@ public final class MinecraftWorldVisualizationRenderer {
         if (baseFinder.isEnabled()) {
             modules.runGuarded(baseFinder, "render",
                     () -> renderBaseEvidence(client.player, camera));
+        }
+        if (caveFinder.isEnabled()) {
+            modules.runGuarded(caveFinder, "render", () -> renderCaves(client.player, camera));
         }
         if (damageIndicators.isEnabled()) {
             modules.runGuarded(damageIndicators, "render", () -> renderDamageIndicators(client.level, client.player,
@@ -391,6 +415,70 @@ public final class MinecraftWorldVisualizationRenderer {
             String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
             baseFinderCache.observe(position, baseFinder.targetBlocks().contains(blockId));
         }
+    }
+
+    private void scanCaves(ClientLevel level, Player player) {
+        if (caveFinder.scanRevision() != observedCaveScanRevision) {
+            observedCaveScanRevision = caveFinder.scanRevision();
+            resetCaveScanner();
+        }
+        int verticalRadius = (caveFinder.scanDepth() + 1) / 2;
+        BlockEspScanAnchor.Update anchor = caveAnchor.update(
+                player.getBlockX(), player.getBlockY() - verticalRadius, player.getBlockZ(),
+                caveFinder.horizontalRange(), verticalRadius, caveCursor.isAtPassBoundary());
+        if (anchor.changed()) {
+            clearCaveResults();
+        }
+        BlockEspScanCursor.Region region = anchor.region();
+        for (int index = 0; index < caveFinder.scanBudget(); index++) {
+            BlockEspScanCursor.Position position = caveCursor.next(region);
+            boolean matches = isLoadedCaveSample(level, player, position);
+            caveCache.observe(position, matches);
+        }
+    }
+
+    private boolean isLoadedCaveSample(ClientLevel level, Player player, BlockEspScanCursor.Position position) {
+        if (!caveFinder.samplesColumn(position.x(), position.z())
+                || !level.isInsideBuildHeight(position.y() - 1)
+                || !level.isInsideBuildHeight(position.y() + 1)
+                || !hasLoadedNeighborChunks(level, position.x(), position.z())) {
+            return false;
+        }
+        BlockPos feet = new BlockPos(position.x(), position.y(), position.z());
+        BlockPos head = feet.above();
+        BlockPos floor = feet.below();
+        int openSides = countOpenSides(level, feet);
+        boolean belowSurface = position.y() + 1
+                < level.getHeight(Heightmap.Types.MOTION_BLOCKING, position.x(), position.z());
+        return caveFinder.shouldMark(new CaveFinder.CaveSample(
+                position.x(), position.y(), position.z(), player.getBlockY(),
+                level.getBlockState(feet).isAir(),
+                level.getBlockState(head).isAir(),
+                !level.getBlockState(floor).getCollisionShape(level, floor).isEmpty(),
+                openSides,
+                belowSurface
+        ));
+    }
+
+    private static boolean hasLoadedNeighborChunks(ClientLevel level, int x, int z) {
+        return level.hasChunk(x >> 4, z >> 4)
+                && level.hasChunk((x - 1) >> 4, z >> 4)
+                && level.hasChunk((x + 1) >> 4, z >> 4)
+                && level.hasChunk(x >> 4, (z - 1) >> 4)
+                && level.hasChunk(x >> 4, (z + 1) >> 4);
+    }
+
+    private static int countOpenSides(ClientLevel level, BlockPos feet) {
+        int openSides = 0;
+        if (isTwoHighAir(level, feet.offset(-1, 0, 0))) openSides++;
+        if (isTwoHighAir(level, feet.offset(1, 0, 0))) openSides++;
+        if (isTwoHighAir(level, feet.offset(0, 0, -1))) openSides++;
+        if (isTwoHighAir(level, feet.offset(0, 0, 1))) openSides++;
+        return openSides;
+    }
+
+    private static boolean isTwoHighAir(ClientLevel level, BlockPos feet) {
+        return level.getBlockState(feet).isAir() && level.getBlockState(feet.above()).isAir();
     }
 
     private void observeDamage(ClientLevel level, Player localPlayer, long nowMillis) {
@@ -786,6 +874,31 @@ public final class MinecraftWorldVisualizationRenderer {
         }
     }
 
+    private void renderCaves(Player localPlayer, CameraRenderState camera) {
+        Vec3 start = caveFinder.tracersEnabled() ? tracerStart(camera, localPlayer) : null;
+        GizmoStyle style = GizmoStyle.strokeAndFill(
+                caveFinder.color(), caveFinder.lineWidth(), caveFinder.fillColor());
+        int rendered = 0;
+        for (BlockEspScanCursor.Position position : caveCache.positions()) {
+            CaveFinder.CaveSample sample = new CaveFinder.CaveSample(
+                    position.x(), position.y(), position.z(), localPlayer.getBlockY(),
+                    true, true, true, 4, true);
+            if (!caveFinder.withinCurrentRange(
+                    sample, localPlayer.getX(), localPlayer.getY(), localPlayer.getZ())) {
+                continue;
+            }
+            BlockPos marker = new BlockPos(position.x(), position.y(), position.z());
+            Gizmos.cuboid(new AABB(marker), style).setAlwaysOnTop();
+            if (start != null) {
+                Gizmos.line(start, Vec3.atCenterOf(marker), caveFinder.color(), caveFinder.lineWidth())
+                        .setAlwaysOnTop();
+            }
+            if (++rendered >= caveFinder.maximumMarkers()) {
+                return;
+            }
+        }
+    }
+
     private void renderDamageIndicators(ClientLevel level, Player localPlayer, Frustum frustum, long nowMillis) {
         for (DamageIndicatorTracker.RenderedIndicator indicator : damageIndicators.renderedIndicators(nowMillis)) {
             Entity entity = level.getEntity(indicator.entityId());
@@ -1028,6 +1141,11 @@ public final class MinecraftWorldVisualizationRenderer {
         clearBaseFinderResults();
     }
 
+    private void resetCaveScanner() {
+        caveAnchor.clear();
+        clearCaveResults();
+    }
+
     private void clearBlockResults() {
         blockCursor.clear();
         blockCache.clear();
@@ -1041,5 +1159,10 @@ public final class MinecraftWorldVisualizationRenderer {
     private void clearBaseFinderResults() {
         baseFinderCursor.clear();
         baseFinderCache.clear();
+    }
+
+    private void clearCaveResults() {
+        caveCursor.clear();
+        caveCache.clear();
     }
 }

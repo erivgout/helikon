@@ -274,6 +274,7 @@ import dev.helikon.client.module.render.Health;
 import dev.helikon.client.module.render.Dinnerbone;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.Breadcrumbs;
+import dev.helikon.client.module.render.CaveFinder;
 import dev.helikon.client.module.render.DamageIndicators;
 import dev.helikon.client.module.render.Chams;
 import dev.helikon.client.module.render.Explosions;
@@ -464,6 +465,7 @@ public final class HelikonClient implements ClientModInitializer {
         Chams chams = new Chams();
         BaseFinder baseFinder = new BaseFinder();
         BlockEsp blockEsp = new BlockEsp();
+        CaveFinder caveFinder = new CaveFinder();
         Tracers tracers = new Tracers();
         Trajectories trajectories = new Trajectories();
         ProjectileWarning projectileWarning = new ProjectileWarning();
@@ -497,6 +499,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(chams);
         modules.register(baseFinder);
         modules.register(blockEsp);
+        modules.register(caveFinder);
         modules.register(tracers);
         modules.register(trajectories);
         modules.register(projectileWarning);
@@ -792,7 +795,8 @@ public final class HelikonClient implements ClientModInitializer {
         FakeLagAccess.install(fakeLag);
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
-                modules, friends, entityEsp, chams, betterNametags, baseFinder, blockEsp, tracers, trajectories, projectileWarning,
+                modules, friends, entityEsp, chams, betterNametags, baseFinder, blockEsp, caveFinder, tracers,
+                trajectories, projectileWarning,
                 projectilePreview, trueSight, storageEsp,
                 damageIndicators, breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics, explosions
         );

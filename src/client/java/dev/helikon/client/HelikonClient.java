@@ -680,6 +680,9 @@ public final class HelikonClient implements ClientModInitializer {
         AntiCactus antiCactus = new AntiCactus();
         BlockSelection blockSelection = new BlockSelection();
         BlockIn blockIn = new BlockIn();
+        dev.helikon.client.module.world.AutoSign autoSign = new dev.helikon.client.module.world.AutoSign();
+        dev.helikon.client.module.world.MinecraftAutoSignAccess autoSignAccess =
+                new dev.helikon.client.module.world.MinecraftAutoSignAccess();
         AutoFarm autoFarm = new AutoFarm();
         BonemealAura bonemealAura = new BonemealAura();
         BuildRandom buildRandom = new BuildRandom();
@@ -841,6 +844,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(antiCactus);
         modules.register(blockSelection);
         modules.register(blockIn);
+        modules.register(autoSign);
         modules.register(autoFarm);
         modules.register(bonemealAura);
         modules.register(buildRandom);
@@ -1042,6 +1046,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(chestSteal, "tick", () -> tickChestSteal(chestSteal, clientTick));
                 modules.runGuarded(builderAssist, "tick", () -> MinecraftBuilderAssistAccess.tick(builderAssist, clientTick));
                 modules.runGuarded(blockIn, "tick", () -> MinecraftBlockInAccess.tick(blockIn, clientTick));
+                modules.runGuarded(autoSign, "tick", () -> autoSignAccess.tick(autoSign));
                 modules.runGuarded(airPlace, "tick", () -> MinecraftAirPlaceAccess.tick(airPlace, clientTick));
                 modules.runGuarded(autoFarm, "tick",
                         () -> MinecraftLegacyWorldAccess.tickAutoFarm(clientTick, autoFarm));

@@ -113,6 +113,8 @@ import dev.helikon.client.module.combat.MinecraftAutoAnchorAccess;
 import dev.helikon.client.module.combat.MinecraftVelocityAccess;
 import dev.helikon.client.module.combat.MinecraftGojoInfinityAccess;
 import dev.helikon.client.module.combat.MinecraftFightBotAccess;
+import dev.helikon.client.module.combat.MinecraftProtectAccess;
+import dev.helikon.client.module.combat.Protect;
 import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
 import dev.helikon.client.module.combat.MinecraftCrystalAccess;
@@ -611,6 +613,7 @@ public final class HelikonClient implements ClientModInitializer {
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
         FightBot fightBot = new FightBot();
+        Protect protect = new Protect();
         Reach reach = new Reach();
         AutoClicker autoClicker = new AutoClicker();
         BlockHit blockHit = new BlockHit(new MinecraftBlockHitUseKey());
@@ -729,6 +732,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(targetHud);
         modules.register(killAura);
         modules.register(fightBot);
+        modules.register(protect);
         modules.register(reach);
         modules.register(autoClicker);
         modules.register(blockHit);
@@ -912,6 +916,13 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(fightBot, "tick", () -> {
                     boolean attacked = MinecraftFightBotAccess.tick(clientTick, fightBot, combatSnapshot.get(),
                             combatTracker, !combatAttackStarted.get());
+                    if (attacked) {
+                        combatAttackStarted.set(true);
+                    }
+                });
+                modules.runGuarded(protect, "tick", () -> {
+                    boolean attacked = MinecraftProtectAccess.tick(clientTick, protect, combatSnapshot.get(),
+                            combatTracker, friends, !combatAttackStarted.get());
                     if (attacked) {
                         combatAttackStarted.set(true);
                     }

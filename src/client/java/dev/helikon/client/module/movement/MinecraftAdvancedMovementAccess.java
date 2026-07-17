@@ -140,6 +140,22 @@ public final class MinecraftAdvancedMovementAccess {
         }
     }
 
+    /** Imposes a bounded upward velocity while Jump is held; releasing lets vanilla gravity resume. */
+    public static void tickJetpack(Jetpack module) {
+        Minecraft client = Minecraft.getInstance();
+        if (!isInteractive(client)) {
+            return;
+        }
+        LocalPlayer player = client.player;
+        if (player.isPassenger() || player.getAbilities().flying || player.isFallFlying()) {
+            return;
+        }
+        module.ascentVelocity(player.input.keyPresses.jump()).ifPresent(y -> {
+            Vec3 velocity = player.getDeltaMovement();
+            player.setDeltaMovement(velocity.x, y, velocity.z);
+        });
+    }
+
     public static void tickBoatFlight(BoatFlight module) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null) {

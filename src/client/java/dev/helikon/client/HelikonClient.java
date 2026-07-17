@@ -97,6 +97,7 @@ import dev.helikon.client.module.movement.FastLadders;
 import dev.helikon.client.module.movement.Flight;
 import dev.helikon.client.module.movement.Freecam;
 import dev.helikon.client.module.movement.FreecamAccess;
+import dev.helikon.client.module.movement.Jetpack;
 import dev.helikon.client.module.movement.MinecraftAdvancedMovementAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.NoFall;
@@ -404,6 +405,7 @@ public final class HelikonClient implements ClientModInitializer {
         BunnyHop bunnyHop = new BunnyHop();
         Flight flight = new Flight();
         BoatFlight boatFlight = new BoatFlight();
+        Jetpack jetpack = new Jetpack();
         Freecam freecam = new Freecam();
         NoFall noFall = new NoFall();
         ExtraElytra extraElytra = new ExtraElytra();
@@ -483,6 +485,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(bunnyHop);
         modules.register(flight);
         modules.register(boatFlight);
+        modules.register(jetpack);
         modules.register(freecam);
         modules.register(noFall);
         modules.register(extraElytra);
@@ -577,6 +580,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(bunnyHop, "tick", () -> MinecraftAdvancedMovementAccess.tickBunnyHop(bunnyHop));
                 modules.runGuarded(flight, "tick", () -> MinecraftAdvancedMovementAccess.tickFlight(flight));
                 modules.runGuarded(boatFlight, "tick", () -> MinecraftAdvancedMovementAccess.tickBoatFlight(boatFlight));
+                modules.runGuarded(jetpack, "tick", () -> MinecraftAdvancedMovementAccess.tickJetpack(jetpack));
                 modules.runGuarded(freecam, "tick", () -> FreecamAccess.tick(Minecraft.getInstance()));
                 modules.runGuarded(noFall, "tick", () -> MinecraftAdvancedMovementAccess.tickNoFall(noFall));
                 modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));

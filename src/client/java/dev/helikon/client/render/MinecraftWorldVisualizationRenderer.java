@@ -13,6 +13,7 @@ import dev.helikon.client.module.render.DamageIndicators;
 import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.EntityEspMode;
 import dev.helikon.client.module.render.EntityEspRenderAccess;
+import dev.helikon.client.module.render.Explosions;
 import dev.helikon.client.module.render.StorageEsp;
 import dev.helikon.client.module.render.Trajectories;
 import dev.helikon.client.module.render.Tracers;
@@ -33,10 +34,14 @@ import net.minecraft.gizmos.Gizmos;
 import net.minecraft.gizmos.TextGizmo;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.item.PrimedTnt;
+import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.vehicle.minecart.MinecartTNT;
 import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball;
@@ -91,6 +96,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final BlockSelection blockSelection;
     private final BowAimAssist bowAimAssist;
     private final LocalCosmetics localCosmetics;
+    private final Explosions explosions;
     private final BlockEspScanCursor blockCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor blockAnchor = new BlockEspScanAnchor();
     private final BlockEspCache blockCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
@@ -110,7 +116,7 @@ public final class MinecraftWorldVisualizationRenderer {
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
                                                 TrueSight trueSight, StorageEsp storageEsp, DamageIndicators damageIndicators,
                                                 Breadcrumbs breadcrumbs, BuilderAssist builderAssist, BlockSelection blockSelection,
-                                                BowAimAssist bowAimAssist, LocalCosmetics localCosmetics) {
+                                                BowAimAssist bowAimAssist, LocalCosmetics localCosmetics, Explosions explosions) {
         this.modules = Objects.requireNonNull(modules, "modules");
         this.friends = Objects.requireNonNull(friends, "friends");
         this.entityEsp = Objects.requireNonNull(entityEsp, "entityEsp");
@@ -127,6 +133,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.blockSelection = Objects.requireNonNull(blockSelection, "blockSelection");
         this.bowAimAssist = Objects.requireNonNull(bowAimAssist, "bowAimAssist");
         this.localCosmetics = Objects.requireNonNull(localCosmetics, "localCosmetics");
+        this.explosions = Objects.requireNonNull(explosions, "explosions");
         this.blockEsp.setCacheClearer(this::resetBlockScanner);
         this.storageEsp.setCacheClearer(this::resetStorageScanner);
     }
@@ -219,6 +226,9 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (trajectories.isEnabled()) {
             modules.runGuarded(trajectories, "render", () -> renderTrajectories(client.level, frustum));
+        }
+        if (explosions.isEnabled()) {
+            modules.runGuarded(explosions, "render", () -> renderExplosions(client.level, frustum));
         }
         if (trueSight.isEnabled()) {
             modules.runGuarded(trueSight, "render", () -> renderTrueSight(client.level, client.player, frustum));
@@ -516,6 +526,54 @@ public final class MinecraftWorldVisualizationRenderer {
                 return;
             }
         }
+    }
+
+    private void renderExplosions(ClientLevel level, Frustum frustum) {
+        int rendered = 0;
+        for (Entity entity : level.entitiesForRendering()) {
+            Optional<Explosions.Source> source = explosionSource(entity);
+            if (source.isEmpty() || !explosions.includes(source.get()) || !isFrustumVisible(frustum, entity)) {
+                continue;
+            }
+            double radius = source.get().damageRadius();
+            Vec3 center = entity.getBoundingBox().getCenter();
+            int color = explosions.color();
+            for (ExplosionSphereGeometry.Segment segment : ExplosionSphereGeometry.wireframe(center.x(), center.y(),
+                    center.z(), radius, explosions.segments())) {
+                ExplosionSphereGeometry.Point from = segment.from();
+                ExplosionSphereGeometry.Point to = segment.to();
+                Gizmos.line(new Vec3(from.x(), from.y(), from.z()), new Vec3(to.x(), to.y(), to.z()),
+                        color, explosions.lineWidth()).setAlwaysOnTop();
+            }
+            if (explosions.showRadiusLabel()) {
+                String label = String.format(java.util.Locale.ROOT, "%.1f", radius);
+                Gizmos.billboardText(label, center.add(0.0D, radius + 0.5D, 0.0D),
+                        TextGizmo.Style.forColorAndCentered(color)).setAlwaysOnTop();
+            }
+            if (++rendered >= explosions.maximumSources()) {
+                return;
+            }
+        }
+    }
+
+    /** Classifies an entity as a primed local explosion source, honoring the armed-creeper filter. */
+    private Optional<Explosions.Source> explosionSource(Entity entity) {
+        if (entity instanceof PrimedTnt) {
+            return Optional.of(Explosions.Source.TNT);
+        }
+        if (entity instanceof MinecartTNT minecart) {
+            return minecart.isPrimed() ? Optional.of(Explosions.Source.TNT_MINECART) : Optional.empty();
+        }
+        if (entity instanceof EndCrystal) {
+            return Optional.of(Explosions.Source.END_CRYSTAL);
+        }
+        if (entity instanceof Creeper creeper) {
+            if (explosions.armedCreepersOnly() && creeper.getSwellDir() <= 0 && !creeper.isIgnited()) {
+                return Optional.empty();
+            }
+            return Optional.of(creeper.isPowered() ? Explosions.Source.CHARGED_CREEPER : Explosions.Source.CREEPER);
+        }
+        return Optional.empty();
     }
 
     private void renderTrueSight(ClientLevel level, Player localPlayer, Frustum frustum) {

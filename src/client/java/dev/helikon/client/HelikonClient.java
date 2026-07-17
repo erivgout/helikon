@@ -209,6 +209,7 @@ import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.Breadcrumbs;
 import dev.helikon.client.module.render.DamageIndicators;
 import dev.helikon.client.module.render.Chams;
+import dev.helikon.client.module.render.Explosions;
 import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.MinecraftGammaAccess;
 import dev.helikon.client.module.render.MinecraftNightVisionAccess;
@@ -395,6 +396,7 @@ public final class HelikonClient implements ClientModInitializer {
         DamageIndicators damageIndicators = new DamageIndicators();
         Breadcrumbs breadcrumbs = new Breadcrumbs();
         Arrows arrows = new Arrows();
+        Explosions explosions = new Explosions();
         modules.register(antiBlind);
         modules.register(antiDebuff);
         modules.register(antiTotemAnimation);
@@ -416,6 +418,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(damageIndicators);
         modules.register(breadcrumbs);
         modules.register(arrows);
+        modules.register(explosions);
         RenderModuleAccess.install(antiBlind, betterCrosshair, antiTotemAnimation, dinnerbone, rainbowEnchant,
                 hudLayout, panicState);
         AntiDebuffAccess.install(antiDebuff);
@@ -616,7 +619,7 @@ public final class HelikonClient implements ClientModInitializer {
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, chams, betterNametags, blockEsp, tracers, trajectories, trueSight, storageEsp,
-                damageIndicators, breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics
+                damageIndicators, breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics, explosions
         );
         DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,
                 events, configuration, panicState, hudLayout);

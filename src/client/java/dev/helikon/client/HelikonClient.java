@@ -87,10 +87,12 @@ import dev.helikon.client.module.combat.HitSelect;
 import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MinecraftBlockHitUseKey;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
+import dev.helikon.client.module.combat.MinecraftVelocityAccess;
 import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
 import dev.helikon.client.module.combat.ReachDisplay;
 import dev.helikon.client.module.combat.TriggerBot;
+import dev.helikon.client.module.combat.Velocity;
 import dev.helikon.client.module.movement.AutoSprint;
 import dev.helikon.client.module.movement.AutoSneak;
 import dev.helikon.client.module.movement.AutoWalk;
@@ -473,6 +475,7 @@ public final class HelikonClient implements ClientModInitializer {
         BlockHit blockHit = new BlockHit(new MinecraftBlockHitUseKey());
         HitFlick hitFlick = new HitFlick();
         HitSelect hitSelect = new HitSelect();
+        Velocity velocity = new Velocity();
         ReachDisplay reachDisplay = new ReachDisplay();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
         Annoy annoy = new Annoy();
@@ -553,6 +556,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(blockHit);
         modules.register(hitFlick);
         modules.register(hitSelect);
+        modules.register(velocity);
         modules.register(reachDisplay);
         modules.register(annoy);
         modules.register(oneClickFriends);
@@ -568,6 +572,7 @@ public final class HelikonClient implements ClientModInitializer {
         ChatDisplayAccess.install(chatColor);
         BetterChatDisplayAccess.install(betterChat, privateMessageHelper, antiSpam);
         MinecraftHitFlickAccess.install(hitFlick, friends);
+        MinecraftVelocityAccess.install(velocity);
         MinecraftHitFlickAccess.install(hitFlick, friends);
         AnnouncerAccess.install(announcer, normalChatSender);
         MovementModuleAccess.install(autoWalk, autoSneak, twerk);

@@ -8,6 +8,7 @@
     "ChatScreenMixin",
     "ChatComponentMixin",
     "ChatComponentAccessor",
+    "ClientPacketListenerVelocityMixin",
     "ClientChunkCacheEventMixin",
     "AnnouncerAdvancementMixin",
     "AnnouncerGameModeMixin",

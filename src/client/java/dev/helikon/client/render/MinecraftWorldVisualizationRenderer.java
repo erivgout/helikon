@@ -14,6 +14,7 @@ import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.EntityEspMode;
 import dev.helikon.client.module.render.EntityEspRenderAccess;
 import dev.helikon.client.module.render.Explosions;
+import dev.helikon.client.module.render.NewChunks;
 import dev.helikon.client.module.render.ProjectileWarning;
 import dev.helikon.client.module.render.ProjectilePreview;
 import dev.helikon.client.module.render.StorageEsp;
@@ -105,6 +106,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final ProjectilePreview projectilePreview;
     private final TrueSight trueSight;
     private final StorageEsp storageEsp;
+    private final NewChunks newChunks;
     private final DamageIndicators damageIndicators;
     private final Breadcrumbs breadcrumbs;
     private final BuilderAssist builderAssist;
@@ -131,7 +133,8 @@ public final class MinecraftWorldVisualizationRenderer {
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
                                                 ProjectileWarning projectileWarning, ProjectilePreview projectilePreview,
                                                 TrueSight trueSight,
-                                                StorageEsp storageEsp, DamageIndicators damageIndicators,
+                                                StorageEsp storageEsp, NewChunks newChunks,
+                                                DamageIndicators damageIndicators,
                                                 Breadcrumbs breadcrumbs, BuilderAssist builderAssist, BlockSelection blockSelection,
                                                 BowAimAssist bowAimAssist, LocalCosmetics localCosmetics, Explosions explosions) {
         this.modules = Objects.requireNonNull(modules, "modules");
@@ -146,6 +149,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.projectilePreview = Objects.requireNonNull(projectilePreview, "projectilePreview");
         this.trueSight = Objects.requireNonNull(trueSight, "trueSight");
         this.storageEsp = Objects.requireNonNull(storageEsp, "storageEsp");
+        this.newChunks = Objects.requireNonNull(newChunks, "newChunks");
         this.damageIndicators = Objects.requireNonNull(damageIndicators, "damageIndicators");
         this.breadcrumbs = Objects.requireNonNull(breadcrumbs, "breadcrumbs");
         this.builderAssist = Objects.requireNonNull(builderAssist, "builderAssist");
@@ -161,6 +165,9 @@ public final class MinecraftWorldVisualizationRenderer {
     public void tick(Minecraft client) {
         Objects.requireNonNull(client, "client");
         if (client.level != observedLevel) {
+            if (observedLevel != null) {
+                newChunks.clear();
+            }
             observedLevel = client.level;
             breadcrumbs.clearTrail();
             damageIndicators.clear();
@@ -264,6 +271,10 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (storageEsp.isEnabled()) {
             modules.runGuarded(storageEsp, "render", () -> renderStorage(client.player, frustum));
+        }
+        if (newChunks.isEnabled()) {
+            modules.runGuarded(newChunks, "render",
+                    () -> renderNewChunks(client.player, System.currentTimeMillis()));
         }
         if (damageIndicators.isEnabled()) {
             modules.runGuarded(damageIndicators, "render", () -> renderDamageIndicators(client.level, client.player,
@@ -701,6 +712,25 @@ public final class MinecraftWorldVisualizationRenderer {
                 continue;
             }
             Gizmos.cuboid(bounds, style).setAlwaysOnTop();
+        }
+    }
+
+    private void renderNewChunks(Player localPlayer, long nowMillis) {
+        int playerChunkX = localPlayer.getBlockX() >> 4;
+        int playerChunkZ = localPlayer.getBlockZ() >> 4;
+        double halfSpan = newChunks.verticalSpan() / 2.0D;
+        double minimumY = localPlayer.getY() - halfSpan;
+        double maximumY = localPlayer.getY() + halfSpan;
+        for (NewChunks.Marker marker : newChunks.visibleMarkers(playerChunkX, playerChunkZ, nowMillis)) {
+            double minimumX = marker.coordinate().x() * 16.0D;
+            double minimumZ = marker.coordinate().z() * 16.0D;
+            GizmoStyle style = GizmoStyle.strokeAndFill(newChunks.outlineColor(marker.kind()),
+                    newChunks.lineWidth(), newChunks.fillColor(marker.kind()));
+            GizmoProperties gizmo = Gizmos.cuboid(new AABB(minimumX, minimumY, minimumZ,
+                    minimumX + 16.0D, maximumY, minimumZ + 16.0D), style);
+            if (newChunks.alwaysOnTop()) {
+                gizmo.setAlwaysOnTop();
+            }
         }
     }
 

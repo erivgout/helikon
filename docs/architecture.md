@@ -72,6 +72,29 @@ control. When AutoEat ends its own use hold, the input port separately polls
 the configured keyboard, mouse, or scancode binding so an overlapping physical
 player hold is never cancelled.
 
+The inventory-automation modules keep armor ranking, item-ID/slot parsing,
+totem restore conditions, chest priority, and conservative manager choices in
+Minecraft-free classes. `MinecraftContainerClicker` is the sole narrow adapter:
+only an open corresponding vanilla menu with an empty carried cursor can map a
+validated plan to Minecraft's ordinary container-input operation. It does not
+edit an inventory, construct a packet, or retain item contents. AutoArmor,
+AutoEject, AutoTotem, and InventoryManager require the player's inventory;
+ChestSteal requires a vanilla chest menu.
+
+AutoFish keeps its bite/recast state machine and durability gate
+Minecraft-free. The client edge reads the current selected rod and the local
+fishing-hook's verified bite/open-water state through one accessor, then calls
+Minecraft's normal held-item Use method only for the state machine's single
+action. AutoReconnect likewise owns a local countdown/attempt policy; its
+screen is a cancellable local view and the adapter uses Minecraft's regular
+disconnect/connect screens for a remembered valid multiplayer target.
+
+`BuilderPlan` and `BuilderAssist` generate bounded deterministic block plans
+without Minecraft imports. The version-sensitive builder adapter converts the
+current local block hit, player yaw, loaded replaceable positions, and adjacent
+supports into one ordinary held-block interaction. The same adapter supplies
+only loaded replaceable preview positions to the supported Gizmo renderer.
+
 Outgoing chat formatting is a Minecraft-free policy layer. ChatPrefix and
 ChatSuffix share a conservative guard that preserves local commands, slash
 commands, private-message commands, and likely authentication commands

@@ -55,8 +55,28 @@ When porting:
    replace its temporary render-state change with inventory/equipment mutation.
 17. Revalidate `LivingEntity.getHealth`, `hurtTime`, entity IDs, text Gizmos,
    and frustum visibility before changing DamageIndicators.
-18. Run the manual smoke test in an empty profile and with no internet access.
-19. Document compatibility changes and retained limitations before release.
+18. Revalidate `InventoryMenu` slot constants, `Slot` inventory ownership,
+   `ContainerInput`, `MultiPlayerGameMode.handleContainerInput`, and the
+   carried-cursor/menu checks before changing AutoArmor, AutoEject, AutoTotem,
+   InventoryManager, or ChestSteal. Keep the adapter on Minecraft's normal
+   container-input path; do not construct inventory packets.
+19. Revalidate `DataComponents.EQUIPPABLE`, item attribute modifiers, Binding
+   Curse enchantment lookup, offhand equipment, item rarity, and durability
+   APIs used by the local inventory policies.
+20. Revalidate `FishingHook`'s bite/open-water fields, selected rod handling,
+   and `MultiPlayerGameMode.useItem` before changing AutoFish. Keep the mixin
+   accessor narrow and use normal held-item interaction only.
+21. Revalidate Fabric client play connect/disconnect callbacks,
+   `DisconnectedScreen`, `ConnectScreen.startConnecting`, `ServerAddress`, and
+   local-server checks before changing AutoReconnect. Preserve its cancel,
+   explicit-leave, and bounded-attempt safeguards.
+22. Revalidate `Minecraft.hitResult`, player yaw/direction, `BlockHitResult`,
+   `BlockState.canBeReplaced`, loaded-chunk/build-height checks,
+   `MultiPlayerGameMode.useItemOn`, `rightClickDelay`, and Gizmo cuboids before
+   changing BuilderAssist. Keep plans bounded and every placement a normal
+   held-block use request.
+23. Run the manual smoke test in an empty profile and with no internet access.
+24. Document compatibility changes and retained limitations before release.
 
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

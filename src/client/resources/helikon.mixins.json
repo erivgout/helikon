@@ -8,6 +8,7 @@
     "ChatComponentMixin",
     "ChatComponentAccessor",
     "FogRendererMixin",
+    "FishingHookAccessor",
     "HudMixin",
     "KeyMappingAccessor",
     "KeyboardInputMixin",

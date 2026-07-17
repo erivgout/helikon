@@ -10,6 +10,8 @@ import dev.helikon.client.module.render.StorageEsp;
 import dev.helikon.client.module.render.Trajectories;
 import dev.helikon.client.module.render.Tracers;
 import dev.helikon.client.module.render.TrueSight;
+import dev.helikon.client.module.world.BuilderAssist;
+import dev.helikon.client.module.world.MinecraftBuilderAssistAccess;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -71,6 +73,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final StorageEsp storageEsp;
     private final DamageIndicators damageIndicators;
     private final Breadcrumbs breadcrumbs;
+    private final BuilderAssist builderAssist;
     private final BlockEspScanCursor blockCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor blockAnchor = new BlockEspScanAnchor();
     private final BlockEspCache blockCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
@@ -86,7 +89,7 @@ public final class MinecraftWorldVisualizationRenderer {
     public MinecraftWorldVisualizationRenderer(ModuleRegistry modules, FriendManager friends, EntityEsp entityEsp,
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
                                                 TrueSight trueSight, StorageEsp storageEsp, DamageIndicators damageIndicators,
-                                                Breadcrumbs breadcrumbs) {
+                                                Breadcrumbs breadcrumbs, BuilderAssist builderAssist) {
         this.modules = Objects.requireNonNull(modules, "modules");
         this.friends = Objects.requireNonNull(friends, "friends");
         this.entityEsp = Objects.requireNonNull(entityEsp, "entityEsp");
@@ -97,6 +100,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.storageEsp = Objects.requireNonNull(storageEsp, "storageEsp");
         this.damageIndicators = Objects.requireNonNull(damageIndicators, "damageIndicators");
         this.breadcrumbs = Objects.requireNonNull(breadcrumbs, "breadcrumbs");
+        this.builderAssist = Objects.requireNonNull(builderAssist, "builderAssist");
         this.blockEsp.setCacheClearer(this::resetBlockScanner);
         this.storageEsp.setCacheClearer(this::resetStorageScanner);
     }
@@ -182,6 +186,9 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (breadcrumbs.isEnabled()) {
             modules.runGuarded(breadcrumbs, "render", this::renderBreadcrumbs);
+        }
+        if (builderAssist.isEnabled()) {
+            modules.runGuarded(builderAssist, "render", () -> renderBuilderPreview(client));
         }
     }
 
@@ -414,6 +421,13 @@ public final class MinecraftWorldVisualizationRenderer {
                 }
             }
             previous = point;
+        }
+    }
+
+    private void renderBuilderPreview(Minecraft client) {
+        GizmoStyle style = GizmoStyle.strokeAndFill(builderAssist.previewColor(), 1.0F, builderAssist.previewFillColor());
+        for (BlockPos position : MinecraftBuilderAssistAccess.previewPositions(client, builderAssist)) {
+            Gizmos.cuboid(new AABB(position), style).setAlwaysOnTop();
         }
     }
 

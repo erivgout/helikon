@@ -40,3 +40,11 @@ or used to request chunks or access inventories.
 MiniPlayer's temporary render state and DamageIndicators' bounded health
 snapshot/label state are session-only memory. They are never persisted,
 transmitted, or used to query player inventories or server combat history.
+
+Automation observes only the current client menu, selected item, local fishing
+hook, loaded replacement candidates, and (for reconnect) the active Minecraft
+server target. Its transient plans, countdown, and attempt count remain in
+memory for the current client session; it does not persist inventory contents,
+fishing events, build locations, or server addresses outside Minecraft's own
+normal server list/configuration. No automation data is sent to a Helikon
+service because no such service exists.

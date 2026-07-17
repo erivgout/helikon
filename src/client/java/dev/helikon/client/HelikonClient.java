@@ -13,6 +13,7 @@ import dev.helikon.client.chat.ChatDisplayAccess;
 import dev.helikon.client.chat.BetterChatDisplayAccess;
 import dev.helikon.client.chat.IncomingChatMessage;
 import dev.helikon.client.chat.IncomingMessageAdapter;
+import dev.helikon.client.automation.MinecraftContainerClicker;
 import dev.helikon.client.config.ConfigurationException;
 import dev.helikon.client.config.ConfigurationManager;
 import dev.helikon.client.config.HudConfigurationManager;
@@ -26,6 +27,7 @@ import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
 import dev.helikon.client.gui.HelikonHudEditorScreen;
 import dev.helikon.client.gui.HelikonThemeEditorScreen;
+import dev.helikon.client.gui.HelikonAutoReconnectScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
 import dev.helikon.client.hud.BetterCrosshairHud;
 import dev.helikon.client.hud.HudLayout;
@@ -48,6 +50,15 @@ import dev.helikon.client.module.movement.AutoWalk;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.SprintContext;
 import dev.helikon.client.module.player.AutoTool;
+import dev.helikon.client.module.player.AutoArmor;
+import dev.helikon.client.module.player.AutoEject;
+import dev.helikon.client.module.player.AutoFish;
+import dev.helikon.client.module.player.AutoReconnect;
+import dev.helikon.client.module.player.AutoTotem;
+import dev.helikon.client.module.player.ArmorCandidate;
+import dev.helikon.client.module.player.ArmorSlot;
+import dev.helikon.client.module.player.InventoryItem;
+import dev.helikon.client.module.player.InventoryManager;
 import dev.helikon.client.module.player.ToolCandidate;
 import dev.helikon.client.module.player.AutoEat;
 import dev.helikon.client.module.player.FoodCandidate;
@@ -66,6 +77,11 @@ import dev.helikon.client.module.chat.ChatTimestamps;
 import dev.helikon.client.module.chat.ChatColor;
 import dev.helikon.client.module.chat.BetterChat;
 import dev.helikon.client.module.world.FastPlace;
+import dev.helikon.client.module.world.BuilderAssist;
+import dev.helikon.client.module.world.ChestItem;
+import dev.helikon.client.module.world.ChestSteal;
+import dev.helikon.client.module.world.MinecraftBuilderAssistAccess;
+import dev.helikon.client.mixin.FishingHookAccessor;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
 import dev.helikon.client.module.render.AntiBlind;
@@ -96,6 +112,7 @@ import dev.helikon.client.waypoint.WaypointManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -104,8 +121,28 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.FishingRodItem;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.item.equipment.Equippable;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.projectile.FishingHook;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.ConnectScreen;
+import net.minecraft.client.gui.screens.DisconnectedScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.food.FoodProperties;
@@ -113,7 +150,10 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.BlockHitResult;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.ThreadLocalRandom;
@@ -163,6 +203,10 @@ public final class HelikonClient implements ClientModInitializer {
     private final AtomicReference<Runnable> pendingScreenAction = new AtomicReference<>();
     private boolean screenWasOpenAtTickStart;
     private boolean helikonScreenWasOpenAtTickStart;
+    private long clientTick;
+    private ServerData reconnectServer;
+    private ServerData lastConnectedServer;
+    private boolean reconnectAttemptInFlight;
 
     @Override
     public void onInitializeClient() {
@@ -206,7 +250,15 @@ public final class HelikonClient implements ClientModInitializer {
         AutoSneak autoSneak = new AutoSneak();
         AutoEat autoEat = new AutoEat(new MinecraftUseKeyAccess());
         AutoTool autoTool = new AutoTool();
+        AutoArmor autoArmor = new AutoArmor();
+        AutoEject autoEject = new AutoEject();
+        AutoFish autoFish = new AutoFish();
+        AutoReconnect autoReconnect = new AutoReconnect();
+        AutoTotem autoTotem = new AutoTotem();
+        InventoryManager inventoryManager = new InventoryManager();
         FastPlace fastPlace = new FastPlace(new MinecraftUseCooldownAccess());
+        ChestSteal chestSteal = new ChestSteal();
+        BuilderAssist builderAssist = new BuilderAssist();
         ChatPrefix chatPrefix = new ChatPrefix();
         ChatSuffix chatSuffix = new ChatSuffix();
         ChatMute chatMute = new ChatMute();
@@ -226,7 +278,15 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoSneak);
         modules.register(autoEat);
         modules.register(autoTool);
+        modules.register(autoArmor);
+        modules.register(autoEject);
+        modules.register(autoFish);
+        modules.register(autoReconnect);
+        modules.register(autoTotem);
+        modules.register(inventoryManager);
         modules.register(fastPlace);
+        modules.register(chestSteal);
+        modules.register(builderAssist);
         modules.register(chatPrefix);
         modules.register(chatSuffix);
         modules.register(chatMute);
@@ -245,7 +305,7 @@ public final class HelikonClient implements ClientModInitializer {
         MovementModuleAccess.install(autoWalk, autoSneak);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
-                breadcrumbs
+                breadcrumbs, builderAssist
         );
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
@@ -253,7 +313,15 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(autoSprint, "tick", () -> tickAutoSprint(autoSprint));
                 modules.runGuarded(autoEat, "tick", () -> tickAutoEat(autoEat));
                 modules.runGuarded(autoTool, "tick", () -> tickAutoTool(autoTool));
+                modules.runGuarded(autoArmor, "tick", () -> tickAutoArmor(autoArmor, clientTick));
+                modules.runGuarded(autoEject, "tick", () -> tickAutoEject(autoEject, clientTick));
+                modules.runGuarded(autoFish, "tick", () -> tickAutoFish(autoFish, clientTick));
+                modules.runGuarded(autoReconnect, "tick", () -> tickAutoReconnect(autoReconnect, clientTick));
+                modules.runGuarded(autoTotem, "tick", () -> tickAutoTotem(autoTotem, clientTick));
+                modules.runGuarded(inventoryManager, "tick", () -> tickInventoryManager(inventoryManager, clientTick));
                 modules.runGuarded(fastPlace, "tick", () -> tickFastPlace(fastPlace));
+                modules.runGuarded(chestSteal, "tick", () -> tickChestSteal(chestSteal, clientTick));
+                modules.runGuarded(builderAssist, "tick", () -> MinecraftBuilderAssistAccess.tick(builderAssist, clientTick));
                 modules.runGuarded(chatSpammer, "tick", () -> tickChatSpammer(chatSpammer));
             }
         });
@@ -305,6 +373,15 @@ public final class HelikonClient implements ClientModInitializer {
                 allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply, normalChatSender,
                         IncomingMessageAdapter.game(message, overlay, System.currentTimeMillis()))
         );
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            reconnectServer = null;
+            lastConnectedServer = client.getCurrentServer();
+            reconnectAttemptInFlight = false;
+            modules.runGuarded(autoReconnect, "connect", autoReconnect::onConnected);
+        });
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
+                modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client))
+        );
 
         HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "active_modules"),
@@ -324,6 +401,7 @@ public final class HelikonClient implements ClientModInitializer {
             events.post(new ClientTickEvent(ClientTickEvent.Phase.PRE));
         });
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            clientTick++;
             events.post(new ClientTickEvent(ClientTickEvent.Phase.POST));
             BetterChatDisplayAccess.tickSmoothScroll();
             worldVisuals.tick(client);
@@ -446,6 +524,144 @@ public final class HelikonClient implements ClientModInitializer {
         }
     }
 
+    /** Runs one verified normal inventory swap for a strictly better local armor candidate. */
+    private static void tickAutoArmor(AutoArmor autoArmor, long tick) {
+        Minecraft client = Minecraft.getInstance();
+        if (!isOwnInventoryScreen(client)) {
+            return;
+        }
+        InventoryMenu menu = client.player.inventoryMenu;
+        Inventory inventory = client.player.getInventory();
+        autoArmor.nextAction(tick, armorCandidates(menu, inventory), equippedArmor(client.player), armorDestinationSlots())
+                .ifPresent(clicks -> MinecraftContainerClicker.apply(client, clicks));
+    }
+
+    /** Drops one configured item only while the player's ordinary inventory screen is open. */
+    private static void tickAutoEject(AutoEject autoEject, long tick) {
+        Minecraft client = Minecraft.getInstance();
+        if (!isOwnInventoryScreen(client)) {
+            return;
+        }
+        autoEject.nextAction(tick, inventoryItems(client.player.inventoryMenu, client.player.getInventory()))
+                .ifPresent(clicks -> MinecraftContainerClicker.apply(client, clicks));
+    }
+
+    /** Reels/recasts only an already selected fishing rod through Minecraft's normal interaction method. */
+    private static void tickAutoFish(AutoFish autoFish, long tick) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.gameMode == null || client.gui.screen() != null) {
+            return;
+        }
+        ItemStack held = client.player.getInventory().getSelectedItem();
+        FishingHook hook = client.player.fishing;
+        AutoFish.Action action = autoFish.update(tick, held.getItem() instanceof FishingRodItem, remainingDurability(held),
+                hook != null, hook != null && ((FishingHookAccessor) hook).helikon$isBiting(),
+                hook != null && hook.isOpenWaterFishing());
+        if (action == AutoFish.Action.USE_HELD_ROD) {
+            client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
+        }
+    }
+
+    /** Records a server disconnect only when Minecraft still has a valid multiplayer target. */
+    private void observeAutoReconnectDisconnect(AutoReconnect autoReconnect, Minecraft client) {
+        ServerData server = client.getCurrentServer();
+        if (server == null) {
+            server = lastConnectedServer;
+        }
+        if (server == null || client.isLocalServer() || !ServerAddress.isValidAddress(server.ip)) {
+            reconnectServer = null;
+            reconnectAttemptInFlight = false;
+            autoReconnect.onConnected();
+            return;
+        }
+        reconnectServer = server;
+        reconnectAttemptInFlight = false;
+        autoReconnect.onDisconnected(clientTick, server.ip);
+    }
+
+    /** Bridges the local reconnect policy to Minecraft's ordinary ConnectScreen workflow. */
+    private void tickAutoReconnect(AutoReconnect autoReconnect, long tick) {
+        if (!autoReconnect.isAwaitingDisconnectScreen()) {
+            reconnectServer = null;
+            reconnectAttemptInFlight = false;
+            return;
+        }
+        Minecraft client = Minecraft.getInstance();
+        Screen current = client.gui.screen();
+        if (reconnectAttemptInFlight && current instanceof DisconnectedScreen) {
+            reconnectAttemptInFlight = false;
+            autoReconnect.onReconnectFailed(tick);
+        }
+        if (current instanceof DisconnectedScreen disconnectScreen) {
+            client.setScreenAndShow(new HelikonAutoReconnectScreen(disconnectScreen, autoReconnect, () -> clientTick));
+            current = client.gui.screen();
+        }
+        if (current instanceof ConnectScreen) {
+            return;
+        }
+        boolean disconnectScreenVisible = current instanceof DisconnectedScreen
+                || current instanceof HelikonAutoReconnectScreen;
+        Screen reconnectParent = current;
+        autoReconnect.nextReconnect(tick, disconnectScreenVisible).ifPresent(address -> {
+            if (reconnectServer == null) {
+                autoReconnect.onConnected();
+                return;
+            }
+            reconnectAttemptInFlight = true;
+            ConnectScreen.startConnecting(reconnectParent, client, ServerAddress.parseString(address), reconnectServer,
+                    false, null);
+        });
+    }
+
+    /** Uses only an existing inventory totem and normal inventory swaps while the player inventory is open. */
+    private static void tickAutoTotem(AutoTotem autoTotem, long tick) {
+        Minecraft client = Minecraft.getInstance();
+        if (!isOwnInventoryScreen(client)) {
+            return;
+        }
+        ItemStack offhand = client.player.getItemBySlot(EquipmentSlot.OFFHAND);
+        autoTotem.nextAction(tick, new AutoTotem.Context(client.player.getHealth(), (float) client.player.fallDistance,
+                        offhand.is(Items.TOTEM_OF_UNDYING), offhand.isEmpty() ? "" : itemId(offhand),
+                        InventoryMenu.SHIELD_SLOT, inventoryItems(client.player.inventoryMenu, client.player.getInventory())))
+                .ifPresent(clicks -> MinecraftContainerClicker.apply(client, clicks));
+    }
+
+    /** Runs one conservative inventory organization click sequence on the open vanilla inventory. */
+    private static void tickInventoryManager(InventoryManager inventoryManager, long tick) {
+        Minecraft client = Minecraft.getInstance();
+        if (!isOwnInventoryScreen(client)) {
+            return;
+        }
+        InventoryMenu menu = client.player.inventoryMenu;
+        Inventory inventory = client.player.getInventory();
+        inventoryManager.nextAction(tick, inventoryItems(menu, inventory), inventoryMenuSlots(menu, inventory))
+                .ifPresent(clicks -> MinecraftContainerClicker.apply(client, clicks));
+    }
+
+    /** Transfers one visible chest item through Minecraft's normal QUICK_MOVE action, or closes that menu. */
+    private static void tickChestSteal(ChestSteal chestSteal, long tick) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.gameMode == null || !(client.gui.screen() instanceof AbstractContainerScreen<?>)
+                || !(client.player.containerMenu instanceof ChestMenu menu) || !menu.getCarried().isEmpty()) {
+            return;
+        }
+        List<ChestItem> items = new ArrayList<>();
+        int chestSlots = menu.getContainer().getContainerSize();
+        for (int slot = 0; slot < chestSlots; slot++) {
+            ItemStack stack = menu.getSlot(slot).getItem();
+            if (!stack.isEmpty()) {
+                items.add(new ChestItem(slot, itemId(stack), stack.getCount(), stack.getRarity().ordinal()));
+            }
+        }
+        chestSteal.nextAction(tick, menu.containerId, items).ifPresent(action -> {
+            if (action.type() == ChestSteal.ActionType.CLOSE) {
+                client.player.closeContainer();
+            } else {
+                MinecraftContainerClicker.apply(client, action.clicks());
+            }
+        });
+    }
+
     /** Adapts ordinary local mining state into AutoTool's Minecraft-free selector. */
     private void tickAutoTool(AutoTool autoTool) {
         Minecraft client = Minecraft.getInstance();
@@ -528,6 +744,132 @@ public final class HelikonClient implements ClientModInitializer {
             candidates.add(new FoodCandidate(slot, itemId, food.nutrition(), food.saturation(), food.canAlwaysEat()));
         }
         return candidates;
+    }
+
+    private static boolean isOwnInventoryScreen(Minecraft client) {
+        return client.player != null
+                && client.gameMode != null
+                && client.gui.screen() instanceof InventoryScreen
+                && client.player.containerMenu == client.player.inventoryMenu
+                && client.player.inventoryMenu.getCarried().isEmpty();
+    }
+
+    private static List<InventoryItem> inventoryItems(InventoryMenu menu, Inventory inventory) {
+        List<InventoryItem> items = new ArrayList<>();
+        for (int menuSlot = InventoryMenu.INV_SLOT_START; menuSlot < InventoryMenu.USE_ROW_SLOT_END; menuSlot++) {
+            Slot slot = menu.getSlot(menuSlot);
+            if (slot.container != inventory || slot.getContainerSlot() < 0 || slot.getContainerSlot() >= 36) {
+                continue;
+            }
+            ItemStack stack = slot.getItem();
+            if (!stack.isEmpty()) {
+                items.add(new InventoryItem(menuSlot, slot.getContainerSlot(), itemId(stack), stack.getCount(),
+                        stack.getCustomName() != null, stack.isEnchanted(), remainingDurability(stack)));
+            }
+        }
+        return items;
+    }
+
+    private static Map<Integer, Integer> inventoryMenuSlots(InventoryMenu menu, Inventory inventory) {
+        Map<Integer, Integer> menuSlots = new java.util.LinkedHashMap<>();
+        for (int menuSlot = InventoryMenu.INV_SLOT_START; menuSlot < InventoryMenu.USE_ROW_SLOT_END; menuSlot++) {
+            Slot slot = menu.getSlot(menuSlot);
+            if (slot.container == inventory && slot.getContainerSlot() >= 0 && slot.getContainerSlot() < 36) {
+                menuSlots.put(slot.getContainerSlot(), menuSlot);
+            }
+        }
+        return Map.copyOf(menuSlots);
+    }
+
+    private static List<ArmorCandidate> armorCandidates(InventoryMenu menu, Inventory inventory) {
+        List<ArmorCandidate> candidates = new ArrayList<>();
+        for (int menuSlot = InventoryMenu.INV_SLOT_START; menuSlot < InventoryMenu.USE_ROW_SLOT_END; menuSlot++) {
+            Slot slot = menu.getSlot(menuSlot);
+            if (slot.container == inventory && slot.getContainerSlot() >= 0 && slot.getContainerSlot() < 36) {
+                armorCandidate(menuSlot, slot.getItem()).ifPresent(candidates::add);
+            }
+        }
+        return candidates;
+    }
+
+    private static Map<ArmorSlot, ArmorCandidate> equippedArmor(Player player) {
+        Map<ArmorSlot, ArmorCandidate> equipped = new EnumMap<>(ArmorSlot.class);
+        for (Map.Entry<ArmorSlot, Integer> entry : armorDestinationSlots().entrySet()) {
+            ArmorCandidate candidate = armorCandidate(entry.getValue(), player.getItemBySlot(minecraftArmorSlot(entry.getKey())))
+                    .orElse(null);
+            if (candidate != null) {
+                equipped.put(entry.getKey(), candidate);
+            }
+        }
+        return equipped;
+    }
+
+    private static Optional<ArmorCandidate> armorCandidate(int menuSlot, ItemStack stack) {
+        if (stack.isEmpty()) {
+            return Optional.empty();
+        }
+        Equippable equippable = stack.get(DataComponents.EQUIPPABLE);
+        if (equippable == null || !equippable.slot().isArmor()) {
+            return Optional.empty();
+        }
+        ArmorSlot armorSlot = armorSlot(equippable.slot());
+        if (armorSlot == null) {
+            return Optional.empty();
+        }
+        ItemAttributeModifiers modifiers = stack.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS,
+                ItemAttributeModifiers.EMPTY);
+        return Optional.of(new ArmorCandidate(menuSlot, armorSlot,
+                modifiers.compute(Attributes.ARMOR, 0.0D, equippable.slot()),
+                modifiers.compute(Attributes.ARMOR_TOUGHNESS, 0.0D, equippable.slot()),
+                durabilityFraction(stack), hasBindingCurse(stack)));
+    }
+
+    private static Map<ArmorSlot, Integer> armorDestinationSlots() {
+        return Map.of(
+                ArmorSlot.FEET, InventoryMenu.ARMOR_SLOT_START,
+                ArmorSlot.LEGS, InventoryMenu.ARMOR_SLOT_START + 1,
+                ArmorSlot.CHEST, InventoryMenu.ARMOR_SLOT_START + 2,
+                ArmorSlot.HEAD, InventoryMenu.ARMOR_SLOT_START + 3
+        );
+    }
+
+    private static EquipmentSlot minecraftArmorSlot(ArmorSlot slot) {
+        return switch (slot) {
+            case FEET -> EquipmentSlot.FEET;
+            case LEGS -> EquipmentSlot.LEGS;
+            case CHEST -> EquipmentSlot.CHEST;
+            case HEAD -> EquipmentSlot.HEAD;
+        };
+    }
+
+    private static ArmorSlot armorSlot(EquipmentSlot slot) {
+        return switch (slot) {
+            case FEET -> ArmorSlot.FEET;
+            case LEGS -> ArmorSlot.LEGS;
+            case CHEST -> ArmorSlot.CHEST;
+            case HEAD -> ArmorSlot.HEAD;
+            default -> null;
+        };
+    }
+
+    private static boolean hasBindingCurse(ItemStack stack) {
+        return stack.getEnchantments().keySet().stream()
+                .anyMatch(enchantment -> enchantment.unwrapKey().map(Enchantments.BINDING_CURSE::equals).orElse(false));
+    }
+
+    private static int remainingDurability(ItemStack stack) {
+        return stack.isDamageableItem() ? Math.max(0, stack.getMaxDamage() - stack.getDamageValue()) : 0;
+    }
+
+    private static double durabilityFraction(ItemStack stack) {
+        if (!stack.isDamageableItem() || stack.getMaxDamage() < 1) {
+            return 1.0D;
+        }
+        return Math.max(0.0D, (double) remainingDurability(stack) / stack.getMaxDamage());
+    }
+
+    private static String itemId(ItemStack stack) {
+        return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
     }
 
     /** Evaluates local incoming-message policies through normal module failure isolation. */

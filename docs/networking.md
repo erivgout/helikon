@@ -55,6 +55,26 @@ ordinary local Use binding. It never directly invokes, repeats, or fabricates
 an interaction or packet; normal client interaction rules and all server-side
 food, inventory, and combat rules remain authoritative.
 
+AutoArmor, AutoEject, AutoTotem, InventoryManager, and ChestSteal make no
+packet themselves. When their narrow screen/cursor guards pass, the client
+asks Minecraft to process an ordinary vanilla container input (pickup,
+quick-move, or throw) for existing visible slots. Minecraft then applies its
+normal client/menu and server protocol rules; Helikon neither changes an
+inventory directly nor fabricates a container packet.
+
+AutoFish observes only the currently local fishing hook and, after its local
+delay/durability checks, invokes Minecraft's ordinary selected-item Use method
+once. BuilderAssist reads the local hit result and loaded block states for a
+bounded preview, then asks Minecraft for one normal held-block interaction
+while Use is already held. Neither feature requests blocks, changes reach, or
+constructs/replays a packet.
+
+AutoReconnect has no Helikon network service and does not scan servers. After
+Minecraft reports a valid multiplayer disconnect, it may hand the same stored
+server target back to Minecraft's ordinary `ConnectScreen` after a local
+cancellable countdown and bounded attempts. Local/singleplayer targets and
+explicit leaves are declined.
+
 ChatPrefix and ChatSuffix modify only a normal outgoing chat string immediately
 before Minecraft sends it through the player's existing server connection.
 They never touch slash, private-message, likely authentication, or Helikon

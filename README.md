@@ -24,9 +24,27 @@ movement input and sprint state; AutoTool selects a safe local hotbar tool only
 while the user is already mining; and FastPlace can lower Minecraft's transient
 local use cooldown only while the user holds Use. AutoEat selects existing safe
 hotbar food and holds Minecraft's ordinary Use key only while its local
-threshold and combat rules permit it. Other gameplay automation, combat tools, packet manipulation,
-external networking, telemetry, a custom backend, and a server-side component
-remain unimplemented.
+threshold and combat rules permit it.
+
+AutoArmor, AutoEject, AutoTotem, and InventoryManager act only in the player's
+open vanilla inventory with an empty carried cursor, using Minecraft's normal
+container interactions. ChestSteal similarly runs only in an open vanilla
+chest and uses normal quick-move actions. Their local plans preserve configured
+hotbar slots, named/enchant-protected items, durability reserves, and Binding
+Curse equipment where applicable; Minecraft and the server remain authoritative
+over every attempted action.
+
+AutoFish observes the local fishing-hook state, waits for a configured bite
+delay, uses the selected player-provided rod normally to reel, and recasts once
+after the configured delay. AutoReconnect displays a cancellable local
+countdown after a multiplayer disconnect and asks Minecraft's normal connection
+screen to retry the same remembered server for a bounded number of attempts;
+it declines local/singleplayer targets and a disconnect that never reaches the
+ordinary disconnect screen. BuilderAssist previews small loaded replaceable
+line/floor/wall plans while a player-provided block is held and sends at most
+one ordinary Use interaction at its configured cadence. Combat tools, packet
+manipulation, external networking, telemetry, a custom backend, and a
+server-side component remain unimplemented.
 
 Trajectories predicts only frustum-visible in-flight arrows, tridents, and
 thrown items through a local block-collision simulation; it does not alter

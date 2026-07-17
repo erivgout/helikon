@@ -60,6 +60,13 @@ decisions, and StorageESP target-family parsing are covered by
 MiniPlayer's fixed geometry and DamageIndicators' confirmed health-loss,
 bounded-label, fade, and rise decisions are covered by `MiniPlayerLayoutTest`
 and `DamageIndicatorTrackerTest`.
+Container click plans, armor/totem/eject/manager safeguards, and ChestSteal's
+filter/priority decisions are covered by `ContainerClickSequenceTest`,
+`InventoryAutomationPolicyTest`, and `ChestStealTest`. AutoFish's cast/bite/
+recast state and durability reserve are covered by `AutoFishTest`; AutoReconnect's
+countdown, cancellation, visible-screen guard, and bounded retries are covered
+by `AutoReconnectTest`. Builder plan bounds/geometry and Use/repeat/delay gates
+are covered by `BuilderPlanTest` and `BuilderAssistTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -292,6 +299,40 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     one amount rises and fades with the configured duration/color. Verify a
     target outside range or behind the camera has no label, no damage changes
     occur without a local health decrease, and neither feature affects combat.
+37. In a disposable local/test world, open the player's normal inventory with
+    an empty cursor. Enable **AutoArmor**, confirm it equips only a strictly
+    better piece after its delay, then equip a Binding Curse piece and verify
+    protection leaves it in place. Configure **AutoEject** with a harmless
+    test item and protected hotbar range; verify only an unprotected matching
+    item is normally dropped. At a safe low-health/fall test threshold, verify
+    **AutoTotem** moves an existing inventory totem into offhand and restores
+    the recorded prior item only when its source remains unchanged. Enable
+    **InventoryManager** with a harmless preferred hotbar entry and junk item;
+    verify named, enchanted, and protected/durability-reserved items remain
+    untouched and close the screen to verify every module stops immediately.
+38. In a disposable chest containing harmless items, enable **ChestSteal** and
+    verify one normal quick move occurs per configured delay, whitelist and
+    blacklist filters leave the correct items, priority changes the transfer
+    order, and close-after-completion closes only after eligible items are
+    exhausted. Keep a nonempty cursor or leave the chest screen and verify no
+    action occurs.
+39. In a permitted fishing test world, select a player-provided rod and enable
+    **AutoFish**. Verify it casts once, waits for a visible bite and the reel
+    delay, then reels and waits for the recast delay before casting again.
+    Turn on open-water-only near non-open water and verify it does not reel;
+    set the durability reserve above the remaining rod durability and verify it
+    stops. Open a screen and verify it does nothing.
+40. On a disposable multiplayer target, disconnect unexpectedly with
+    **AutoReconnect** enabled. Verify the local countdown and Cancel button,
+    cancel once to verify no connection is made, then retry and verify no more
+    than the configured attempts use Minecraft's normal connect screen. Leave
+    explicitly or use a local world and verify it never reconnects.
+41. In a local/test world with ordinary blocks, enable **BuilderAssist**, hold
+    Use with a player-provided block, and target a replaceable face. Verify the
+    bounded local preview follows each single/line/floor/wall mode and length,
+    width, height, and color settings. Verify repeat placement honors its delay
+    and stops when Use is released, the held item is not a block, a screen is
+    open, a target is unloaded/occupied, or normal vanilla placement fails.
 
 ## Manual command and keybind smoke test
 

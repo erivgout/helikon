@@ -37,6 +37,7 @@ import dev.helikon.client.event.PlayerLifecycleEvent;
 import dev.helikon.client.event.RenderEvent;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.friend.FriendToggleGesture;
+import dev.helikon.client.integration.BaritoneCompatibility;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
 import dev.helikon.client.gui.HelikonHudEditorScreen;
@@ -132,6 +133,7 @@ import dev.helikon.client.module.chat.AnnouncerAccess;
 import dev.helikon.client.module.chat.AnnouncementTrigger;
 import dev.helikon.client.module.chat.LocalTranslator;
 import dev.helikon.client.module.world.FastPlace;
+import dev.helikon.client.module.world.FastBreak;
 import dev.helikon.client.module.world.BuilderAssist;
 import dev.helikon.client.module.world.AntiCactus;
 import dev.helikon.client.module.world.AntiCactusAccess;
@@ -139,8 +141,11 @@ import dev.helikon.client.module.world.BlockSelection;
 import dev.helikon.client.module.world.ChestItem;
 import dev.helikon.client.module.world.ChestSteal;
 import dev.helikon.client.module.world.MinecraftBuilderAssistAccess;
+import dev.helikon.client.module.world.MinecraftBreakCooldownAccess;
+import dev.helikon.client.module.world.MinecraftMiningAccess;
 import dev.helikon.client.mixin.FishingHookAccessor;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
+import dev.helikon.client.module.world.Nuker;
 import dev.helikon.client.module.render.Fullbright;
 import dev.helikon.client.module.render.AntiBlind;
 import dev.helikon.client.module.render.AntiTotemAnimation;
@@ -352,6 +357,8 @@ public final class HelikonClient implements ClientModInitializer {
         AutoTotem autoTotem = new AutoTotem();
         InventoryManager inventoryManager = new InventoryManager();
         FastPlace fastPlace = new FastPlace(new MinecraftUseCooldownAccess());
+        FastBreak fastBreak = new FastBreak(new MinecraftBreakCooldownAccess());
+        Nuker nuker = new Nuker();
         ChestSteal chestSteal = new ChestSteal();
         BuilderAssist builderAssist = new BuilderAssist();
         AntiCactus antiCactus = new AntiCactus();
@@ -413,6 +420,8 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoTotem);
         modules.register(inventoryManager);
         modules.register(fastPlace);
+        modules.register(fastBreak);
+        modules.register(nuker);
         modules.register(chestSteal);
         modules.register(builderAssist);
         modules.register(antiCactus);
@@ -485,6 +494,8 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(autoTotem, "tick", () -> tickAutoTotem(autoTotem, clientTick));
                 modules.runGuarded(inventoryManager, "tick", () -> tickInventoryManager(inventoryManager, clientTick));
                 modules.runGuarded(fastPlace, "tick", () -> tickFastPlace(fastPlace));
+                modules.runGuarded(fastBreak, "tick", () -> MinecraftMiningAccess.tickFastBreak(fastBreak));
+                modules.runGuarded(nuker, "tick", () -> MinecraftMiningAccess.tickNuker(nuker));
                 modules.runGuarded(chestSteal, "tick", () -> tickChestSteal(chestSteal, clientTick));
                 modules.runGuarded(builderAssist, "tick", () -> MinecraftBuilderAssistAccess.tick(builderAssist, clientTick));
                 modules.runGuarded(chatSpammer, "tick", () -> tickChatSpammer(chatSpammer));
@@ -694,6 +705,9 @@ public final class HelikonClient implements ClientModInitializer {
         });
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> saveConfigurations());
 
+        BaritoneCompatibility.Status baritoneStatus = BaritoneCompatibility.detect(
+                modId -> FabricLoader.getInstance().isModLoaded(modId));
+        LOGGER.info(baritoneStatus.detail());
         LOGGER.info("Helikon bootstrap initialized with " + modules.all().size() + " module(s)");
     }
 

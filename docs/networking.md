@@ -52,6 +52,15 @@ ordinary Use key with a matching held item. It never starts, repeats, or
 replays an interaction and does not construct packets; server rate limits and
 interaction rules remain authoritative.
 
+FastBreak only lowers an existing local normal destroy cooldown while Attack is
+held over a loaded visible block target. Nuker is separately disabled by
+default, requires an explicit whitelist plus held Attack, scans only loaded
+blocks within Minecraft's existing interaction range, and caps itself at two
+calls to Minecraft's normal `startDestroyBlock` path per tick. Neither builds,
+modifies, or replays a packet; a server decides whether each ordinary destroy
+attempt succeeds and can correct client prediction. Baritone compatibility is
+only a local Fabric mod-ID check and sends nothing.
+
 AutoEat only selects an existing local hotbar slot and holds Minecraft's
 ordinary local Use binding. It never directly invokes, repeats, or fabricates
 an interaction or packet; normal client interaction rules and all server-side

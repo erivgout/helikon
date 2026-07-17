@@ -15,9 +15,13 @@ When porting:
    narrowly scoped.
 4. Revalidate AutoTool's ordinary mining-state (`MultiPlayerGameMode`), hotbar
    (`Inventory`), block-state, and `ItemStack` destroy-speed/durability APIs.
-5. Revalidate FastPlace's `Minecraft.rightClickDelay` accessor, Use key mapping,
-   held-item, and `BlockItem` APIs. Keep it a cooldown reducer rather than an
-   interaction injector.
+5. Revalidate FastPlace's `Minecraft.rightClickDelay` accessor, FastBreak and
+   Nuker's `MultiPlayerGameMode.destroyDelay` accessor, Attack/Use key mappings,
+   `Minecraft.hitResult`, `BlockHitResult`, loaded-block and player interaction
+   range checks, `Level.clip`, hotbar/tool APIs, and
+   `MultiPlayerGameMode.startDestroyBlock`. Keep FastBreak a cooldown reducer,
+   Nuker a loaded-target bounded normal interaction, and neither an interaction
+   injector or packet builder.
 6. Revalidate AutoEat's `DataComponents.FOOD`, `FoodProperties`, food-data,
    health, hotbar, hurt-time, configured-key, and normal Use-key APIs. Preserve
    physical keyboard, mouse, and scancode Use input; keep selection and use

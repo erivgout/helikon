@@ -57,6 +57,11 @@ AutoTool's correct-tool scoring, durability guard, ownership-aware slot restore,
 and safe no-selection behavior are covered by `AutoToolTest`.
 FastPlace's held-use gate, item filtering, safe delay floor, and invalid input
 rejection are covered by `FastPlaceTest`.
+FastBreak's held-target/filter/cooldown restoration rules, Nuker's explicit
+whitelist, range, visibility, action cap, temporary tool ownership, and local
+rotation, plus dependency-free Baritone detection, are covered by
+`FastBreakTest`, `NukerTest`, and `BaritoneCompatibilityTest`. Their normal
+Minecraft destroy-input wiring requires the world-automation smoke checklist.
 AntiCactus's disabled default, non-collision preservation, vertical-movement
 preservation, and deterministic safe-axis slide are covered by
 `AntiCactusTest`. BlockSelection's bounded local distance-label and render-style
@@ -546,6 +551,28 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
    verify the extra rendering disappears immediately.
 3. In a permitted multiplayer check, confirm neither behavior sends a custom
    packet, changes reach, edits a block, or becomes visible to another player.
+
+## Manual Phase I world-automation smoke test
+
+1. In a disposable local/test world, enable **FastBreak**, hold Attack on a
+   normal loaded block, and verify only the normal local post-break cooldown is
+   reduced. Set a specific `blocks` filter and verify a non-matching block is
+   unchanged. Release Attack, open a screen, disable the module, and verify no
+   new mining action is started and Minecraft's normal cooldown behavior
+   returns.
+2. Keep **Nuker** disabled or leave its whitelist blank and hold Attack near
+   blocks: verify it does nothing. In a disposable local/test world, whitelist
+   one harmless block ID, keep the default one-request safety limit, hold
+   Attack, and verify only loaded, reachable matching blocks receive ordinary
+   mining attempts. Test a screen-open state, blacklist, out-of-range target,
+   obstructed line of sight, and a low-durability-only tool hotbar. Raise both
+   caps only to two and verify no more than two normal requests occur in a
+   tick. The server remains authoritative; do not treat local prediction as a
+   successful break.
+3. Start once with and once without a user-installed Baritone copy. Verify the
+   log reports only local detection status and that Helikon starts with the
+   same controls either way. It must not download Baritone, expose a remote
+   endpoint, or invoke an optional Baritone command/API.
 
 ## Manual LocalTranslator smoke test
 

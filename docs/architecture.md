@@ -95,6 +95,23 @@ or packet. Its narrow port immediately restores an unchanged module-owned
 cooldown on disable or panic. The accessor remains confined to the
 version-sensitive client edge.
 
+FastBreak follows the same ownership model for Minecraft's transient normal
+destroy cooldown, while keeping its held-Attack/visible-target/block-filter
+decision Minecraft-free. `Nuker` keeps the whitelist, blacklist, range,
+line-of-sight, hard two-request cap, and temporary tool-slot ownership in pure
+classes. Its adapter scans only the small loaded cube around the local player,
+uses Minecraft's actual interaction-range and optional block ray facts, then
+calls only `MultiPlayerGameMode.startDestroyBlock`. It never creates a packet
+or edits world state directly; server validation and correction remain in
+control. Optional local view rotation and hotbar selection use existing client
+state only.
+
+`BaritoneCompatibility` is a pure injected-predicate detector for the optional
+user-installed `baritone` Fabric mod ID. The entrypoint supplies Fabric's local
+mod lookup and logs the status. It makes no class reference to Baritone, uses
+no reflection, download, external service, or integration call, so Helikon
+continues unchanged whether that mod is absent or present.
+
 `CactusCollisionPolicy` owns finite-box intersection and deterministic
 horizontal-slide decisions without Minecraft imports. Its narrow adapter scans
 at most 64 already-loaded cactus collision boxes for only the local player's

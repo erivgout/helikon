@@ -73,6 +73,13 @@ fishing events, build locations, or server addresses outside Minecraft's own
 normal server list/configuration. No automation data is sent to a Helikon
 service because no such service exists.
 
+FastBreak retains only an in-progress client cooldown value so it can restore
+an unchanged value on disable. Nuker retains only the current small loaded
+target list and a temporary hotbar-slot ownership record; neither writes block
+positions, block IDs, tool choices, or break history to disk or transmits them.
+Baritone compatibility checks one local installed-mod ID and retains no mod
+metadata or cross-mod state.
+
 Advanced movement keeps only transient local input, velocity, camera, ability,
 and Elytra status needed for the current session. Freecam's temporary camera
 entity is never added to the world, persisted, or transmitted. No movement

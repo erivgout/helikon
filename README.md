@@ -50,10 +50,11 @@ movement, or packets. BlockESP deliberately scans a bounded cube at a bounded
 per-tick budget, so newly loaded or changed blocks can take one scan pass to
 appear. AutoSprint, AutoWalk, and AutoSneak apply only normal local
 movement input and sprint state; AutoTool selects a safe local hotbar tool only
-while the user is already mining; and FastPlace can lower Minecraft's transient
-local use cooldown only while the user holds Use. AutoEat selects existing safe
-hotbar food and holds Minecraft's ordinary Use key only while its local
-threshold and combat rules permit it.
+while the user is already mining; FastPlace can lower Minecraft's transient
+local use cooldown only while the user holds Use; and FastBreak can lower an
+existing normal destroy cooldown for an optional local block-ID filter. AutoEat
+selects existing safe hotbar food and holds Minecraft's ordinary Use key only
+while its local threshold and combat rules permit it.
 AntiCactus only slides a normal local self-movement vector away from already
 loaded cactus collision boxes; it never suppresses cactus damage or claims to
 override server movement. BlockSelection renders one local highlight around the
@@ -83,9 +84,13 @@ screen to retry the same remembered server for a bounded number of attempts;
 it declines local/singleplayer targets and a disconnect that never reaches the
 ordinary disconnect screen. BuilderAssist previews small loaded replaceable
 line/floor/wall plans while a player-provided block is held and sends at most
-one ordinary Use interaction at its configured cadence. Packet manipulation,
-external networking, telemetry, a custom backend, and a server-side component
-remain unimplemented.
+one ordinary Use interaction at its configured cadence. Nuker is disabled by
+default and requires Attack plus a non-empty block whitelist before it can make
+at most two normal destroy requests for loaded, reachable blocks per tick; its
+server-visible result is never assumed. A Baritone installation is detected
+only by its local Fabric mod ID; Helikon does not bundle, download, reflect on,
+or invoke Baritone. Packet manipulation, external networking, telemetry, a
+custom backend, and a server-side component remain unimplemented.
 
 Combat tools are deliberately constrained to Minecraft's ordinary client
 paths. TriggerBot and KillAura make at most one normal locally observed, line-of-sight

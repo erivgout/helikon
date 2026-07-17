@@ -54,6 +54,7 @@ import dev.helikon.client.hud.BetterCrosshairHud;
 import dev.helikon.client.hud.CoordinateHud;
 import dev.helikon.client.hud.ClientTpsEstimate;
 import dev.helikon.client.hud.DebugOverlayHud;
+import dev.helikon.client.hud.HealthHud;
 import dev.helikon.client.hud.DurabilityWarningsHud;
 import dev.helikon.client.hud.ElytraHud;
 import dev.helikon.client.hud.HudLayout;
@@ -204,6 +205,7 @@ import dev.helikon.client.module.render.AntiTotemAnimation;
 import dev.helikon.client.module.render.Arrows;
 import dev.helikon.client.module.render.BetterCrosshair;
 import dev.helikon.client.module.render.BetterNametags;
+import dev.helikon.client.module.render.Health;
 import dev.helikon.client.module.render.Dinnerbone;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.Breadcrumbs;
@@ -397,6 +399,7 @@ public final class HelikonClient implements ClientModInitializer {
         Breadcrumbs breadcrumbs = new Breadcrumbs();
         Arrows arrows = new Arrows();
         Explosions explosions = new Explosions();
+        Health health = new Health();
         modules.register(antiBlind);
         modules.register(antiDebuff);
         modules.register(antiTotemAnimation);
@@ -419,6 +422,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(breadcrumbs);
         modules.register(arrows);
         modules.register(explosions);
+        modules.register(health);
         RenderModuleAccess.install(antiBlind, betterCrosshair, antiTotemAnimation, dinnerbone, rainbowEnchant,
                 hudLayout, panicState);
         AntiDebuffAccess.install(antiDebuff);
@@ -871,6 +875,8 @@ public final class HelikonClient implements ClientModInitializer {
                 new WaypointHud(waypoints, waypointLocations, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "better_crosshair"),
                 new BetterCrosshairHud(betterCrosshair, panicState, hudLayout));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "health"),
+                new HealthHud(health, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "radar"),
                 new RadarHud(radar, friends, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "arrows"),

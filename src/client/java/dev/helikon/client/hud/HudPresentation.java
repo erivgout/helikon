@@ -16,6 +16,16 @@ public final class HudPresentation {
     /** Draws a local text block with every persisted per-element presentation option. */
     public static HudBounds drawLines(GuiGraphicsExtractor graphics, Font font, List<String> lines,
                                       HudElementPlacement placement) {
+        return drawLines(graphics, font, lines, placement, color(Objects.requireNonNull(placement, "placement")));
+    }
+
+    /**
+     * Draws a local text block with an explicit text color that overrides the
+     * element's persisted solid or animated color, keeping every other
+     * placement option (position, scale, background, padding, shadow).
+     */
+    public static HudBounds drawLines(GuiGraphicsExtractor graphics, Font font, List<String> lines,
+                                      HudElementPlacement placement, int textColor) {
         Objects.requireNonNull(graphics, "graphics");
         Objects.requireNonNull(font, "font");
         lines = List.copyOf(Objects.requireNonNull(lines, "lines"));
@@ -28,7 +38,7 @@ public final class HudPresentation {
         int contentWidth = textWidth + placement.padding() * 2;
         int contentHeight = lines.size() * font.lineHeight + placement.padding() * 2;
         HudBounds bounds = placement.scaledBounds(graphics.guiWidth(), graphics.guiHeight(), contentWidth, contentHeight);
-        int color = color(placement);
+        int color = textColor;
 
         graphics.pose().pushMatrix();
         graphics.pose().translate(bounds.x(), bounds.y());

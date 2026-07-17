@@ -50,6 +50,19 @@ normal careful-movement handling guards ledges. The bridge is always inactive
 while a screen is open, and it recomputes the effective movement vector after
 the final input transformation.
 
+AutoTool separates hotbar candidates and deterministic scoring from the small
+Minecraft adapter. The adapter runs only while the user is normally mining a
+block through Minecraft's own game mode, selects an existing hotbar slot, and
+restores a previous slot only when it still owns the selection. It never sends
+its own mining packet or modifies inventory contents.
+
+FastPlace has a similarly small adapter around Minecraft's transient use-delay
+field. Its pure policy only lowers an existing cooldown after the user holds
+Use with a matching non-empty item; it never synthesizes a click, interaction,
+or packet. Its narrow port immediately restores an unchanged module-owned
+cooldown on disable or panic. The accessor remains confined to the
+version-sensitive client edge.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

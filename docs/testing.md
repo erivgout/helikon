@@ -30,6 +30,10 @@ plus AutoWalk's GUI and steering input policy, are covered by
 AutoSneak's Toggle, bound-key Hold, Edge-only, and screen-suppression policies,
 plus enum-setting recovery and command validation, are covered by
 `AutoSneakTest`, `SettingTest`, and `BuiltinCommandsTest`.
+AutoTool's correct-tool scoring, durability guard, ownership-aware slot restore,
+and safe no-selection behavior are covered by `AutoToolTest`.
+FastPlace's held-use gate, item filtering, safe delay floor, and invalid input
+rejection are covered by `FastPlaceTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -126,6 +130,18 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     applies local sneak while moving so vanilla careful movement stops at a
     ledge. Open chat or the ClickGUI in each mode and verify it never forces
     sneak while the screen is open.
+20. Put multiple tools in the hotbar, begin manually mining a block, and enable
+    **AutoTool**. Verify it selects the fastest correct tool with at least the
+    configured remaining durability, then restores the previous slot when
+    mining ends if that setting is enabled. Change slots manually while mining
+    and verify AutoTool does not overwrite that later user selection. Verify it
+    is inactive while a screen is open or the attack key is not held.
+21. Enable **FastPlace** with its default Blocks filter, hold Use while placing
+    ordinary blocks, and verify repeated placement only follows normal
+    Minecraft interactions. Set a nonzero safe minimum delay and verify it
+    remains a floor. Change the filter to Non-blocks and verify held block use
+    is no longer affected. Open any screen and verify no cooldown change is
+    applied while it is open.
 
 ## Manual command and keybind smoke test
 

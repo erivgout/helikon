@@ -21,6 +21,15 @@ AutoSprint, AutoWalk, and AutoSneak use ordinary local client input and player
 sprint state. They do not construct, alter, replay, or bypass Minecraft
 packets; the connected server remains authoritative for all resulting movement.
 
+AutoTool only selects an existing local hotbar slot while the player is already
+using Minecraft's normal mining interaction. It does not construct or replay
+mining, inventory, or slot-selection packets.
+
+FastPlace only lowers a local transient cooldown after the user holds the
+ordinary Use key with a matching held item. It never starts, repeats, or
+replays an interaction and does not construct packets; server rate limits and
+interaction rules remain authoritative.
+
 ## Future policy
 
 Optional external integrations must be isolated under

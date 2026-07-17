@@ -16,6 +16,18 @@
 | `auto_walk` | Movement | Applies continuous local forward input. | `continue_forward`, `stop_on_gui`, `allow_steering` | It changes only the freshly polled local input record. `stop_on_gui` is on by default; turning it off intentionally permits movement while screens are open. |
 | `auto_sneak` | Movement | Applies a local sneaking policy. | `mode` (`toggle`, `hold`, `edge_only`) | Toggle holds sneak while enabled; Hold reserves its bound key as input-only after enabling the module through the GUI or a local command; Edge-only holds sneak while moving so vanilla careful movement guards ledges. It is inactive while a screen is open. |
 
+## Player modules
+
+| ID | Category | Description | Settings | Limitation |
+| --- | --- | --- | --- | --- |
+| `auto_tool` | Player | Selects the best safe hotbar tool while the user is already mining. | `minimum_durability`, `restore_prior_slot` | It changes only the local selected hotbar slot, ignores bare-hand-equivalent items and guarded durability, and uses Minecraft's normal mining path. It never creates a mining or inventory packet. |
+
+## World modules
+
+| ID | Category | Description | Settings | Limitation |
+| --- | --- | --- | --- | --- |
+| `fast_place` | World | Lowers the ordinary local item-use cooldown while Use is held. | `use_delay`, `item_filter` (`all`, `blocks`, `non_blocks`), `safe_minimum_delay` | It only lowers a cooldown Minecraft has already created for a non-empty held item, and restores an unchanged module-owned cooldown immediately on disable or panic. It never generates uses, clicks, or packets; the server still controls all interaction rate limits. |
+
 Every production module will document its stable ID, category, settings,
 limitations, acceptance criteria, and automated or manual test coverage here.
 

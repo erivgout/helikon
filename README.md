@@ -16,7 +16,9 @@ Helikon currently includes three client-only render modules: Fullbright restores
 the previous gamma and Night Vision state when disabled; AntiBlind selectively
 hides local impairment visuals; and BetterCrosshair draws a local configurable
 HUD crosshair. AutoSprint, AutoWalk, and AutoSneak apply only normal local
-movement input and sprint state. Other gameplay automation, combat tools, packet manipulation,
+movement input and sprint state; AutoTool selects a safe local hotbar tool only
+while the user is already mining; and FastPlace can lower Minecraft's transient
+local use cooldown only while the user holds Use. Other gameplay automation, combat tools, packet manipulation,
 external networking, telemetry, a custom backend, and a server-side component
 remain unimplemented.
 

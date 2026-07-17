@@ -37,6 +37,10 @@ import dev.helikon.client.module.movement.AutoSneak;
 import dev.helikon.client.module.movement.AutoWalk;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.SprintContext;
+import dev.helikon.client.module.player.AutoTool;
+import dev.helikon.client.module.player.ToolCandidate;
+import dev.helikon.client.module.world.FastPlace;
+import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
 import dev.helikon.client.module.render.AntiBlind;
 import dev.helikon.client.module.render.BetterCrosshair;
@@ -57,7 +61,13 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.BlockHitResult;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -124,14 +134,20 @@ public final class HelikonClient implements ClientModInitializer {
         AutoSprint autoSprint = new AutoSprint();
         AutoWalk autoWalk = new AutoWalk();
         AutoSneak autoSneak = new AutoSneak();
+        AutoTool autoTool = new AutoTool();
+        FastPlace fastPlace = new FastPlace(new MinecraftUseCooldownAccess());
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
+        modules.register(autoTool);
+        modules.register(fastPlace);
         MovementModuleAccess.install(autoWalk, autoSneak);
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
                 modules.runGuarded(fullbright, "tick", fullbright::tick);
                 modules.runGuarded(autoSprint, "tick", () -> tickAutoSprint(autoSprint));
+                modules.runGuarded(autoTool, "tick", () -> tickAutoTool(autoTool));
+                modules.runGuarded(fastPlace, "tick", () -> tickFastPlace(fastPlace));
             }
         });
 
@@ -298,6 +314,59 @@ public final class HelikonClient implements ClientModInitializer {
                 // The module has no local state transition to apply this tick.
             }
         }
+    }
+
+    /** Adapts ordinary local mining state into AutoTool's Minecraft-free selector. */
+    private void tickAutoTool(AutoTool autoTool) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null) {
+            autoTool.onPlayerUnavailable();
+            return;
+        }
+
+        boolean mining = client.gui.screen() == null
+                && client.level != null
+                && client.gameMode != null
+                && client.gameMode.isDestroying()
+                && client.options.keyAttack.isDown()
+                && client.hitResult instanceof BlockHitResult;
+        List<ToolCandidate> candidates = mining ? toolCandidates(client) : List.of();
+        AutoTool.Action action = autoTool.update(mining, client.player.getInventory().getSelectedSlot(), candidates);
+        if (action.type() == AutoTool.ActionType.SELECT || action.type() == AutoTool.ActionType.RESTORE) {
+            client.player.getInventory().setSelectedSlot(action.slot());
+        }
+    }
+
+    private static List<ToolCandidate> toolCandidates(Minecraft client) {
+        BlockHitResult hit = (BlockHitResult) client.hitResult;
+        var blockState = client.level.getBlockState(hit.getBlockPos());
+        List<ToolCandidate> candidates = new ArrayList<>(9);
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack stack = client.player.getInventory().getItem(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            int remainingDurability = stack.isDamageableItem()
+                    ? stack.getMaxDamage() - stack.getDamageValue()
+                    : Integer.MAX_VALUE;
+            candidates.add(new ToolCandidate(slot, stack.getDestroySpeed(blockState),
+                    stack.isCorrectToolForDrops(blockState), remainingDurability));
+        }
+        return candidates;
+    }
+
+    /** Applies a FastPlace cooldown reduction after Minecraft has handled this tick's normal use input. */
+    private static void tickFastPlace(FastPlace fastPlace) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.gui.screen() != null) {
+            return;
+        }
+
+        ItemStack heldItem = client.player.getInventory().getItem(client.player.getInventory().getSelectedSlot());
+        if (heldItem.isEmpty()) {
+            return;
+        }
+        fastPlace.tick(client.options.keyUse.isDown(), heldItem.getItem() instanceof BlockItem);
     }
 
     private void reportMacroResult(MacroRunner.TickResult result) {

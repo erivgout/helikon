@@ -200,6 +200,8 @@ import dev.helikon.client.module.world.BuilderAssist;
 import dev.helikon.client.module.world.AntiCactus;
 import dev.helikon.client.module.world.AntiCactusAccess;
 import dev.helikon.client.module.world.BlockSelection;
+import dev.helikon.client.module.world.BlockIn;
+import dev.helikon.client.module.world.MinecraftBlockInAccess;
 import dev.helikon.client.module.world.ChestItem;
 import dev.helikon.client.module.world.ChestSteal;
 import dev.helikon.client.module.world.MinecraftBuilderAssistAccess;
@@ -485,6 +487,7 @@ public final class HelikonClient implements ClientModInitializer {
         BuilderAssist builderAssist = new BuilderAssist();
         AntiCactus antiCactus = new AntiCactus();
         BlockSelection blockSelection = new BlockSelection();
+        BlockIn blockIn = new BlockIn();
         ChatPrefix chatPrefix = new ChatPrefix();
         ChatSuffix chatSuffix = new ChatSuffix();
         ChatMute chatMute = new ChatMute();
@@ -584,6 +587,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(builderAssist);
         modules.register(antiCactus);
         modules.register(blockSelection);
+        modules.register(blockIn);
         modules.register(chatPrefix);
         modules.register(chatSuffix);
         modules.register(chatMute);
@@ -702,6 +706,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(nuker, "tick", () -> MinecraftMiningAccess.tickNuker(nuker));
                 modules.runGuarded(chestSteal, "tick", () -> tickChestSteal(chestSteal, clientTick));
                 modules.runGuarded(builderAssist, "tick", () -> MinecraftBuilderAssistAccess.tick(builderAssist, clientTick));
+                modules.runGuarded(blockIn, "tick", () -> MinecraftBlockInAccess.tick(blockIn, clientTick));
                 modules.runGuarded(chatSpammer, "tick", () -> tickChatSpammer(chatSpammer));
                 modules.runGuarded(announcer, "tick", HelikonClient::tickAnnouncer);
                 Minecraft minecraft = Minecraft.getInstance();

@@ -116,6 +116,8 @@ import dev.helikon.client.module.movement.Speed;
 import dev.helikon.client.module.movement.Spider;
 import dev.helikon.client.module.movement.Timer;
 import dev.helikon.client.module.movement.TimerModuleAccess;
+import dev.helikon.client.module.movement.TpClick;
+import dev.helikon.client.module.movement.MinecraftTpClickAccess;
 import dev.helikon.client.module.movement.WaterJump;
 import dev.helikon.client.module.movement.WaterJumpAccess;
 import dev.helikon.client.module.miscellaneous.Annoy;
@@ -412,6 +414,7 @@ public final class HelikonClient implements ClientModInitializer {
         NoFall noFall = new NoFall();
         ExtraElytra extraElytra = new ExtraElytra();
         Scaffold scaffold = new Scaffold();
+        TpClick tpClick = new TpClick();
         Timer timer = new Timer();
         AutoEat autoEat = new AutoEat(new MinecraftUseKeyAccess());
         AutoTool autoTool = new AutoTool();
@@ -493,6 +496,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(noFall);
         modules.register(extraElytra);
         modules.register(scaffold);
+        modules.register(tpClick);
         modules.register(timer);
         modules.register(autoEat);
         modules.register(autoTool);
@@ -589,6 +593,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(noFall, "tick", () -> MinecraftAdvancedMovementAccess.tickNoFall(noFall));
                 modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));
                 modules.runGuarded(scaffold, "tick", () -> MinecraftAdvancedMovementAccess.tickScaffold(scaffold, clientTick));
+                modules.runGuarded(tpClick, "tick", () -> MinecraftTpClickAccess.tick(tpClick, INPUT_READER));
                 modules.runGuarded(autoEat, "tick", () -> tickAutoEat(autoEat));
                 modules.runGuarded(autoTool, "tick", () -> tickAutoTool(autoTool));
                 modules.runGuarded(autoArmor, "tick", () -> tickAutoArmor(autoArmor, clientTick));

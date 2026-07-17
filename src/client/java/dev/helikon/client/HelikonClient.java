@@ -103,6 +103,7 @@ import dev.helikon.client.module.combat.MinecraftCrystalAccess;
 import dev.helikon.client.module.combat.ReachDisplay;
 import dev.helikon.client.module.combat.RightClicker;
 import dev.helikon.client.module.combat.SilentAura;
+import dev.helikon.client.module.combat.TargetFilter;
 import dev.helikon.client.module.combat.TriggerBot;
 import dev.helikon.client.module.combat.WTap;
 import dev.helikon.client.module.combat.WTapAccess;
@@ -507,6 +508,7 @@ public final class HelikonClient implements ClientModInitializer {
                 () -> chatHistory.updateSettings(chatHistoryModule)
         );
         AntiBot antiBot = new AntiBot();
+        TargetFilter targetFilter = new TargetFilter();
         TriggerBot triggerBot = new TriggerBot();
         BowAimAssist bowAimAssist = new BowAimAssist();
         AimAssist aimAssist = new AimAssist();
@@ -598,6 +600,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(localTranslator);
         modules.register(chatHistoryModule);
         modules.register(antiBot);
+        modules.register(targetFilter);
         modules.register(triggerBot);
         modules.register(bowAimAssist);
         modules.register(aimAssist);
@@ -708,8 +711,7 @@ public final class HelikonClient implements ClientModInitializer {
                 combatAttackStarted.set(false);
                 combatSnapshot.set(MinecraftCombatAccess.Snapshot.unavailable());
                 modules.runGuarded(hitFlick, "restore", MinecraftHitFlickAccess::tickRestore);
-                modules.runGuarded(hitFlick, "restore", MinecraftHitFlickAccess::tickRestore);
-                modules.runGuarded(antiBot, "observe", () -> combatSnapshot.set(MinecraftCombatAccess.observe(friends, antiBot)));
+                modules.runGuarded(antiBot, "observe", () -> combatSnapshot.set(MinecraftCombatAccess.observe(friends, antiBot, targetFilter)));
                 modules.runGuarded(targetHud, "tick", () -> MinecraftCombatAccess.observeTarget(targetHud,
                         combatSnapshot.get(), combatTracker));
                 modules.runGuarded(autoPotion, "tick", () -> MinecraftCombatAccess.tickAutoPotion(clientTick, autoPotion));

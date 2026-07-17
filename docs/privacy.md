@@ -50,6 +50,8 @@ EntityESP, BlockESP, Tracers, and Breadcrumbs use only the entities, blocks,
 and local player positions that Minecraft has already loaded for the current
 session. Their bounded caches and trails are not written to disk or transmitted
 to a server or service.
+BlockSelection's current target box and optional distance label are transient
+local render facts and are not retained or transmitted.
 
 Trajectories, TrueSight, and Radar similarly consume only already-loaded local
 world state for the active session. Their predicted paths, invisible-entity
@@ -76,6 +78,8 @@ and Elytra status needed for the current session. Freecam's temporary camera
 entity is never added to the world, persisted, or transmitted. No movement
 module writes a route, block-placement history, speed trace, fall trace, or
 camera position to disk or a service.
+AntiCactus retains no movement or cactus history; its bounded collision boxes
+exist only while one local movement vector is being evaluated.
 
 Combat keeps only transient local target facts, anti-bot heuristic inputs, a
 current HUD target, and the most recent Helikon-requested attack distance.

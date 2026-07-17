@@ -87,6 +87,13 @@ or packet. Its narrow port immediately restores an unchanged module-owned
 cooldown on disable or panic. The accessor remains confined to the
 version-sensitive client edge.
 
+`CactusCollisionPolicy` owns finite-box intersection and deterministic
+horizontal-slide decisions without Minecraft imports. Its narrow adapter scans
+at most 64 already-loaded cactus collision boxes for only the local player's
+ordinary `MoverType.SELF` movement. It declines world-driven, spectator,
+passenger, large, or unknown-chunk movement and does not cancel cactus damage
+or change server authority.
+
 AutoEat keeps food ranking, avoid-list parsing, threshold checks, combat
 interruption, and user-slot ownership in Minecraft-free classes. Its adapter
 only exposes existing hotbar food facts and ordinary local Use-key state. It
@@ -409,6 +416,11 @@ coordinates for rendering. Breadcrumbs samples the local player into a
 bounded session-only deque and clears it when the level instance changes.
 None of these visualizers changes entity state, block state, input, packets,
 or disk storage.
+
+`BlockSelection` keeps its style and bounded distance-label formatting in a
+Minecraft-free module. The shared renderer reads only Minecraft's current
+visible `BlockHitResult` in a loaded chunk, then emits one local Gizmo box and
+optional label; it never changes the hit result, block state, reach, or input.
 
 The same renderer draws Trajectories and TrueSight during the Gizmo phase. Both
 consult the render state's current frustum before emitting any Gizmos; an

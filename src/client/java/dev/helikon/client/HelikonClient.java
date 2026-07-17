@@ -131,6 +131,9 @@ import dev.helikon.client.module.chat.AnnouncementTrigger;
 import dev.helikon.client.module.chat.LocalTranslator;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.BuilderAssist;
+import dev.helikon.client.module.world.AntiCactus;
+import dev.helikon.client.module.world.AntiCactusAccess;
+import dev.helikon.client.module.world.BlockSelection;
 import dev.helikon.client.module.world.ChestItem;
 import dev.helikon.client.module.world.ChestSteal;
 import dev.helikon.client.module.world.MinecraftBuilderAssistAccess;
@@ -348,6 +351,8 @@ public final class HelikonClient implements ClientModInitializer {
         FastPlace fastPlace = new FastPlace(new MinecraftUseCooldownAccess());
         ChestSteal chestSteal = new ChestSteal();
         BuilderAssist builderAssist = new BuilderAssist();
+        AntiCactus antiCactus = new AntiCactus();
+        BlockSelection blockSelection = new BlockSelection();
         ChatPrefix chatPrefix = new ChatPrefix();
         ChatSuffix chatSuffix = new ChatSuffix();
         ChatMute chatMute = new ChatMute();
@@ -406,6 +411,8 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(fastPlace);
         modules.register(chestSteal);
         modules.register(builderAssist);
+        modules.register(antiCactus);
+        modules.register(blockSelection);
         modules.register(chatPrefix);
         modules.register(chatSuffix);
         modules.register(chatMute);
@@ -441,10 +448,11 @@ public final class HelikonClient implements ClientModInitializer {
         FreecamAccess.install(flight);
         NoSlowAccess.install(noSlow);
         StepAccess.install(step);
+        AntiCactusAccess.install(antiCactus);
         TimerModuleAccess.install(timer);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, betterNametags, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
-                breadcrumbs, builderAssist, bowAimAssist
+                breadcrumbs, builderAssist, blockSelection, bowAimAssist
         );
         AtomicReference<MinecraftCombatAccess.Snapshot> combatSnapshot = new AtomicReference<>(
                 MinecraftCombatAccess.Snapshot.unavailable());

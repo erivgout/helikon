@@ -57,6 +57,11 @@ AutoTool's correct-tool scoring, durability guard, ownership-aware slot restore,
 and safe no-selection behavior are covered by `AutoToolTest`.
 FastPlace's held-use gate, item filtering, safe delay floor, and invalid input
 rejection are covered by `FastPlaceTest`.
+AntiCactus's disabled default, non-collision preservation, vertical-movement
+preservation, and deterministic safe-axis slide are covered by
+`AntiCactusTest`. BlockSelection's bounded local distance-label and render-style
+decisions are covered by `BlockSelectionTest`; their 26.2 mixin/Gizmo wiring
+also requires the smoke check below.
 AutoEat's deterministic food choice, avoid list, local combat/manual-use
 interruption, owned Use-key cleanup, and slot safety are covered by
 `AutoEatTest`, including always-edible foods at full hunger and physical-key
@@ -515,6 +520,24 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     SHA-256 checksum, and dependency report, then inspect the source-style and
     client-only architecture checks. Confirm that no release workflow publishes
     an untagged build and record any manual checks not performed.
+
+## Manual Phase F world-module smoke test
+
+1. Run `./gradlew.bat runClient` in a disposable local/test world with a cactus
+   beside a clear walking path. With **AntiCactus** disabled, verify normal
+   vanilla movement and damage behavior. Enable it and walk diagonally toward
+   the cactus: verify the local player slides only along a clear horizontal
+   axis instead of entering its collision box. Use a vehicle or cross an
+   unloaded boundary and verify the module does not claim to alter those
+   movements. If contact occurs, cactus damage remains vanilla.
+2. Enable **BlockSelection** and target ordinary nearby blocks. Verify exactly
+   one local outline follows Minecraft's visible block target; toggle **Fill**,
+   change outline color/line width, and toggle **Distance label** to verify
+   each local rendering setting independently. Target air, an entity, or an
+   unloaded boundary and verify no box/label appears. Disable the module and
+   verify the extra rendering disappears immediately.
+3. In a permitted multiplayer check, confirm neither behavior sends a custom
+   packet, changes reach, edits a block, or becomes visible to another player.
 
 ## Manual LocalTranslator smoke test
 

@@ -13,6 +13,7 @@ import dev.helikon.client.module.render.Trajectories;
 import dev.helikon.client.module.render.Tracers;
 import dev.helikon.client.module.render.TrueSight;
 import dev.helikon.client.module.world.BuilderAssist;
+import dev.helikon.client.module.world.BlockSelection;
 import dev.helikon.client.module.world.MinecraftBuilderAssistAccess;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
@@ -77,6 +78,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final DamageIndicators damageIndicators;
     private final Breadcrumbs breadcrumbs;
     private final BuilderAssist builderAssist;
+    private final BlockSelection blockSelection;
     private final BowAimAssist bowAimAssist;
     private final BlockEspScanCursor blockCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor blockAnchor = new BlockEspScanAnchor();
@@ -94,7 +96,8 @@ public final class MinecraftWorldVisualizationRenderer {
                                                 BetterNametags betterNametags,
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
                                                 TrueSight trueSight, StorageEsp storageEsp, DamageIndicators damageIndicators,
-                                                Breadcrumbs breadcrumbs, BuilderAssist builderAssist, BowAimAssist bowAimAssist) {
+                                                Breadcrumbs breadcrumbs, BuilderAssist builderAssist, BlockSelection blockSelection,
+                                                BowAimAssist bowAimAssist) {
         this.modules = Objects.requireNonNull(modules, "modules");
         this.friends = Objects.requireNonNull(friends, "friends");
         this.entityEsp = Objects.requireNonNull(entityEsp, "entityEsp");
@@ -107,6 +110,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.damageIndicators = Objects.requireNonNull(damageIndicators, "damageIndicators");
         this.breadcrumbs = Objects.requireNonNull(breadcrumbs, "breadcrumbs");
         this.builderAssist = Objects.requireNonNull(builderAssist, "builderAssist");
+        this.blockSelection = Objects.requireNonNull(blockSelection, "blockSelection");
         this.bowAimAssist = Objects.requireNonNull(bowAimAssist, "bowAimAssist");
         this.blockEsp.setCacheClearer(this::resetBlockScanner);
         this.storageEsp.setCacheClearer(this::resetStorageScanner);
@@ -199,6 +203,9 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (builderAssist.isEnabled()) {
             modules.runGuarded(builderAssist, "render", () -> renderBuilderPreview(client));
+        }
+        if (blockSelection.isEnabled()) {
+            modules.runGuarded(blockSelection, "render", () -> renderBlockSelection(client));
         }
         if (bowAimAssist.isEnabled()) {
             modules.runGuarded(bowAimAssist, "render", () -> renderBowAimMarker(client.level));
@@ -478,6 +485,29 @@ public final class MinecraftWorldVisualizationRenderer {
         for (BlockPos position : MinecraftBuilderAssistAccess.previewPositions(client, builderAssist)) {
             Gizmos.cuboid(new AABB(position), style).setAlwaysOnTop();
         }
+    }
+
+    private void renderBlockSelection(Minecraft client) {
+        if (!(client.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) {
+            return;
+        }
+        BlockPos position = hit.getBlockPos();
+        if (!client.level.hasChunk(position.getX() >> 4, position.getZ() >> 4)) {
+            return;
+        }
+        BlockSelection.Options options = blockSelection.options();
+        GizmoStyle style = options.fill()
+                ? GizmoStyle.strokeAndFill(options.outlineColor(), options.lineWidth(),
+                RenderColor.withAlpha(options.outlineColor(), 0.2D))
+                : GizmoStyle.stroke(options.outlineColor(), options.lineWidth());
+        Gizmos.cuboid(new AABB(position), style).setAlwaysOnTop();
+        if (!options.distanceLabel()) {
+            return;
+        }
+        Vec3 center = Vec3.atCenterOf(position);
+        blockSelection.distanceLabel(client.player.getEyePosition().distanceTo(center)).ifPresent(label ->
+                Gizmos.billboardText(label, center.add(0.0D, 0.7D, 0.0D),
+                        TextGizmo.Style.forColorAndCentered(options.outlineColor())).setAlwaysOnTop());
     }
 
     private static Optional<TrajectoryVector> firstBlockCollision(ClientLevel level, Projectile projectile,

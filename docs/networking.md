@@ -21,6 +21,8 @@ EntityESP, BlockESP, Tracers, and Breadcrumbs inspect only the already-loaded
 client world and emit local render Gizmos. They do not request chunks, send
 coordinates, modify entity/block state, or create any network traffic. The
 BlockESP cache and Breadcrumb trail are bounded in-memory state only.
+BlockSelection likewise reads only the current loaded block target to draw one
+local Gizmo box and optional distance label.
 
 Trajectories, TrueSight, and Radar likewise read only current client-side
 entity/projectile/block state to create local overlay geometry or HUD points.
@@ -61,6 +63,11 @@ not create, modify, replay, or spoof movement packets, and a server can reject
 or correct any client-side motion it does not permit. Flight and NoFall call
 Minecraft's ordinary ability-update path only after its existing `mayfly`
 permission is present; neither claims survival multiplayer flight.
+
+AntiCactus only changes an ordinary local `MoverType.SELF` movement vector when
+its bounded loaded-cactus collision observation predicts an intersection. It
+does not send, fabricate, suppress, or alter a movement packet; cactus damage
+and the final movement outcome remain server-authoritative.
 
 Freecam is entirely local: its camera entity is not added to the client level,
 suppresses player movement keys, never moves the player, and never sends a

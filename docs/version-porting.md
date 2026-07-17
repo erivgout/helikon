@@ -73,12 +73,15 @@ When porting:
 22. Revalidate `Minecraft.hitResult`, player yaw/direction, `BlockHitResult`,
    `BlockState.canBeReplaced`, loaded-chunk/build-height checks,
    `MultiPlayerGameMode.useItemOn`, `rightClickDelay`, and Gizmo cuboids before
-   changing BuilderAssist. Keep plans bounded and every placement a normal
-   held-block use request.
+   changing BuilderAssist or BlockSelection. Keep BuilderAssist plans bounded
+   and every placement a normal held-block use request; keep BlockSelection a
+   single render-only current-target overlay.
 23. Revalidate `LocalPlayer` input/use-speed methods, `Entity` block-speed,
    stuck-in-block, and step-height methods, plus the relevant use-animation,
    sneaking attribute, honey/soul-sand/cobweb state APIs before changing
-   NoSlow or Step. Keep every mixin restricted to the local player.
+   NoSlow or Step. Revalidate `Entity.move`, `MoverType.SELF`, loaded-chunk
+   checks, and cactus collision-shape bounds before changing AntiCactus. Keep
+   every mixin restricted to the local player and do not suppress damage.
 24. Revalidate local input records, climbable/fall-flying state, movement
    vectors, velocity setters, permitted `Abilities`, and ability-update path
    before changing FastLadders, Speed, BunnyHop, Flight, NoFall, or

@@ -54,6 +54,10 @@ while the user is already mining; and FastPlace can lower Minecraft's transient
 local use cooldown only while the user holds Use. AutoEat selects existing safe
 hotbar food and holds Minecraft's ordinary Use key only while its local
 threshold and combat rules permit it.
+AntiCactus only slides a normal local self-movement vector away from already
+loaded cactus collision boxes; it never suppresses cactus damage or claims to
+override server movement. BlockSelection renders one local highlight around the
+current visible block target and never modifies the selected block.
 
 AutoParkour requests only Minecraft's ordinary Jump input at a locally loaded,
 non-lava ledge with a shallow observed landing; it never jumps in a screen or

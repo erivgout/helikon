@@ -17,6 +17,7 @@ public final class RenderModuleAccess {
     private static volatile AntiTotemAnimation antiTotemAnimation;
     private static volatile Dinnerbone dinnerbone;
     private static volatile RainbowEnchant rainbowEnchant;
+    private static volatile NoWeather noWeather;
     private static volatile HudLayout hudLayout;
     private static volatile PanicState panicState;
 
@@ -25,12 +26,14 @@ public final class RenderModuleAccess {
 
     public static void install(AntiBlind antiBlindModule, BetterCrosshair crosshairModule,
                                AntiTotemAnimation antiTotemAnimationModule, Dinnerbone dinnerboneModule,
-                               RainbowEnchant rainbowEnchantModule, HudLayout layout, PanicState panic) {
+                               RainbowEnchant rainbowEnchantModule, NoWeather noWeatherModule,
+                               HudLayout layout, PanicState panic) {
         antiBlind = Objects.requireNonNull(antiBlindModule, "antiBlindModule");
         betterCrosshair = Objects.requireNonNull(crosshairModule, "crosshairModule");
         antiTotemAnimation = Objects.requireNonNull(antiTotemAnimationModule, "antiTotemAnimationModule");
         dinnerbone = Objects.requireNonNull(dinnerboneModule, "dinnerboneModule");
         rainbowEnchant = Objects.requireNonNull(rainbowEnchantModule, "rainbowEnchantModule");
+        noWeather = Objects.requireNonNull(noWeatherModule, "noWeatherModule");
         hudLayout = Objects.requireNonNull(layout, "layout");
         panicState = Objects.requireNonNull(panic, "panic");
     }
@@ -79,5 +82,15 @@ public final class RenderModuleAccess {
     public static int rainbowEnchantColor(long nowMillis) {
         RainbowEnchant module = rainbowEnchant;
         return module == null ? 0xFFFFFFFF : module.glintColor(nowMillis);
+    }
+
+    public static boolean hideRainColumns() {
+        NoWeather module = noWeather;
+        return module != null && module.hidesRain();
+    }
+
+    public static boolean hideSnowColumns() {
+        NoWeather module = noWeather;
+        return module != null && module.hidesSnow();
     }
 }

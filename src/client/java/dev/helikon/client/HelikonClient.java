@@ -188,6 +188,7 @@ import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.MinecraftGammaAccess;
 import dev.helikon.client.module.render.MinecraftNightVisionAccess;
 import dev.helikon.client.module.render.MiniPlayer;
+import dev.helikon.client.module.render.NoWeather;
 import dev.helikon.client.module.render.RenderModuleAccess;
 import dev.helikon.client.module.render.Radar;
 import dev.helikon.client.module.render.RainbowEnchant;
@@ -355,6 +356,7 @@ public final class HelikonClient implements ClientModInitializer {
         BetterNametags betterNametags = new BetterNametags();
         Dinnerbone dinnerbone = new Dinnerbone();
         RainbowEnchant rainbowEnchant = new RainbowEnchant();
+        NoWeather noWeather = new NoWeather();
         EntityEsp entityEsp = new EntityEsp();
         BlockEsp blockEsp = new BlockEsp();
         Tracers tracers = new Tracers();
@@ -373,6 +375,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(betterNametags);
         modules.register(dinnerbone);
         modules.register(rainbowEnchant);
+        modules.register(noWeather);
         modules.register(entityEsp);
         modules.register(blockEsp);
         modules.register(tracers);
@@ -386,7 +389,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(damageIndicators);
         modules.register(breadcrumbs);
         RenderModuleAccess.install(antiBlind, betterCrosshair, antiTotemAnimation, dinnerbone, rainbowEnchant,
-                hudLayout, panicState);
+                noWeather, hudLayout, panicState);
         AutoSprint autoSprint = new AutoSprint();
         AutoWalk autoWalk = new AutoWalk();
         AutoSneak autoSneak = new AutoSneak();

@@ -36,6 +36,7 @@
     "MouseEventMixin",
     "MinecraftEntityEspGlowMixin",
     "MinecraftResourceReloadEventMixin",
+    "WeatherEffectRendererMixin",
     "MultiPlayerGameModeEventMixin",
     "MultiPlayerGameModeAccessor",
     "SectionCompilerXRayMixin",

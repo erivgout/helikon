@@ -10,7 +10,7 @@ Before a feature is accepted for implementation, it must satisfy every applicabl
 2. It can run without a Helikon-operated backend, server plugin, account system, proxy, database, VPS, API, or persistent WebSocket connection.
 3. It stores Helikon-owned data locally unless the user explicitly invokes an optional third-party integration.
 4. It is honest about Minecraft server authority: a client-side interface must never promise a server-side result that the server may reject.
-5. It does not add anti-cheat bypasses, malformed or exploitative packets, authentication bypasses, remote code/module loading, telemetry, hidden behavior, malware, or arbitrary code execution.
+5. It does not add malformed or exploitative packets, authentication bypasses, remote code/module loading, telemetry, hidden behavior, malware, or arbitrary code execution.
 6. It has a clear user-facing purpose, a stable identity, configurable behavior where needed, defined limitations, acceptance criteria, and test coverage.
 7. Its performance, security, privacy, failure behavior, documentation, and version-compatibility implications are understood before it is merged.
 
@@ -74,8 +74,6 @@ Every module must provide:
 - Acceptance criteria and at least one automated test or documented manual test.
 
 Use only these categories: Combat, Movement, Player, Render, World, Chat, and Miscellaneous.
-
-Do not add anti-cheat-bypass presets, packet-bypass modes, crash modes, packet floods, attacks through solid blocks, malformed packet sequences, or claims of unrestricted server-side capabilities. Rate-sensitive chat features must respect delays and server limits. Features that rely on server permission must explain that limitation.
 
 ## 6. Architecture and implementation rules
 

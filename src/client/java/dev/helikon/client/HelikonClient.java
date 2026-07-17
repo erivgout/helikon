@@ -240,6 +240,7 @@ import dev.helikon.client.module.render.CameraModuleAccess;
 import dev.helikon.client.module.render.CameraNoClip;
 import dev.helikon.client.module.render.NoFireOverlay;
 import dev.helikon.client.module.render.NoFog;
+import dev.helikon.client.module.render.NoHurtcam;
 import dev.helikon.client.module.render.AntiTotemAnimation;
 import dev.helikon.client.module.render.Arrows;
 import dev.helikon.client.module.render.BetterCrosshair;
@@ -425,6 +426,7 @@ public final class HelikonClient implements ClientModInitializer {
         CameraNoClip cameraNoClip = new CameraNoClip();
         NoFireOverlay noFireOverlay = new NoFireOverlay();
         NoFog noFog = new NoFog();
+        NoHurtcam noHurtcam = new NoHurtcam();
         AntiTotemAnimation antiTotemAnimation = new AntiTotemAnimation();
         BetterCrosshair betterCrosshair = new BetterCrosshair();
         BetterNametags betterNametags = new BetterNametags();
@@ -454,6 +456,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(cameraNoClip);
         modules.register(noFireOverlay);
         modules.register(noFog);
+        modules.register(noHurtcam);
         modules.register(antiTotemAnimation);
         modules.register(betterCrosshair);
         modules.register(betterNametags);
@@ -483,6 +486,7 @@ public final class HelikonClient implements ClientModInitializer {
         CameraModuleAccess.install(cameraDistance);
         RenderModuleAccess.installCameraNoClip(cameraNoClip);
         RenderModuleAccess.installNoFog(noFog);
+        RenderModuleAccess.installNoHurtcam(noHurtcam);
         AutoSprint autoSprint = new AutoSprint();
         AutoSwim autoSwim = new AutoSwim();
         AutoWalk autoWalk = new AutoWalk();

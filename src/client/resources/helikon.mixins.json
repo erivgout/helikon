@@ -24,6 +24,7 @@
     "NoFogMixin",
     "FishingHookAccessor",
     "GameRendererMixin",
+    "HurtCameraMixin",
     "HudMixin",
     "IndigoXRayMixin",
     "ItemFeatureRendererMixin",

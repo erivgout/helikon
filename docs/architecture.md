@@ -567,9 +567,16 @@ unavailable frustum means no new overlay is emitted.
 `TrajectorySimulator` owns finite-vector, drag/gravity-order, bounded-step,
 and injected-collision decisions without Minecraft imports; the adapter only
 maps observed in-flight projectile state to verified 26.2 block clipping.
-TrueSight deliberately leaves vanilla entity render state untouched and uses
-bounded transparent local boxes only when entities are invisible to the local
-player. `RadarProjection` is also Minecraft-free; `RadarHud` projects currently
+ProjectilePreview shares the same simulator for the complementary case: the
+Minecraft-free `HeldProjectilePreview` reproduces the verified
+`shootFromRotation` launch direction, bow draw-power curve, and per-family
+speed/pitch-offset, and the render adapter reads only the local held item
+(bow while drawn, loaded crossbow, held trident/throwables, offhand throwables),
+the player's aim, and the same block clipping. It launches from the eye position
+and never creates a projectile entity or packet; the server stays authoritative
+over any real shot. TrueSight deliberately leaves vanilla entity render state
+untouched and uses bounded transparent local boxes only when entities are
+invisible to the local player. `RadarProjection` is also Minecraft-free; `RadarHud` projects currently
 loaded local entities onto a bounded fixed-position HUD surface.
 
 XRay has a deliberately narrow compiled-geometry path. `XRayRenderState` is

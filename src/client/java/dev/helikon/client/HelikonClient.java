@@ -216,6 +216,7 @@ import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.MinecraftGammaAccess;
 import dev.helikon.client.module.render.MinecraftNightVisionAccess;
 import dev.helikon.client.module.render.MiniPlayer;
+import dev.helikon.client.module.render.ProjectilePreview;
 import dev.helikon.client.module.render.RenderModuleAccess;
 import dev.helikon.client.module.render.Radar;
 import dev.helikon.client.module.render.ProjectileWarning;
@@ -391,6 +392,7 @@ public final class HelikonClient implements ClientModInitializer {
         Tracers tracers = new Tracers();
         Trajectories trajectories = new Trajectories();
         ProjectileWarning projectileWarning = new ProjectileWarning();
+        ProjectilePreview projectilePreview = new ProjectilePreview();
         TrueSight trueSight = new TrueSight();
         Radar radar = new Radar();
         SaturationDisplay saturationDisplay = new SaturationDisplay();
@@ -415,6 +417,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(tracers);
         modules.register(trajectories);
         modules.register(projectileWarning);
+        modules.register(projectilePreview);
         modules.register(trueSight);
         modules.register(radar);
         modules.register(saturationDisplay);
@@ -626,7 +629,7 @@ public final class HelikonClient implements ClientModInitializer {
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, chams, betterNametags, blockEsp, tracers, trajectories, projectileWarning,
-                trueSight, storageEsp,
+                projectilePreview, trueSight, storageEsp,
                 damageIndicators, breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics, explosions
         );
         DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,

@@ -169,6 +169,7 @@
 
 | `portal_gui` | Player | Keeps the current interface open while a portal transition begins. | none | It changes only the local screen-allowance check; the server still controls teleport timing and containers may become invalid across dimensions. |
 | `potion_saver` | Player | Pauses an integrated single-player server after standing still with a beneficial effect. | `idle_ticks` | Only single-player can truly pause potion timers; multiplayer servers continue ticking and are deliberately not spoofed. |
+| `auto_librarian` | Player | Inspects librarian enchanted-book trades, then breaks and replaces one nearby loaded lectern until the desired trade appears. | `desired_enchantment`, `maximum_emeralds`, `radius` | Requires the player to supply a lectern in the hotbar and reopen the villager after each reroll. It uses ordinary break/place actions, scans only loaded blocks, and the server controls villager job/trade changes. |
 
 ## World modules
 

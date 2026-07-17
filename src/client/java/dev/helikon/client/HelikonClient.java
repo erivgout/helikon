@@ -665,6 +665,10 @@ public final class HelikonClient implements ClientModInitializer {
         FastEat fastEat = new FastEat();
         dev.helikon.client.module.player.PortalGui portalGui = new dev.helikon.client.module.player.PortalGui();
         dev.helikon.client.module.player.PotionSaver potionSaver = new dev.helikon.client.module.player.PotionSaver();
+        dev.helikon.client.module.player.AutoLibrarian autoLibrarian =
+                new dev.helikon.client.module.player.AutoLibrarian();
+        dev.helikon.client.module.player.MinecraftAutoLibrarianAccess autoLibrarianAccess =
+                new dev.helikon.client.module.player.MinecraftAutoLibrarianAccess();
         dev.helikon.client.module.player.MinecraftPotionSaverAccess potionSaverAccess =
                 new dev.helikon.client.module.player.MinecraftPotionSaverAccess();
         dev.helikon.client.module.miscellaneous.TooManyHax tooManyHax =
@@ -848,6 +852,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(fastEat);
         modules.register(portalGui);
         modules.register(potionSaver);
+        modules.register(autoLibrarian);
         modules.register(tooManyHax);
         dev.helikon.client.module.player.PortalGuiAccess.install(portalGui);
         modules.register(itemGenerator);
@@ -1060,6 +1065,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(fastEat, "tick",
                         () -> MinecraftLegacyPlayerAccess.tickFastEat(clientTick, fastEat));
                 modules.runGuarded(potionSaver, "tick", () -> potionSaverAccess.tick(potionSaver));
+                modules.runGuarded(autoLibrarian, "tick", () -> autoLibrarianAccess.tick(autoLibrarian));
                 modules.runGuarded(tooManyHax, "tick",
                         () -> dev.helikon.client.module.miscellaneous.MinecraftTooManyHaxAccess.tick(tooManyHax, modules));
                 for (CreativeItemModule creativeItem : List.of(itemGenerator, killPotion, trollPotion, commandBlock)) {

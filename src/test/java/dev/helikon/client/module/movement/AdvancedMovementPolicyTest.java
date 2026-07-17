@@ -49,7 +49,7 @@ class AdvancedMovementPolicyTest {
     }
 
     @Test
-    void flightAndNoFallRequireMinecraftGrantedFlightPermission() {
+    void flightOwnsOnlyMinecraftGrantedFlightState() {
         Flight flight = enabled(new Flight());
         Flight.Action enable = flight.update(new Flight.Abilities(true, false, 0.05F));
         assertTrue(enable.setFlying());
@@ -66,18 +66,28 @@ class AdvancedMovementPolicyTest {
         worldChange.onContextLost();
         assertFalse(worldChange.update(new Flight.Abilities(false, false, 0.05F)).setSpeed());
 
-        Flight freecam = enabled(new Flight());
-        booleanSetting(freecam, "freecam_view").set(true);
-        assertTrue(freecam.isFreecamView());
-        assertFalse(freecam.update(new Flight.Abilities(false, false, 0.05F)).setFlying());
+    }
 
+    @Test
+    void noFallResetsOnlyOrdinaryUncontrolledFalls() {
         NoFall noFall = enabled(new NoFall());
-        assertTrue(noFall.shouldArmAllowedFlight(6.0D, true, false));
-        assertFalse(noFall.shouldArmAllowedFlight(20.0D, false, false));
-        assertTrue(noFall.update(6.0D, true, false, false, true).flying());
-        NoFall.Action landed = noFall.update(6.0D, true, true, true, true);
-        assertTrue(landed.setFlying());
-        assertFalse(landed.flying());
+
+        assertTrue(noFall.shouldResetFall(0.5D, false, false, false, false));
+        assertFalse(noFall.shouldResetFall(0.0D, false, false, false, false));
+        assertFalse(noFall.shouldResetFall(10.0D, true, false, false, false));
+        assertFalse(noFall.shouldResetFall(10.0D, false, true, false, false));
+        assertFalse(noFall.shouldResetFall(10.0D, false, false, true, false));
+        assertFalse(noFall.shouldResetFall(10.0D, false, false, false, true));
+    }
+
+    @Test
+    void freecamIsAnIndependentModuleWithBoundedSpeed() {
+        Freecam freecam = enabled(new Freecam());
+
+        assertEquals("freecam", freecam.id());
+        assertEquals(0.15D, freecam.speed(), 0.0001D);
+        numberSetting(freecam, "speed").set(0.4D);
+        assertEquals(0.4D, freecam.speed(), 0.0001D);
     }
 
     @Test

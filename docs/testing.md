@@ -609,9 +609,10 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     collisions, and **Speed**/**BunnyHop** remain within their configured caps
     and do nothing in screens. On a creative/spectator or otherwise permitted
     test environment, verify **Flight** enables normal permitted flight then
-    restores its own speed/state; enable its Freecam view, move and look around,
+    restores its own speed/state; enable **Freecam**, move and look around,
     confirm the player does not move, then disable it and confirm the camera
-    returns. Verify **NoFall** does nothing without `mayfly`. While gliding,
+    returns. In Survival, enable **NoFall**, drop far enough to take damage,
+    and verify health is unchanged. While gliding,
     verify **ExtraElytra**'s gradual pitch/near-ground adjustment, speed HUD,
     durability warning, and panic hide. With player-provided hotbar blocks,
     hold Use for **Scaffold** and verify one normal supported placement per

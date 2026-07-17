@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Abilities;
@@ -71,27 +72,16 @@ public final class MinecraftAdvancedMovementAccess {
     public static void tickFlight(Flight module) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null) {
-            FreecamAccess.stop(client);
             module.onContextLost();
             return;
         }
         LocalPlayer player = client.player;
         boolean screenOpen = client.gui.screen() != null;
         if (screenOpen && module.isEnabled()) {
-            // Hold a stable hover so opening a screen does not drop the player or boat.
-            if (rideableFlightBoat(module, player) instanceof AbstractBoat boat) {
-                boat.setDeltaMovement(0.0D, 0.0D, 0.0D);
-            } else if (module.usesVelocityFlight(player.getAbilities().mayfly)) {
+            // Hold a stable player hover so opening a screen does not drop the player.
+            if (!player.isPassenger() && module.usesVelocityFlight(player.getAbilities().mayfly)) {
                 player.setDeltaMovement(0.0D, 0.0D, 0.0D);
             }
-            return;
-        }
-        FreecamAccess.tick(client);
-        if (rideableFlightBoat(module, player) instanceof AbstractBoat boat) {
-            Vec2 input = player.input.getMoveVector();
-            Flight.FlightVelocity velocity = module.flightVelocity(desiredDirection(player, input),
-                    player.input.keyPresses.jump(), player.input.keyPresses.shift(), true);
-            boat.setDeltaMovement(velocity.x(), velocity.y(), velocity.z());
             return;
         }
         Abilities abilities = player.getAbilities();
@@ -105,17 +95,37 @@ public final class MinecraftAdvancedMovementAccess {
         if (action.setFlying() || action.setSpeed()) {
             player.onUpdateAbilities();
         }
-        if (module.usesVelocityFlight(abilities.mayfly)) {
+        if (!player.isPassenger() && module.usesVelocityFlight(abilities.mayfly)) {
             Vec2 input = player.input.getMoveVector();
             Flight.FlightVelocity velocity = module.flightVelocity(desiredDirection(player, input),
-                    player.input.keyPresses.jump(), player.input.keyPresses.shift(), false);
+                    player.input.keyPresses.jump(), player.input.keyPresses.shift());
             player.setDeltaMovement(velocity.x(), velocity.y(), velocity.z());
         }
     }
 
-    /** The ridden boat only when Flight's boat mode applies and the local player is its driver. */
-    private static AbstractBoat rideableFlightBoat(Flight module, LocalPlayer player) {
-        if (module.usesBoatFlight() && player.getVehicle() instanceof AbstractBoat boat
+    public static void tickBoatFlight(BoatFlight module) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) {
+            return;
+        }
+        AbstractBoat boat = rideableBoat(module, client.player);
+        if (boat == null) {
+            return;
+        }
+        if (client.gui.screen() != null) {
+            boat.setDeltaMovement(0.0D, 0.0D, 0.0D);
+            return;
+        }
+        LocalPlayer player = client.player;
+        Vec2 input = player.input.getMoveVector();
+        BoatFlight.Velocity velocity = module.velocity(desiredDirection(player, input),
+                player.input.keyPresses.jump(), player.input.keyPresses.shift());
+        boat.setDeltaMovement(velocity.x(), velocity.y(), velocity.z());
+    }
+
+    /** The ridden boat only when Boat Flight is enabled and the local player is its driver. */
+    private static AbstractBoat rideableBoat(BoatFlight module, LocalPlayer player) {
+        if (module.isEnabled() && player.getVehicle() instanceof AbstractBoat boat
                 && boat.getControllingPassenger() == player) {
             return boat;
         }
@@ -125,18 +135,15 @@ public final class MinecraftAdvancedMovementAccess {
     public static void tickNoFall(NoFall module) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null) {
-            module.onContextLost();
             return;
         }
         LocalPlayer player = client.player;
         Abilities abilities = player.getAbilities();
-        NoFall.Action action = module.update(player.fallDistance, abilities.mayfly, player.onGround(), abilities.flying,
-                isInteractive(client));
-        if (!action.setFlying()) {
-            return;
+        if (module.shouldResetFall(player.fallDistance, player.onGround(), player.isPassenger(),
+                abilities.flying, player.isFallFlying())) {
+            player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(true, false));
+            player.fallDistance = 0.0F;
         }
-        abilities.flying = action.flying();
-        player.onUpdateAbilities();
     }
 
     public static void tickElytra(ExtraElytra module) {

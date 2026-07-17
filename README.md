@@ -14,7 +14,7 @@ branding, or configuration formats from that or any other project.
   StorageESP, XRay, Tracers, Trajectories, TrueSight, Radar, Breadcrumbs,
   BetterNametags, BetterCrosshair, DamageIndicators, MiniPlayer, and more.
 - **Movement** — AutoSprint, AutoWalk, AutoSneak, AutoParkour, NoSlow, Step,
-  Speed, BunnyHop, Flight (with freecam view), NoFall, ExtraElytra, Scaffold,
+  Speed, BunnyHop, Flight, Boat Flight, Freecam, NoFall, ExtraElytra, Scaffold,
   Timer, and more.
 - **Player automation** — AutoEat, AutoTool, AutoArmor, AutoTotem, AutoFish,
   AutoEject, AutoPotion, AutoReconnect, InventoryManager, ChestSteal,
@@ -82,10 +82,10 @@ checksums, and the resolved dependency report. See
 
 ## Status
 
-`1.0.0-rc.1` is a release candidate. The automated test suite, style, and
-client-only architecture checks pass; the live-client smoke checklists in
-[testing.md](docs/testing.md) remain a release gate and are not a substitute
-for real-world testing on a disposable profile.
+`1.0.0` is the first stable release. The automated test suite, style and
+client-only architecture checks, and Fabric client game tests pass. The
+additional live-client smoke checklists in [testing.md](docs/testing.md) remain
+recommended for real-world testing on a disposable profile.
 
 ## Contributing
 

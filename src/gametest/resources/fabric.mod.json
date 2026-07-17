@@ -9,7 +9,9 @@
   "entrypoints": {
     "fabric-client-gametest": [
       "dev.helikon.gametest.HelikonClientGameTest",
-      "dev.helikon.gametest.XRayClientGameTest"
+      "dev.helikon.gametest.MiniPlayerClientGameTest",
+      "dev.helikon.gametest.XRayClientGameTest",
+      "dev.helikon.gametest.NoFallClientGameTest"
     ]
   },
   "depends": {

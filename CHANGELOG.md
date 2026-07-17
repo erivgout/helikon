@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.0
+
+- Fixes XRay rendering under Fabric Indigo, keeps configured ores visible and
+  full-bright, and reliably restores normal chunk geometry when disabled.
+- Splits Boat Flight and Freecam into independently toggleable movement
+  modules; regular Flight now controls only player flight.
+- Fixes NoFall for ordinary Survival falls and adds an in-engine 30-block drop
+  regression test.
+- Removes MiniPlayer's duplicated panel background and outline so only the
+  player model is rendered.
+- Adds expanded Fabric client game tests for XRay, NoFall, MiniPlayer, and the
+  complete registered-module smoke suite.
+
 ## 1.0.0-rc.1
 
 - Adds the four planned EntityESP modes. Existing profiles without a saved

@@ -46,11 +46,8 @@ public final class MiniPlayerHud implements HudElement {
         }
         HudBounds rawBounds = MiniPlayerLayout.bounds();
         HudElementPlacement placement = layout.element(HudElementId.MINI_PLAYER);
-        HudPresentation.Frame frame = HudPresentation.beginFrame(graphics, placement, rawBounds.width(), rawBounds.height());
-        if (placement.background()) {
-            graphics.fill(frame.contentX(), frame.contentY(), frame.contentX() + rawBounds.width(),
-                    frame.contentY() + rawBounds.height(), module.backgroundColor());
-        }
+        HudPresentation.Frame frame = HudPresentation.beginTransparentFrame(
+                graphics, placement, rawBounds.width(), rawBounds.height());
 
         EntityRenderState state = client.getEntityRenderDispatcher().extractEntity(client.player,
                 deltaTracker.getGameTimeDeltaPartialTick(false));

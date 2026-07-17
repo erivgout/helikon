@@ -198,9 +198,9 @@ val generateChecksums = tasks.register("generateChecksums") {
 /** Bundles the remapped JAR, sources, checksums, dependency report, license, and release notes locally. */
 tasks.register<Zip>("releaseBundle") {
     group = "build"
-    description = "Builds the local version-1.0 release-candidate bundle."
+    description = "Builds the local version-1.0 release bundle."
     dependsOn(tasks.named("build"), generateChecksums, generateDependencyReport)
-    archiveFileName.set("helikon-${project.version}-release-candidate.zip")
+    archiveFileName.set("helikon-${project.version}.zip")
     destinationDirectory.set(layout.buildDirectory.dir("releases"))
     isPreserveFileTimestamps = false
     isReproducibleFileOrder = true

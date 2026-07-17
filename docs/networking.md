@@ -97,9 +97,12 @@ NoSlow, FastLadders, WaterJump, Step, Speed, BunnyHop, ExtraElytra, and Timer
 change only local movement/input, collision, view, or client-time calculations.
 WaterJump adds only an ordinary local Jump request after loaded water-edge
 checks. They do not create, modify, replay, or spoof movement packets, and a
-server can reject or correct any client-side motion it does not permit. Flight and NoFall call
-Minecraft's ordinary ability-update path only after its existing `mayfly`
-permission is present; neither claims survival multiplayer flight.
+server can reject or correct any client-side motion it does not permit. Flight
+uses Minecraft's ordinary ability-update path when `mayfly` is present and
+ordinary local velocity otherwise. NoFall sends a standard grounded movement
+status while an unmounted player is falling, resets the matching client fall
+accumulator, and leaves flight and Elytra states untouched. A multiplayer
+server remains authoritative and may reject or penalize that status.
 
 AntiCactus only changes an ordinary local `MoverType.SELF` movement vector when
 its bounded loaded-cactus collision observation predicts an intersection. It

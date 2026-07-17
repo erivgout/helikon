@@ -10,15 +10,15 @@ import java.util.Objects;
 
 /** Local-only detached camera bridge; it never moves the player or constructs network traffic. */
 public final class FreecamAccess {
-    private static volatile Flight flight;
+    private static volatile Freecam freecam;
     private static ArmorStand camera;
     private static Input capturedInput = new Input(false, false, false, false, false, false, false);
 
     private FreecamAccess() {
     }
 
-    public static void install(Flight module) {
-        flight = Objects.requireNonNull(module, "module");
+    public static void install(Freecam module) {
+        freecam = Objects.requireNonNull(module, "module");
     }
 
     /** Captures local keys for the camera and suppresses player movement while detached. */
@@ -65,16 +65,16 @@ public final class FreecamAccess {
     }
 
     public static boolean isActive() {
-        Flight current = flight;
-        return current != null && current.isFreecamView();
+        Freecam current = freecam;
+        return current != null && current.isEnabled();
     }
 
     private static void moveCamera() {
         if (camera == null) {
             return;
         }
-        Flight current = flight;
-        double speed = current.freecamSpeed();
+        Freecam current = freecam;
+        double speed = current.speed();
         Vec3 forward = camera.getViewVector(1.0F);
         Vec3 horizontalForward = new Vec3(forward.x, 0.0D, forward.z);
         if (horizontalForward.lengthSqr() > 0.0D) {

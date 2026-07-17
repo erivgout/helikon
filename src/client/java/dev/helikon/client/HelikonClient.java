@@ -90,10 +90,12 @@ import dev.helikon.client.module.movement.InventoryWalk;
 import dev.helikon.client.module.movement.AntiAfk;
 import dev.helikon.client.module.movement.AdvancedMovementInputAccess;
 import dev.helikon.client.module.movement.AntiAfkAccess;
+import dev.helikon.client.module.movement.BoatFlight;
 import dev.helikon.client.module.movement.BunnyHop;
 import dev.helikon.client.module.movement.ExtraElytra;
 import dev.helikon.client.module.movement.FastLadders;
 import dev.helikon.client.module.movement.Flight;
+import dev.helikon.client.module.movement.Freecam;
 import dev.helikon.client.module.movement.FreecamAccess;
 import dev.helikon.client.module.movement.MinecraftAdvancedMovementAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
@@ -397,6 +399,8 @@ public final class HelikonClient implements ClientModInitializer {
         Speed speed = new Speed();
         BunnyHop bunnyHop = new BunnyHop();
         Flight flight = new Flight();
+        BoatFlight boatFlight = new BoatFlight();
+        Freecam freecam = new Freecam();
         NoFall noFall = new NoFall();
         ExtraElytra extraElytra = new ExtraElytra();
         Scaffold scaffold = new Scaffold();
@@ -472,6 +476,8 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(speed);
         modules.register(bunnyHop);
         modules.register(flight);
+        modules.register(boatFlight);
+        modules.register(freecam);
         modules.register(noFall);
         modules.register(extraElytra);
         modules.register(scaffold);
@@ -533,7 +539,7 @@ public final class HelikonClient implements ClientModInitializer {
         ParkourAccess.install(autoParkour);
         AntiAfkAccess.install(antiAfk);
         AdvancedMovementInputAccess.install(bunnyHop, scaffold);
-        FreecamAccess.install(flight);
+        FreecamAccess.install(freecam);
         NoSlowAccess.install(noSlow);
         StepAccess.install(step);
         AntiCactusAccess.install(antiCactus);
@@ -562,6 +568,8 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(speed, "tick", () -> MinecraftAdvancedMovementAccess.tickSpeed(speed));
                 modules.runGuarded(bunnyHop, "tick", () -> MinecraftAdvancedMovementAccess.tickBunnyHop(bunnyHop));
                 modules.runGuarded(flight, "tick", () -> MinecraftAdvancedMovementAccess.tickFlight(flight));
+                modules.runGuarded(boatFlight, "tick", () -> MinecraftAdvancedMovementAccess.tickBoatFlight(boatFlight));
+                modules.runGuarded(freecam, "tick", () -> FreecamAccess.tick(Minecraft.getInstance()));
                 modules.runGuarded(noFall, "tick", () -> MinecraftAdvancedMovementAccess.tickNoFall(noFall));
                 modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));
                 modules.runGuarded(scaffold, "tick", () -> MinecraftAdvancedMovementAccess.tickScaffold(scaffold, clientTick));

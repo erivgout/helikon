@@ -142,8 +142,8 @@ narrow: NoSlow/Step/Timer mixins target verified local movement and
 velocity, abilities, and held blocks to ordinary Minecraft APIs. No module
 constructs movement/container packets or treats client motion as server truth.
 
-Flight's normal mode changes only `Abilities` that already permit flight and
-restores only values it owns. Its optional Freecam uses an invisible, unadded
+Flight changes only `Abilities` that already permit flight and restores only
+values it owns. The independent Freecam module uses an invisible, unadded
 client-side camera entity; input and mouse turn are redirected locally while
 the player receives no movement input, then the normal camera is restored.
 Scaffold is similarly constrained to a selected player-provided hotbar block,

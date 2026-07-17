@@ -30,11 +30,15 @@ jobs:
       - name: Run checks and package release bundle
         run: ./gradlew check releaseBundle
 
-      - name: Create draft GitHub release from the tag
+      - name: Publish GitHub release from the tag
         uses: softprops/action-gh-release@v2
         with:
-          draft: true
+          name: Helikon ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
           files: |
+            build/libs/helikon-*.jar
             build/releases/*.zip
             build/reports/helikon/checksums.sha256
             build/reports/helikon/dependencies.txt

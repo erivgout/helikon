@@ -21,30 +21,30 @@ class FlightTest {
     }
 
     @Test
-    void freecamViewSuppressesVelocityAndBoatFlight() {
-        Flight flight = enabled();
-        booleanSetting(flight, "freecam_view").set(true);
-
-        assertFalse(flight.usesVelocityFlight(false));
-        assertFalse(flight.usesBoatFlight());
-    }
-
-    @Test
     void flightVelocityNormalizesDirectionAndAppliesVerticalInput() {
         Flight flight = enabled();
 
-        Flight.FlightVelocity hover = flight.flightVelocity(new HorizontalVelocity(0.0D, 0.0D), false, false, false);
+        Flight.FlightVelocity hover = flight.flightVelocity(new HorizontalVelocity(0.0D, 0.0D), false, false);
         assertEquals(0.0D, hover.x());
         assertEquals(0.0D, hover.y());
         assertEquals(0.0D, hover.z());
 
-        Flight.FlightVelocity moving = flight.flightVelocity(new HorizontalVelocity(3.0D, 4.0D), true, false, false);
+        Flight.FlightVelocity moving = flight.flightVelocity(new HorizontalVelocity(3.0D, 4.0D), true, false);
         assertEquals(0.5D * 3.0D / 5.0D, moving.x(), 1.0E-9D);
         assertEquals(0.5D, moving.y(), 1.0E-9D);
         assertEquals(0.5D * 4.0D / 5.0D, moving.z(), 1.0E-9D);
 
-        Flight.FlightVelocity sinking = flight.flightVelocity(new HorizontalVelocity(0.0D, 0.0D), false, true, true);
-        assertEquals(-0.6D, sinking.y(), 1.0E-9D);
+        Flight.FlightVelocity sinking = flight.flightVelocity(new HorizontalVelocity(0.0D, 0.0D), false, true);
+        assertEquals(-0.5D, sinking.y(), 1.0E-9D);
+    }
+
+    @Test
+    void containsNoVehicleOrCameraSettings() {
+        Flight flight = new Flight();
+
+        assertFalse(flight.settings().stream().anyMatch(setting ->
+                setting.id().equals("boat_flight") || setting.id().equals("boat_speed")
+                        || setting.id().equals("freecam_view") || setting.id().equals("freecam_speed")));
     }
 
     private static Flight enabled() {

@@ -1,7 +1,7 @@
-# 1.0 release-candidate process
+# 1.0 release process
 
-The current version is `1.0.0-rc.1`. It is a local build candidate, not an
-automatic publication.
+The current version is `1.0.0`. Tagged `v*` commits are built and published by
+the GitHub release workflow after its checks pass.
 
 ## Build the bundle
 
@@ -26,5 +26,5 @@ binary.
    contents. Confirm no proprietary assets, backend code, telemetry, or server
    entrypoint is present.
 5. Tag only the reviewed commit intended for publication (for example
-   `v1.0.0`) and publish only its generated bundle. Never publish an untagged
-   workspace build.
+   `v1.0.0`). The release workflow publishes the installable JAR, sources JAR,
+   auditable bundle, checksums, and dependency report from that tagged commit.

@@ -58,6 +58,17 @@ public final class HudPresentation {
     /** Opens a scaled, padded local frame for HUD renderers that are not text blocks. */
     public static Frame beginFrame(GuiGraphicsExtractor graphics, HudElementPlacement placement,
                                    int contentWidth, int contentHeight) {
+        return beginFrame(graphics, placement, contentWidth, contentHeight, true);
+    }
+
+    /** Opens a placement frame without drawing the generic background or outline. */
+    public static Frame beginTransparentFrame(GuiGraphicsExtractor graphics, HudElementPlacement placement,
+                                              int contentWidth, int contentHeight) {
+        return beginFrame(graphics, placement, contentWidth, contentHeight, false);
+    }
+
+    private static Frame beginFrame(GuiGraphicsExtractor graphics, HudElementPlacement placement,
+                                    int contentWidth, int contentHeight, boolean decorate) {
         Objects.requireNonNull(graphics, "graphics");
         Objects.requireNonNull(placement, "placement");
         if (contentWidth < 0 || contentHeight < 0) {
@@ -69,10 +80,10 @@ public final class HudPresentation {
         graphics.pose().pushMatrix();
         graphics.pose().translate(bounds.x(), bounds.y());
         graphics.pose().scale(placement.scale());
-        if (placement.background()) {
+        if (decorate && placement.background()) {
             graphics.fill(0, 0, outerWidth, outerHeight, BACKGROUND);
         }
-        if (placement.textShadow()) {
+        if (decorate && placement.textShadow()) {
             graphics.outline(0, 0, outerWidth, outerHeight, color(placement));
         }
         int horizontalOffset = switch (placement.alignment()) {

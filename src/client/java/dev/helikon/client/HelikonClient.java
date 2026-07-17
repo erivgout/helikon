@@ -79,6 +79,7 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.ModuleTimingMetrics;
 import dev.helikon.client.module.combat.AntiBot;
 import dev.helikon.client.module.combat.AimAssist;
+import dev.helikon.client.module.combat.AutoAnchor;
 import dev.helikon.client.module.combat.AutoClicker;
 import dev.helikon.client.module.combat.AutoPotion;
 import dev.helikon.client.module.combat.BlockHit;
@@ -92,6 +93,7 @@ import dev.helikon.client.module.combat.CrystalAura;
 import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MinecraftBlockHitUseKey;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
+import dev.helikon.client.module.combat.MinecraftAutoAnchorAccess;
 import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
 import dev.helikon.client.module.combat.MinecraftCrystalAccess;
@@ -506,6 +508,7 @@ public final class HelikonClient implements ClientModInitializer {
         HitSelect hitSelect = new HitSelect();
         SilentAura silentAura = new SilentAura();
         WTap wtap = new WTap();
+        AutoAnchor autoAnchor = new AutoAnchor();
         CrystalAura crystalAura = new CrystalAura();
         ReachDisplay reachDisplay = new ReachDisplay();
         RightClicker rightClicker = new RightClicker();
@@ -591,6 +594,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(hitSelect);
         modules.register(silentAura);
         modules.register(wtap);
+        modules.register(autoAnchor);
         modules.register(crystalAura);
         modules.register(reachDisplay);
         modules.register(rightClicker);
@@ -736,6 +740,12 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(crystalAura, "tick", () -> {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftCrystalAccess.tick(clientTick, crystalAura,
+                                combatSnapshot.get()));
+                    }
+                });
+                modules.runGuarded(autoAnchor, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftAutoAnchorAccess.tick(clientTick, autoAnchor,
                                 combatSnapshot.get()));
                     }
                 });

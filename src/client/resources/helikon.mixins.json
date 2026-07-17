@@ -47,6 +47,7 @@
     "ConnectionBackTrackMixin",
     "ClientboundMoveEntityPacketAccessor",
     "ConnectionBlinkMixin",
+    "ConnectionFakeLagMixin",
     "MinecraftAccessor"
   ],
   "injectors": {

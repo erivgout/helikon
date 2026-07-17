@@ -33,30 +33,49 @@ public final class ActiveModulesHud implements HudElement {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (panicState.customHudHidden() || !layout.activeModulesEnabled()) {
+        ActiveModulesLayout style = layout.activeModules();
+        if (panicState.customHudHidden() || !style.enabled()) {
             return;
         }
 
-        List<String> names = ActiveModules.enabledNames(modules);
+        Font font = Minecraft.getInstance().font;
+        List<String> names = ActiveModules.enabledNames(modules, style.sort(), font::width);
         if (names.isEmpty()) {
             return;
         }
 
-        draw(graphics, Minecraft.getInstance().font, names,
-                bounds(Minecraft.getInstance().font, names, layout.activeModulesX(), layout.activeModulesY()),
-                COLOR_TEXT, false);
+        HudBounds bounds = bounds(font, names, style.x(), style.y(), style.padding());
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(bounds.x(), bounds.y());
+        graphics.pose().scale(style.scale());
+        long tick = Minecraft.getInstance().level == null
+                ? System.currentTimeMillis() / 50L
+                : Minecraft.getInstance().level.getGameTime();
+        int color = style.colorMode() == ActiveModulesLayout.ColorMode.RAINBOW
+                ? ActiveModules.rainbowColor(tick)
+                : COLOR_TEXT;
+        draw(graphics, font, names, new HudBounds(0, 0, bounds.width(), bounds.height()), color, false,
+                style.padding(), style.alignment(), style.background(), style.textShadow());
+        graphics.pose().popMatrix();
     }
 
     /** Calculates the complete draggable footprint, including the text backdrop. */
     public static HudBounds bounds(Font font, List<String> lines, int x, int y) {
+        return bounds(font, lines, x, y, PADDING);
+    }
+
+    public static HudBounds bounds(Font font, List<String> lines, int x, int y, int padding) {
         Objects.requireNonNull(font, "font");
         Objects.requireNonNull(lines, "lines");
         if (lines.isEmpty()) {
             throw new IllegalArgumentException("Active Modules HUD requires at least one preview line");
         }
+        if (padding < ActiveModulesLayout.MIN_PADDING || padding > ActiveModulesLayout.MAX_PADDING) {
+            throw new IllegalArgumentException("Invalid padding");
+        }
 
         int textWidth = lines.stream().mapToInt(font::width).max().orElse(0);
-        return new HudBounds(x, y, textWidth + PADDING * 2, lines.size() * font.lineHeight + PADDING * 2);
+        return new HudBounds(x, y, textWidth + padding * 2, lines.size() * font.lineHeight + padding * 2);
     }
 
     /** Draws the shared normal-HUD or editor-preview representation. */
@@ -68,18 +87,42 @@ public final class ActiveModulesHud implements HudElement {
             int textColor,
             boolean selected
     ) {
+        draw(graphics, font, lines, bounds, textColor, selected, PADDING,
+                ActiveModulesLayout.Alignment.LEFT, true, true);
+    }
+
+    /** Draws one Active Modules list with its persisted presentation controls. */
+    public static void draw(
+            GuiGraphicsExtractor graphics,
+            Font font,
+            List<String> lines,
+            HudBounds bounds,
+            int textColor,
+            boolean selected,
+            int padding,
+            ActiveModulesLayout.Alignment alignment,
+            boolean background,
+            boolean textShadow
+    ) {
         Objects.requireNonNull(graphics, "graphics");
         Objects.requireNonNull(font, "font");
         Objects.requireNonNull(lines, "lines");
         Objects.requireNonNull(bounds, "bounds");
+        Objects.requireNonNull(alignment, "alignment");
 
-        graphics.fill(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + bounds.height(), COLOR_BACKGROUND);
+        if (background) {
+            graphics.fill(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + bounds.height(), COLOR_BACKGROUND);
+        }
         if (selected) {
             graphics.outline(bounds.x(), bounds.y(), bounds.width(), bounds.height(), COLOR_TEXT);
         }
+        int textWidth = Math.max(0, bounds.width() - padding * 2);
         for (int index = 0; index < lines.size(); index++) {
-            graphics.text(font, lines.get(index), bounds.x() + PADDING,
-                    bounds.y() + PADDING + index * font.lineHeight, textColor, true);
+            String line = lines.get(index);
+            int x = alignment == ActiveModulesLayout.Alignment.RIGHT
+                    ? bounds.x() + padding + textWidth - font.width(line)
+                    : bounds.x() + padding;
+            graphics.text(font, line, x, bounds.y() + padding + index * font.lineHeight, textColor, textShadow);
         }
     }
 }

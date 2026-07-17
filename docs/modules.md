@@ -229,9 +229,9 @@ screens permit it as an emergency close control.
 
 | Element | Behavior | Persistence | Limitation | Coverage |
 | --- | --- | --- | --- | --- |
-| Active Modules | Lists enabled Helikon modules in registry order. | `hud.json`: enabled state and top-left position. | No sorting options, styling controls, snapping, or animation yet. | `ActiveModulesTest`, `HudEditorStateTest`, `HudConfigurationManagerTest`, manual HUD checklist. |
+| Active Modules | Lists enabled Helikon modules with registry, alphabetical, or width sorting. | `hud.json`: enabled state, position, scale, padding, backdrop/shadow, sort/alignment/color modes. | Other HUD elements and list-entry animations remain later work. | `ActiveModulesTest`, `HudEditorStateTest`, `HudConfigurationManagerTest`, manual HUD checklist. |
 
-The minimal HUD editor is opened through the **HUD** button in the ClickGUI
-header. It shows a preview even when no module is enabled, supports toggling
-the element, and clamps dragging so its entire current preview remains on
-screen. It is client-only and sends no network traffic.
+The HUD editor is opened through the **HUD** button in the ClickGUI header. It
+shows a preview even when no module is enabled, supports the listed Active
+Modules controls, and clamps/snaps dragging so its complete scaled preview
+remains on screen. It is client-only and sends no network traffic.

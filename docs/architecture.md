@@ -587,11 +587,13 @@ module keybind dispatcher continues to ignore input while any screen is open.
 
 `ActiveModulesHud` is registered through Fabric's supported
 `HudElementRegistry` API and only renders enabled modules. `ActiveModules`
-contains the Minecraft-free selection rule, while `HudLayout` stores the
-validated persisted position and enabled state. `HudEditorState` owns pointer
-offsets and bounds clamping without Minecraft imports; `HelikonHudEditorScreen`
-is only the input/render adapter. The editor is reached from the **HUD** button
-in the ClickGUI header, saves once when it closes, and returns to the ClickGUI.
+contains Minecraft-free filtering, alphabetical/width sorting, and rainbow
+color selection; `ActiveModulesLayout` stores validated scale, padding,
+alignment, color mode, text shadow, and backdrop choices. `HudLayout` persists
+that state. `HudEditorState` owns pointer offsets, clamping, and edge/centre
+snapping without Minecraft imports; `HelikonHudEditorScreen` is only the
+input/render adapter. The editor is reached from the **HUD** button in the
+ClickGUI header, saves once when it closes, and returns to the ClickGUI.
 
 The initial editor intentionally has one draggable element. Alignment, scale,
 background options, snapping, and other HUD elements remain future work.

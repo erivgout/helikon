@@ -4,6 +4,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.helikon.client.hud.HudLayout;
+import dev.helikon.client.hud.ActiveModulesLayout;
+import dev.helikon.client.hud.ActiveModulesHud;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -14,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,7 +26,7 @@ import java.util.logging.Logger;
  * global module configuration.
  */
 public final class HudConfigurationManager {
-    public static final int SCHEMA_VERSION = 1;
+    public static final int SCHEMA_VERSION = 2;
 
     private static final Logger LOGGER = Logger.getLogger(HudConfigurationManager.class.getName());
 
@@ -83,10 +86,18 @@ public final class HudConfigurationManager {
         JsonObject root = new JsonObject();
         root.addProperty("schemaVersion", SCHEMA_VERSION);
 
+        ActiveModulesLayout state = layout.activeModules();
         JsonObject activeModules = new JsonObject();
-        activeModules.addProperty("enabled", layout.activeModulesEnabled());
-        activeModules.addProperty("x", layout.activeModulesX());
-        activeModules.addProperty("y", layout.activeModulesY());
+        activeModules.addProperty("enabled", state.enabled());
+        activeModules.addProperty("x", state.x());
+        activeModules.addProperty("y", state.y());
+        activeModules.addProperty("scale", state.scale());
+        activeModules.addProperty("padding", state.padding());
+        activeModules.addProperty("background", state.background());
+        activeModules.addProperty("textShadow", state.textShadow());
+        activeModules.addProperty("sort", state.sort().name().toLowerCase(Locale.ROOT));
+        activeModules.addProperty("alignment", state.alignment().name().toLowerCase(Locale.ROOT));
+        activeModules.addProperty("colorMode", state.colorMode().name().toLowerCase(Locale.ROOT));
         root.add("activeModules", activeModules);
         return root;
     }
@@ -105,15 +116,25 @@ public final class HudConfigurationManager {
         }
 
         JsonObject activeModules = activeModulesElement.getAsJsonObject();
-        boolean enabled = getOptionalBoolean(activeModules, "enabled", true);
+        ActiveModulesLayout state = layout.activeModules();
+        state.reset();
+        state.setEnabled(getOptionalBoolean(activeModules, "enabled", true));
         int x = getOptionalCoordinate(activeModules, "x", HudLayout.DEFAULT_ACTIVE_MODULES_X);
         int y = getOptionalCoordinate(activeModules, "y", HudLayout.DEFAULT_ACTIVE_MODULES_Y);
-
-        layout.setActiveModulesEnabled(enabled);
-        if (!layout.setActiveModulesPosition(x, y)) {
+        if (!state.setPosition(x, y)) {
             LOGGER.warning("Invalid Active Modules HUD position; reset to defaults");
-            layout.setActiveModulesPosition(HudLayout.DEFAULT_ACTIVE_MODULES_X, HudLayout.DEFAULT_ACTIVE_MODULES_Y);
+            state.setPosition(HudLayout.DEFAULT_ACTIVE_MODULES_X, HudLayout.DEFAULT_ACTIVE_MODULES_Y);
         }
+        state.setScale(getOptionalScale(activeModules));
+        state.setPadding(getOptionalPadding(activeModules));
+        state.setBackground(getOptionalBoolean(activeModules, "background", true));
+        state.setTextShadow(getOptionalBoolean(activeModules, "textShadow", true));
+        state.setSort(getOptionalEnum(activeModules, "sort", ActiveModulesLayout.Sort.class,
+                ActiveModulesLayout.Sort.REGISTRY));
+        state.setAlignment(getOptionalEnum(activeModules, "alignment", ActiveModulesLayout.Alignment.class,
+                ActiveModulesLayout.Alignment.LEFT));
+        state.setColorMode(getOptionalEnum(activeModules, "colorMode", ActiveModulesLayout.ColorMode.class,
+                ActiveModulesLayout.ColorMode.ACCENT));
     }
 
     private static boolean getOptionalBoolean(JsonObject object, String property, boolean defaultValue) {
@@ -140,6 +161,54 @@ public final class HudConfigurationManager {
             }
         } catch (IllegalArgumentException ignored) {
             // Logged below with the same safe fallback as an out-of-range number.
+        }
+        LOGGER.warning(() -> "Invalid '" + property + "' HUD value; reset to default");
+        return defaultValue;
+    }
+
+    private static float getOptionalScale(JsonObject object) {
+        JsonElement element = object.get("scale");
+        if (element == null) {
+            return 1.0F;
+        }
+        if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()) {
+            float value = element.getAsFloat();
+            if (Float.isFinite(value) && value >= ActiveModulesLayout.MIN_SCALE && value <= ActiveModulesLayout.MAX_SCALE) {
+                return value;
+            }
+        }
+        LOGGER.warning("Invalid 'scale' HUD value; reset to default");
+        return 1.0F;
+    }
+
+    private static int getOptionalPadding(JsonObject object) {
+        JsonElement element = object.get("padding");
+        if (element == null) {
+            return ActiveModulesHud.PADDING;
+        }
+        try {
+            int value = getRequiredInt(object, "padding");
+            if (value >= ActiveModulesLayout.MIN_PADDING && value <= ActiveModulesLayout.MAX_PADDING) {
+                return value;
+            }
+        } catch (IllegalArgumentException ignored) {
+            // The shared safe fallback below also covers fractional values.
+        }
+        LOGGER.warning("Invalid 'padding' HUD value; reset to default");
+        return ActiveModulesHud.PADDING;
+    }
+
+    private static <E extends Enum<E>> E getOptionalEnum(JsonObject object, String property, Class<E> type, E defaultValue) {
+        JsonElement element = object.get(property);
+        if (element == null) {
+            return defaultValue;
+        }
+        if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
+            try {
+                return Enum.valueOf(type, element.getAsString().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException ignored) {
+                // Logged below.
+            }
         }
         LOGGER.warning(() -> "Invalid '" + property + "' HUD value; reset to default");
         return defaultValue;

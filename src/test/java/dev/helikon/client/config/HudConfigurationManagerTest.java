@@ -57,6 +57,30 @@ class HudConfigurationManagerTest {
     }
 
     @Test
+    void saveAndLoadPreserveActiveModulesPresentation() {
+        HudConfigurationManager manager = new HudConfigurationManager(temporaryDirectory.resolve("helikon"));
+        HudLayout source = new HudLayout();
+        source.activeModules().setScale(1.5F);
+        source.activeModules().setPadding(7);
+        source.activeModules().setBackground(false);
+        source.activeModules().setTextShadow(false);
+        source.activeModules().setSort(dev.helikon.client.hud.ActiveModulesLayout.Sort.WIDTH);
+        source.activeModules().setAlignment(dev.helikon.client.hud.ActiveModulesLayout.Alignment.RIGHT);
+        source.activeModules().setColorMode(dev.helikon.client.hud.ActiveModulesLayout.ColorMode.RAINBOW);
+        manager.save(source);
+
+        HudLayout target = new HudLayout();
+        assertEquals(HudConfigurationManager.LoadResult.LOADED, manager.load(target));
+        assertEquals(1.5F, target.activeModules().scale());
+        assertEquals(7, target.activeModules().padding());
+        assertFalse(target.activeModules().background());
+        assertFalse(target.activeModules().textShadow());
+        assertEquals(dev.helikon.client.hud.ActiveModulesLayout.Sort.WIDTH, target.activeModules().sort());
+        assertEquals(dev.helikon.client.hud.ActiveModulesLayout.Alignment.RIGHT, target.activeModules().alignment());
+        assertEquals(dev.helikon.client.hud.ActiveModulesLayout.ColorMode.RAINBOW, target.activeModules().colorMode());
+    }
+
+    @Test
     void malformedConfigurationIsPreservedAndRestoresDefaults() throws IOException {
         HudConfigurationManager manager = new HudConfigurationManager(temporaryDirectory.resolve("helikon"));
         Files.createDirectories(manager.hudConfigurationPath().getParent());

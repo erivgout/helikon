@@ -224,11 +224,12 @@ The ClickGUI currently provides:
 - keyboard navigation: Left/Right changes categories, Up/Down selects module rows, and Enter/Space toggles the selected module
 - persistence of module state and settings when the screen closes
 
-The first HUD slice adds an **Active Modules** list. It renders enabled Helikon
-modules in registry order and can be positioned through the small HUD editor.
-Open the ClickGUI with Right Shift and select **HUD** in its header; drag the
-preview, toggle it with the checkbox, and press Escape to return. The layout
-is stored locally in `config/helikon/hud.json`.
+The HUD editor currently provides a fully configurable **Active Modules**
+list. Open the ClickGUI with Right Shift and select **HUD** in its header;
+drag the preview (it snaps to edges and centre), toggle it, choose registry,
+alphabetical, or width sorting, left/right alignment, accent/rainbow color,
+background, text shadow, scale, and padding. The layout is stored locally in
+`config/helikon/hud.json`.
 
 ## Requirements
 

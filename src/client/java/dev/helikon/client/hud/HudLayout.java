@@ -9,24 +9,26 @@ public final class HudLayout {
     public static final int DEFAULT_ACTIVE_MODULES_Y = 4;
     public static final int MAX_COORDINATE = 10_000;
 
-    private boolean activeModulesEnabled = true;
-    private int activeModulesX = DEFAULT_ACTIVE_MODULES_X;
-    private int activeModulesY = DEFAULT_ACTIVE_MODULES_Y;
+    private final ActiveModulesLayout activeModules = new ActiveModulesLayout();
+
+    public ActiveModulesLayout activeModules() {
+        return activeModules;
+    }
 
     public boolean activeModulesEnabled() {
-        return activeModulesEnabled;
+        return activeModules.enabled();
     }
 
     public void setActiveModulesEnabled(boolean enabled) {
-        activeModulesEnabled = enabled;
+        activeModules.setEnabled(enabled);
     }
 
     public int activeModulesX() {
-        return activeModulesX;
+        return activeModules.x();
     }
 
     public int activeModulesY() {
-        return activeModulesY;
+        return activeModules.y();
     }
 
     /**
@@ -37,16 +39,12 @@ public final class HudLayout {
         if (!isValidCoordinate(x) || !isValidCoordinate(y)) {
             return false;
         }
-        activeModulesX = x;
-        activeModulesY = y;
-        return true;
+        return activeModules.setPosition(x, y);
     }
 
     /** Restores the active-modules element to its safe initial layout. */
     public void resetActiveModules() {
-        activeModulesEnabled = true;
-        activeModulesX = DEFAULT_ACTIVE_MODULES_X;
-        activeModulesY = DEFAULT_ACTIVE_MODULES_Y;
+        activeModules.reset();
     }
 
     public static boolean isValidCoordinate(int coordinate) {

@@ -55,9 +55,11 @@ and `.setting` command syntax will be added with the editor/command completion
 work rather than accepting unvalidated ad-hoc text.
 
 The Active Modules HUD has its own schema-versioned `hud.json` in the same
-directory. It stores only the element's enabled state and top-left scaled-GUI
-coordinates. The HUD editor saves it when closed; normal client shutdown also
-saves it. Its writes use `hud.json.bak` and move malformed files to
+directory. It stores enabled state, top-left scaled-GUI coordinates, scale,
+padding, backdrop/text-shadow choices, sort/alignment/color modes. Schema 2
+loads the earlier position-only schema 1 safely with presentation defaults.
+The HUD editor saves it when closed; normal client shutdown also saves it. Its
+writes use `hud.json.bak` and move malformed files to
 `hud.corrupt-<timestamp>.json`. Invalid individual HUD values are logged and
 reset to safe defaults.
 

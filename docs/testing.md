@@ -159,8 +159,12 @@ key (`ConfigurationManagerTest`).
 3. Drag the preview to each screen edge and verify it stays fully visible;
    turn its checkbox off and verify the normal HUD no longer renders after
    leaving the editor. Turn it back on and move it to a distinct position.
+   Drag close to, but not exactly on, an edge and then the viewport centre;
+   verify the preview snaps there. Cycle Sort, Alignment, and Color, toggle
+   Background and Text shadow, and adjust Scale/Padding; verify the live HUD
+   reflects every choice and remains entirely on screen.
 4. Press Escape and verify the ClickGUI returns. Close it, relaunch the
-   client, and verify the enabled state and position are restored from
+   client, and verify the enabled state, position, and presentation choices are restored from
    `config/helikon/hud.json`.
 5. Replace `hud.json` with invalid JSON, relaunch, and verify Helikon creates
    `hud.corrupt-<timestamp>.json` and returns the element to its default

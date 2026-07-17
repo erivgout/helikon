@@ -4,10 +4,13 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.helikon.client.command.ChatCommands;
 import dev.helikon.client.command.CommandDispatcher;
 import dev.helikon.client.command.HelikonCommands;
+import dev.helikon.client.command.BetterChatCommand;
+import dev.helikon.client.command.MinecraftTextClipboard;
 import dev.helikon.client.command.MinecraftServerCommandSender;
 import dev.helikon.client.command.MinecraftKeyNameResolver;
 import dev.helikon.client.chat.OutgoingChatFormatter;
 import dev.helikon.client.chat.ChatDisplayAccess;
+import dev.helikon.client.chat.BetterChatDisplayAccess;
 import dev.helikon.client.chat.IncomingChatMessage;
 import dev.helikon.client.chat.IncomingMessageAdapter;
 import dev.helikon.client.config.ConfigurationException;
@@ -59,6 +62,7 @@ import dev.helikon.client.module.chat.AutoReply;
 import dev.helikon.client.module.chat.AntiSpam;
 import dev.helikon.client.module.chat.ChatTimestamps;
 import dev.helikon.client.module.chat.ChatColor;
+import dev.helikon.client.module.chat.BetterChat;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
@@ -178,6 +182,7 @@ public final class HelikonClient implements ClientModInitializer {
         AntiSpam antiSpam = new AntiSpam();
         ChatTimestamps chatTimestamps = new ChatTimestamps();
         ChatColor chatColor = new ChatColor();
+        BetterChat betterChat = new BetterChat();
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
@@ -195,8 +200,10 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(antiSpam);
         modules.register(chatTimestamps);
         modules.register(chatColor);
+        modules.register(betterChat);
         ChatDisplayAccess.install(chatTimestamps);
         ChatDisplayAccess.install(chatColor);
+        BetterChatDisplayAccess.install(betterChat);
         MovementModuleAccess.install(autoWalk, autoSneak);
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
@@ -240,6 +247,8 @@ public final class HelikonClient implements ClientModInitializer {
                 friends, waypoints, waypointLocations, macros, macroRunner, macroServerContext,
                 panic, panicKeybinds, panicConfiguration, privateMessageHelper, privateMessageHistory,
                 new MinecraftServerCommandSender());
+        commands.register(new BetterChatCommand(betterChat, BetterChatDisplayAccess::localHistory,
+                new MinecraftTextClipboard()));
         ChatCommands.register(commands, notifier);
         OutgoingChatFormatter outgoingChat = new OutgoingChatFormatter(chatPrefix, chatSuffix,
                 () -> macroServerContext.currentServerAddress().orElse(null),
@@ -269,6 +278,7 @@ public final class HelikonClient implements ClientModInitializer {
         });
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             events.post(new ClientTickEvent(ClientTickEvent.Phase.POST));
+            BetterChatDisplayAccess.tickSmoothScroll();
 
             boolean anyScreenOpen = screenWasOpenAtTickStart || client.gui.screen() != null;
             boolean panicTriggered = panicKeybinds.tick(

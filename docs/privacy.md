@@ -17,3 +17,9 @@ ChatColor operates only on components Minecraft has already received for this
 client's chat display. Its local palette and opacity settings are stored with
 other module configuration, but it does not store message content or send any
 chat formatting, metadata, or display preference to a server or service.
+
+BetterChat keeps only the messages Minecraft already retains for the active
+client session. Its `.chat search`, `.chat history`, and explicit `.chat copy`
+operations read that in-memory display list; the copied selection goes only to
+the local system clipboard. BetterChat does not create a chat-log file, persist
+chat content, transmit search text, or send display settings anywhere.

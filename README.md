@@ -66,6 +66,13 @@ vanilla `<player>` span color, background-opacity multiplier, and text shadow.
 It rebuilds only local display components after Minecraft logs the original
 message; custom server chat formats retain their own structured name styling.
 
+BetterChat is off by default and extends only the local chat display: bounded
+expanded history, consecutive duplicate stacking and `[xN]` counters, standard
+vanilla player names that suggest (but never send) a `/msg <name>` command,
+longer visibility with an adjustable fade, compact line height, and eased
+multi-line scrolling. Its `.chat` command searches, lists, or explicitly copies
+currently retained local lines; no history is persisted.
+
 PrivateMessageHelper intercepts `.pm` and `.reply` locally, validates a player
 name and a bounded message, then uses Minecraft's normal server-command route
 with configurable `msg` and `r` command tokens. The `.` command itself is
@@ -163,6 +170,7 @@ sent to the server:
 | `.macro run <name>` / `.macro stop` | Starts one local macro or stops its queued run. |
 | `.pm <player> <message>` / `.pm history [player]` | Sends one validated normal server PM or views bounded local outgoing history. Prefix a literal `history` target with `--`. |
 | `.reply <message>` / `.reply history [player]` | Sends one validated normal server reply or views the same local history. Prefix a literal `history` reply with `--`. |
+| `.chat search <text>` / `.chat copy <newest-index>` / `.chat history [count]` | Searches, explicitly copies, or lists bounded local BetterChat display history while BetterChat is enabled. |
 | `.panic` | Disables modules, hides custom HUD for this session, and closes Helikon GUI screens. |
 | `.panic bind <key>` / `.panic unbind` | Configures or clears the local persisted panic key. |
 | `.panic status` / `.panic restorehud` | Shows the bind or restores HUD visibility without re-enabling modules. |

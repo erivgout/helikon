@@ -82,6 +82,13 @@ the later local chat-display copy plus its rendered background alpha. It does
 not alter outbound chat, message signatures, client-log text, packets, or
 server-visible formatting.
 
+BetterChat changes only local retained/displayed chat. Its clickable standard
+player names use Minecraft's local **suggest command** action, which merely
+places a normal `/msg <name>` string in the chat input; it does not send the
+string. `.chat copy` writes only the user-selected retained line to the local
+system clipboard. BetterChat never sends history, search text, counters, or
+display settings to a server or external service.
+
 ## Future policy
 
 Optional external integrations must be isolated under

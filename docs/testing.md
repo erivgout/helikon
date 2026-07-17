@@ -229,6 +229,20 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     uses ChatColor's timestamp color. Relaunch to verify settings persist, then
     disable ChatColor and verify vanilla display colors/opacity return without
     sending or changing any chat text.
+32. Enable **BetterChat** and receive more than 100 harmless local/test chat
+    lines. Verify its configured history limit is retained, then lower the
+    setting or disable the module and verify only the current bounded local
+    display remains. Send the same line twice consecutively and verify one line
+    becomes `[x2]`; insert a different line between repeats and verify the
+    counter restarts. Disable duplicate stacking while keeping counters enabled
+    and verify repeat lines stay separate. In ordinary vanilla `<player>` chat,
+    click a name and verify `/msg <name> ` is only suggested in the input, never
+    sent; a server-provided click action must remain intact. Use `.chat history
+    3`, `.chat search <text>`, and `.chat copy 1`, verify each is local and the
+    selected newest line reaches only the local clipboard. Change visibility,
+    fade, compact mode, and smooth scroll; verify unfocused chat timing,
+    line-height, and multi-line scroll easing change locally. Relaunch and
+    verify settings persist but no old chat lines do.
 
 ## Manual command and keybind smoke test
 

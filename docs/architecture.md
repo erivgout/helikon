@@ -149,6 +149,18 @@ uncolored local display component for each current line, so a ChatColor setting
 change or disable rebuilds retained chat without changing message packets,
 Minecraft's original log text, or timestamp insertion time.
 
+`BetterChatRenderPolicy`, `ChatDuplicateTracker`, `ChatHistorySearch`,
+`ChatPlayerNamePolicy`, and `SmoothScrollState` hold its calculations and
+bounded state without Minecraft imports. `BetterChatDisplayAccess` is the thin
+adapter: verified constant hooks expand the two local chat queues, a verified
+alpha-calculator hook changes only unfocused display timing, and standard
+`chat.type.text` name components may receive a local suggest-command click
+action only when they do not already have one. The stored-message path handles
+one consecutive duplicate at a time, removes only the immediately previous
+local entry, then asks Minecraft to rebuild its local trimmed display. Search,
+history listing, and clipboard copying use explicit `.` commands and a
+non-persistent current-display provider; no chat text is written to disk.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

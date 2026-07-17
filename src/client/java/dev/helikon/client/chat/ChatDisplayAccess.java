@@ -63,6 +63,12 @@ public final class ChatDisplayAccess {
         return new GuiMessage(message.addedTime(), decorated, message.signature(), message.source(), message.tag());
     }
 
+    /** Returns the original received component for a currently retained locally decorated line. */
+    public static Component originalContent(GuiMessage message) {
+        DisplayOrigin origin = displayOrigins.get(message.content());
+        return origin == null ? message.content() : origin.original();
+    }
+
     /** Applies ChatColor's local opacity multiplier to the vanilla chat background alpha. */
     public static float backgroundOpacity(float vanillaOpacity) {
         return colors != null && colors.isEnabled() ? colors.adjustBackgroundOpacity(vanillaOpacity) : vanillaOpacity;

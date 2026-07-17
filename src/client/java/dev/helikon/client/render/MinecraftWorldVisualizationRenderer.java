@@ -4,6 +4,7 @@ import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.miscellaneous.LocalCosmetics;
+import dev.helikon.client.module.render.BaseFinder;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.BetterNametags;
 import dev.helikon.client.module.render.Breadcrumbs;
@@ -98,6 +99,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final EntityEsp entityEsp;
     private final Chams chams;
     private final BetterNametags betterNametags;
+    private final BaseFinder baseFinder;
     private final BlockEsp blockEsp;
     private final Tracers tracers;
     private final Trajectories trajectories;
@@ -118,16 +120,22 @@ public final class MinecraftWorldVisualizationRenderer {
     private final BlockEspScanCursor storageCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor storageAnchor = new BlockEspScanAnchor();
     private final BlockEspCache storageCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
+    private final BlockEspScanCursor baseFinderCursor = new BlockEspScanCursor();
+    private final BlockEspScanAnchor baseFinderAnchor = new BlockEspScanAnchor();
+    private final BlockEspCache baseFinderCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
     private ClientLevel observedLevel;
     private long observedBlockScanRevision = Long.MIN_VALUE;
     private long observedStorageScanRevision = Long.MIN_VALUE;
+    private long observedBaseFinderScanRevision = Long.MIN_VALUE;
     private boolean blockScannerWasEnabled;
     private boolean storageScannerWasEnabled;
+    private boolean baseFinderScannerWasEnabled;
     private boolean nativeOutlineWasInstalled;
     private boolean chamsWasInstalled;
 
     public MinecraftWorldVisualizationRenderer(ModuleRegistry modules, FriendManager friends, EntityEsp entityEsp,
                                                 Chams chams, BetterNametags betterNametags,
+                                                BaseFinder baseFinder,
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
                                                 ProjectileWarning projectileWarning, ProjectilePreview projectilePreview,
                                                 TrueSight trueSight,
@@ -139,6 +147,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.entityEsp = Objects.requireNonNull(entityEsp, "entityEsp");
         this.chams = Objects.requireNonNull(chams, "chams");
         this.betterNametags = Objects.requireNonNull(betterNametags, "betterNametags");
+        this.baseFinder = Objects.requireNonNull(baseFinder, "baseFinder");
         this.blockEsp = Objects.requireNonNull(blockEsp, "blockEsp");
         this.tracers = Objects.requireNonNull(tracers, "tracers");
         this.trajectories = Objects.requireNonNull(trajectories, "trajectories");
@@ -155,6 +164,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.explosions = Objects.requireNonNull(explosions, "explosions");
         this.blockEsp.setCacheClearer(this::resetBlockScanner);
         this.storageEsp.setCacheClearer(this::resetStorageScanner);
+        this.baseFinder.setCacheClearer(this::resetBaseFinderScanner);
     }
 
     /** Samples the trail and advances the bounded block cache from the client tick bridge. */
@@ -166,6 +176,7 @@ public final class MinecraftWorldVisualizationRenderer {
             damageIndicators.clear();
             resetBlockScanner();
             resetStorageScanner();
+            resetBaseFinderScanner();
             clearNativeOutlineTargets();
             clearChamsTargets();
         }
@@ -220,6 +231,19 @@ public final class MinecraftWorldVisualizationRenderer {
                 modules.runGuarded(storageEsp, "scan", () -> scanStorage(client.level, client.player));
             }
         }
+        if (!baseFinder.isEnabled()) {
+            if (baseFinderScannerWasEnabled) {
+                resetBaseFinderScanner();
+                baseFinderScannerWasEnabled = false;
+            }
+        } else {
+            baseFinderScannerWasEnabled = true;
+            if (!BlockEspScanPolicy.shouldScan(true, baseFinder.targetBlocks())) {
+                clearBaseFinderResults();
+            } else {
+                modules.runGuarded(baseFinder, "scan", () -> scanBaseEvidence(client.level, client.player));
+            }
+        }
     }
 
     /** Registered for Fabric's verified {@code BEFORE_GIZMOS} level-render phase. */
@@ -264,6 +288,10 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (storageEsp.isEnabled()) {
             modules.runGuarded(storageEsp, "render", () -> renderStorage(client.player, frustum));
+        }
+        if (baseFinder.isEnabled()) {
+            modules.runGuarded(baseFinder, "render",
+                    () -> renderBaseEvidence(client.player, camera));
         }
         if (damageIndicators.isEnabled()) {
             modules.runGuarded(damageIndicators, "render", () -> renderDamageIndicators(client.level, client.player,
@@ -338,6 +366,30 @@ public final class MinecraftWorldVisualizationRenderer {
             BlockState state = level.getBlockState(blockPosition);
             String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
             storageCache.observe(position, state.hasBlockEntity() && storageEsp.targetBlocks().contains(blockId));
+        }
+    }
+
+    private void scanBaseEvidence(ClientLevel level, Player player) {
+        if (baseFinder.scanRevision() != observedBaseFinderScanRevision) {
+            observedBaseFinderScanRevision = baseFinder.scanRevision();
+            resetBaseFinderScanner();
+        }
+        BlockEspScanAnchor.Update anchor = baseFinderAnchor.update(
+                player.getBlockX(), player.getBlockY(), player.getBlockZ(),
+                baseFinder.horizontalRange(), baseFinder.verticalRange(), baseFinderCursor.isAtPassBoundary());
+        if (anchor.changed()) {
+            clearBaseFinderResults();
+        }
+        BlockEspScanCursor.Region region = anchor.region();
+        for (int index = 0; index < baseFinder.scanBudget(); index++) {
+            BlockEspScanCursor.Position position = baseFinderCursor.next(region);
+            if (!level.isInsideBuildHeight(position.y()) || !level.hasChunk(position.x() >> 4, position.z() >> 4)) {
+                baseFinderCache.observe(position, false);
+                continue;
+            }
+            BlockState state = level.getBlockState(new BlockPos(position.x(), position.y(), position.z()));
+            String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+            baseFinderCache.observe(position, baseFinder.targetBlocks().contains(blockId));
         }
     }
 
@@ -704,6 +756,36 @@ public final class MinecraftWorldVisualizationRenderer {
         }
     }
 
+    private void renderBaseEvidence(Player localPlayer, CameraRenderState camera) {
+        List<BaseFinder.Evidence> evidence = new ArrayList<>();
+        for (BlockEspScanCursor.Position position : baseFinderCache.positions()) {
+            if (isWithinCurrentBaseFinderRange(position, localPlayer)) {
+                evidence.add(new BaseFinder.Evidence(position.x(), position.y(), position.z()));
+            }
+        }
+        if (evidence.isEmpty()) {
+            return;
+        }
+        Vec3 start = baseFinder.tracersEnabled() ? tracerStart(camera, localPlayer) : null;
+        GizmoStyle style = GizmoStyle.strokeAndFill(
+                baseFinder.color(), baseFinder.lineWidth(), baseFinder.fillColor());
+        int rendered = 0;
+        for (BaseFinder.Evidence marker : evidence) {
+            if (!baseFinder.shouldHighlight(marker, evidence)) {
+                continue;
+            }
+            BlockPos position = new BlockPos(marker.x(), marker.y(), marker.z());
+            Gizmos.cuboid(new AABB(position), style).setAlwaysOnTop();
+            if (start != null) {
+                Gizmos.line(start, Vec3.atCenterOf(position), baseFinder.color(), baseFinder.lineWidth())
+                        .setAlwaysOnTop();
+            }
+            if (++rendered >= baseFinder.maximumMarkers()) {
+                return;
+            }
+        }
+    }
+
     private void renderDamageIndicators(ClientLevel level, Player localPlayer, Frustum frustum, long nowMillis) {
         for (DamageIndicatorTracker.RenderedIndicator indicator : damageIndicators.renderedIndicators(nowMillis)) {
             Entity entity = level.getEntity(indicator.entityId());
@@ -926,6 +1008,11 @@ public final class MinecraftWorldVisualizationRenderer {
                 storageEsp.horizontalRange(), storageEsp.verticalRange());
     }
 
+    private boolean isWithinCurrentBaseFinderRange(BlockEspScanCursor.Position position, Player player) {
+        return BlockEspRange.contains(position, player.getX(), player.getY(), player.getZ(),
+                baseFinder.horizontalRange(), baseFinder.verticalRange());
+    }
+
     private void resetBlockScanner() {
         blockAnchor.clear();
         clearBlockResults();
@@ -936,6 +1023,11 @@ public final class MinecraftWorldVisualizationRenderer {
         clearStorageResults();
     }
 
+    private void resetBaseFinderScanner() {
+        baseFinderAnchor.clear();
+        clearBaseFinderResults();
+    }
+
     private void clearBlockResults() {
         blockCursor.clear();
         blockCache.clear();
@@ -944,5 +1036,10 @@ public final class MinecraftWorldVisualizationRenderer {
     private void clearStorageResults() {
         storageCursor.clear();
         storageCache.clear();
+    }
+
+    private void clearBaseFinderResults() {
+        baseFinderCursor.clear();
+        baseFinderCache.clear();
     }
 }

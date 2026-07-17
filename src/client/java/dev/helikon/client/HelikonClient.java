@@ -265,6 +265,7 @@ import dev.helikon.client.module.render.NoFireOverlay;
 import dev.helikon.client.module.render.NoFog;
 import dev.helikon.client.module.render.NoHurtcam;
 import dev.helikon.client.module.render.NoShieldOverlay;
+import dev.helikon.client.module.render.BaseFinder;
 import dev.helikon.client.module.render.AntiTotemAnimation;
 import dev.helikon.client.module.render.Arrows;
 import dev.helikon.client.module.render.BetterCrosshair;
@@ -461,6 +462,7 @@ public final class HelikonClient implements ClientModInitializer {
         NoWeather noWeather = new NoWeather();
         EntityEsp entityEsp = new EntityEsp();
         Chams chams = new Chams();
+        BaseFinder baseFinder = new BaseFinder();
         BlockEsp blockEsp = new BlockEsp();
         Tracers tracers = new Tracers();
         Trajectories trajectories = new Trajectories();
@@ -493,6 +495,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(noWeather);
         modules.register(entityEsp);
         modules.register(chams);
+        modules.register(baseFinder);
         modules.register(blockEsp);
         modules.register(tracers);
         modules.register(trajectories);
@@ -789,7 +792,7 @@ public final class HelikonClient implements ClientModInitializer {
         FakeLagAccess.install(fakeLag);
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
-                modules, friends, entityEsp, chams, betterNametags, blockEsp, tracers, trajectories, projectileWarning,
+                modules, friends, entityEsp, chams, betterNametags, baseFinder, blockEsp, tracers, trajectories, projectileWarning,
                 projectilePreview, trueSight, storageEsp,
                 damageIndicators, breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics, explosions
         );

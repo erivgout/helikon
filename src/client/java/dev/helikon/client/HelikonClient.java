@@ -95,10 +95,12 @@ import dev.helikon.client.module.movement.BoatFlight;
 import dev.helikon.client.module.movement.BunnyHop;
 import dev.helikon.client.module.movement.ExtraElytra;
 import dev.helikon.client.module.movement.FastLadders;
+import dev.helikon.client.module.movement.Follow;
 import dev.helikon.client.module.movement.Flight;
 import dev.helikon.client.module.movement.Freecam;
 import dev.helikon.client.module.movement.FreecamAccess;
 import dev.helikon.client.module.movement.MinecraftAdvancedMovementAccess;
+import dev.helikon.client.module.movement.MinecraftFollowAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.NoFall;
 import dev.helikon.client.module.movement.NoSlow;
@@ -397,6 +399,7 @@ public final class HelikonClient implements ClientModInitializer {
         AntiAfk antiAfk = new AntiAfk();
         NoSlow noSlow = new NoSlow();
         FastLadders fastLadders = new FastLadders();
+        Follow follow = new Follow();
         WaterJump waterJump = new WaterJump();
         Jesus jesus = new Jesus();
         Spider spider = new Spider();
@@ -476,6 +479,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(antiAfk);
         modules.register(noSlow);
         modules.register(fastLadders);
+        modules.register(follow);
         modules.register(waterJump);
         modules.register(jesus);
         modules.register(spider);
@@ -571,6 +575,7 @@ public final class HelikonClient implements ClientModInitializer {
                 }
                 modules.runGuarded(fullbright, "tick", fullbright::tick);
                 modules.runGuarded(autoSprint, "tick", () -> tickAutoSprint(autoSprint));
+                modules.runGuarded(follow, "tick", () -> MinecraftFollowAccess.tick(follow));
                 modules.runGuarded(fastLadders, "tick", () -> MinecraftAdvancedMovementAccess.tickFastLadders(fastLadders));
                 modules.runGuarded(jesus, "tick", () -> MinecraftAdvancedMovementAccess.tickJesus(jesus));
                 modules.runGuarded(spider, "tick", () -> MinecraftAdvancedMovementAccess.tickSpider(spider));

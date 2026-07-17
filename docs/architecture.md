@@ -63,6 +63,15 @@ or packet. Its narrow port immediately restores an unchanged module-owned
 cooldown on disable or panic. The accessor remains confined to the
 version-sensitive client edge.
 
+AutoEat keeps food ranking, avoid-list parsing, threshold checks, combat
+interruption, and user-slot ownership in Minecraft-free classes. Its adapter
+only exposes existing hotbar food facts and ordinary local Use-key state. It
+does not directly invoke an interaction, create an item, or construct a
+packet; the normal client interaction path and connected server remain in
+control. When AutoEat ends its own use hold, the input port separately polls
+the configured keyboard, mouse, or scancode binding so an overlapping physical
+player hold is never cancelled.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

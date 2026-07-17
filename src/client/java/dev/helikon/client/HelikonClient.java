@@ -39,6 +39,9 @@ import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.SprintContext;
 import dev.helikon.client.module.player.AutoTool;
 import dev.helikon.client.module.player.ToolCandidate;
+import dev.helikon.client.module.player.AutoEat;
+import dev.helikon.client.module.player.FoodCandidate;
+import dev.helikon.client.module.player.MinecraftUseKeyAccess;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
@@ -63,6 +66,9 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.BlockHitResult;
 
@@ -134,11 +140,13 @@ public final class HelikonClient implements ClientModInitializer {
         AutoSprint autoSprint = new AutoSprint();
         AutoWalk autoWalk = new AutoWalk();
         AutoSneak autoSneak = new AutoSneak();
+        AutoEat autoEat = new AutoEat(new MinecraftUseKeyAccess());
         AutoTool autoTool = new AutoTool();
         FastPlace fastPlace = new FastPlace(new MinecraftUseCooldownAccess());
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
+        modules.register(autoEat);
         modules.register(autoTool);
         modules.register(fastPlace);
         MovementModuleAccess.install(autoWalk, autoSneak);
@@ -146,6 +154,7 @@ public final class HelikonClient implements ClientModInitializer {
             if (event.phase() == ClientTickEvent.Phase.POST) {
                 modules.runGuarded(fullbright, "tick", fullbright::tick);
                 modules.runGuarded(autoSprint, "tick", () -> tickAutoSprint(autoSprint));
+                modules.runGuarded(autoEat, "tick", () -> tickAutoEat(autoEat));
                 modules.runGuarded(autoTool, "tick", () -> tickAutoTool(autoTool));
                 modules.runGuarded(fastPlace, "tick", () -> tickFastPlace(fastPlace));
             }
@@ -337,6 +346,34 @@ public final class HelikonClient implements ClientModInitializer {
         }
     }
 
+    /** Adapts ordinary local player state into AutoEat's safe hotbar-food policy. */
+    private static void tickAutoEat(AutoEat autoEat) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null) {
+            autoEat.onPlayerUnavailable();
+            return;
+        }
+
+        boolean screenOpen = client.gui.screen() != null;
+        List<FoodCandidate> candidates = screenOpen ? List.of() : foodCandidates(client);
+        AutoEat.Action action = autoEat.tick(new AutoEat.Context(
+                client.player.getInventory().getSelectedSlot(),
+                client.player.getFoodData().getFoodLevel(),
+                client.player.getHealth(),
+                client.options.keyAttack.isDown(),
+                client.player.hurtTime > 0,
+                screenOpen,
+                client.options.keyUse.isDown(),
+                client.player.isUsingItem(),
+                candidates
+        ));
+        if (action.restoreSlot() >= 0) {
+            client.player.getInventory().setSelectedSlot(action.restoreSlot());
+        } else if (action.selectSlot() >= 0) {
+            client.player.getInventory().setSelectedSlot(action.selectSlot());
+        }
+    }
+
     private static List<ToolCandidate> toolCandidates(Minecraft client) {
         BlockHitResult hit = (BlockHitResult) client.hitResult;
         var blockState = client.level.getBlockState(hit.getBlockPos());
@@ -351,6 +388,23 @@ public final class HelikonClient implements ClientModInitializer {
                     : Integer.MAX_VALUE;
             candidates.add(new ToolCandidate(slot, stack.getDestroySpeed(blockState),
                     stack.isCorrectToolForDrops(blockState), remainingDurability));
+        }
+        return candidates;
+    }
+
+    private static List<FoodCandidate> foodCandidates(Minecraft client) {
+        List<FoodCandidate> candidates = new ArrayList<>(9);
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack stack = client.player.getInventory().getItem(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            FoodProperties food = stack.get(DataComponents.FOOD);
+            if (food == null || food.nutrition() < 1) {
+                continue;
+            }
+            String itemId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+            candidates.add(new FoodCandidate(slot, itemId, food.nutrition(), food.saturation(), food.canAlwaysEat()));
         }
         return candidates;
     }

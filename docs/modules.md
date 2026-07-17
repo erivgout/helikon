@@ -21,6 +21,7 @@
 | ID | Category | Description | Settings | Limitation |
 | --- | --- | --- | --- | --- |
 | `auto_tool` | Player | Selects the best safe hotbar tool while the user is already mining. | `minimum_durability`, `restore_prior_slot` | It changes only the local selected hotbar slot, ignores bare-hand-equivalent items and guarded durability, and uses Minecraft's normal mining path. It never creates a mining or inventory packet. |
+| `auto_eat` | Player | Uses existing safe hotbar food when local hunger or health is low. | `hunger_threshold`, `health_threshold`, `food_priority`, `avoided_foods`, `combat_rule` | It selects regular food below full hunger, or an eligible always-edible food at full hunger when health is low. It only holds the normal local Use key when no screen is open and the player is not already using an item manually; an overlapping physical hold is preserved. It restores only a slot it still owns and releases module-owned Use state immediately on disable or panic. |
 
 ## World modules
 

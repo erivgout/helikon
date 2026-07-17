@@ -30,6 +30,11 @@ declared finite list. Unknown or malformed tokens reset only that setting to
 its safe default and are logged. The ClickGUI cycles an enum setting when its
 row is clicked; `.setting` accepts any listed token case-insensitively.
 
+`StringSetting` values are bounded local text. Invalid or overlong values reset
+only that setting to its default and are logged. They appear as validated text
+boxes in the ClickGUI; `.setting` accepts a single non-space text token. AutoEat
+uses one for its bounded comma-separated food identifier avoid list.
+
 The Active Modules HUD has its own schema-versioned `hud.json` in the same
 directory. It stores only the element's enabled state and top-left scaled-GUI
 coordinates. The HUD editor saves it when closed; normal client shutdown also

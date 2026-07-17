@@ -18,8 +18,12 @@ When porting:
 5. Revalidate FastPlace's `Minecraft.rightClickDelay` accessor, Use key mapping,
    held-item, and `BlockItem` APIs. Keep it a cooldown reducer rather than an
    interaction injector.
-6. Run the manual smoke test in an empty profile and with no internet access.
-7. Document compatibility changes and retained limitations before release.
+6. Revalidate AutoEat's `DataComponents.FOOD`, `FoodProperties`, food-data,
+   health, hotbar, hurt-time, configured-key, and normal Use-key APIs. Preserve
+   physical keyboard, mouse, and scancode Use input; keep selection and use
+   input local and do not replace the ordinary client interaction path.
+7. Run the manual smoke test in an empty profile and with no internet access.
+8. Document compatibility changes and retained limitations before release.
 
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

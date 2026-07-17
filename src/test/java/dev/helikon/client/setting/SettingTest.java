@@ -66,6 +66,18 @@ class SettingTest {
         assertEquals(TestMode.FIRST, setting.value());
     }
 
+    @Test
+    void stringSettingBoundsTextAndRecoversMalformedJson() {
+        StringSetting setting = new StringSetting("foods", "Foods", "Test text.", "", 8, true);
+
+        assertTrue(StringSettingText.tryApply(setting, "bread"));
+        assertEquals("bread", setting.value());
+        assertFalse(StringSettingText.tryApply(setting, "cooked_beef"));
+        assertEquals("bread", setting.value());
+        assertFalse(setting.applyJson(new JsonPrimitive(12)));
+        assertEquals("", setting.value());
+    }
+
     private enum TestMode {
         FIRST,
         SECOND

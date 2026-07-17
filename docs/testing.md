@@ -34,6 +34,11 @@ AutoTool's correct-tool scoring, durability guard, ownership-aware slot restore,
 and safe no-selection behavior are covered by `AutoToolTest`.
 FastPlace's held-use gate, item filtering, safe delay floor, and invalid input
 rejection are covered by `FastPlaceTest`.
+AutoEat's deterministic food choice, avoid list, local combat/manual-use
+interruption, owned Use-key cleanup, and slot safety are covered by
+`AutoEatTest`, including always-edible foods at full hunger and physical-key
+handoff. Bounded text-setting validation and local command support are
+covered by `SettingTest` and `BuiltinCommandsTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -142,6 +147,15 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     remains a floor. Change the filter to Non-blocks and verify held block use
     is no longer affected. Open any screen and verify no cooldown change is
     applied while it is open.
+22. Put two food items in the hotbar, lower hunger below **AutoEat**'s threshold,
+    and enable it. Verify it selects the configured preferred, non-avoided food
+    and uses the ordinary eating animation. Verify it pauses while attack is
+    held (with the default rule), never takes over while manually using another
+    item or while a screen is open, and restores its original slot only when
+    the user has not changed slots. Disable it mid-eat and verify Use releases
+    immediately unless the player is physically holding the configured Use
+    binding, in which case that physical hold continues normally. At full
+    hunger with low health, verify only a normally always-edible food is chosen.
 
 ## Manual command and keybind smoke test
 

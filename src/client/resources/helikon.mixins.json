@@ -6,6 +6,7 @@
     "ClientInputAccessor",
     "FogRendererMixin",
     "HudMixin",
+    "KeyMappingAccessor",
     "KeyboardInputMixin",
     "LightmapRenderStateExtractorMixin",
     "MinecraftAccessor"

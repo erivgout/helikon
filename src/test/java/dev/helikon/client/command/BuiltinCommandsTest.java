@@ -18,6 +18,7 @@ import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.ColorSetting;
 import dev.helikon.client.setting.EnumSetting;
 import dev.helikon.client.setting.NumberSetting;
+import dev.helikon.client.setting.StringSetting;
 import dev.helikon.client.waypoint.WaypointContext;
 import dev.helikon.client.waypoint.WaypointLocation;
 import dev.helikon.client.waypoint.WaypointManager;
@@ -138,6 +139,9 @@ class BuiltinCommandsTest {
 
         dispatcher.dispatch(".setting configurable mode second", feedback);
         assertEquals(TestMode.SECOND, module.mode.value());
+
+        dispatcher.dispatch(".setting configurable text bread", feedback);
+        assertEquals("bread", module.text.value());
     }
 
     @Test
@@ -226,6 +230,7 @@ class BuiltinCommandsTest {
         private final NumberSetting amount;
         private final ColorSetting color;
         private final EnumSetting<TestMode> mode;
+        private final StringSetting text;
 
         private ConfigurableModule() {
             super("configurable", "Configurable", "Used by command tests.",
@@ -234,6 +239,7 @@ class BuiltinCommandsTest {
             amount = addSetting(new NumberSetting("amount", "Amount", "A test number.", 2.0, 0.0, 10.0));
             color = addSetting(new ColorSetting("color", "Color", "A test color.", 0xFFFFFFFF));
             mode = addSetting(new EnumSetting<>("mode", "Mode", "A test enum.", TestMode.class, TestMode.FIRST));
+            text = addSetting(new StringSetting("text", "Text", "A test string.", "", 8, true));
         }
     }
 

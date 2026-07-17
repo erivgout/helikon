@@ -9,6 +9,8 @@ import dev.helikon.client.setting.EnumSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.setting.NumberSettingText;
 import dev.helikon.client.setting.Setting;
+import dev.helikon.client.setting.StringSetting;
+import dev.helikon.client.setting.StringSettingText;
 
 import java.util.List;
 import java.util.Locale;
@@ -66,6 +68,7 @@ public final class SettingCommand implements HelikonCommand {
             case ColorSetting colorSetting -> applyColor(module, colorSetting, value, feedback);
             case EnumSetting<?> enumSetting -> applyEnum(module, enumSetting, value, feedback);
             case NumberSetting numberSetting -> applyNumber(module, numberSetting, value, feedback);
+            case StringSetting stringSetting -> applyString(module, stringSetting, value, feedback);
             default -> feedback.error("Setting '" + settingId + "' has an unsupported type for this command.");
         }
     }
@@ -107,5 +110,13 @@ public final class SettingCommand implements HelikonCommand {
             return;
         }
         feedback.info("'" + module.id() + "." + setting.id() + "' set to " + setting.valueId() + ".");
+    }
+
+    private static void applyString(Module module, StringSetting setting, String value, CommandFeedback feedback) {
+        if (!StringSettingText.tryApply(setting, value)) {
+            feedback.error("Expected at most " + setting.maximumLength() + " characters for '" + setting.id() + "'.");
+            return;
+        }
+        feedback.info("'" + module.id() + "." + setting.id() + "' updated.");
     }
 }

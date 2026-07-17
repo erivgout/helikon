@@ -17,6 +17,8 @@ import dev.helikon.client.setting.EnumSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.setting.NumberSettingText;
 import dev.helikon.client.setting.Setting;
+import dev.helikon.client.setting.StringSetting;
+import dev.helikon.client.setting.StringSettingText;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -167,7 +169,8 @@ public final class HelikonClickGuiScreen extends Screen {
             return;
         }
         for (SettingRow row : settingRows(module)) {
-            if (row.setting() instanceof NumberSetting || row.setting() instanceof ColorSetting) {
+            if (row.setting() instanceof NumberSetting || row.setting() instanceof ColorSetting
+                    || row.setting() instanceof StringSetting) {
                 EditBox field = textFields.get(row.setting());
                 if (field != null) {
                     field.setX(settingsX + 6);
@@ -683,7 +686,8 @@ public final class HelikonClickGuiScreen extends Screen {
 
         for (SettingRow row : settingRows(module)) {
             Setting<?> setting = row.setting();
-            if (!(setting instanceof NumberSetting) && !(setting instanceof ColorSetting)) {
+            if (!(setting instanceof NumberSetting) && !(setting instanceof ColorSetting)
+                    && !(setting instanceof StringSetting)) {
                 continue;
             }
             EditBox field = new EditBox(font, settingsX + 6, row.y() + 12, SETTINGS_WIDTH - 12, 14,
@@ -693,11 +697,16 @@ public final class HelikonClickGuiScreen extends Screen {
                 field.setValue(NumberSettingText.format(numberSetting.value()));
                 field.setResponder(text -> field.setTextColor(
                         NumberSettingText.tryApply(numberSetting, text) ? COLOR_TEXT : COLOR_INVALID));
-            } else {
-                ColorSetting colorSetting = (ColorSetting) setting;
+            } else if (setting instanceof ColorSetting colorSetting) {
                 field.setValue(ColorSettingText.format(colorSetting.value()));
                 field.setResponder(text -> field.setTextColor(
                         ColorSettingText.tryApply(colorSetting, text) ? COLOR_TEXT : COLOR_INVALID));
+            } else {
+                StringSetting stringSetting = (StringSetting) setting;
+                field.setMaxLength(stringSetting.maximumLength());
+                field.setValue(stringSetting.value());
+                field.setResponder(text -> field.setTextColor(
+                        StringSettingText.tryApply(stringSetting, text) ? COLOR_TEXT : COLOR_INVALID));
             }
             addRenderableWidget(field);
             textFields.put(setting, field);
@@ -714,7 +723,7 @@ public final class HelikonClickGuiScreen extends Screen {
         List<SettingRow> rows = new ArrayList<>();
         int y = settingControlsTop(module) + MODULE_RESET_ROW_HEIGHT + BIND_ROW_HEIGHT + ENABLED_ROW_HEIGHT;
         for (Setting<?> setting : module.settings()) {
-            int rowHeight = setting instanceof NumberSetting || setting instanceof ColorSetting
+            int rowHeight = setting instanceof NumberSetting || setting instanceof ColorSetting || setting instanceof StringSetting
                     ? NUMBER_ROW_HEIGHT : BOOLEAN_ROW_HEIGHT;
             rows.add(new SettingRow(setting, y, rowHeight));
             y += rowHeight;

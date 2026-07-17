@@ -30,6 +30,11 @@ ordinary Use key with a matching held item. It never starts, repeats, or
 replays an interaction and does not construct packets; server rate limits and
 interaction rules remain authoritative.
 
+AutoEat only selects an existing local hotbar slot and holds Minecraft's
+ordinary local Use binding. It never directly invokes, repeats, or fabricates
+an interaction or packet; normal client interaction rules and all server-side
+food, inventory, and combat rules remain authoritative.
+
 ## Future policy
 
 Optional external integrations must be isolated under

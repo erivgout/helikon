@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.multiplayer.chat.GuiMessageSource;
 import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -15,6 +16,8 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Objects;
 import java.util.WeakHashMap;
 
@@ -27,6 +30,8 @@ public final class ChatDisplayAccess {
      * Weak keys ensure this bridge cannot extend a chat line's lifetime.
      */
     private static final WeakHashMap<Component, DisplayOrigin> displayOrigins = new WeakHashMap<>();
+    private static final Deque<String> pendingHighlights = new ArrayDeque<>();
+    private static final int MAX_PENDING_HIGHLIGHTS = 64;
 
     private ChatDisplayAccess() {
     }
@@ -50,12 +55,26 @@ public final class ChatDisplayAccess {
                 .append(message);
     }
 
+    /** Queues one bounded local highlight for the next matching Minecraft chat-display line. */
+    public static void queueHighlight(String displayText) {
+        if (displayText == null || displayText.isBlank()) {
+            return;
+        }
+        pendingHighlights.addLast(displayText);
+        while (pendingHighlights.size() > MAX_PENDING_HIGHLIGHTS) {
+            pendingHighlights.removeFirst();
+        }
+    }
+
     /** Rebuilds a display message after Minecraft has already logged its original content. */
     public static GuiMessage decorateTimestamp(GuiMessage message) {
         DisplayOrigin origin = displayOrigins.get(message.content());
         Component original = origin == null ? message.content() : origin.original();
         Component timestamped = origin == null ? decorateTimestamp(original) : origin.timestamped();
         Component decorated = decorateDisplay(message, original, timestamped);
+        if (pendingHighlights.removeFirstOccurrence(original.getString())) {
+            decorated = Component.empty().append(decorated).withStyle(ChatFormatting.YELLOW);
+        }
         if (decorated == message.content()) {
             return message;
         }

@@ -15,6 +15,9 @@ public final class ChatFilter extends Module {
     private final StringSetting playerFilters;
     private final BooleanSetting caseSensitive;
     private final BooleanSetting hideMatches;
+    private final BooleanSetting highlightMatches;
+    private final BooleanSetting soundMatches;
+    private final BooleanSetting hudNotifications;
 
     public ChatFilter() {
         super("chat_filter", "ChatFilter", "Locally hides incoming text matching bounded filters.",
@@ -29,10 +32,23 @@ public final class ChatFilter extends Module {
                 "Use exact case when matching local text and player filters.", false));
         hideMatches = addSetting(new BooleanSetting("hide_matches", "Hide matches",
                 "Hide matching messages locally instead of sending them to the chat HUD.", true));
+        highlightMatches = addSetting(new BooleanSetting("highlight_matches", "Highlight matches",
+                "Highlight a matching visible line locally in the chat HUD.", false));
+        soundMatches = addSetting(new BooleanSetting("sound_matches", "Sound matches",
+                "Play a local UI sound for a matching visible line.", false));
+        hudNotifications = addSetting(new BooleanSetting("hud_notifications", "HUD notifications",
+                "Post local Helikon feedback for a matching visible line.", false));
     }
 
     public boolean shouldHide(IncomingChatMessage message) {
-        return isEnabled() && hideMatches.value() && matches(message);
+        return evaluate(message).hide();
+    }
+
+    /** Returns all local presentation choices for one incoming message without Minecraft types. */
+    public Decision evaluate(IncomingChatMessage message) {
+        boolean matched = isEnabled() && matches(message);
+        return new Decision(matched, matched && hideMatches.value(), matched && highlightMatches.value(),
+                matched && soundMatches.value(), matched && hudNotifications.value());
     }
 
     public boolean matches(IncomingChatMessage message) {
@@ -42,5 +58,8 @@ public final class ChatFilter extends Module {
         return TextMatchRules.containsAny(message.text(), keywordFilters.value(), caseSensitive.value())
                 || TextMatchRules.matchesRegex(message.text(), regexFilters.value(), caseSensitive.value())
                 || TextMatchRules.containsAny(message.sender(), playerFilters.value(), caseSensitive.value());
+    }
+
+    public record Decision(boolean matched, boolean hide, boolean highlight, boolean sound, boolean hudNotification) {
     }
 }

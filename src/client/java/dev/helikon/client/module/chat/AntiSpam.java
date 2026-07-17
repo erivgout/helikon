@@ -1,6 +1,7 @@
 package dev.helikon.client.module.chat;
 
 import dev.helikon.client.chat.IncomingChatMessage;
+import dev.helikon.client.chat.ChatDuplicateTracker;
 import dev.helikon.client.input.Keybind;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
@@ -48,6 +49,7 @@ public final class AntiSpam extends Module {
     private final BooleanSetting collapseJoinLeave;
     private final StringSetting whitelistedMessageTypes;
     private final Map<MessageKey, RepeatState> repeats = new LinkedHashMap<>();
+    private final ChatDuplicateTracker displayedDuplicates = new ChatDuplicateTracker();
     private final Map<String, SenderState> senders = new LinkedHashMap<>();
     private final Map<String, Long> joinLeaveTimes = new LinkedHashMap<>();
 
@@ -99,9 +101,15 @@ public final class AntiSpam extends Module {
         return stackDuplicates.value();
     }
 
+    /** Records a retained local display line for visible duplicate stacking. */
+    public ChatDuplicateTracker.Decision recordDisplayedDuplicate(String identity) {
+        return displayedDuplicates.record(identity, stackDuplicates.value(), stackDuplicates.value());
+    }
+
     @Override
     protected void onDisable() {
         repeats.clear();
+        displayedDuplicates.reset();
         senders.clear();
         joinLeaveTimes.clear();
     }

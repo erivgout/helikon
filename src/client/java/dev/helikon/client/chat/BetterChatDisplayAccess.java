@@ -2,6 +2,8 @@ package dev.helikon.client.chat;
 
 import dev.helikon.client.mixin.ChatComponentAccessor;
 import dev.helikon.client.module.chat.BetterChat;
+import dev.helikon.client.module.chat.AntiSpam;
+import dev.helikon.client.module.chat.PrivateMessageHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
@@ -19,6 +21,8 @@ import java.util.WeakHashMap;
 /** Thin Minecraft adapter for BetterChat's local display behavior. */
 public final class BetterChatDisplayAccess {
     private static BetterChat betterChat;
+    private static PrivateMessageHelper privateMessageHelper;
+    private static AntiSpam antiSpam;
     private static final WeakHashMap<ChatComponent, SmoothScrollState> scrollStates = new WeakHashMap<>();
     private static boolean applyingSmoothScroll;
     private static boolean rescaleRequested;
@@ -27,8 +31,10 @@ public final class BetterChatDisplayAccess {
     private BetterChatDisplayAccess() {
     }
 
-    public static void install(BetterChat module) {
+    public static void install(BetterChat module, PrivateMessageHelper helper, AntiSpam antiSpamModule) {
         betterChat = module;
+        privateMessageHelper = helper;
+        antiSpam = antiSpamModule;
         module.setDisplayRefresh(BetterChatDisplayAccess::refreshHistoryLimit);
     }
 
@@ -50,7 +56,9 @@ public final class BetterChatDisplayAccess {
 
     /** Adds a local suggest-command action to a safe standard vanilla sender span. */
     public static GuiMessage decorateClickableNames(GuiMessage message) {
-        if (betterChat == null || !betterChat.isEnabled() || !betterChat.clickableNames()) {
+        boolean betterChatClickable = betterChat != null && betterChat.isEnabled() && betterChat.clickableNames();
+        boolean privateMessagesClickable = privateMessageHelper != null && privateMessageHelper.isEnabled();
+        if (!betterChatClickable && !privateMessagesClickable) {
             return message;
         }
         TransformResult result = decorateClickableNames(message.content());
@@ -62,13 +70,17 @@ public final class BetterChatDisplayAccess {
 
     /** Processes a raw stored message exactly once, after its immediate display pass. */
     public static GuiMessage stackStoredMessage(ChatComponent chat, GuiMessage message) {
-        if (betterChat == null || !betterChat.isEnabled()) {
+        boolean betterChatEnabled = betterChat != null && betterChat.isEnabled();
+        boolean antiSpamEnabled = antiSpam != null && antiSpam.isEnabled() && antiSpam.stacksDuplicates();
+        if (!betterChatEnabled && !antiSpamEnabled) {
             previousStoredIdentity = null;
             return message;
         }
         String identity = message.source().name() + '\u0000' + message.content().getString();
         boolean sameAsPrevious = identity.equals(previousStoredIdentity);
-        ChatDuplicateTracker.Decision decision = betterChat.recordDuplicate(identity);
+        ChatDuplicateTracker.Decision decision = betterChatEnabled
+                ? betterChat.recordDuplicate(identity)
+                : antiSpam.recordDisplayedDuplicate(identity);
         previousStoredIdentity = identity;
         if (decision.collapsePrevious() && sameAsPrevious && removeLatest(chat, message)) {
             rescaleRequested = true;
@@ -191,8 +203,9 @@ public final class BetterChatDisplayAccess {
         if (!ChatPlayerNamePolicy.isVanillaPlayerName(name) || style.getClickEvent() != null) {
             return source;
         }
+        String command = privateMessageHelper == null ? "msg" : privateMessageHelper.messageCommand().orElse("msg");
         MutableComponent copy = MutableComponent.create(source.getContents());
-        copy.setStyle(style.withClickEvent(new ClickEvent.SuggestCommand("/msg " + name + " ")));
+        copy.setStyle(style.withClickEvent(new ClickEvent.SuggestCommand("/" + command + " " + name + " ")));
         for (Component sibling : source.getSiblings()) {
             copy.append(sibling);
         }

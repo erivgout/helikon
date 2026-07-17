@@ -15,6 +15,8 @@ public final class PrivateMessageHelper extends Module {
     private final StringSetting replyCommand;
     private final NumberSetting recentLimit;
     private final BooleanSetting notifications;
+    private final BooleanSetting sound;
+    private final BooleanSetting highlight;
 
     public PrivateMessageHelper() {
         super("private_message_helper", "PrivateMessageHelper", "Sends configured normal private-message commands.",
@@ -27,6 +29,10 @@ public final class PrivateMessageHelper extends Module {
                 "Maximum in-memory messages retained for each local conversation tab.", 20.0, 1.0, 100.0));
         notifications = addSetting(new BooleanSetting("notifications", "PM notifications",
                 "Allow local notifications for recognized incoming private messages.", true));
+        sound = addSetting(new BooleanSetting("sound", "PM sound",
+                "Play a local UI sound for a recognized incoming private message.", true));
+        highlight = addSetting(new BooleanSetting("highlight", "PM highlight",
+                "Highlight a recognized incoming private message in the local chat HUD.", true));
     }
 
     public Optional<String> messageCommand() {
@@ -43,6 +49,14 @@ public final class PrivateMessageHelper extends Module {
 
     public boolean notifications() {
         return notifications.value();
+    }
+
+    public boolean sound() {
+        return sound.value();
+    }
+
+    public boolean highlight() {
+        return highlight.value();
     }
 
     private static Optional<String> validToken(String token) {

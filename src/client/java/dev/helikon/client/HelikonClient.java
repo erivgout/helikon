@@ -14,6 +14,7 @@ import dev.helikon.client.command.MinecraftKeyNameResolver;
 import dev.helikon.client.chat.OutgoingChatFormatter;
 import dev.helikon.client.chat.AnnouncerObservationTracker;
 import dev.helikon.client.chat.ChatHistoryManager;
+import dev.helikon.client.chat.ChatPresentationPolicy;
 import dev.helikon.client.chat.ChatDisplayAccess;
 import dev.helikon.client.chat.BetterChatDisplayAccess;
 import dev.helikon.client.chat.IncomingChatMessage;
@@ -196,6 +197,7 @@ import dev.helikon.client.notification.ChatNotifier;
 import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.privatechat.PrivateMessageHistory;
+import dev.helikon.client.privatechat.PrivateMessageRecognizer;
 import dev.helikon.client.render.MinecraftWorldVisualizationRenderer;
 import dev.helikon.client.render.LocalCapeRenderer;
 import dev.helikon.client.render.MinecraftXRayRendererInvalidator;
@@ -221,6 +223,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.FishingRodItem;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
@@ -515,7 +519,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(logoutCoordinates);
         ChatDisplayAccess.install(chatTimestamps);
         ChatDisplayAccess.install(chatColor);
-        BetterChatDisplayAccess.install(betterChat);
+        BetterChatDisplayAccess.install(betterChat, privateMessageHelper, antiSpam);
         AnnouncerAccess.install(announcer, normalChatSender);
         MovementModuleAccess.install(autoWalk, autoSneak, twerk);
         InventoryWalkAccess.install(inventoryWalk);
@@ -647,7 +651,7 @@ public final class HelikonClient implements ClientModInitializer {
         ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, chatType, receivedAt) -> {
             IncomingChatMessage incoming = IncomingMessageAdapter.chat(message, signedMessage, sender, receivedAt.toEpochMilli());
             boolean allowed = allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply,
-                    normalChatSender, incoming);
+                    privateMessageHelper, privateMessageHistory, normalChatSender, incoming);
             if (allowed && !incoming.overlay()) {
                 modules.runGuarded(localTranslator, "translate", () -> localTranslator.translate(incoming)
                         .ifPresent(translation -> notifier.info("Translation: " + translation)));
@@ -658,7 +662,7 @@ public final class HelikonClient implements ClientModInitializer {
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
             IncomingChatMessage incoming = IncomingMessageAdapter.game(message, overlay, System.currentTimeMillis());
             boolean allowed = allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply,
-                    normalChatSender, incoming);
+                    privateMessageHelper, privateMessageHistory, normalChatSender, incoming);
             if (allowed && !incoming.overlay()) {
                 modules.runGuarded(localTranslator, "translate", () -> localTranslator.translate(incoming)
                         .ifPresent(translation -> notifier.info("Translation: " + translation)));
@@ -1331,23 +1335,30 @@ public final class HelikonClient implements ClientModInitializer {
 
     /** Evaluates local incoming-message policies through normal module failure isolation. */
     private boolean allowIncomingMessage(ChatMute chatMute, ChatFilter chatFilter, AntiSpam antiSpam, MentionNotifier mentionNotifier,
-                                         AutoReply autoReply, MinecraftChatSender normalChatSender,
+                                         AutoReply autoReply, PrivateMessageHelper privateMessageHelper,
+                                         PrivateMessageHistory privateMessageHistory, MinecraftChatSender normalChatSender,
                                          IncomingChatMessage message) {
         if (shouldHideIncoming(chatMute, "incoming-message", () -> chatMute.shouldHide(message))) {
             return false;
         }
-        if (shouldHideIncoming(chatFilter, "incoming-message", () -> chatFilter.shouldHide(message))) {
+        ChatFilter.Decision filterDecision = evaluateChatFilter(chatFilter, message);
+        if (filterDecision.hide()) {
             return false;
         }
-        if (shouldHideIncoming(antiSpam, "incoming-message", () -> antiSpam.evaluate(message).shouldHide())) {
+        AntiSpam.Decision antiSpamDecision = evaluateAntiSpam(antiSpam, message);
+        ChatFilter.Decision visibleFilterDecision = ChatPresentationPolicy.filterEffectsForVisibleLine(
+                filterDecision, !antiSpamDecision.shouldHide());
+        if (antiSpamDecision.shouldHide()) {
             return false;
         }
-        observeIncomingMessage(mentionNotifier, autoReply, normalChatSender, message);
+        presentChatFilterDecision(visibleFilterDecision, message);
+        observeIncomingMessage(mentionNotifier, autoReply, privateMessageHelper, privateMessageHistory, normalChatSender, message);
         return true;
     }
 
     /** Runs local post-display chat actions through module failure isolation. */
     private void observeIncomingMessage(MentionNotifier mentionNotifier, AutoReply autoReply,
+                                        PrivateMessageHelper privateMessageHelper, PrivateMessageHistory privateMessageHistory,
                                         MinecraftChatSender normalChatSender, IncomingChatMessage message) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) {
@@ -1356,9 +1367,33 @@ public final class HelikonClient implements ClientModInitializer {
         String localPlayerName = client.player.getGameProfile().name();
         modules.runGuarded(mentionNotifier, "incoming-message", () -> {
             if (mentionNotifier.shouldNotify(message, localPlayerName)) {
-                notifier.info("Mention from '" + message.sender() + "'.");
+                if (mentionNotifier.highlight()) {
+                    ChatDisplayAccess.queueHighlight(message.text());
+                }
+                if (mentionNotifier.hudNotification()) {
+                    notifier.info("Mention from '" + message.sender() + "'.");
+                }
+                if (mentionNotifier.sound()) {
+                    playChatAttention();
+                }
             }
         });
+        if (privateMessageHelper.isEnabled()) {
+            modules.runGuarded(privateMessageHelper, "incoming-message", () -> PrivateMessageRecognizer
+                    .recognize(message, localPlayerName)
+                    .ifPresent(incoming -> {
+                        privateMessageHistory.recordIncoming(incoming.participant(), incoming.text(), privateMessageHelper.recentLimit());
+                        if (privateMessageHelper.highlight()) {
+                            ChatDisplayAccess.queueHighlight(message.text());
+                        }
+                        if (privateMessageHelper.notifications()) {
+                            notifier.info("Private message from '" + incoming.participant() + "'.");
+                        }
+                        if (privateMessageHelper.sound()) {
+                            playChatAttention();
+                        }
+                    }));
+        }
         modules.runGuarded(autoReply, "incoming-message", () -> autoReply.replyFor(
                 message,
                 localPlayerName,
@@ -1371,6 +1406,39 @@ public final class HelikonClient implements ClientModInitializer {
         java.util.concurrent.atomic.AtomicBoolean hidden = new java.util.concurrent.atomic.AtomicBoolean();
         boolean successful = modules.runGuarded(module, operation, () -> hidden.set(policy.getAsBoolean()));
         return successful && hidden.get();
+    }
+
+    private ChatFilter.Decision evaluateChatFilter(ChatFilter chatFilter, IncomingChatMessage message) {
+        java.util.concurrent.atomic.AtomicReference<ChatFilter.Decision> decision = new java.util.concurrent.atomic.AtomicReference<>(
+                new ChatFilter.Decision(false, false, false, false, false));
+        modules.runGuarded(chatFilter, "incoming-message", () -> decision.set(chatFilter.evaluate(message)));
+        return decision.get();
+    }
+
+    private AntiSpam.Decision evaluateAntiSpam(AntiSpam antiSpam, IncomingChatMessage message) {
+        java.util.concurrent.atomic.AtomicReference<AntiSpam.Decision> decision = new java.util.concurrent.atomic.AtomicReference<>(
+                new AntiSpam.Decision(AntiSpam.Action.SHOW, 1));
+        modules.runGuarded(antiSpam, "incoming-message", () -> decision.set(antiSpam.evaluate(message)));
+        return decision.get();
+    }
+
+    private void presentChatFilterDecision(ChatFilter.Decision decision, IncomingChatMessage message) {
+        if (!decision.matched()) {
+            return;
+        }
+        if (decision.highlight()) {
+            ChatDisplayAccess.queueHighlight(message.text());
+        }
+        if (decision.hudNotification()) {
+            notifier.info("ChatFilter matched a message from '" + message.sender() + "'.");
+        }
+        if (decision.sound()) {
+            playChatAttention();
+        }
+    }
+
+    private static void playChatAttention() {
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
     }
 
     /** Applies a FastPlace cooldown reduction after Minecraft has handled this tick's normal use input. */

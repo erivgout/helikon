@@ -49,6 +49,23 @@ class IncomingChatPolicyTest {
         assertFalse(TextMatchRules.isSafeRegex("(a|a?)+$"));
     }
 
+    @Test
+    void chatFilterSeparatesVisiblePresentationFromLocalHiding() {
+        ChatFilter filter = enabled(new ChatFilter());
+        stringSetting(filter, "keyword_filters").set("urgent");
+        booleanSetting(filter, "hide_matches").set(false);
+        booleanSetting(filter, "highlight_matches").set(true);
+        booleanSetting(filter, "sound_matches").set(true);
+        booleanSetting(filter, "hud_notifications").set(true);
+
+        ChatFilter.Decision decision = filter.evaluate(chat("urgent request", "Bob", 1));
+        assertTrue(decision.matched());
+        assertFalse(decision.hide());
+        assertTrue(decision.highlight());
+        assertTrue(decision.sound());
+        assertTrue(decision.hudNotification());
+    }
+
     private static IncomingChatMessage chat(String text, String sender, long time) {
         return new IncomingChatMessage(IncomingChatMessage.Channel.CHAT, text, sender, "", false, time);
     }

@@ -6,6 +6,7 @@ import dev.helikon.client.chat.IncomingMessageAdapter;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.EnumSetting;
+import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.setting.StringSetting;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,21 @@ class MentionAndAutoReplyTest {
 
         assertTrue(notifier.shouldNotify(chat("Bob", "Need urgent help", 1_000L), "Alice"));
         assertFalse(notifier.shouldNotify(chat("alice", "urgent", 7_000L), "Alice"));
+    }
+
+    @Test
+    void mentionPresentationChoicesAreLocalSettings() {
+        MentionNotifier notifier = enabled(new MentionNotifier());
+        assertTrue(notifier.sound());
+        assertTrue(notifier.hudNotification());
+        assertTrue(notifier.highlight());
+
+        booleanSetting(notifier, "sound").set(false);
+        booleanSetting(notifier, "hud_notification").set(false);
+        booleanSetting(notifier, "highlight").set(false);
+        assertFalse(notifier.sound());
+        assertFalse(notifier.hudNotification());
+        assertFalse(notifier.highlight());
     }
 
     @Test
@@ -126,6 +142,10 @@ class MentionAndAutoReplyTest {
 
     private static NumberSetting numberSetting(Module module, String id) {
         return (NumberSetting) module.settings().stream().filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
+    }
+
+    private static BooleanSetting booleanSetting(Module module, String id) {
+        return (BooleanSetting) module.settings().stream().filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
     }
 
     @SuppressWarnings("unchecked")

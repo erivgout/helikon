@@ -16,6 +16,9 @@ public final class MentionNotifier extends Module {
     private final BooleanSetting includeOwnName;
     private final BooleanSetting caseSensitive;
     private final NumberSetting cooldownSeconds;
+    private final BooleanSetting sound;
+    private final BooleanSetting hudNotification;
+    private final BooleanSetting highlight;
     private long lastNotificationAt = Long.MIN_VALUE;
 
     public MentionNotifier() {
@@ -29,6 +32,12 @@ public final class MentionNotifier extends Module {
                 "Use exact case for local mention terms.", false));
         cooldownSeconds = addSetting(new NumberSetting("cooldown_seconds", "Cooldown",
                 "Minimum local time between mention notifications.", 5.0, 1.0, 300.0));
+        sound = addSetting(new BooleanSetting("sound", "Sound",
+                "Play a local UI sound for a confirmed mention.", true));
+        hudNotification = addSetting(new BooleanSetting("hud_notification", "HUD notification",
+                "Post local Helikon feedback for a confirmed mention.", true));
+        highlight = addSetting(new BooleanSetting("highlight", "Highlight",
+                "Highlight a confirmed mention in the local chat HUD.", true));
     }
 
     /** Returns true once per cooldown window when an ordinary remote chat message mentions the player. */
@@ -51,6 +60,18 @@ public final class MentionNotifier extends Module {
     @Override
     protected void onDisable() {
         lastNotificationAt = Long.MIN_VALUE;
+    }
+
+    public boolean sound() {
+        return sound.value();
+    }
+
+    public boolean hudNotification() {
+        return hudNotification.value();
+    }
+
+    public boolean highlight() {
+        return highlight.value();
     }
 
     private boolean matchesTerms(String text, String localPlayerName) {

@@ -157,16 +157,17 @@ spam, so it is off by default.
 
 MentionNotifier and AutoReply are off by default. MentionNotifier watches
 ordinary incoming player chat for the local player's name or configured local
-terms and posts an in-game Helikon notice. AutoReply evaluates one configured
+terms and can locally highlight the line, post Helikon feedback, and play a
+client UI sound. AutoReply evaluates one configured
 rule only, ignores the local player's own messages, pauses in screens by
 default, bounds replies per minute, and sends only safe ordinary chat through
 Minecraft's normal connection. It never sends commands or retries a failure.
 
 AntiSpam is also off by default. Its local policy can hide repeated or rapid
 incoming messages, collapse bursts of same-type join/leave notices, and exempt
-message categories. It has no server effect and never changes protocol traffic.
-The first slice records duplicate counts for a later display-level stacker; it
-does not yet replace shown chat lines with a visible counter.
+message categories. When its duplicate-stacking option is enabled, consecutive
+visible lines are locally collapsed with a bounded counter even if BetterChat
+is disabled. It has no server effect and never changes protocol traffic.
 
 ChatTimestamps is off by default and prepends a locally rendered timestamp to
 incoming player and server-system chat lines. It supports 12/24-hour time,

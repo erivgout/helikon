@@ -379,8 +379,10 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
 24. Enable **ChatMute** with one category at a time and verify only the local
     chat HUD hides the chosen message type. Enable **ChatFilter** with a simple
     keyword, player name, and safe regex; verify matching incoming messages are
-    hidden locally. Enter a malformed or nested-quantifier regex and verify it
-    does not freeze the client or hide unrelated messages.
+    hidden locally. Turn off Hide and turn on Highlight, Sound, and HUD
+    notification; verify a matching line remains local-only, highlights, sounds,
+    and posts one Helikon notice. Enter a malformed or nested-quantifier regex
+    and verify it does not freeze the client or hide unrelated messages.
 25. With a server or test environment where you are permitted to send chat,
     configure **ChatSpammer** with a harmless ordinary message and verify it
     sends no more frequently than its stated delay, pauses while chat or any
@@ -393,6 +395,10 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     feedback. Use a 16-character player name and a long message to verify an
     over-limit composed command is rejected before sending. Relaunch and
     verify history is gone while the configurable command-token settings remain
+    local. Receive a supported `From Bob: hello`, `Bob whispers to you: hello`,
+    or `Bob -> you: hello` line and verify it appears as an incoming history
+    entry, uses only local notification/highlight/sound controls, and a standard
+    player name suggests the configured normal PM command when clicked.
     in `global.json`. To message a player literally named `history`, use
     `.pm -- history hello`; the `--` escape also lets `.reply -- history`
     send that literal reply instead of opening local history.

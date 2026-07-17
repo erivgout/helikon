@@ -1,6 +1,7 @@
 package dev.helikon.client.module.chat;
 
 import dev.helikon.client.chat.IncomingChatMessage;
+import dev.helikon.client.chat.ChatDuplicateTracker;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.BooleanSetting;
@@ -76,6 +77,17 @@ class AntiSpamTest {
         registry.setEnabled(antiSpam, true);
 
         assertEquals(new AntiSpam.Decision(AntiSpam.Action.SHOW, 1), antiSpam.evaluate(chat("Bob", "hello", 2_000L)));
+    }
+
+    @Test
+    void exposesVisibleDuplicateStackingWhenEnabled() {
+        AntiSpam antiSpam = enabled();
+
+        assertEquals(1, antiSpam.recordDisplayedDuplicate("line").count());
+        ChatDuplicateTracker.Decision second = antiSpam.recordDisplayedDuplicate("line");
+        assertEquals(2, second.count());
+        assertTrue(second.collapsePrevious());
+        assertTrue(second.appendCounter());
     }
 
     private static AntiSpam enabled() {

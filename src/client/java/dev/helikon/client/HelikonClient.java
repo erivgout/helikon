@@ -276,6 +276,7 @@ public final class HelikonClient implements ClientModInitializer {
         }
     };
     public static final Logger LOGGER = Logger.getLogger(MOD_ID);
+    private static volatile ModuleRegistry activeModules;
 
     private final ModuleRegistry modules = new ModuleRegistry();
     private final ModuleTimingMetrics timingMetrics = new ModuleTimingMetrics();
@@ -326,8 +327,14 @@ public final class HelikonClient implements ClientModInitializer {
     private ServerData lastConnectedServer;
     private boolean reconnectAttemptInFlight;
 
+    /** The live registry, exposed only for client gametests; null before client init. */
+    public static ModuleRegistry activeModuleRegistry() {
+        return activeModules;
+    }
+
     @Override
     public void onInitializeClient() {
+        activeModules = modules;
         ClientEventAccess.install(events);
         modules.setTimingMetrics(timingMetrics);
         modules.addFailureHandler((module, operation, exception) ->

@@ -9,14 +9,27 @@ Run the test suite with:
 Test tiers, honestly stated: the automated tier is JUnit unit tests over the
 Minecraft-free decision logic plus the Gradle `verifySourceStyle` and
 `verifyClientOnlyArchitecture` checks; Minecraft API shapes are verified with
-`javap` against the mapped 26.2 jars (see `version-porting.md`). The Fabric
-GameTest tier described in PLAN.md is not implemented, and no general
-static-analysis tool beyond the two custom verify tasks is configured; the
-in-game behavior of version-specific adapters and mixins is therefore covered
-only by the manual live-client smoke checklists below, which must be performed
-on a real client before a final release. A checklist item in this document
-describes how to verify a feature — it is not a record that the check has been
-performed.
+`javap` against the mapped 26.2 jars (see `version-porting.md`).
+
+A Fabric client-gametest tier runs a real 26.2 client in-engine:
+
+```powershell
+.\gradlew.bat runClientGameTest
+```
+
+It creates a singleplayer world, enables every registered module at once,
+soaks them through real tick/render traffic, cycles EntityESP through all
+four modes, verifies no module was auto-disabled by the failure handler,
+captures screenshots under `build/run/clientGameTest/screenshots/`, and
+verifies a clean disable and world close. The gametest mod
+(`helikon_gametest`, `src/gametest/`) is a separate dev-only mod and is never
+included in release JARs. CI runs it under a virtual display.
+
+No general static-analysis tool beyond the two custom verify tasks is
+configured. The gametest tier proves crash-free operation, not visual
+correctness: the manual live-client smoke checklists below remain required
+before a final release. A checklist item in this document describes how to
+verify a feature — it is not a record that the check has been performed.
 
 The automated tests cover module lifecycle behavior, failure isolation,
 setting validation/JSON recovery, configuration round-tripping (including

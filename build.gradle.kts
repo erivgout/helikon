@@ -16,6 +16,8 @@ base {
     archivesName.set(property("archive_base_name") as String)
 }
 
+sourceSets.create("gametest")
+
 loom {
     splitEnvironmentSourceSets()
 
@@ -23,6 +25,19 @@ loom {
         create("helikon") {
             sourceSet(sourceSets["main"])
             sourceSet(sourceSets["client"])
+        }
+        create("helikon_gametest") {
+            sourceSet(sourceSets["gametest"])
+        }
+    }
+
+    runs {
+        create("clientGameTest") {
+            client()
+            configName = "Helikon Client GameTest"
+            source(sourceSets["gametest"])
+            vmArg("-Dfabric.client.gametest")
+            runDir("build/run/clientGameTest")
         }
     }
 }
@@ -38,6 +53,10 @@ dependencies {
 }
 
 sourceSets {
+    named("gametest") {
+        compileClasspath += sourceSets["client"].compileClasspath + sourceSets["client"].output + sourceSets["main"].output
+        runtimeClasspath += sourceSets["client"].runtimeClasspath + sourceSets["client"].output + sourceSets["main"].output
+    }
     named("test") {
         compileClasspath += sourceSets["client"].output
         runtimeClasspath += sourceSets["client"].output

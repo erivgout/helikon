@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "helikon_gametest",
+  "version": "1.0.0",
+  "name": "Helikon Client GameTests",
+  "description": "In-engine client gametests for Helikon; never shipped in release JARs.",
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": [
+      "dev.helikon.gametest.HelikonClientGameTest"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "helikon": "*",
+    "fabric-client-gametest-api-v1": "*"
+  }
+}

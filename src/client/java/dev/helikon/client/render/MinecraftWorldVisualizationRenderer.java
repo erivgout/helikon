@@ -11,6 +11,7 @@ import dev.helikon.client.module.render.DamageIndicators;
 import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.EntityEspMode;
 import dev.helikon.client.module.render.EntityEspRenderAccess;
+import dev.helikon.client.module.render.ProjectilePreview;
 import dev.helikon.client.module.render.StorageEsp;
 import dev.helikon.client.module.render.Trajectories;
 import dev.helikon.client.module.render.Tracers;
@@ -41,6 +42,17 @@ import net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEgg;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownSplashPotion;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.EggItem;
+import net.minecraft.world.item.EnderpearlItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SnowballItem;
+import net.minecraft.world.item.SplashPotionItem;
+import net.minecraft.world.item.TridentItem;
+import net.minecraft.world.item.component.ChargedProjectiles;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -77,6 +89,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final BlockEsp blockEsp;
     private final Tracers tracers;
     private final Trajectories trajectories;
+    private final ProjectilePreview projectilePreview;
     private final TrueSight trueSight;
     private final StorageEsp storageEsp;
     private final DamageIndicators damageIndicators;
@@ -101,7 +114,8 @@ public final class MinecraftWorldVisualizationRenderer {
     public MinecraftWorldVisualizationRenderer(ModuleRegistry modules, FriendManager friends, EntityEsp entityEsp,
                                                 BetterNametags betterNametags,
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
-                                                TrueSight trueSight, StorageEsp storageEsp, DamageIndicators damageIndicators,
+                                                ProjectilePreview projectilePreview, TrueSight trueSight,
+                                                StorageEsp storageEsp, DamageIndicators damageIndicators,
                                                 Breadcrumbs breadcrumbs, BuilderAssist builderAssist, BlockSelection blockSelection,
                                                 BowAimAssist bowAimAssist, LocalCosmetics localCosmetics) {
         this.modules = Objects.requireNonNull(modules, "modules");
@@ -111,6 +125,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.blockEsp = Objects.requireNonNull(blockEsp, "blockEsp");
         this.tracers = Objects.requireNonNull(tracers, "tracers");
         this.trajectories = Objects.requireNonNull(trajectories, "trajectories");
+        this.projectilePreview = Objects.requireNonNull(projectilePreview, "projectilePreview");
         this.trueSight = Objects.requireNonNull(trueSight, "trueSight");
         this.storageEsp = Objects.requireNonNull(storageEsp, "storageEsp");
         this.damageIndicators = Objects.requireNonNull(damageIndicators, "damageIndicators");
@@ -203,6 +218,9 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (trajectories.isEnabled()) {
             modules.runGuarded(trajectories, "render", () -> renderTrajectories(client.level, frustum));
+        }
+        if (projectilePreview.isEnabled()) {
+            modules.runGuarded(projectilePreview, "render", () -> renderProjectilePreview(client.level, client.player));
         }
         if (trueSight.isEnabled()) {
             modules.runGuarded(trueSight, "render", () -> renderTrueSight(client.level, client.player, frustum));
@@ -597,11 +615,86 @@ public final class MinecraftWorldVisualizationRenderer {
                         TextGizmo.Style.forColorAndCentered(options.outlineColor())).setAlwaysOnTop());
     }
 
-    private static Optional<TrajectoryVector> firstBlockCollision(ClientLevel level, Projectile projectile,
+    private static Optional<TrajectoryVector> firstBlockCollision(ClientLevel level, Entity collisionContext,
                                                                     TrajectoryVector from, TrajectoryVector to) {
         BlockHitResult hit = level.clip(new ClipContext(minecraftVector(from), minecraftVector(to),
-                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, projectile));
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, collisionContext));
         return hit.getType() == HitResult.Type.MISS ? Optional.empty() : Optional.of(trajectoryVector(hit.getLocation()));
+    }
+
+    /**
+     * Predicts the path of the projectile the player is currently holding, before it is
+     * launched. The main hand is checked first; a throwable in the offhand is checked when
+     * the main hand holds nothing previewable and the offhand option is enabled.
+     */
+    private void renderProjectilePreview(ClientLevel level, Player player) {
+        Optional<HeldProjectilePreview.Launch> launch = detectHeldProjectile(player, player.getMainHandItem(), false);
+        if (launch.isEmpty() && projectilePreview.previewsOffhand()) {
+            launch = detectHeldProjectile(player, player.getOffhandItem(), true);
+        }
+        launch.ifPresent(predicted -> {
+            Vec3 eye = player.getEyePosition();
+            TrajectoryVector start = new TrajectoryVector(eye.x(), eye.y() - 0.1D, eye.z());
+            TrajectorySimulator.TraceResult result = TrajectorySimulator.trace(start, predicted.velocity(),
+                    predicted.physics(), projectilePreview.maximumSteps(),
+                    (from, to) -> firstBlockCollision(level, player, from, to),
+                    (from, to) -> Gizmos.line(minecraftVector(from), minecraftVector(to), projectilePreview.color(),
+                            projectilePreview.lineWidth()).setAlwaysOnTop());
+            if (result.collided()) {
+                Gizmos.point(minecraftVector(result.terminalPoint()), projectilePreview.impactColor(), 3.0F).setAlwaysOnTop();
+            }
+        });
+    }
+
+    /**
+     * Maps a held stack to a predicted launch, or empty when it is not a previewable held
+     * projectile in a launchable state. Bows are previewed only while actually being drawn;
+     * crossbows only while loaded; {@code throwablesOnly} restricts the offhand to thrown items.
+     */
+    private Optional<HeldProjectilePreview.Launch> detectHeldProjectile(Player player, ItemStack stack,
+                                                                        boolean throwablesOnly) {
+        if (stack.isEmpty()) {
+            return Optional.empty();
+        }
+        Item item = stack.getItem();
+        float yaw = player.getYRot();
+        float pitch = player.getXRot();
+        if (!throwablesOnly && item instanceof BowItem) {
+            if (!projectilePreview.includes(HeldProjectilePreview.Kind.BOW)
+                    || !player.isUsingItem() || player.getUseItem() != stack) {
+                return Optional.empty();
+            }
+            int drawTicks = stack.getUseDuration(player) - player.getUseItemRemainingTicks();
+            return HeldProjectilePreview.launch(HeldProjectilePreview.Kind.BOW, yaw, pitch, drawTicks);
+        }
+        if (!throwablesOnly && item instanceof CrossbowItem) {
+            ChargedProjectiles charged = stack.get(DataComponents.CHARGED_PROJECTILES);
+            if (!projectilePreview.includes(HeldProjectilePreview.Kind.CROSSBOW) || charged == null || charged.isEmpty()) {
+                return Optional.empty();
+            }
+            return HeldProjectilePreview.launch(HeldProjectilePreview.Kind.CROSSBOW, yaw, pitch, 0);
+        }
+        if (!throwablesOnly && item instanceof TridentItem) {
+            if (!projectilePreview.includes(HeldProjectilePreview.Kind.TRIDENT)) {
+                return Optional.empty();
+            }
+            return HeldProjectilePreview.launch(HeldProjectilePreview.Kind.TRIDENT, yaw, pitch, 0);
+        }
+        HeldProjectilePreview.Kind throwableKind = throwableKind(item);
+        if (throwableKind != null && projectilePreview.includes(throwableKind)) {
+            return HeldProjectilePreview.launch(throwableKind, yaw, pitch, 0);
+        }
+        return Optional.empty();
+    }
+
+    private static HeldProjectilePreview.Kind throwableKind(Item item) {
+        if (item instanceof SplashPotionItem) {
+            return HeldProjectilePreview.Kind.SPLASH_POTION;
+        }
+        if (item instanceof SnowballItem || item instanceof EggItem || item instanceof EnderpearlItem) {
+            return HeldProjectilePreview.Kind.THROWABLE;
+        }
+        return null;
     }
 
     private static Optional<Trajectories.ProjectileType> projectileType(Projectile projectile) {

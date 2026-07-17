@@ -5,6 +5,7 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.Breadcrumbs;
 import dev.helikon.client.module.render.EntityEsp;
+import dev.helikon.client.module.render.StorageEsp;
 import dev.helikon.client.module.render.Trajectories;
 import dev.helikon.client.module.render.Tracers;
 import dev.helikon.client.module.render.TrueSight;
@@ -62,17 +63,23 @@ public final class MinecraftWorldVisualizationRenderer {
     private final Tracers tracers;
     private final Trajectories trajectories;
     private final TrueSight trueSight;
+    private final StorageEsp storageEsp;
     private final Breadcrumbs breadcrumbs;
     private final BlockEspScanCursor blockCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor blockAnchor = new BlockEspScanAnchor();
     private final BlockEspCache blockCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
+    private final BlockEspScanCursor storageCursor = new BlockEspScanCursor();
+    private final BlockEspScanAnchor storageAnchor = new BlockEspScanAnchor();
+    private final BlockEspCache storageCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
     private ClientLevel observedLevel;
     private long observedBlockScanRevision = Long.MIN_VALUE;
+    private long observedStorageScanRevision = Long.MIN_VALUE;
     private boolean blockScannerWasEnabled;
+    private boolean storageScannerWasEnabled;
 
     public MinecraftWorldVisualizationRenderer(ModuleRegistry modules, FriendManager friends, EntityEsp entityEsp,
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
-                                                TrueSight trueSight, Breadcrumbs breadcrumbs) {
+                                                TrueSight trueSight, StorageEsp storageEsp, Breadcrumbs breadcrumbs) {
         this.modules = Objects.requireNonNull(modules, "modules");
         this.friends = Objects.requireNonNull(friends, "friends");
         this.entityEsp = Objects.requireNonNull(entityEsp, "entityEsp");
@@ -80,8 +87,10 @@ public final class MinecraftWorldVisualizationRenderer {
         this.tracers = Objects.requireNonNull(tracers, "tracers");
         this.trajectories = Objects.requireNonNull(trajectories, "trajectories");
         this.trueSight = Objects.requireNonNull(trueSight, "trueSight");
+        this.storageEsp = Objects.requireNonNull(storageEsp, "storageEsp");
         this.breadcrumbs = Objects.requireNonNull(breadcrumbs, "breadcrumbs");
         this.blockEsp.setCacheClearer(this::resetBlockScanner);
+        this.storageEsp.setCacheClearer(this::resetStorageScanner);
     }
 
     /** Samples the trail and advances the bounded block cache from the client tick bridge. */
@@ -91,6 +100,7 @@ public final class MinecraftWorldVisualizationRenderer {
             observedLevel = client.level;
             breadcrumbs.clearTrail();
             resetBlockScanner();
+            resetStorageScanner();
         }
         if (client.level == null || client.player == null) {
             return;
@@ -104,14 +114,27 @@ public final class MinecraftWorldVisualizationRenderer {
                 resetBlockScanner();
                 blockScannerWasEnabled = false;
             }
-            return;
+        } else {
+            blockScannerWasEnabled = true;
+            if (!BlockEspScanPolicy.shouldScan(true, blockEsp.targetBlocks())) {
+                clearBlockResults();
+            } else {
+                modules.runGuarded(blockEsp, "scan", () -> scanBlocks(client.level, client.player));
+            }
         }
-        blockScannerWasEnabled = true;
-        if (!BlockEspScanPolicy.shouldScan(blockEsp.isEnabled(), blockEsp.targetBlocks())) {
-            clearBlockResults();
-            return;
+        if (!storageEsp.isEnabled()) {
+            if (storageScannerWasEnabled) {
+                resetStorageScanner();
+                storageScannerWasEnabled = false;
+            }
+        } else {
+            storageScannerWasEnabled = true;
+            if (!BlockEspScanPolicy.shouldScan(true, storageEsp.targetBlocks())) {
+                clearStorageResults();
+            } else {
+                modules.runGuarded(storageEsp, "scan", () -> scanStorage(client.level, client.player));
+            }
         }
-        modules.runGuarded(blockEsp, "scan", () -> scanBlocks(client.level, client.player));
     }
 
     /** Registered for Fabric's verified {@code BEFORE_GIZMOS} level-render phase. */
@@ -136,6 +159,9 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (blockEsp.isEnabled()) {
             modules.runGuarded(blockEsp, "render", () -> renderBlocks(client.player));
+        }
+        if (storageEsp.isEnabled()) {
+            modules.runGuarded(storageEsp, "render", () -> renderStorage(client.player, frustum));
         }
         if (breadcrumbs.isEnabled()) {
             modules.runGuarded(breadcrumbs, "render", this::renderBreadcrumbs);
@@ -163,6 +189,30 @@ public final class MinecraftWorldVisualizationRenderer {
             BlockState state = level.getBlockState(blockPosition);
             String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
             blockCache.observe(position, blockEsp.targetBlocks().contains(blockId));
+        }
+    }
+
+    private void scanStorage(ClientLevel level, Player player) {
+        if (storageEsp.scanRevision() != observedStorageScanRevision) {
+            observedStorageScanRevision = storageEsp.scanRevision();
+            resetStorageScanner();
+        }
+        BlockEspScanAnchor.Update anchor = storageAnchor.update(player.getBlockX(), player.getBlockY(), player.getBlockZ(),
+                storageEsp.horizontalRange(), storageEsp.verticalRange(), storageCursor.isAtPassBoundary());
+        if (anchor.changed()) {
+            clearStorageResults();
+        }
+        BlockEspScanCursor.Region region = anchor.region();
+        for (int index = 0; index < storageEsp.scanBudget(); index++) {
+            BlockEspScanCursor.Position position = storageCursor.next(region);
+            if (!level.isInsideBuildHeight(position.y()) || !level.hasChunk(position.x() >> 4, position.z() >> 4)) {
+                storageCache.observe(position, false);
+                continue;
+            }
+            BlockPos blockPosition = new BlockPos(position.x(), position.y(), position.z());
+            BlockState state = level.getBlockState(blockPosition);
+            String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+            storageCache.observe(position, state.hasBlockEntity() && storageEsp.targetBlocks().contains(blockId));
         }
     }
 
@@ -266,6 +316,21 @@ public final class MinecraftWorldVisualizationRenderer {
         }
     }
 
+    private void renderStorage(Player localPlayer, Frustum frustum) {
+        GizmoStyle style = GizmoStyle.strokeAndFill(storageEsp.color(), storageEsp.lineWidth(), storageEsp.fillColor());
+        for (BlockEspScanCursor.Position position : storageCache.positions()) {
+            if (!isWithinCurrentStorageRange(position, localPlayer)) {
+                continue;
+            }
+            AABB bounds = new AABB(position.x(), position.y(), position.z(),
+                    position.x() + 1.0D, position.y() + 1.0D, position.z() + 1.0D);
+            if (frustum == null || !frustum.isVisible(bounds)) {
+                continue;
+            }
+            Gizmos.cuboid(bounds, style).setAlwaysOnTop();
+        }
+    }
+
     /** A missing render frustum is treated as not renderable to preserve the local render boundary. */
     private static boolean isFrustumVisible(Frustum frustum, Entity entity) {
         return frustum != null && frustum.isVisible(entity.getBoundingBox());
@@ -350,13 +415,28 @@ public final class MinecraftWorldVisualizationRenderer {
                 blockEsp.horizontalRange(), blockEsp.verticalRange());
     }
 
+    private boolean isWithinCurrentStorageRange(BlockEspScanCursor.Position position, Player player) {
+        return BlockEspRange.contains(position, player.getX(), player.getY(), player.getZ(),
+                storageEsp.horizontalRange(), storageEsp.verticalRange());
+    }
+
     private void resetBlockScanner() {
         blockAnchor.clear();
         clearBlockResults();
     }
 
+    private void resetStorageScanner() {
+        storageAnchor.clear();
+        clearStorageResults();
+    }
+
     private void clearBlockResults() {
         blockCursor.clear();
         blockCache.clear();
+    }
+
+    private void clearStorageResults() {
+        storageCursor.clear();
+        storageCache.clear();
     }
 }

@@ -32,3 +32,7 @@ to a server or service.
 Trajectories, TrueSight, and Radar similarly consume only already-loaded local
 world state for the active session. Their predicted paths, invisible-entity
 boxes, and radar points are never persisted or transmitted.
+
+XRay's compiled-geometry snapshot and StorageESP's bounded block-position
+cache are in-memory-only local render state. They are not stored, transmitted,
+or used to request chunks or access inventories.

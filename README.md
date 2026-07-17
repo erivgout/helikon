@@ -12,7 +12,7 @@ branding, or configuration formats from that project.
 
 ## Status
 
-Helikon currently includes ten client-only render modules: Fullbright restores
+Helikon currently includes twelve client-only render modules: Fullbright restores
 the previous gamma and Night Vision state when disabled; AntiBlind selectively
 hides local impairment visuals; and BetterCrosshair draws a local configurable
 HUD crosshair. EntityESP, BlockESP, Tracers, and Breadcrumbs use Minecraft's
@@ -34,6 +34,13 @@ projectile physics or generate an aiming preview. TrueSight makes selected
 invisible entities locatable with transparent local boxes, without changing
 vanilla model rendering. Radar is a fixed-position local HUD for selected
 nearby entities. None of these features sends data or changes the server game.
+
+XRay rebuilds only local compiled chunk geometry so non-selected blocks are
+absent and configured targets remain locally visible; toggling it or changing
+its block list/opacity rebuilds the geometry again, including a full restoration
+on disable. StorageESP uses a separate bounded loaded-chunk scan for selected
+block entities and draws only frustum-visible local boxes. Neither feature
+requests chunks, modifies blocks, or sends packets.
 
 ChatPrefix and ChatSuffix can format only ordinary outgoing chat, with explicit
 guards for Helikon commands, slash commands, private messages, and likely

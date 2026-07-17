@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 /** Adjusts only the verified unfocused-chat alpha constants in Minecraft 26.2. */
 @Mixin(targets = "net.minecraft.client.gui.components.ChatComponent$AlphaCalculator")
-abstract class ChatAlphaCalculatorMixin {
+interface ChatAlphaCalculatorMixin {
     @ModifyConstant(method = "lambda$timeBased$0", constant = @Constant(doubleValue = 200.0D))
     private static double helikon$adjustVisibleDuration(double vanillaTicks) {
         return BetterChatDisplayAccess.totalLifetimeTicks();

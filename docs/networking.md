@@ -27,6 +27,11 @@ entity/projectile/block state to create local overlay geometry or HUD points.
 They do not request additional chunks, send coordinates, or modify packets,
 entity state, projectile movement, or normal server interactions.
 
+XRay filters and rebuilds only already-loaded local chunk geometry. StorageESP
+reads only already-loaded block states while advancing its bounded local scan.
+Neither requests chunks, opens inventories, reads server storage contents,
+changes blocks, or sends custom/modified packets.
+
 AutoSprint, AutoWalk, and AutoSneak use ordinary local client input and player
 sprint state. They do not construct, alter, replay, or bypass Minecraft
 packets; the connected server remains authoritative for all resulting movement.

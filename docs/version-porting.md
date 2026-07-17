@@ -42,11 +42,16 @@ When porting:
    `ClipContext`, and the drag/gravity bytecode for each Trajectories family.
    Preserve its observed-in-flight-only behavior and stop prediction at the
    first local block hit.
-13. Revalidate `Entity.isInvisible`, HUD extraction, and the entity state
+13. Revalidate `Entity.isInvisibleTo`, HUD extraction, and the entity state
    available to TrueSight/Radar. Keep TrueSight as a local overlay unless a
    separately verified reversible model-render path is introduced.
-14. Run the manual smoke test in an empty profile and with no internet access.
-15. Document compatibility changes and retained limitations before release.
+14. Revalidate `SectionCompiler.compile`, `ModelBlockRenderer` face/quad
+   output hooks, `BakedQuad.MaterialInfo`, and `LevelRenderer.invalidateCompiledGeometry`
+   before changing XRay. Confirm it restores normal chunk geometry on disable.
+15. Revalidate `BlockState.hasBlockEntity`, loaded-chunk checks, and frustum
+   visibility before changing StorageESP's bounded scan/render adapter.
+16. Run the manual smoke test in an empty profile and with no internet access.
+17. Document compatibility changes and retained limitations before release.
 
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

@@ -12,6 +12,8 @@
     "KeyMappingAccessor",
     "KeyboardInputMixin",
     "LightmapRenderStateExtractorMixin",
+    "ModelBlockRendererXRayMixin",
+    "SectionCompilerXRayMixin",
     "MinecraftAccessor"
   ],
   "injectors": {

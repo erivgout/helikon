@@ -54,6 +54,9 @@ scan order, cache eviction, and Breadcrumb sampling/age bounds are covered by
 Trajectory drag/gravity ordering, collision stopping, radar projection/clipping,
 and ARGB transparency are covered by `TrajectorySimulatorTest`,
 `RadarProjectionTest`, and `RenderColorTest`.
+XRay target filtering, opacity validation, reversible renderer-invalidation
+decisions, and StorageESP target-family parsing are covered by
+`XRayRenderStateTest`, `XRayTest`, and `StorageEspTargetsTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -272,6 +275,13 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     rotation, zoom, local friend color, and category filters, and confirm no
     unloaded or out-of-range entities appear. None of these results should be
     visible to another player or change a normal projectile/entity interaction.
+35. In a disposable local/test world, enable **XRay** and verify only its
+    configured locally loaded block models remain visible after the geometry
+    rebuild; change the block list and opacity, wait for the local rebuild, and
+    verify the display follows it. Disable XRay and verify normal world geometry
+    fully returns. Enable **StorageESP** near known selected storage, then
+    verify its box appears after a bounded scan pass, is culled when offscreen,
+    honors category/custom-ID settings, and never opens or changes a container.
 
 ## Manual command and keybind smoke test
 

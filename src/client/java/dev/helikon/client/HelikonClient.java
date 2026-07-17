@@ -76,14 +76,17 @@ import dev.helikon.client.module.render.MinecraftGammaAccess;
 import dev.helikon.client.module.render.MinecraftNightVisionAccess;
 import dev.helikon.client.module.render.RenderModuleAccess;
 import dev.helikon.client.module.render.Radar;
+import dev.helikon.client.module.render.StorageEsp;
 import dev.helikon.client.module.render.Trajectories;
 import dev.helikon.client.module.render.Tracers;
 import dev.helikon.client.module.render.TrueSight;
+import dev.helikon.client.module.render.XRay;
 import dev.helikon.client.notification.ChatNotifier;
 import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.privatechat.PrivateMessageHistory;
 import dev.helikon.client.render.MinecraftWorldVisualizationRenderer;
+import dev.helikon.client.render.MinecraftXRayRendererInvalidator;
 import dev.helikon.client.waypoint.MinecraftWaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointManager;
@@ -176,6 +179,8 @@ public final class HelikonClient implements ClientModInitializer {
         Trajectories trajectories = new Trajectories();
         TrueSight trueSight = new TrueSight();
         Radar radar = new Radar();
+        StorageEsp storageEsp = new StorageEsp();
+        XRay xray = new XRay(new MinecraftXRayRendererInvalidator());
         Breadcrumbs breadcrumbs = new Breadcrumbs();
         modules.register(antiBlind);
         modules.register(betterCrosshair);
@@ -185,6 +190,8 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(trajectories);
         modules.register(trueSight);
         modules.register(radar);
+        modules.register(storageEsp);
+        modules.register(xray);
         modules.register(breadcrumbs);
         RenderModuleAccess.install(antiBlind, betterCrosshair);
         AutoSprint autoSprint = new AutoSprint();
@@ -230,7 +237,7 @@ public final class HelikonClient implements ClientModInitializer {
         BetterChatDisplayAccess.install(betterChat);
         MovementModuleAccess.install(autoWalk, autoSneak);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
-                modules, friends, entityEsp, blockEsp, tracers, trajectories, trueSight, breadcrumbs
+                modules, friends, entityEsp, blockEsp, tracers, trajectories, trueSight, storageEsp, breadcrumbs
         );
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {

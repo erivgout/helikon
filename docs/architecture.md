@@ -290,6 +290,18 @@ bounded transparent local boxes only when entities are invisible to the local
 player. `RadarProjection` is also Minecraft-free; `RadarHud` projects currently
 loaded local entities onto a bounded fixed-position HUD surface.
 
+XRay has a deliberately narrow compiled-geometry path. `XRayRenderState` is
+an immutable Minecraft-free snapshot, published by `XRayRenderAccess`; its
+two verified chunk-render mixins run only while `SectionCompiler.compile` is
+building a local chunk. They omit non-selected blocks, retain faces that would
+normally be hidden by surrounding blocks, and route selected quads through the
+translucent layer with the configured local alpha. `MinecraftXRayRendererInvalidator`
+calls the verified 26.2 geometry invalidation method on enable, disable, and
+setting changes, so normal world geometry is rebuilt on disable. `StorageEsp`
+reuses the bounded cursor/anchor/cache decision objects but owns a separate
+cache and revision; its Minecraft adapter scans only loaded chunks and renders
+only locally frustum-visible block-entity boxes.
+
 The Right Shift keybind opens `HelikonClickGuiScreen`, a vanilla `Screen`
 subclass that uses only supported Minecraft/Fabric GUI APIs (`EditBox`
 widgets, `GuiGraphicsExtractor` fills/text/scissor). The screen is a thin

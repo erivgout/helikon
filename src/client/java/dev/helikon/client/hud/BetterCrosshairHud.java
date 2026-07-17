@@ -17,22 +17,32 @@ public final class BetterCrosshairHud implements HudElement {
 
     private final BetterCrosshair module;
     private final PanicState panicState;
+    private final HudLayout layout;
 
     public BetterCrosshairHud(BetterCrosshair module, PanicState panicState) {
+        this(module, panicState, new HudLayout());
+    }
+
+    public BetterCrosshairHud(BetterCrosshair module, PanicState panicState, HudLayout layout) {
         this.module = Objects.requireNonNull(module, "module");
         this.panicState = Objects.requireNonNull(panicState, "panicState");
+        this.layout = Objects.requireNonNull(layout, "layout");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (!module.isEnabled() || panicState.customHudHidden()) {
+        if (!module.isEnabled() || !layout.element(HudElementId.BETTER_CROSSHAIR).enabled()
+                || panicState.customHudHidden()) {
             return;
         }
 
         Minecraft client = Minecraft.getInstance();
         int movementGap = movementGap(client);
-        int centerX = client.getWindow().getGuiScaledWidth() / 2;
-        int centerY = client.getWindow().getGuiScaledHeight() / 2;
+        int diameter = crosshairDiameter(movementGap);
+        HudBounds center = layout.element(HudElementId.BETTER_CROSSHAIR)
+                .bounds(graphics.guiWidth(), graphics.guiHeight(), diameter, diameter);
+        int centerX = center.x() + diameter / 2;
+        int centerY = center.y() + diameter / 2;
         for (CrosshairGeometry.Rect arm : CrosshairGeometry.arms(
                 centerX, centerY, module.sizePixels(), module.gapPixels(), module.thicknessPixels(), movementGap
         )) {
@@ -49,5 +59,9 @@ public final class BetterCrosshairHud implements HudElement {
         }
         return Math.clamp((int) Math.round(client.player.getDeltaMovement().horizontalDistance() * 20.0),
                 0, MAX_MOVEMENT_GAP);
+    }
+
+    private int crosshairDiameter(int movementGap) {
+        return 2 * (module.sizePixels() + module.gapPixels() + movementGap) + 3;
     }
 }

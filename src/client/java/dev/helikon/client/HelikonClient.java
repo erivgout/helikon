@@ -364,7 +364,8 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(miniPlayer);
         modules.register(damageIndicators);
         modules.register(breadcrumbs);
-        RenderModuleAccess.install(antiBlind, betterCrosshair, antiTotemAnimation, dinnerbone, rainbowEnchant);
+        RenderModuleAccess.install(antiBlind, betterCrosshair, antiTotemAnimation, dinnerbone, rainbowEnchant,
+                hudLayout, panicState);
         AutoSprint autoSprint = new AutoSprint();
         AutoWalk autoWalk = new AutoWalk();
         AutoSneak autoSneak = new AutoSneak();
@@ -527,7 +528,7 @@ public final class HelikonClient implements ClientModInitializer {
                 breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics
         );
         DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,
-                events, configuration, panicState);
+                events, configuration, panicState, hudLayout);
         AtomicReference<MinecraftCombatAccess.Snapshot> combatSnapshot = new AtomicReference<>(
                 MinecraftCombatAccess.Snapshot.unavailable());
         AtomicBoolean combatAttackStarted = new AtomicBoolean();
@@ -723,21 +724,21 @@ public final class HelikonClient implements ClientModInitializer {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "waypoints"),
                 new WaypointHud(waypoints, waypointLocations, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "better_crosshair"),
-                new BetterCrosshairHud(betterCrosshair, panicState));
+                new BetterCrosshairHud(betterCrosshair, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "radar"),
-                new RadarHud(radar, friends, panicState));
+                new RadarHud(radar, friends, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "saturation"),
                 new SaturationHud(saturationDisplay, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "mini_player"),
-                new MiniPlayerHud(miniPlayer, panicState));
+                new MiniPlayerHud(miniPlayer, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "elytra"),
                 new ElytraHud(extraElytra, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "target_hud"),
-                new TargetHud(targetHud, combatTracker, panicState));
+                new TargetHud(targetHud, combatTracker, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "reach_display"),
                 new ReachDisplayHud(reachDisplay, combatTracker, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "inventory_preview"),
-                new InventoryPreviewHud(inventoryPreview, panicState));
+                new InventoryPreviewHud(inventoryPreview, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "durability_warnings"),
                 new DurabilityWarningsHud(durabilityWarnings, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "coordinates"),

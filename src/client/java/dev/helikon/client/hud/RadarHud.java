@@ -20,33 +20,39 @@ import java.util.Objects;
 
 /** Thin HUD adapter for Radar's Minecraft-free projection and local entity filters. */
 public final class RadarHud implements HudElement {
-    private static final int X = 5;
-    private static final int Y = 120;
     private static final int RADIUS = 38;
     private static final int PLAYER_COLOR = 0xFFFFFFFF;
 
     private final Radar module;
     private final FriendManager friends;
     private final PanicState panicState;
+    private final HudLayout layout;
 
     public RadarHud(Radar module, FriendManager friends, PanicState panicState) {
+        this(module, friends, panicState, new HudLayout());
+    }
+
+    public RadarHud(Radar module, FriendManager friends, PanicState panicState, HudLayout layout) {
         this.module = Objects.requireNonNull(module, "module");
         this.friends = Objects.requireNonNull(friends, "friends");
         this.panicState = Objects.requireNonNull(panicState, "panicState");
+        this.layout = Objects.requireNonNull(layout, "layout");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (!module.isEnabled() || panicState.customHudHidden()) {
+        if (!module.isEnabled() || !layout.element(HudElementId.RADAR).enabled() || panicState.customHudHidden()) {
             return;
         }
         Minecraft client = Minecraft.getInstance();
         if (client.level == null || client.player == null) {
             return;
         }
-        int centerX = X + RADIUS;
-        int centerY = Y + RADIUS;
-        drawBackground(graphics, centerX, centerY);
+        HudBounds bounds = layout.element(HudElementId.RADAR).bounds(graphics.guiWidth(), graphics.guiHeight(),
+                RADIUS * 2, RADIUS * 2);
+        int centerX = bounds.x() + RADIUS;
+        int centerY = bounds.y() + RADIUS;
+        drawBackground(graphics, bounds, centerX, centerY);
         EntityRenderFilter.Options options = module.options();
         int rendered = 0;
         for (Entity entity : client.level.entitiesForRendering()) {
@@ -71,10 +77,11 @@ public final class RadarHud implements HudElement {
         graphics.fill(centerX - 1, centerY - 1, centerX + 2, centerY + 2, PLAYER_COLOR);
     }
 
-    private void drawBackground(GuiGraphicsExtractor graphics, int centerX, int centerY) {
+    private void drawBackground(GuiGraphicsExtractor graphics, HudBounds bounds, int centerX, int centerY) {
         if (module.shape() == RadarProjection.Shape.SQUARE) {
-            graphics.fill(X, Y, X + RADIUS * 2, Y + RADIUS * 2, module.backgroundColor());
-            graphics.outline(X, Y, RADIUS * 2, RADIUS * 2, 0xFF8A919E);
+            graphics.fill(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + bounds.height(),
+                    module.backgroundColor());
+            graphics.outline(bounds.x(), bounds.y(), bounds.width(), bounds.height(), 0xFF8A919E);
             return;
         }
         for (int offsetY = -RADIUS; offsetY <= RADIUS; offsetY++) {

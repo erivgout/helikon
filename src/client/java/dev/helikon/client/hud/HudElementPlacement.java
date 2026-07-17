@@ -52,7 +52,8 @@ public final class HudElementPlacement {
             case BOTTOM_LEFT, BOTTOM_RIGHT -> Math.max(0, viewportHeight - contentHeight - offsetY);
             case CENTER -> Math.max(0, (viewportHeight - contentHeight) / 2 + offsetY);
         };
-        return new HudBounds(x, y, contentWidth, contentHeight);
+        return new HudBounds(Math.clamp(x, 0, Math.max(0, viewportWidth - contentWidth)),
+                Math.clamp(y, 0, Math.max(0, viewportHeight - contentHeight)), contentWidth, contentHeight);
     }
 
     public void reset(HudElementId element) {

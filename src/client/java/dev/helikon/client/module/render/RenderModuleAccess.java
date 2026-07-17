@@ -1,6 +1,9 @@
 package dev.helikon.client.module.render;
 
 import dev.helikon.client.render.EntityRenderFilter;
+import dev.helikon.client.hud.HudElementId;
+import dev.helikon.client.hud.HudLayout;
+import dev.helikon.client.panic.PanicState;
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffects;
@@ -14,18 +17,22 @@ public final class RenderModuleAccess {
     private static volatile AntiTotemAnimation antiTotemAnimation;
     private static volatile Dinnerbone dinnerbone;
     private static volatile RainbowEnchant rainbowEnchant;
+    private static volatile HudLayout hudLayout;
+    private static volatile PanicState panicState;
 
     private RenderModuleAccess() {
     }
 
     public static void install(AntiBlind antiBlindModule, BetterCrosshair crosshairModule,
                                AntiTotemAnimation antiTotemAnimationModule, Dinnerbone dinnerboneModule,
-                               RainbowEnchant rainbowEnchantModule) {
+                               RainbowEnchant rainbowEnchantModule, HudLayout layout, PanicState panic) {
         antiBlind = Objects.requireNonNull(antiBlindModule, "antiBlindModule");
         betterCrosshair = Objects.requireNonNull(crosshairModule, "crosshairModule");
         antiTotemAnimation = Objects.requireNonNull(antiTotemAnimationModule, "antiTotemAnimationModule");
         dinnerbone = Objects.requireNonNull(dinnerboneModule, "dinnerboneModule");
         rainbowEnchant = Objects.requireNonNull(rainbowEnchantModule, "rainbowEnchantModule");
+        hudLayout = Objects.requireNonNull(layout, "layout");
+        panicState = Objects.requireNonNull(panic, "panic");
     }
 
     public static boolean hideMobEffectFog(Holder<MobEffect> effect) {
@@ -47,7 +54,11 @@ public final class RenderModuleAccess {
     }
 
     public static boolean hideVanillaCrosshair() {
-        return betterCrosshair != null && betterCrosshair.hidesVanillaCrosshair();
+        BetterCrosshair module = betterCrosshair;
+        HudLayout layout = hudLayout;
+        PanicState panic = panicState;
+        return module != null && layout != null && panic != null && module.hidesVanillaCrosshair()
+                && layout.element(HudElementId.BETTER_CROSSHAIR).enabled() && !panic.customHudHidden();
     }
 
     public static boolean shouldHideItemActivation(boolean hasDeathProtection) {

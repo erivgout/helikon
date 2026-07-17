@@ -597,15 +597,14 @@ ClickGUI header, saves once when it closes, and returns to the ClickGUI.
 
 `HudElementPlacement` provides the shared non-Active-Modules layout model:
 validated local enable state plus a top/bottom/left/right/centre anchor and
-offsets. Existing textual telemetry HUD renderers resolve their content bounds
+offsets. Every registered custom HUD renderer resolves its content bounds
 against that model instead of hard-coding screen coordinates. The editor shows
-one selectable telemetry preview at a time; it can be toggled and dragged,
-with a drag intentionally converting it to a stable top-left placement.
+one selectable element preview at a time; it can be toggled and dragged, with
+a drag intentionally converting it to a stable top-left placement. The
+preview is a placement handle; every renderer clamps its actual local content
+bounds to the scaled viewport, including when dynamic content changes size.
 
-The initial editor intentionally has one draggable element. Alignment, scale,
-background options, snapping, and other HUD elements remain future work.
-
-`SaturationHud` is a separate fixed local HUD element. It reads the current
+`SaturationHud` is a separate local HUD element. It reads the current
 local player's `FoodData.getSaturationLevel()` through the narrow 26.2 adapter
 layer and formats only a bounded display string. It neither modifies hunger nor
 requests any server information; panic hides it with the other custom HUD.

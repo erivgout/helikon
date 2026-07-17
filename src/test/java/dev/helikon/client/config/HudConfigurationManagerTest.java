@@ -81,21 +81,21 @@ class HudConfigurationManagerTest {
     }
 
     @Test
-    void saveAndLoadPreserveTelemetryPlacements() {
+    void saveAndLoadPreserveHudElementPlacements() {
         HudConfigurationManager manager = new HudConfigurationManager(temporaryDirectory.resolve("helikon"));
         HudLayout source = new HudLayout();
-        source.element(dev.helikon.client.hud.HudElementId.SATURATION).setEnabled(false);
-        source.element(dev.helikon.client.hud.HudElementId.SATURATION)
+        source.element(dev.helikon.client.hud.HudElementId.RADAR).setEnabled(false);
+        source.element(dev.helikon.client.hud.HudElementId.RADAR)
                 .set(dev.helikon.client.hud.HudElementId.Anchor.TOP_RIGHT, 9, 12);
         manager.save(source);
 
         HudLayout target = new HudLayout();
         assertEquals(HudConfigurationManager.LoadResult.LOADED, manager.load(target));
-        var saturation = target.element(dev.helikon.client.hud.HudElementId.SATURATION);
-        assertFalse(saturation.enabled());
-        assertEquals(dev.helikon.client.hud.HudElementId.Anchor.TOP_RIGHT, saturation.anchor());
-        assertEquals(9, saturation.offsetX());
-        assertEquals(12, saturation.offsetY());
+        var radar = target.element(dev.helikon.client.hud.HudElementId.RADAR);
+        assertFalse(radar.enabled());
+        assertEquals(dev.helikon.client.hud.HudElementId.Anchor.TOP_RIGHT, radar.anchor());
+        assertEquals(9, radar.offsetX());
+        assertEquals(12, radar.offsetY());
     }
 
     @Test

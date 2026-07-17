@@ -18,15 +18,22 @@ public final class InventoryPreviewHud implements HudElement {
 
     private final InventoryPreview module;
     private final PanicState panicState;
+    private final HudLayout layout;
 
     public InventoryPreviewHud(InventoryPreview module, PanicState panicState) {
+        this(module, panicState, new HudLayout());
+    }
+
+    public InventoryPreviewHud(InventoryPreview module, PanicState panicState, HudLayout layout) {
         this.module = Objects.requireNonNull(module, "module");
         this.panicState = Objects.requireNonNull(panicState, "panicState");
+        this.layout = Objects.requireNonNull(layout, "layout");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (!module.isEnabled() || panicState.customHudHidden()) {
+        if (!module.isEnabled() || !layout.element(HudElementId.INVENTORY_PREVIEW).enabled()
+                || panicState.customHudHidden()) {
             return;
         }
         Minecraft client = Minecraft.getInstance();
@@ -41,8 +48,10 @@ public final class InventoryPreviewHud implements HudElement {
         }
         int width = InventoryPreviewLayout.width();
         int height = InventoryPreviewLayout.height(rows);
-        int x = Math.max(5, graphics.guiWidth() - width - 5);
-        int y = 5;
+        HudBounds bounds = layout.element(HudElementId.INVENTORY_PREVIEW)
+                .bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
+        int x = bounds.x();
+        int y = bounds.y();
         graphics.fill(x, y, x + width, y + height, BACKGROUND);
         for (int index = 0; index < slots.size(); index++) {
             int column = index % InventoryPreviewLayout.COLUMNS;

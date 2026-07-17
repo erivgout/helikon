@@ -17,6 +17,21 @@ class HudElementPlacementTest {
     }
 
     @Test
+    void centeredCrosshairPlacementResolvesToTheViewportCenter() {
+        HudElementPlacement crosshair = new HudElementPlacement(HudElementId.BETTER_CROSSHAIR);
+
+        assertEquals(new HudBounds(41, 31, 17, 17), crosshair.bounds(100, 80, 17, 17));
+    }
+
+    @Test
+    void resolvedBoundsKeepOversizedOffsetsOnScreen() {
+        HudElementPlacement placement = new HudElementPlacement(HudElementId.RADAR);
+
+        assertTrue(placement.setAbsolutePosition(95, 75));
+        assertEquals(new HudBounds(24, 4, 76, 76), placement.bounds(100, 80, 76, 76));
+    }
+
+    @Test
     void draggingConvertsPlacementToClampedTopLeftCoordinates() {
         HudElementPlacement placement = new HudElementPlacement(HudElementId.SATURATION);
 

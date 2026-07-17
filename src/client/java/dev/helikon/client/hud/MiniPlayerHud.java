@@ -23,22 +23,30 @@ public final class MiniPlayerHud implements HudElement {
 
     private final MiniPlayer module;
     private final PanicState panicState;
+    private final HudLayout layout;
 
     public MiniPlayerHud(MiniPlayer module, PanicState panicState) {
+        this(module, panicState, new HudLayout());
+    }
+
+    public MiniPlayerHud(MiniPlayer module, PanicState panicState, HudLayout layout) {
         this.module = Objects.requireNonNull(module, "module");
         this.panicState = Objects.requireNonNull(panicState, "panicState");
+        this.layout = Objects.requireNonNull(layout, "layout");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (!module.isEnabled() || panicState.customHudHidden()) {
+        if (!module.isEnabled() || !layout.element(HudElementId.MINI_PLAYER).enabled() || panicState.customHudHidden()) {
             return;
         }
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) {
             return;
         }
-        HudBounds bounds = MiniPlayerLayout.bounds();
+        HudBounds rawBounds = MiniPlayerLayout.bounds();
+        HudBounds bounds = layout.element(HudElementId.MINI_PLAYER).bounds(graphics.guiWidth(), graphics.guiHeight(),
+                rawBounds.width(), rawBounds.height());
         graphics.fill(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + bounds.height(),
                 module.backgroundColor());
         graphics.outline(bounds.x(), bounds.y(), bounds.width(), bounds.height(), OUTLINE_COLOR);

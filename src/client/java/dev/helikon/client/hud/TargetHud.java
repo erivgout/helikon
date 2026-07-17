@@ -21,22 +21,30 @@ public final class TargetHud implements HudElement {
     private final dev.helikon.client.module.combat.TargetHud module;
     private final CombatTargetTracker tracker;
     private final PanicState panicState;
+    private final HudLayout layout;
 
     public TargetHud(dev.helikon.client.module.combat.TargetHud module, CombatTargetTracker tracker, PanicState panicState) {
+        this(module, tracker, panicState, new HudLayout());
+    }
+
+    public TargetHud(dev.helikon.client.module.combat.TargetHud module, CombatTargetTracker tracker, PanicState panicState,
+                     HudLayout layout) {
         this.module = Objects.requireNonNull(module, "module");
         this.tracker = Objects.requireNonNull(tracker, "tracker");
         this.panicState = Objects.requireNonNull(panicState, "panicState");
+        this.layout = Objects.requireNonNull(layout, "layout");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (!module.isEnabled() || panicState.customHudHidden()) {
+        if (!module.isEnabled() || !layout.element(HudElementId.TARGET).enabled() || panicState.customHudHidden()) {
             return;
         }
-        tracker.target().ifPresent(target -> render(graphics, Minecraft.getInstance(), target));
+        tracker.target().ifPresent(target -> render(graphics, Minecraft.getInstance(), target, layout.element(HudElementId.TARGET)));
     }
 
-    private static void render(GuiGraphicsExtractor graphics, Minecraft client, CombatTarget target) {
+    private static void render(GuiGraphicsExtractor graphics, Minecraft client, CombatTarget target,
+                               HudElementPlacement placement) {
         List<String> lines = List.of(
                 target.name(),
                 String.format(Locale.ROOT, "Health %.1f  Armor %d", target.health(), target.armor()),
@@ -46,10 +54,11 @@ public final class TargetHud implements HudElement {
         );
         int width = lines.stream().mapToInt(client.font::width).max().orElse(0) + 8;
         int height = lines.size() * client.font.lineHeight + 8;
-        graphics.fill(X, Y, X + width, Y + height, 0xB014161B);
+        HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
+        graphics.fill(bounds.x(), bounds.y(), bounds.x() + width, bounds.y() + height, 0xB014161B);
         for (int index = 0; index < lines.size(); index++) {
-            graphics.text(client.font, Component.literal(lines.get(index)), X + 4,
-                    Y + 4 + index * client.font.lineHeight, index == 0 ? 0xFFFFD180 : 0xFFE5EDF5, true);
+            graphics.text(client.font, Component.literal(lines.get(index)), bounds.x() + 4,
+                    bounds.y() + 4 + index * client.font.lineHeight, index == 0 ? 0xFFFFD180 : 0xFFE5EDF5, true);
         }
     }
 }

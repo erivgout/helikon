@@ -19,8 +19,6 @@ import java.util.Objects;
 
 /** Opt-in local performance diagnostics; it never submits telemetry or writes a file. */
 public final class DebugOverlayHud implements HudElement {
-    private static final int X = 5;
-    private static final int Y = 5;
     private static final int PADDING = 3;
 
     private final DebugOverlay module;
@@ -30,11 +28,18 @@ public final class DebugOverlayHud implements HudElement {
     private final EventBus events;
     private final ConfigurationManager configuration;
     private final PanicState panicState;
+    private final HudLayout layout;
     private RenderState renderState = RenderState.empty();
 
     public DebugOverlayHud(DebugOverlay module, ModuleRegistry modules, ModuleTimingMetrics timings,
                            MinecraftWorldVisualizationRenderer worldVisuals, EventBus events,
                            ConfigurationManager configuration, PanicState panicState) {
+        this(module, modules, timings, worldVisuals, events, configuration, panicState, new HudLayout());
+    }
+
+    public DebugOverlayHud(DebugOverlay module, ModuleRegistry modules, ModuleTimingMetrics timings,
+                           MinecraftWorldVisualizationRenderer worldVisuals, EventBus events,
+                           ConfigurationManager configuration, PanicState panicState, HudLayout layout) {
         this.module = Objects.requireNonNull(module, "module");
         this.modules = Objects.requireNonNull(modules, "modules");
         this.timings = Objects.requireNonNull(timings, "timings");
@@ -42,11 +47,13 @@ public final class DebugOverlayHud implements HudElement {
         this.events = Objects.requireNonNull(events, "events");
         this.configuration = Objects.requireNonNull(configuration, "configuration");
         this.panicState = Objects.requireNonNull(panicState, "panicState");
+        this.layout = Objects.requireNonNull(layout, "layout");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (!module.isEnabled() || panicState.customHudHidden()) {
+        if (!module.isEnabled() || !layout.element(HudElementId.DEBUG_OVERLAY).enabled()
+                || panicState.customHudHidden()) {
             return;
         }
 
@@ -55,10 +62,12 @@ public final class DebugOverlayHud implements HudElement {
         if (state.lines().isEmpty()) {
             return;
         }
-        graphics.fill(X, Y, X + state.width(), Y + state.height(), 0xC014161B);
+        HudBounds bounds = layout.element(HudElementId.DEBUG_OVERLAY)
+                .bounds(graphics.guiWidth(), graphics.guiHeight(), state.width(), state.height());
+        graphics.fill(bounds.x(), bounds.y(), bounds.x() + state.width(), bounds.y() + state.height(), 0xC014161B);
         for (int index = 0; index < state.lines().size(); index++) {
-            graphics.text(client.font, state.lines().get(index), X + PADDING,
-                    Y + PADDING + index * client.font.lineHeight, 0xFFE5EDF5, true);
+            graphics.text(client.font, state.lines().get(index), bounds.x() + PADDING,
+                    bounds.y() + PADDING + index * client.font.lineHeight, 0xFFE5EDF5, true);
         }
     }
 

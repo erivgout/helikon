@@ -7,7 +7,7 @@ an internal event bus, a functional Right Shift ClickGUI, local chat commands,
 module keybinds, an Active Modules HUD, local profiles, local friends, local
 waypoints, local macros, and tests.
 
-Saturation Display is a fixed local HUD readout of the player's current hunger
+Saturation Display is a local HUD readout of the player's current hunger
 saturation. It changes no food state and sends no packet or request.
 
 Better Nametags adds only local billboard facts for nearby visible players. It
@@ -121,7 +121,7 @@ Trajectories predicts only frustum-visible in-flight arrows, tridents, and
 thrown items through a local block-collision simulation; it does not alter
 projectile physics or generate an aiming preview. TrueSight makes selected
 invisible entities locatable with transparent local boxes, without changing
-vanilla model rendering. Radar is a fixed-position local HUD for selected
+vanilla model rendering. Radar is a configurable local HUD for selected
 nearby entities. None of these features sends data or changes the server game.
 
 XRay rebuilds only local compiled chunk geometry so non-selected blocks are
@@ -131,7 +131,7 @@ on disable. StorageESP uses a separate bounded loaded-chunk scan for selected
 block entities and draws only frustum-visible local boxes. Neither feature
 requests chunks, modifies blocks, or sends packets.
 
-MiniPlayer renders the current local player model in a fixed HUD panel with
+MiniPlayer renders the current local player model in a configurable HUD panel with
 local rotation, scale, armor, and background controls. DamageIndicators tracks
 only observed nearby local health decreases while the target has a current
 hurt indication, then draws a bounded fading/rising amount. Neither changes
@@ -224,14 +224,16 @@ The ClickGUI currently provides:
 - keyboard navigation: Left/Right changes categories, Up/Down selects module rows, and Enter/Space toggles the selected module
 - persistence of module state and settings when the screen closes
 
-The HUD editor currently provides a fully configurable **Active Modules**
-list. Open the ClickGUI with Right Shift and select **HUD** in its header;
-drag the preview (it snaps to edges and centre), toggle it, choose registry,
+The HUD editor provides a fully configurable **Active Modules** list and
+on/off, draggable placements for every other Helikon HUD element. Open the
+ClickGUI with Right Shift and select **HUD** in its header; drag the Active
+Modules preview (it snaps to edges and centre), toggle it, choose registry,
 alphabetical, or width sorting, left/right alignment, accent/rainbow color,
 background, text shadow, scale, and padding. The layout is stored locally in
-`config/helikon/hud.json`. The editor also provides selectable draggable local
-placements for the Waypoints, Coordinates, Saturation, Elytra, Reach, and
-Durability Warnings HUD elements.
+`config/helikon/hud.json`. Cycle the **HUD element** selector to position or
+hide Waypoints, Coordinates, Saturation, Elytra, Target HUD, Reach, Inventory
+Preview, Durability Warnings, Radar, MiniPlayer, Debug Overlay, and Better
+Crosshair.
 
 ## Requirements
 

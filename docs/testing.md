@@ -148,7 +148,7 @@ Configuration migration coverage verifies that legacy Fullbright state loads
 under the production module ID and that the next atomic save removes the legacy
 key (`ConfigurationManagerTest`).
 
-## Manual Active Modules HUD smoke test
+## Manual HUD editor smoke test
 
 1. Run `./gradlew.bat runClient`, join a world, and send
    `.toggle fullbright`. Verify **Fullbright** appears in a small
@@ -166,10 +166,15 @@ key (`ConfigurationManagerTest`).
 4. Press Escape and verify the ClickGUI returns. Close it, relaunch the
    client, and verify the enabled state, position, and presentation choices are restored from
    `config/helikon/hud.json`.
-   Cycle the **Telemetry** selector through Waypoints, Coordinates, Saturation,
-   Elytra, Reach, and Durability warnings. Toggle one off, drag another preview
-   to a distinct position, close/reopen the editor, and verify both local
-   settings persist and affect only that HUD element.
+   Cycle the **HUD element** selector through Waypoints, Coordinates, Saturation,
+   Elytra, Target HUD, Reach, Inventory Preview, Durability warnings, Radar,
+   MiniPlayer, Debug Overlay, and Better Crosshair. Toggle one off, drag another
+   preview to a distinct position, close/reopen the editor, and verify both local
+   settings persist and affect only that HUD element. Drag Radar, MiniPlayer,
+   Inventory Preview, and Debug Overlay to each viewport edge and verify their
+   actual rendered content remains fully on screen. For Better Crosshair,
+   verify its placement changes the arm centre and toggling it restores the
+   vanilla crosshair when its module is otherwise enabled.
 5. Replace `hud.json` with invalid JSON, relaunch, and verify Helikon creates
    `hud.corrupt-<timestamp>.json` and returns the element to its default
    position.

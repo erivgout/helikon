@@ -205,6 +205,8 @@ import dev.helikon.client.module.miscellaneous.SkinBlinker;
 import dev.helikon.client.module.miscellaneous.Twerk;
 import dev.helikon.client.module.miscellaneous.WindCharge;
 import dev.helikon.client.module.player.AutoTool;
+import dev.helikon.client.module.player.AutoSwitch;
+import dev.helikon.client.module.player.MinecraftAutoSwitchAccess;
 import dev.helikon.client.module.player.AutoArmor;
 import dev.helikon.client.module.player.AutoEject;
 import dev.helikon.client.module.player.AutoFish;
@@ -585,6 +587,7 @@ public final class HelikonClient implements ClientModInitializer {
         FakeLag fakeLag = new FakeLag();
         AutoEat autoEat = new AutoEat(new MinecraftUseKeyAccess());
         AutoTool autoTool = new AutoTool();
+        AutoSwitch autoSwitch = new AutoSwitch();
         AutoArmor autoArmor = new AutoArmor();
         AutoEject autoEject = new AutoEject();
         AutoFish autoFish = new AutoFish();
@@ -713,6 +716,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(fakeLag);
         modules.register(autoEat);
         modules.register(autoTool);
+        modules.register(autoSwitch);
         modules.register(autoArmor);
         modules.register(autoEject);
         modules.register(autoFish);
@@ -875,6 +879,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(clutch, "tick", () -> MinecraftAdvancedMovementAccess.tickClutch(clutch, clientTick));
                 modules.runGuarded(autoEat, "tick", () -> tickAutoEat(autoEat));
                 modules.runGuarded(autoTool, "tick", () -> tickAutoTool(autoTool));
+                modules.runGuarded(autoSwitch, "tick", () -> MinecraftAutoSwitchAccess.tick(autoSwitch));
                 modules.runGuarded(autoArmor, "tick", () -> tickAutoArmor(autoArmor, clientTick));
                 modules.runGuarded(autoEject, "tick", () -> tickAutoEject(autoEject, clientTick));
                 modules.runGuarded(autoFish, "tick", () -> tickAutoFish(autoFish, clientTick));

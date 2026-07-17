@@ -215,13 +215,15 @@ public final class HelikonClickGuiScreen extends Screen {
         COLOR_SIDEBAR = theme.sidebar();
         COLOR_SETTINGS = theme.settings();
         COLOR_ROW_HOVER = theme.rowHover();
-        COLOR_ROW_SELECTED = theme.rowSelected();
-        COLOR_ACCENT = theme.accent();
+        int animatedAccent = dev.helikon.client.module.render.RainbowUiAccess.accent(
+                System.currentTimeMillis(), theme.accent());
+        COLOR_ROW_SELECTED = animatedAccent;
+        COLOR_ACCENT = animatedAccent;
         COLOR_TEXT = theme.text();
         COLOR_TEXT_DIM = theme.textDim();
         COLOR_OUTLINE = theme.outline();
         COLOR_INVALID = theme.invalid();
-        COLOR_SCROLLBAR = theme.scrollbar();
+        COLOR_SCROLLBAR = animatedAccent;
     }
 
     @Override

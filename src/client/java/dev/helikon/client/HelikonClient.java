@@ -510,6 +510,24 @@ public final class HelikonClient implements ClientModInitializer {
         Dinnerbone dinnerbone = new Dinnerbone();
         RainbowEnchant rainbowEnchant = new RainbowEnchant();
         NoWeather noWeather = new NoWeather();
+        dev.helikon.client.module.render.Zoom zoom = new dev.helikon.client.module.render.Zoom();
+        dev.helikon.client.module.render.RainbowUi rainbowUi = new dev.helikon.client.module.render.RainbowUi();
+        dev.helikon.client.module.miscellaneous.LegacyFunModules.Derp derp =
+                new dev.helikon.client.module.miscellaneous.LegacyFunModules.Derp();
+        dev.helikon.client.module.miscellaneous.LegacyFunModules.HeadRoll headRoll =
+                new dev.helikon.client.module.miscellaneous.LegacyFunModules.HeadRoll();
+        dev.helikon.client.module.miscellaneous.LegacyFunModules.Lsd lsd =
+                new dev.helikon.client.module.miscellaneous.LegacyFunModules.Lsd();
+        dev.helikon.client.module.miscellaneous.LegacyFunModules.MileyCyrus mileyCyrus =
+                new dev.helikon.client.module.miscellaneous.LegacyFunModules.MileyCyrus();
+        dev.helikon.client.module.miscellaneous.LegacyFunModules.Tired tired =
+                new dev.helikon.client.module.miscellaneous.LegacyFunModules.Tired();
+        dev.helikon.client.module.miscellaneous.LegacyFunModules.Headless headless =
+                new dev.helikon.client.module.miscellaneous.LegacyFunModules.Headless();
+        dev.helikon.client.module.miscellaneous.MinecraftLegacyFunAccess legacyFunAccess =
+                new dev.helikon.client.module.miscellaneous.MinecraftLegacyFunAccess();
+        dev.helikon.client.module.render.MinecraftZoomAccess zoomAccess =
+                new dev.helikon.client.module.render.MinecraftZoomAccess();
         EntityEsp entityEsp = new EntityEsp();
         Chams chams = new Chams();
         BaseFinder baseFinder = new BaseFinder();
@@ -550,6 +568,14 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(dinnerbone);
         modules.register(rainbowEnchant);
         modules.register(noWeather);
+        modules.register(zoom);
+        modules.register(rainbowUi);
+        modules.register(derp);
+        modules.register(headRoll);
+        modules.register(lsd);
+        modules.register(mileyCyrus);
+        modules.register(tired);
+        modules.register(headless);
         modules.register(entityEsp);
         modules.register(chams);
         modules.register(baseFinder);
@@ -585,6 +611,7 @@ public final class HelikonClient implements ClientModInitializer {
         RenderModuleAccess.installNoShieldOverlay(noShieldOverlay);
         RenderModuleAccess.install(antiBlind, noFireOverlay, betterCrosshair, antiTotemAnimation, dinnerbone,
                 rainbowEnchant, noWeather, hudLayout, panicState);
+        dev.helikon.client.module.render.RainbowUiAccess.install(rainbowUi);
         AutoSprint autoSprint = new AutoSprint();
         AutoSwim autoSwim = new AutoSwim();
         AutoWalk autoWalk = new AutoWalk();
@@ -947,6 +974,9 @@ public final class HelikonClient implements ClientModInitializer {
                     modules.setEnabled(timer, false);
                 }
                 modules.runGuarded(fullbright, "tick", fullbright::tick);
+                modules.runGuarded(zoom, "tick", () -> zoomAccess.tick(zoom));
+                modules.runGuarded(derp, "fun-effects", () -> legacyFunAccess.tick(clientTick, derp, headRoll, lsd,
+                        mileyCyrus, tired, headless));
                 modules.runGuarded(autoSprint, "tick", () -> tickAutoSprint(autoSprint));
                 modules.runGuarded(autoSwim, "tick", () -> MinecraftAutoSwimAccess.tick(autoSwim));
                 modules.runGuarded(follow, "tick", () -> MinecraftFollowAccess.tick(follow));

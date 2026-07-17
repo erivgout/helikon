@@ -46,6 +46,11 @@
 | `explosions` | Render | Draws a local wireframe sphere at the expected damage radius of nearby primed explosion sources. | `tnt`, `creepers`, `tnt_minecarts`, `end_crystals`, `armed_creepers_only`, `segments`, `maximum_sources`, `line_width`, `color`, `show_radius_label` | It reads only already-loaded local entities (primed TNT, primed TNT minecarts, end crystals, and creepers) and draws at most 128 frustum-visible sources per frame. The sphere is the exact vanilla entity-damage radius (`power * 2.0`): 8 for TNT/TNT minecart, 6 for a creeper, 12 for a charged creeper or end crystal. Actual block destruction is ray-traced and terrain dependent, so it may fall short of the sphere; the module is an awareness aid and never changes entity state or sends packets. `armed_creepers_only` (default on) limits creepers to those actively swelling or ignited. |
 | `health` | Render | Displays the local player's observed health as a compact readout near the crosshair. | `show_max`, `show_absorption`, `show_decimals`, `color_by_health` | It reads only Minecraft's local `getHealth`/`getMaxHealth`/`getAbsorptionAmount` values and never changes health, healing, or server state. Its enabled state, position (default centered just below the crosshair), and base color are local HUD-editor choices; `color_by_health` tints the text from red to green by remaining health and overrides the HUD color/rainbow while on. |
 
+| `zoom` | Render | Temporarily narrows the vanilla field of view. | `field_of_view` | It owns only the local FOV option while enabled and restores the prior value on disable. |
+| `rainbow_ui` | Render | Animates the ClickGUI accent through the color spectrum. | `speed`, `saturation` | This affects only Helikon's local ClickGUI colors. |
+| `lsd` | Render | Applies a reversible client-local nausea visual. | `refresh_ticks` | It does not grant or alter a server-side potion effect and removes only the local effect it added. |
+| `headless` | Render | Displaces the local head with an extreme downward pose. | none | Minecraft has no vanilla head-detach packet; this is a reversible pose displacement and servers may correct the rotation. |
+
 ## Combat modules
 
 | ID | Category | Description | Settings | Limitation |
@@ -228,6 +233,11 @@ Every production module will document its stable ID, category, settings,
 limitations, acceptance criteria, and automated or manual test coverage here.
 
 Module IDs are lowercase and stable; display names are not used as identifiers.
+
+| `derp` | Miscellaneous | Continuously rotates the local player's view. | `speed` | Uses ordinary local rotations; servers remain authoritative and may correct them. |
+| `head_roll` | Miscellaneous | Animates a circular pitch/yaw approximation of a head roll. | `speed`, `amount` | Vanilla exposes pitch and yaw but no networked roll axis. |
+| `miley_cyrus` | Miscellaneous | Repeatedly swings both local hands. | `interval` | Uses ordinary bounded swing actions and does not target entities. |
+| `tired` | Miscellaneous | Keeps the local player in a prone swimming pose. | none | The pose is restored on disable; servers can correct it. |
 
 ## ClickGUI
 

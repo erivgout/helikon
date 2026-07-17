@@ -453,6 +453,12 @@ local player's `FoodData.getSaturationLevel()` through the narrow 26.2 adapter
 layer and formats only a bounded display string. It neither modifies hunger nor
 requests any server information; panic hides it with the other custom HUD.
 
+`BetterNametags` uses the supported world Gizmo phase to add one local
+billboard for each frustum-visible nearby player. `BetterNametagText` composes
+the configured facts without Minecraft imports; the adapter only reads already
+rendered player state and local friend storage, so it cannot expose unloaded
+entities or alter vanilla/server name tags.
+
 ## Stabilization and release boundaries
 
 The release candidate keeps runtime decision paths Minecraft-free wherever

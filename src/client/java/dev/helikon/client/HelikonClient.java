@@ -122,6 +122,7 @@ import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
 import dev.helikon.client.module.render.AntiBlind;
 import dev.helikon.client.module.render.BetterCrosshair;
+import dev.helikon.client.module.render.BetterNametags;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.Breadcrumbs;
 import dev.helikon.client.module.render.DamageIndicators;
@@ -260,6 +261,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(fullbright);
         AntiBlind antiBlind = new AntiBlind();
         BetterCrosshair betterCrosshair = new BetterCrosshair();
+        BetterNametags betterNametags = new BetterNametags();
         EntityEsp entityEsp = new EntityEsp();
         BlockEsp blockEsp = new BlockEsp();
         Tracers tracers = new Tracers();
@@ -274,6 +276,7 @@ public final class HelikonClient implements ClientModInitializer {
         Breadcrumbs breadcrumbs = new Breadcrumbs();
         modules.register(antiBlind);
         modules.register(betterCrosshair);
+        modules.register(betterNametags);
         modules.register(entityEsp);
         modules.register(blockEsp);
         modules.register(tracers);
@@ -388,7 +391,7 @@ public final class HelikonClient implements ClientModInitializer {
         StepAccess.install(step);
         TimerModuleAccess.install(timer);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
-                modules, friends, entityEsp, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
+                modules, friends, entityEsp, betterNametags, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
                 breadcrumbs, builderAssist, bowAimAssist
         );
         AtomicReference<MinecraftCombatAccess.Snapshot> combatSnapshot = new AtomicReference<>(

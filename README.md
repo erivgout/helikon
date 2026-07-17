@@ -10,6 +10,9 @@ waypoints, local macros, and tests.
 Saturation Display is a fixed local HUD readout of the player's current hunger
 saturation. It changes no food state and sends no packet or request.
 
+Better Nametags adds only local billboard facts for nearby visible players. It
+does not change vanilla name tags, player data, packets, or server visibility.
+
 The internal event bus uses typed, Minecraft-free event models. Its currently
 wired lifecycle bridge covers ticks, local world connections, identity-aware
 screen changes, accepted ordinary chat, world rendering, and local player-state

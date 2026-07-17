@@ -4,6 +4,7 @@ import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.render.BlockEsp;
+import dev.helikon.client.module.render.BetterNametags;
 import dev.helikon.client.module.render.Breadcrumbs;
 import dev.helikon.client.module.render.DamageIndicators;
 import dev.helikon.client.module.render.EntityEsp;
@@ -67,6 +68,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final ModuleRegistry modules;
     private final FriendManager friends;
     private final EntityEsp entityEsp;
+    private final BetterNametags betterNametags;
     private final BlockEsp blockEsp;
     private final Tracers tracers;
     private final Trajectories trajectories;
@@ -89,12 +91,14 @@ public final class MinecraftWorldVisualizationRenderer {
     private boolean storageScannerWasEnabled;
 
     public MinecraftWorldVisualizationRenderer(ModuleRegistry modules, FriendManager friends, EntityEsp entityEsp,
+                                                BetterNametags betterNametags,
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
                                                 TrueSight trueSight, StorageEsp storageEsp, DamageIndicators damageIndicators,
                                                 Breadcrumbs breadcrumbs, BuilderAssist builderAssist, BowAimAssist bowAimAssist) {
         this.modules = Objects.requireNonNull(modules, "modules");
         this.friends = Objects.requireNonNull(friends, "friends");
         this.entityEsp = Objects.requireNonNull(entityEsp, "entityEsp");
+        this.betterNametags = Objects.requireNonNull(betterNametags, "betterNametags");
         this.blockEsp = Objects.requireNonNull(blockEsp, "blockEsp");
         this.tracers = Objects.requireNonNull(tracers, "tracers");
         this.trajectories = Objects.requireNonNull(trajectories, "trajectories");
@@ -171,6 +175,9 @@ public final class MinecraftWorldVisualizationRenderer {
             modules.runGuarded(tracers, "render", () -> renderTracers(client.level, client.player));
         }
         Frustum frustum = context.levelState().cameraRenderState.cullFrustum;
+        if (betterNametags.isEnabled()) {
+            modules.runGuarded(betterNametags, "render", () -> renderBetterNametags(client.level, client.player, frustum));
+        }
         if (trajectories.isEnabled()) {
             modules.runGuarded(trajectories, "render", () -> renderTrajectories(client.level, frustum));
         }
@@ -313,6 +320,29 @@ public final class MinecraftWorldVisualizationRenderer {
                 return;
             }
         }
+    }
+
+    private void renderBetterNametags(ClientLevel level, Player localPlayer, Frustum frustum) {
+        BetterNametags.Options options = betterNametags.options();
+        double maximumDistanceSquared = options.range() * options.range();
+        for (Entity entity : level.entitiesForRendering()) {
+            if (!(entity instanceof Player player) || player == localPlayer || player.isInvisibleTo(localPlayer)
+                    || !localPlayer.hasLineOfSight(player) || !isFrustumVisible(frustum, player)
+                    || player.position().distanceToSqr(localPlayer.position()) > maximumDistanceSquared) {
+                continue;
+            }
+            boolean friend = isFriend(player);
+            BetterNametagText.Facts facts = new BetterNametagText.Facts(player.getGameProfile().name(), player.getHealth(),
+                    player.getMaxHealth(), player.getArmorValue(), Math.sqrt(player.position().distanceToSqr(localPlayer.position())),
+                    BuiltInRegistries.ITEM.getKey(player.getMainHandItem().getItem()).toString());
+            Gizmos.billboardText(BetterNametagText.format(facts, options, friend),
+                    new Vec3(player.getX(), player.getY() + player.getBbHeight() + 0.35D, player.getZ()),
+                    TextGizmo.Style.forColorAndCentered(nametagColor(options, friend)));
+        }
+    }
+
+    static int nametagColor(BetterNametags.Options options, boolean friend) {
+        return friend && options.friendStatus() ? 0xFF80CBC4 : 0xFFE5EDF5;
     }
 
     /** Draws one local outline around BowAimAssist's currently predicted target. */

@@ -97,6 +97,7 @@ import dev.helikon.client.module.movement.FastLadders;
 import dev.helikon.client.module.movement.Flight;
 import dev.helikon.client.module.movement.Freecam;
 import dev.helikon.client.module.movement.FreecamAccess;
+import dev.helikon.client.module.movement.Clutch;
 import dev.helikon.client.module.movement.MinecraftAdvancedMovementAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.NoFall;
@@ -408,6 +409,7 @@ public final class HelikonClient implements ClientModInitializer {
         NoFall noFall = new NoFall();
         ExtraElytra extraElytra = new ExtraElytra();
         Scaffold scaffold = new Scaffold();
+        Clutch clutch = new Clutch();
         Timer timer = new Timer();
         AutoEat autoEat = new AutoEat(new MinecraftUseKeyAccess());
         AutoTool autoTool = new AutoTool();
@@ -487,6 +489,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(noFall);
         modules.register(extraElytra);
         modules.register(scaffold);
+        modules.register(clutch);
         modules.register(timer);
         modules.register(autoEat);
         modules.register(autoTool);
@@ -581,6 +584,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(noFall, "tick", () -> MinecraftAdvancedMovementAccess.tickNoFall(noFall));
                 modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));
                 modules.runGuarded(scaffold, "tick", () -> MinecraftAdvancedMovementAccess.tickScaffold(scaffold, clientTick));
+                modules.runGuarded(clutch, "tick", () -> MinecraftAdvancedMovementAccess.tickClutch(clutch, clientTick));
                 modules.runGuarded(autoEat, "tick", () -> tickAutoEat(autoEat));
                 modules.runGuarded(autoTool, "tick", () -> tickAutoTool(autoTool));
                 modules.runGuarded(autoArmor, "tick", () -> tickAutoArmor(autoArmor, clientTick));

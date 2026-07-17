@@ -44,6 +44,7 @@
     "MultiPlayerGameModeAccessor",
     "WTapAttackMixin",
     "SectionCompilerXRayMixin",
+    "ScreenEffectRendererMixin",
     "ConnectionPacketObservationMixin",
     "ConnectionBackTrackMixin",
     "ClientboundMoveEntityPacketAccessor",

@@ -14,6 +14,7 @@ import java.util.Objects;
 public final class RenderModuleAccess {
     private static volatile AntiBlind antiBlind;
     private static volatile CameraNoClip cameraNoClip;
+    private static volatile NoFireOverlay noFireOverlay;
     private static volatile BetterCrosshair betterCrosshair;
     private static volatile AntiTotemAnimation antiTotemAnimation;
     private static volatile Dinnerbone dinnerbone;
@@ -24,10 +25,11 @@ public final class RenderModuleAccess {
     private RenderModuleAccess() {
     }
 
-    public static void install(AntiBlind antiBlindModule, BetterCrosshair crosshairModule,
+    public static void install(AntiBlind antiBlindModule, NoFireOverlay noFireOverlayModule, BetterCrosshair crosshairModule,
                                AntiTotemAnimation antiTotemAnimationModule, Dinnerbone dinnerboneModule,
                                RainbowEnchant rainbowEnchantModule, HudLayout layout, PanicState panic) {
         antiBlind = Objects.requireNonNull(antiBlindModule, "antiBlindModule");
+        noFireOverlay = Objects.requireNonNull(noFireOverlayModule, "noFireOverlayModule");
         betterCrosshair = Objects.requireNonNull(crosshairModule, "crosshairModule");
         antiTotemAnimation = Objects.requireNonNull(antiTotemAnimationModule, "antiTotemAnimationModule");
         dinnerbone = Objects.requireNonNull(dinnerboneModule, "dinnerboneModule");
@@ -61,6 +63,11 @@ public final class RenderModuleAccess {
 
     public static boolean hidePowderSnowOverlay() {
         return antiBlind != null && antiBlind.hidesPowderSnowOverlay();
+    }
+
+    public static boolean hideFireOverlay() {
+        NoFireOverlay module = noFireOverlay;
+        return module != null && module.hidesFireOverlay();
     }
 
     public static boolean hideVanillaCrosshair() {

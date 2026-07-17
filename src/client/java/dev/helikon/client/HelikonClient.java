@@ -238,6 +238,7 @@ import dev.helikon.client.module.render.AntiDebuffAccess;
 import dev.helikon.client.module.render.CameraDistance;
 import dev.helikon.client.module.render.CameraModuleAccess;
 import dev.helikon.client.module.render.CameraNoClip;
+import dev.helikon.client.module.render.NoFireOverlay;
 import dev.helikon.client.module.render.AntiTotemAnimation;
 import dev.helikon.client.module.render.Arrows;
 import dev.helikon.client.module.render.BetterCrosshair;
@@ -421,6 +422,7 @@ public final class HelikonClient implements ClientModInitializer {
         AntiDebuff antiDebuff = new AntiDebuff();
         CameraDistance cameraDistance = new CameraDistance();
         CameraNoClip cameraNoClip = new CameraNoClip();
+        NoFireOverlay noFireOverlay = new NoFireOverlay();
         AntiTotemAnimation antiTotemAnimation = new AntiTotemAnimation();
         BetterCrosshair betterCrosshair = new BetterCrosshair();
         BetterNametags betterNametags = new BetterNametags();
@@ -448,6 +450,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(antiDebuff);
         modules.register(cameraDistance);
         modules.register(cameraNoClip);
+        modules.register(noFireOverlay);
         modules.register(antiTotemAnimation);
         modules.register(betterCrosshair);
         modules.register(betterNametags);
@@ -471,7 +474,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(arrows);
         modules.register(explosions);
         modules.register(health);
-        RenderModuleAccess.install(antiBlind, betterCrosshair, antiTotemAnimation, dinnerbone, rainbowEnchant,
+        RenderModuleAccess.install(antiBlind, noFireOverlay, betterCrosshair, antiTotemAnimation, dinnerbone, rainbowEnchant,
                 hudLayout, panicState);
         AntiDebuffAccess.install(antiDebuff);
         CameraModuleAccess.install(cameraDistance);

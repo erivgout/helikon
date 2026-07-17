@@ -267,6 +267,7 @@ import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.MinecraftGammaAccess;
 import dev.helikon.client.module.render.MinecraftNightVisionAccess;
 import dev.helikon.client.module.render.MiniPlayer;
+import dev.helikon.client.module.render.PlayerFinder;
 import dev.helikon.client.module.render.ProjectilePreview;
 import dev.helikon.client.module.render.NoWeather;
 import dev.helikon.client.module.render.RenderModuleAccess;
@@ -450,6 +451,7 @@ public final class HelikonClient implements ClientModInitializer {
         Chams chams = new Chams();
         BlockEsp blockEsp = new BlockEsp();
         Tracers tracers = new Tracers();
+        PlayerFinder playerFinder = new PlayerFinder();
         Trajectories trajectories = new Trajectories();
         ProjectileWarning projectileWarning = new ProjectileWarning();
         ProjectilePreview projectilePreview = new ProjectilePreview();
@@ -482,6 +484,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(chams);
         modules.register(blockEsp);
         modules.register(tracers);
+        modules.register(playerFinder);
         modules.register(trajectories);
         modules.register(projectileWarning);
         modules.register(projectilePreview);
@@ -760,7 +763,8 @@ public final class HelikonClient implements ClientModInitializer {
         FakeLagAccess.install(fakeLag);
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
-                modules, friends, entityEsp, chams, betterNametags, blockEsp, tracers, trajectories, projectileWarning,
+                modules, friends, entityEsp, chams, betterNametags, blockEsp, tracers, playerFinder,
+                trajectories, projectileWarning,
                 projectilePreview, trueSight, storageEsp,
                 damageIndicators, breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics, explosions
         );

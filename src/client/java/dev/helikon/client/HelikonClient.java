@@ -82,6 +82,7 @@ import dev.helikon.client.module.combat.AimAssist;
 import dev.helikon.client.module.combat.AutoClicker;
 import dev.helikon.client.module.combat.AntiFireball;
 import dev.helikon.client.module.combat.AutoPearl;
+import dev.helikon.client.module.combat.AutoRespawn;
 import dev.helikon.client.module.combat.AutoPotion;
 import dev.helikon.client.module.combat.BlockHit;
 import dev.helikon.client.module.combat.BackTrack;
@@ -102,6 +103,7 @@ import dev.helikon.client.module.combat.MinecraftCombatAccess;
 import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
 import dev.helikon.client.module.combat.MinecraftCrystalAccess;
+import dev.helikon.client.module.combat.MinecraftAutoRespawnAccess;
 import dev.helikon.client.module.combat.ReachDisplay;
 import dev.helikon.client.module.combat.RightClicker;
 import dev.helikon.client.module.combat.SilentAura;
@@ -545,6 +547,7 @@ public final class HelikonClient implements ClientModInitializer {
         AimAssist aimAssist = new AimAssist();
         CriticalAssist criticalAssist = new CriticalAssist();
         JumpReset jumpReset = new JumpReset();
+        AutoRespawn autoRespawn = new AutoRespawn();
         AutoPotion autoPotion = new AutoPotion();
         AutoPearl autoPearl = new AutoPearl();
         AutoLeave autoLeave = new AutoLeave();
@@ -649,6 +652,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(aimAssist);
         modules.register(criticalAssist);
         modules.register(jumpReset);
+        modules.register(autoRespawn);
         modules.register(autoPotion);
         modules.register(autoPearl);
         modules.register(autoLeave);
@@ -770,6 +774,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(antiBot, "observe", () -> combatSnapshot.set(MinecraftCombatAccess.observe(friends, antiBot, targetFilter)));
                 modules.runGuarded(targetHud, "tick", () -> MinecraftCombatAccess.observeTarget(targetHud,
                         combatSnapshot.get(), combatTracker));
+                modules.runGuarded(autoRespawn, "tick", () -> MinecraftAutoRespawnAccess.tick(clientTick, autoRespawn));
                 modules.runGuarded(autoPotion, "tick", () -> MinecraftCombatAccess.tickAutoPotion(clientTick, autoPotion));
                 modules.runGuarded(autoPearl, "tick", () -> MinecraftCombatAccess.tickAutoPearl(clientTick, autoPearl,
                         combatSnapshot.get()));
@@ -939,8 +944,8 @@ public final class HelikonClient implements ClientModInitializer {
             MinecraftBackTrackAccess.reset();
             events.post(new WorldEvent(WorldEvent.Phase.LEAVE, serverAddress(lastConnectedServer)));
             MinecraftHitFlickAccess.reset();
-            MinecraftHitFlickAccess.reset();
             playerStateEvents.reset();
+            modules.runGuarded(autoRespawn, "world-leave", autoRespawn::onContextLost);
             if (autoLeaveDisconnectInFlight) {
                 autoLeaveDisconnectInFlight = false;
                 modules.runGuarded(autoReconnect, "disconnect", autoReconnect::onConnected);

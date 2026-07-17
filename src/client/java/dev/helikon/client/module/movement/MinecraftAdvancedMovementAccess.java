@@ -183,6 +183,20 @@ public final class MinecraftAdvancedMovementAccess {
         }
     }
 
+    /** Applies Glide's capped descent only during an ordinary local fall. */
+    public static void tickGlide(Glide module) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) {
+            return;
+        }
+        LocalPlayer player = client.player;
+        Vec3 velocity = player.getDeltaMovement();
+        module.verticalVelocity(client.gui.screen() != null, player.onGround(), player.isInWater(), player.onClimbable(),
+                        player.input.keyPresses.shift(), player.isPassenger(), player.getAbilities().flying,
+                        player.isFallFlying(), velocity.y)
+                .ifPresent(y -> player.setDeltaMovement(velocity.x, y, velocity.z));
+    }
+
     public static void tickElytra(ExtraElytra module) {
         Minecraft client = Minecraft.getInstance();
         if (!isInteractive(client) || !client.player.isFallFlying()) {

@@ -169,7 +169,8 @@ hotbar selection, and safe timer multiplier are covered by
 by the live-client checklist below because it relies on verified 26.2 client
 hooks.
 
-`WaterJumpTest` independently covers its disabled default and every required
+`GlideTest` covers its bounded descent, opt-out states, setting change, and
+invalid velocity rejection. `WaterJumpTest` independently covers its disabled default and every required
 Minecraft-free water-edge fact. Its 26.2 input adapter is covered by the
 advanced-movement smoke check below.
 Combat filtering, deterministic selection, bounded bow smoothing, legitimate
@@ -634,7 +635,10 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     Enable **Freecam**, move and look around, confirm the player does not move,
     then disable it and confirm the camera returns. In Survival, enable
     **NoFall**, drop far enough to take damage,
-    and verify health is unchanged. While gliding,
+    and verify health is unchanged. With **Glide**, verify fast ordinary
+    descent is capped at its configured local speed, while Sneak, ground,
+    water, climbables, riding, permitted flight, Elytra flight, and open
+    screens retain vanilla behavior. While gliding with Elytra,
     verify **ExtraElytra**'s gradual pitch/near-ground adjustment, speed HUD,
     durability warning, and panic hide. With player-provided hotbar blocks,
     hold Use for **Scaffold** and verify one normal supported placement per

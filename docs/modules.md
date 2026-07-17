@@ -112,6 +112,10 @@
 | `annoy` | Miscellaneous | Makes sparse ordinary main-hand swings. | `interval_ticks` | Disabled by default; it requires a local player and no screen, waits 20–600 ticks between swings, never attacks/targets/chats, and uses only Minecraft's ordinary swing path. A server can observe or reject the normal swing. |
 | `one_click_friends` | Miscellaneous | Enables the local middle-click friend gesture. | none | It records an edge before applying the gate, so enabling it while the button is held cannot change a friend. It never consumes or changes normal middle-click behavior. |
 | `skin_blinker` | Miscellaneous | Alternates the local player skin-layer options. | `half_cycle_ticks` | It changes no saved or broadcast option, pauses for screens, and restores layer values it still owns on disable, panic, or world exit. |
+| `inventory_preview` | Miscellaneous | Renders a local read-only grid of storage slots and optional hotbar. | `rows`, `include_hotbar` | It reads only the verified 36 local non-equipment item slots, renders at most 36 cells, and never opens or alters an inventory. |
+| `durability_warnings` | Miscellaneous | Displays local low-durability held-item and armor warnings. | `threshold_percent`, `held_item`, `armor` | It checks at most five already-loaded damageable item facts and changes no durability, inventory, or packet. |
+| `death_coordinates` | Miscellaneous | Retains one local death position for the session. | none | It records only while enabled, uses the last safe local waypoint location, is visible only in the same server/world scope, makes no waypoint/file, and resets on restart. |
+| `logout_coordinates` | Miscellaneous | Retains one local disconnect position for the session. | none | It records only while enabled, uses the last safe local waypoint location, is visible only in the same server/world scope, makes no waypoint/file, and resets on restart. |
 
 Every production module will document its stable ID, category, settings,
 limitations, acceptance criteria, and automated or manual test coverage here.
@@ -185,9 +189,10 @@ small optional icon token with local commands. The minimal Waypoints HUD shows
 up to three nearest enabled entries with distance and direction, and hides
 entries from any other server/world or dimension.
 
-Death and logout waypoints are deliberately not automatic yet. The first HUD
-indicator has no separate HUD-editor position or world-space beacon; those
-rendering and layout controls remain future work.
+Death and logout coordinates are now separate enabled-only session snapshots;
+they deliberately do not create automatic waypoints. The first HUD indicator
+has no separate HUD-editor position or world-space beacon; those rendering and
+layout controls remain future work.
 
 ## Macros
 

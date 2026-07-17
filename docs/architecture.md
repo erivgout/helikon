@@ -413,6 +413,19 @@ only values it still owns on disable, panic, world exit, or a screen opening. It
 adapter calls the local options API only; it neither saves nor broadcasts those
 option changes.
 
+`InventoryPreviewLayout` chooses at most the 27 storage slots and optional
+nine hotbar slots from the verified local 36-item inventory list without a
+Minecraft import. Its HUD adapter only submits existing item stacks through the
+supported HUD extraction API; it never opens or mutates an inventory.
+`DurabilityWarnings` filters a bounded caller-supplied list of observed
+damageable held/armor facts through a Minecraft-free inclusive percentage rule.
+`CoordinateTracker` holds only session memory: the entrypoint updates its last
+safe local `WaypointLocation`, then enabled death/logout modules capture it at
+the already-wired lifecycle boundary. The HUD shows a snapshot only in the
+same local server/world scope (while retaining its recorded dimension); the
+chat notifier displays it immediately. Neither creates a waypoint nor writes
+coordinate data to disk.
+
 `WaypointManager` follows the same atomic local-storage rules for
 `waypoints.json`. `WaypointContext`, `WaypointLocation`, and
 `WaypointNavigation` own validation, context filtering, distance ordering, and

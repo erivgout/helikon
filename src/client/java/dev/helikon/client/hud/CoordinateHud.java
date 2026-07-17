@@ -1,0 +1,70 @@
+package dev.helikon.client.hud;
+
+import dev.helikon.client.module.miscellaneous.CoordinateEntry;
+import dev.helikon.client.module.miscellaneous.CoordinateKind;
+import dev.helikon.client.module.miscellaneous.CoordinateTracker;
+import dev.helikon.client.module.miscellaneous.DeathCoordinates;
+import dev.helikon.client.module.miscellaneous.LogoutCoordinates;
+import dev.helikon.client.panic.PanicState;
+import dev.helikon.client.waypoint.WaypointLocationProvider;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+/** Displays the enabled session-local death and logout coordinate snapshots without creating waypoints. */
+public final class CoordinateHud implements HudElement {
+    private static final int X = 5;
+    private static final int PADDING = 3;
+
+    private final DeathCoordinates deathCoordinates;
+    private final LogoutCoordinates logoutCoordinates;
+    private final CoordinateTracker tracker;
+    private final WaypointLocationProvider locations;
+    private final PanicState panicState;
+
+    public CoordinateHud(DeathCoordinates deathCoordinates, LogoutCoordinates logoutCoordinates,
+                         CoordinateTracker tracker, WaypointLocationProvider locations, PanicState panicState) {
+        this.deathCoordinates = Objects.requireNonNull(deathCoordinates, "deathCoordinates");
+        this.logoutCoordinates = Objects.requireNonNull(logoutCoordinates, "logoutCoordinates");
+        this.tracker = Objects.requireNonNull(tracker, "tracker");
+        this.locations = Objects.requireNonNull(locations, "locations");
+        this.panicState = Objects.requireNonNull(panicState, "panicState");
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
+        if (panicState.customHudHidden()) {
+            return;
+        }
+        List<String> lines = locations.currentLocation().map(location -> lines(location.context().scope())).orElseGet(List::of);
+        if (lines.isEmpty()) {
+            return;
+        }
+        Minecraft client = Minecraft.getInstance();
+        int width = lines.stream().mapToInt(client.font::width).max().orElse(0) + PADDING * 2;
+        int height = lines.size() * client.font.lineHeight + PADDING * 2;
+        int y = Math.max(5, graphics.guiHeight() - height - 5);
+        graphics.fill(X, y, X + width, y + height, 0xB014161B);
+        for (int index = 0; index < lines.size(); index++) {
+            graphics.text(client.font, Component.literal(lines.get(index)), X + PADDING,
+                    y + PADDING + index * client.font.lineHeight, 0xFFB5D8FF, true);
+        }
+    }
+
+    private List<String> lines(String scope) {
+        List<String> lines = new ArrayList<>(2);
+        if (deathCoordinates.isEnabled()) {
+            tracker.latestForScope(CoordinateKind.DEATH, scope).map(CoordinateEntry::displayText).ifPresent(lines::add);
+        }
+        if (logoutCoordinates.isEnabled()) {
+            tracker.latestForScope(CoordinateKind.LOGOUT, scope).map(CoordinateEntry::displayText).ifPresent(lines::add);
+        }
+        return List.copyOf(lines);
+    }
+}

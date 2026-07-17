@@ -45,8 +45,11 @@ import dev.helikon.client.gui.HelikonThemeEditorScreen;
 import dev.helikon.client.gui.HelikonAutoReconnectScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
 import dev.helikon.client.hud.BetterCrosshairHud;
+import dev.helikon.client.hud.CoordinateHud;
+import dev.helikon.client.hud.DurabilityWarningsHud;
 import dev.helikon.client.hud.ElytraHud;
 import dev.helikon.client.hud.HudLayout;
+import dev.helikon.client.hud.InventoryPreviewHud;
 import dev.helikon.client.hud.MiniPlayerHud;
 import dev.helikon.client.hud.RadarHud;
 import dev.helikon.client.hud.ReachDisplayHud;
@@ -101,6 +104,11 @@ import dev.helikon.client.module.movement.TimerModuleAccess;
 import dev.helikon.client.module.movement.WaterJump;
 import dev.helikon.client.module.movement.WaterJumpAccess;
 import dev.helikon.client.module.miscellaneous.Annoy;
+import dev.helikon.client.module.miscellaneous.CoordinateTracker;
+import dev.helikon.client.module.miscellaneous.DeathCoordinates;
+import dev.helikon.client.module.miscellaneous.DurabilityWarnings;
+import dev.helikon.client.module.miscellaneous.InventoryPreview;
+import dev.helikon.client.module.miscellaneous.LogoutCoordinates;
 import dev.helikon.client.module.miscellaneous.MinecraftMiscellaneousAccess;
 import dev.helikon.client.module.miscellaneous.MinecraftSkinLayerAccess;
 import dev.helikon.client.module.miscellaneous.OneClickFriends;
@@ -404,6 +412,11 @@ public final class HelikonClient implements ClientModInitializer {
         Annoy annoy = new Annoy();
         OneClickFriends oneClickFriends = new OneClickFriends();
         SkinBlinker skinBlinker = new SkinBlinker(new MinecraftSkinLayerAccess());
+        InventoryPreview inventoryPreview = new InventoryPreview();
+        DurabilityWarnings durabilityWarnings = new DurabilityWarnings();
+        DeathCoordinates deathCoordinates = new DeathCoordinates();
+        LogoutCoordinates logoutCoordinates = new LogoutCoordinates();
+        CoordinateTracker coordinateTracker = new CoordinateTracker();
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
@@ -463,6 +476,10 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(annoy);
         modules.register(oneClickFriends);
         modules.register(skinBlinker);
+        modules.register(inventoryPreview);
+        modules.register(durabilityWarnings);
+        modules.register(deathCoordinates);
+        modules.register(logoutCoordinates);
         ChatDisplayAccess.install(chatTimestamps);
         ChatDisplayAccess.install(chatColor);
         BetterChatDisplayAccess.install(betterChat);
@@ -487,6 +504,7 @@ public final class HelikonClient implements ClientModInitializer {
         AtomicBoolean combatAttackStarted = new AtomicBoolean();
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
+                waypointLocations.currentLocation().ifPresent(coordinateTracker::observe);
                 if (Minecraft.getInstance().level == null && timer.isEnabled()) {
                     modules.setEnabled(timer, false);
                 }
@@ -624,12 +642,16 @@ public final class HelikonClient implements ClientModInitializer {
             reconnectServer = null;
             lastConnectedServer = client.getCurrentServer();
             reconnectAttemptInFlight = false;
+            coordinateTracker.clearObservedLocation();
             AnnouncerAccess.enqueue(AnnouncementTrigger.JOIN, "joined the world");
             chatHistory.switchScope(chatHistoryModule, currentChatHistoryScope());
             events.post(new WorldEvent(WorldEvent.Phase.JOIN, serverAddress(lastConnectedServer)));
             modules.runGuarded(autoReconnect, "connect", autoReconnect::onConnected);
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            waypointLocations.currentLocation().ifPresent(coordinateTracker::observe);
+            modules.runGuarded(logoutCoordinates, "record", () -> logoutCoordinates.record(coordinateTracker)
+                    .ifPresent(entry -> notifier.info(entry.displayText())));
             modules.runGuarded(announcer, "leave", () -> announcer.messageFor(AnnouncementTrigger.LEAVE,
                     "left the world", System.currentTimeMillis(), false).ifPresent(notifier::info));
             AnnouncerAccess.reset();
@@ -644,10 +666,14 @@ public final class HelikonClient implements ClientModInitializer {
             if (timer.isEnabled()) {
                 modules.setEnabled(timer, false);
             }
+            coordinateTracker.clearObservedLocation();
         });
         events.subscribe(PlayerLifecycleEvent.class, event -> {
             if (event.phase() == PlayerLifecycleEvent.Phase.DEATH) {
                 AnnouncerAccess.enqueue(AnnouncementTrigger.DEATH, "died");
+                waypointLocations.currentLocation().ifPresent(coordinateTracker::observe);
+                modules.runGuarded(deathCoordinates, "record", () -> deathCoordinates.record(coordinateTracker)
+                        .ifPresent(entry -> notifier.info(entry.displayText())));
             }
         });
         ClientPlayerBlockBreakEvents.AFTER.register((level, player, position, state) -> {
@@ -681,6 +707,12 @@ public final class HelikonClient implements ClientModInitializer {
                 new TargetHud(targetHud, combatTracker, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "reach_display"),
                 new ReachDisplayHud(reachDisplay, combatTracker, panicState));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "inventory_preview"),
+                new InventoryPreviewHud(inventoryPreview, panicState));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "durability_warnings"),
+                new DurabilityWarningsHud(durabilityWarnings, panicState));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "coordinates"),
+                new CoordinateHud(deathCoordinates, logoutCoordinates, coordinateTracker, waypointLocations, panicState));
         LevelRenderEvents.BEFORE_GIZMOS.register(context -> {
             events.post(new RenderEvent(RenderEvent.Kind.WORLD, 0.0D, ""));
             worldVisuals.render(context);

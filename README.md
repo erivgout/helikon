@@ -333,9 +333,15 @@ Friend names and colors are also stored locally only in `friends.json`. With
 **OneClickFriends** enabled, middle-clicking a player in the world toggles that
 local friend entry; this does not consume or alter normal middle-click actions
 on blocks or items. SkinBlinker changes only the session-local skin-layer
-options and restores them on disable or world exit. Annoy is disabled by
+options and restores them on disable, screen open, or world exit. Annoy is disabled by
 default and makes at most one ordinary main-hand swing every configured 20–600
 ticks; it never attacks, targets, or sends chat.
+Inventory Preview and Durability Warnings render only already-loaded local
+inventory facts; neither opens an inventory nor changes an item. Death
+Coordinates and Logout Coordinates retain one enabled-only, session-local
+coordinate snapshot and show local chat/HUD feedback only in the same local
+server or singleplayer-world scope. They do not create a waypoint, write a
+coordinate file, or send location data, and reset on restart.
 Waypoints are scoped locally to the current server/world and dimension; their
 nearest enabled entries appear as a small direction-and-distance HUD list.
 Waypoint names, coordinates, world/server scope, dimension, colors, icons, and

@@ -53,6 +53,13 @@ Minecraft's normal main-hand swing path for one ordinary swing. That path is
 server-visible under normal Minecraft rules, but Annoy never constructs,
 modifies, or replays a packet, attacks, changes a target, or sends chat.
 
+Inventory Preview and Durability Warnings read only local `Inventory` and
+`ItemStack` state to produce HUD extraction calls. They never open a screen,
+move an item, or send a packet. Death Coordinates and Logout Coordinates retain
+one session-local coordinate snapshot from the existing local waypoint-location
+adapter and emit optional local system feedback; they never make a waypoint,
+write a coordinate file, or transmit position data.
+
 AutoTool only selects an existing local hotbar slot while the player is already
 using Minecraft's normal mining interaction. It does not construct or replay
 mining, inventory, or slot-selection packets.

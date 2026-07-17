@@ -114,9 +114,15 @@ When porting:
     `Options.isModelPartEnabled` for Annoy and SkinBlinker. Preserve Twerk's
     screen suppression, Annoy's ordinary bounded swing path, and SkinBlinker's
     session-only no-save/no-broadcast restoration behavior.
-30. Run the manual smoke test in an empty profile and with no internet access.
-31. Document compatibility changes and retained limitations before release.
-32. Re-run `check releaseBundle`, inspect the generated checksum and resolved
+30. Revalidate `Inventory.getNonEquipmentItems`, its 36-item/9-hotbar layout,
+    `ItemStack` damage methods, `LivingEntity.getItemBySlot`, and HUD
+    `GuiGraphicsExtractor.item`/`itemDecorations` calls before changing the
+    local inventory preview or durability warnings. Revalidate the local
+    waypoint-location adapter at death/disconnect boundaries; retain the
+    session-only, no-waypoint/no-file coordinate policy.
+31. Run the manual smoke test in an empty profile and with no internet access.
+32. Document compatibility changes and retained limitations before release.
+33. Re-run `check releaseBundle`, inspect the generated checksum and resolved
     dependency report, and repeat the focused live-client smoke checks before
     packaging a release for the target version.
 

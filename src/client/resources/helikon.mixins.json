@@ -37,6 +37,7 @@
     "MinecraftEntityEspGlowMixin",
     "MinecraftResourceReloadEventMixin",
     "MultiPlayerGameModeEventMixin",
+    "MultiPlayerGameModeHitSwapMixin",
     "MultiPlayerGameModeAccessor",
     "SectionCompilerXRayMixin",
     "ConnectionPacketObservationMixin",

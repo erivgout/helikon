@@ -21,6 +21,7 @@
     "FishingHookAccessor",
     "GameRendererMixin",
     "HudMixin",
+    "IndigoXRayMixin",
     "ItemFeatureRendererMixin",
     "KeyMappingAccessor",
     "KeyboardInputMixin",

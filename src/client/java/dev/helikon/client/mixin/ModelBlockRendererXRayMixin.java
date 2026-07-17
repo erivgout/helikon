@@ -16,6 +16,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 /** Emits all selected-block faces and applies XRay opacity only during local chunk compilation. */
 @Mixin(ModelBlockRenderer.class)
 abstract class ModelBlockRendererXRayMixin {
+    private static final int FULL_BRIGHT_LIGHTMAP = 0x00F000F0;
+
     @Redirect(method = "shouldRenderFace", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/level/block/Block;shouldRenderFace(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z"))
     private boolean helikon$keepSelectedBlockFaces(BlockState state, BlockState adjacentState, Direction direction) {
@@ -35,6 +37,7 @@ abstract class ModelBlockRendererXRayMixin {
             int color = instance.getColor(index);
             int alpha = Math.round(((color >>> 24) & 0xFF) * opacity);
             instance.setColor(index, (color & 0x00FFFFFF) | (alpha << 24));
+            instance.setLightCoords(index, FULL_BRIGHT_LIGHTMAP);
         }
         output.put(x, y, z, translucentQuad(quad), instance);
     }

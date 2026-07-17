@@ -2,8 +2,9 @@ package dev.helikon.client.render;
 
 import dev.helikon.client.module.render.XRay;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.SectionPos;
 
-/** Verified 26.2 bridge that rebuilds local compiled chunk geometry after XRay changes. */
+/** Marks the local 26.2 render-section range dirty after XRay changes. */
 public final class MinecraftXRayRendererInvalidator implements XRay.RendererInvalidator {
     @Override
     public void invalidateGeometry() {
@@ -11,7 +12,10 @@ public final class MinecraftXRayRendererInvalidator implements XRay.RendererInva
         if (client.level == null) {
             return;
         }
-        client.levelRenderer.invalidateCompiledGeometry(client.level, client.options,
-                client.gameRenderer.mainCamera(), client.getBlockColors());
+        SectionPos cameraSection = SectionPos.of(client.gameRenderer.mainCamera().position());
+        int viewDistance = client.options.getEffectiveRenderDistance();
+        client.level.setSectionRangeDirty(cameraSection.x() - viewDistance, client.level.getMinSectionY(),
+                cameraSection.z() - viewDistance, cameraSection.x() + viewDistance,
+                client.level.getMaxSectionY() - 1, cameraSection.z() + viewDistance);
     }
 }

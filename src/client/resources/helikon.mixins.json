@@ -12,6 +12,7 @@
     "ClientChunkCacheEventMixin",
     "EntityRendererChamsOutlineMixin",
     "MinecraftChamsGlowMixin",
+    "ClientPacketListenerKnockbackDelayMixin",
     "AnnouncerAdvancementMixin",
     "AnnouncerGameModeMixin",
     "AnnouncerItemEntityMixin",

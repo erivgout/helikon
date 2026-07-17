@@ -83,6 +83,7 @@ import dev.helikon.client.module.combat.BlockHit;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.HitFlick;
+import dev.helikon.client.module.combat.HitSelect;
 import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MinecraftBlockHitUseKey;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
@@ -471,6 +472,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoClicker autoClicker = new AutoClicker();
         BlockHit blockHit = new BlockHit(new MinecraftBlockHitUseKey());
         HitFlick hitFlick = new HitFlick();
+        HitSelect hitSelect = new HitSelect();
         ReachDisplay reachDisplay = new ReachDisplay();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
         Annoy annoy = new Annoy();
@@ -550,6 +552,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoClicker);
         modules.register(blockHit);
         modules.register(hitFlick);
+        modules.register(hitSelect);
         modules.register(reachDisplay);
         modules.register(annoy);
         modules.register(oneClickFriends);
@@ -673,6 +676,12 @@ public final class HelikonClient implements ClientModInitializer {
                  });
                  modules.runGuarded(blockHit, "tick", () -> MinecraftCombatAccess.tickBlockHit(clientTick, blockHit,
                          combatSnapshot.get()));
+                modules.runGuarded(hitSelect, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftCombatAccess.tickHitSelect(clientTick, hitSelect,
+                                combatSnapshot.get(), combatTracker));
+                    }
+                });
             }
         });
 

@@ -153,6 +153,22 @@ public final class MinecraftCombatAccess {
         return attack(client, snapshot.entities().get(target.id()), target, tracker);
     }
 
+    public static boolean tickHitSelect(long tick, HitSelect hitSelect, Snapshot snapshot, CombatTargetTracker tracker) {
+        Minecraft client = Minecraft.getInstance();
+        if (!readyForAttack(client, snapshot) || snapshot.crosshairTarget() == null) {
+            return false;
+        }
+        LocalPlayer player = client.player;
+        HitSelect.Context context = new HitSelect.Context(client.options.keyAttack.isDown(),
+                player.getAttackStrengthScale(0.0F), player.isSprinting(), player.onGround(),
+                player.isInWater() || player.isInLava(), player.onClimbable(), player.isFallFlying(),
+                player.fallDistance, player.getDeltaMovement().y, isMeleeWeapon(player.getMainHandItem()));
+        if (hitSelect.shouldAttack(tick, snapshot.crosshairTarget(), context)) {
+            return attack(client, snapshot.entities().get(snapshot.crosshairTarget().id()), snapshot.crosshairTarget(), tracker);
+        }
+        return false;
+    }
+
     public static boolean tickKillAura(long tick, KillAura killAura, Snapshot snapshot, CombatTargetTracker tracker) {
         Minecraft client = Minecraft.getInstance();
         if (!readyForAttack(client, snapshot)) {

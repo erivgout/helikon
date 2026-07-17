@@ -118,6 +118,7 @@ import dev.helikon.client.module.combat.Protect;
 import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
 import dev.helikon.client.module.combat.MinecraftCrystalAccess;
+import dev.helikon.client.module.combat.MinecraftTpAuraAccess;
 import dev.helikon.client.module.combat.MinecraftAutoRespawnAccess;
 import dev.helikon.client.module.combat.MinecraftHitSwapAccess;
 import dev.helikon.client.module.combat.ReachDisplay;
@@ -125,6 +126,7 @@ import dev.helikon.client.module.combat.RightClicker;
 import dev.helikon.client.module.combat.SilentAura;
 import dev.helikon.client.module.combat.TargetFilter;
 import dev.helikon.client.module.combat.TriggerBot;
+import dev.helikon.client.module.combat.TpAura;
 import dev.helikon.client.module.combat.WTap;
 import dev.helikon.client.module.combat.WTapAccess;
 import dev.helikon.client.module.combat.Velocity;
@@ -635,6 +637,7 @@ public final class HelikonClient implements ClientModInitializer {
         HitSelect hitSelect = new HitSelect();
         HitSwap hitSwap = new HitSwap();
         SilentAura silentAura = new SilentAura();
+        TpAura tpAura = new TpAura();
         WTap wtap = new WTap();
         AutoAnchor autoAnchor = new AutoAnchor();
         CrystalAura crystalAura = new CrystalAura();
@@ -754,6 +757,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(hitSelect);
         modules.register(hitSwap);
         modules.register(silentAura);
+        modules.register(tpAura);
         modules.register(wtap);
         modules.register(autoAnchor);
         modules.register(crystalAura);
@@ -967,6 +971,12 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(silentAura, "tick", () -> {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftCombatAccess.tickSilentAura(clientTick, silentAura,
+                                combatSnapshot.get(), combatTracker));
+                    }
+                });
+                modules.runGuarded(tpAura, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftTpAuraAccess.tick(clientTick, tpAura,
                                 combatSnapshot.get(), combatTracker));
                     }
                 });

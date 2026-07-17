@@ -91,9 +91,16 @@ When porting:
    changing Freecam. It must not add an entity to the level or move the player.
 27. Revalidate hotbar selection, held-block tests, loaded target/support
    checks, normal `useItemOn`, rotation, and use-cooldown APIs before changing
-   Scaffold. Keep player-provided blocks and ordinary interaction requirements.
-28. Run the manual smoke test in an empty profile and with no internet access.
-29. Document compatibility changes and retained limitations before release.
+    Scaffold. Keep player-provided blocks and ordinary interaction requirements.
+28. Revalidate `Minecraft.hitResult`, rendered-entity iteration, player tab-list
+    lookup, `LivingEntity` health/armor/effect/line-of-sight APIs,
+    `LocalPlayer.getAttackStrengthScale`, `MultiPlayerGameMode.attack`, normal
+    held-potion `useItem`, potion components/effects, bow rotation setters, and
+    Gizmo cuboids before changing combat modules. Preserve the single ordinary
+    Helikon attack-per-tick guard, line-of-sight rule, user-held bow rule, and
+    no-packet policy.
+29. Run the manual smoke test in an empty profile and with no internet access.
+30. Document compatibility changes and retained limitations before release.
 
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

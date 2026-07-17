@@ -54,3 +54,9 @@ and Elytra status needed for the current session. Freecam's temporary camera
 entity is never added to the world, persisted, or transmitted. No movement
 module writes a route, block-placement history, speed trace, fall trace, or
 camera position to disk or a service.
+
+Combat keeps only transient local target facts, anti-bot heuristic inputs, a
+current HUD target, and the most recent Helikon-requested attack distance.
+These values are bounded session memory, are not persisted, and are never sent
+to a Helikon service. AutoPotion reads only the player's current hotbar potion
+components and does not store inventory contents.

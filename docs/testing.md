@@ -73,6 +73,11 @@ hotbar selection, and safe timer multiplier are covered by
 `AdvancedMovementPolicyTest`. Mixin/HUD/freecam wiring is additionally covered
 by the live-client checklist below because it relies on verified 26.2 client
 hooks.
+Combat filtering, deterministic selection, bounded bow smoothing, legitimate
+critical gates, restorative-potion slot ownership, anti-bot heuristics, and
+session HUD tracking are covered by `CombatPolicyTest`. Minecraft combat and
+HUD wiring additionally have the manual checklist below because they depend on
+verified 26.2 local game APIs.
 
 ## Manual Active Modules HUD smoke test
 
@@ -358,6 +363,24 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     screens. Finally set **Timer** within its safe range, verify it disables on
     disconnect/world leave, and confirm no module claims server-side movement
     or tick-rate changes.
+43. In a disposable local/test world, enable each **Combat** module separately.
+    Verify **TriggerBot** acts only for a visible crosshair target with normal
+    cooldown and, with its option enabled, a conventional melee item. Verify
+    **BowAimAssist** moves the local view gradually only while Use is held with
+    a bow, draws one local target outline, never releases the bow, and clears
+    the outline on disable/world leave. While falling normally with Attack
+    held, verify **CriticalAssist** requests no attack when grounded, in water,
+    climbing, or fall-flying. Verify **KillAura** respects its range/FOV,
+    friend/bot exclusions (including the configured invisible heuristic), delay, bounded rotation speed, priority, and single/switch mode, never
+    selects a target behind a solid block, and makes no more than one ordinary
+    Helikon attack request in a tick alongside the other combat modules. Put a
+    healing splash/drink potion and a non-healing potion in the hotbar; verify
+    **AutoPotion** selects only the configured healing potion below its health
+    threshold, uses Minecraft's normal item path, then restores its owned slot.
+    Verify **TargetHUD** shows only local crosshair/attack facts and
+    **ReachDisplay** reports only a measured Helikon attack request distance.
+    Finally toggle **AntiBot** options with a test player/list state and verify
+    they merely exclude local targets and create no network/service request.
 
 ## Manual command and keybind smoke test
 

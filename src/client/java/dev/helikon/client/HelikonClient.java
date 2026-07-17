@@ -13,6 +13,7 @@ import dev.helikon.client.chat.ChatDisplayAccess;
 import dev.helikon.client.chat.BetterChatDisplayAccess;
 import dev.helikon.client.chat.IncomingChatMessage;
 import dev.helikon.client.chat.IncomingMessageAdapter;
+import dev.helikon.client.combat.CombatTargetTracker;
 import dev.helikon.client.automation.MinecraftContainerClicker;
 import dev.helikon.client.config.ConfigurationException;
 import dev.helikon.client.config.ConfigurationManager;
@@ -34,6 +35,8 @@ import dev.helikon.client.hud.ElytraHud;
 import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.hud.MiniPlayerHud;
 import dev.helikon.client.hud.RadarHud;
+import dev.helikon.client.hud.ReachDisplayHud;
+import dev.helikon.client.hud.TargetHud;
 import dev.helikon.client.hud.WaypointHud;
 import dev.helikon.client.input.HelikonKeybinds;
 import dev.helikon.client.input.KeybindManager;
@@ -45,6 +48,14 @@ import dev.helikon.client.macro.MacroServerContextProvider;
 import dev.helikon.client.macro.MinecraftMacroActionExecutor;
 import dev.helikon.client.macro.MinecraftMacroServerContextProvider;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.module.combat.AntiBot;
+import dev.helikon.client.module.combat.AutoPotion;
+import dev.helikon.client.module.combat.BowAimAssist;
+import dev.helikon.client.module.combat.CriticalAssist;
+import dev.helikon.client.module.combat.KillAura;
+import dev.helikon.client.module.combat.MinecraftCombatAccess;
+import dev.helikon.client.module.combat.ReachDisplay;
+import dev.helikon.client.module.combat.TriggerBot;
 import dev.helikon.client.module.movement.AutoSprint;
 import dev.helikon.client.module.movement.AutoSneak;
 import dev.helikon.client.module.movement.AutoWalk;
@@ -173,6 +184,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -300,6 +312,15 @@ public final class HelikonClient implements ClientModInitializer {
         ChatTimestamps chatTimestamps = new ChatTimestamps();
         ChatColor chatColor = new ChatColor();
         BetterChat betterChat = new BetterChat();
+        AntiBot antiBot = new AntiBot();
+        TriggerBot triggerBot = new TriggerBot();
+        BowAimAssist bowAimAssist = new BowAimAssist();
+        CriticalAssist criticalAssist = new CriticalAssist();
+        AutoPotion autoPotion = new AutoPotion();
+        dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
+        KillAura killAura = new KillAura();
+        ReachDisplay reachDisplay = new ReachDisplay();
+        CombatTargetTracker combatTracker = new CombatTargetTracker();
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
@@ -336,6 +357,14 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(chatTimestamps);
         modules.register(chatColor);
         modules.register(betterChat);
+        modules.register(antiBot);
+        modules.register(triggerBot);
+        modules.register(bowAimAssist);
+        modules.register(criticalAssist);
+        modules.register(autoPotion);
+        modules.register(targetHud);
+        modules.register(killAura);
+        modules.register(reachDisplay);
         ChatDisplayAccess.install(chatTimestamps);
         ChatDisplayAccess.install(chatColor);
         BetterChatDisplayAccess.install(betterChat);
@@ -347,8 +376,11 @@ public final class HelikonClient implements ClientModInitializer {
         TimerModuleAccess.install(timer);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
-                breadcrumbs, builderAssist
+                breadcrumbs, builderAssist, bowAimAssist
         );
+        AtomicReference<MinecraftCombatAccess.Snapshot> combatSnapshot = new AtomicReference<>(
+                MinecraftCombatAccess.Snapshot.unavailable());
+        AtomicBoolean combatAttackStarted = new AtomicBoolean();
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
                 if (Minecraft.getInstance().level == null && timer.isEnabled()) {
@@ -375,6 +407,32 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(chestSteal, "tick", () -> tickChestSteal(chestSteal, clientTick));
                 modules.runGuarded(builderAssist, "tick", () -> MinecraftBuilderAssistAccess.tick(builderAssist, clientTick));
                 modules.runGuarded(chatSpammer, "tick", () -> tickChatSpammer(chatSpammer));
+                combatAttackStarted.set(false);
+                combatSnapshot.set(MinecraftCombatAccess.Snapshot.unavailable());
+                modules.runGuarded(antiBot, "observe", () -> combatSnapshot.set(MinecraftCombatAccess.observe(friends, antiBot)));
+                modules.runGuarded(targetHud, "tick", () -> MinecraftCombatAccess.observeTarget(targetHud,
+                        combatSnapshot.get(), combatTracker));
+                modules.runGuarded(autoPotion, "tick", () -> MinecraftCombatAccess.tickAutoPotion(clientTick, autoPotion));
+                modules.runGuarded(bowAimAssist, "tick", () -> MinecraftCombatAccess.tickBowAim(bowAimAssist,
+                        combatSnapshot.get()));
+                modules.runGuarded(triggerBot, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftCombatAccess.tickTriggerBot(clientTick, triggerBot,
+                                combatSnapshot.get(), combatTracker));
+                    }
+                });
+                modules.runGuarded(criticalAssist, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftCombatAccess.tickCriticalAssist(clientTick, criticalAssist,
+                                combatSnapshot.get(), combatTracker));
+                    }
+                });
+                modules.runGuarded(killAura, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftCombatAccess.tickKillAura(clientTick, killAura,
+                                combatSnapshot.get(), combatTracker));
+                    }
+                });
             }
         });
 
@@ -451,6 +509,10 @@ public final class HelikonClient implements ClientModInitializer {
                 new MiniPlayerHud(miniPlayer, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "elytra"),
                 new ElytraHud(extraElytra, panicState));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "target_hud"),
+                new TargetHud(targetHud, combatTracker, panicState));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "reach_display"),
+                new ReachDisplayHud(reachDisplay, combatTracker, panicState));
         LevelRenderEvents.BEFORE_GIZMOS.register(worldVisuals::render);
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             screenWasOpenAtTickStart = client.gui.screen() != null;

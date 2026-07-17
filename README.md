@@ -42,9 +42,22 @@ screen to retry the same remembered server for a bounded number of attempts;
 it declines local/singleplayer targets and a disconnect that never reaches the
 ordinary disconnect screen. BuilderAssist previews small loaded replaceable
 line/floor/wall plans while a player-provided block is held and sends at most
-one ordinary Use interaction at its configured cadence. Combat tools, packet
-manipulation, external networking, telemetry, a custom backend, and a
-server-side component remain unimplemented.
+one ordinary Use interaction at its configured cadence. Packet manipulation,
+external networking, telemetry, a custom backend, and a server-side component
+remain unimplemented.
+
+Combat tools are deliberately constrained to Minecraft's ordinary client
+paths. TriggerBot and KillAura make at most one normal locally observed, line-of-sight
+attack request per client tick; CriticalAssist acts only while the user holds
+Attack during an ordinary falling critical window. BowAimAssist smooths only
+the local view while the user holds a bow and draws a local target outline; it
+never fires the bow. AutoPotion uses only player-owned, locally identified
+restorative hotbar potions, then restores a slot it still owns. AntiBot uses
+local tab-list/profile/age/name/invisibility heuristics only. TargetHUD and
+ReachDisplay render local observed facts; ReachDisplay reports distances for
+Helikon's own ordinary attack requests and never claims modified reach. KillAura
+also uses a configurable bounded local rotation adjustment before its normal
+attack request.
 
 The advanced movement modules remain deliberately conservative. NoSlow changes
 only selected local vanilla slowdown calculations; FastLadders, Step, Speed,

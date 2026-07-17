@@ -2,6 +2,7 @@ package dev.helikon.client.render;
 
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.Breadcrumbs;
 import dev.helikon.client.module.render.DamageIndicators;
@@ -74,6 +75,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final DamageIndicators damageIndicators;
     private final Breadcrumbs breadcrumbs;
     private final BuilderAssist builderAssist;
+    private final BowAimAssist bowAimAssist;
     private final BlockEspScanCursor blockCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor blockAnchor = new BlockEspScanAnchor();
     private final BlockEspCache blockCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
@@ -89,7 +91,7 @@ public final class MinecraftWorldVisualizationRenderer {
     public MinecraftWorldVisualizationRenderer(ModuleRegistry modules, FriendManager friends, EntityEsp entityEsp,
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
                                                 TrueSight trueSight, StorageEsp storageEsp, DamageIndicators damageIndicators,
-                                                Breadcrumbs breadcrumbs, BuilderAssist builderAssist) {
+                                                Breadcrumbs breadcrumbs, BuilderAssist builderAssist, BowAimAssist bowAimAssist) {
         this.modules = Objects.requireNonNull(modules, "modules");
         this.friends = Objects.requireNonNull(friends, "friends");
         this.entityEsp = Objects.requireNonNull(entityEsp, "entityEsp");
@@ -101,6 +103,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.damageIndicators = Objects.requireNonNull(damageIndicators, "damageIndicators");
         this.breadcrumbs = Objects.requireNonNull(breadcrumbs, "breadcrumbs");
         this.builderAssist = Objects.requireNonNull(builderAssist, "builderAssist");
+        this.bowAimAssist = Objects.requireNonNull(bowAimAssist, "bowAimAssist");
         this.blockEsp.setCacheClearer(this::resetBlockScanner);
         this.storageEsp.setCacheClearer(this::resetStorageScanner);
     }
@@ -189,6 +192,9 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (builderAssist.isEnabled()) {
             modules.runGuarded(builderAssist, "render", () -> renderBuilderPreview(client));
+        }
+        if (bowAimAssist.isEnabled()) {
+            modules.runGuarded(bowAimAssist, "render", () -> renderBowAimMarker(client.level));
         }
     }
 
@@ -307,6 +313,19 @@ public final class MinecraftWorldVisualizationRenderer {
                 return;
             }
         }
+    }
+
+    /** Draws one local outline around BowAimAssist's currently predicted target. */
+    private void renderBowAimMarker(ClientLevel level) {
+        bowAimAssist.markerTargetId().ifPresent(targetId -> {
+            for (Entity entity : level.entitiesForRendering()) {
+                if (entity.getUUID().toString().equals(targetId)) {
+                    Gizmos.cuboid(entity.getBoundingBox().inflate(0.08D),
+                            GizmoStyle.strokeAndFill(0xFFFFD54F, 1.5F, 0x303FFF00)).setAlwaysOnTop();
+                    return;
+                }
+            }
+        });
     }
 
     private void renderTrajectories(ClientLevel level, Frustum frustum) {

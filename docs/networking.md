@@ -70,6 +70,17 @@ block through Minecraft's normal `useItemOn` path after loaded-target/support
 checks. It does not choose blocks outside the hotbar or construct placement
 packets.
 
+Combat modules do not construct, modify, replay, or spoof packets. TriggerBot,
+CriticalAssist, and KillAura may ask Minecraft to perform one ordinary local
+attack after their local cooldown, target, and line-of-sight checks; the shared
+bridge permits at most one such request per tick and the server remains fully
+authoritative for damage, reach, cooldown, and validation. BowAimAssist only
+changes local view rotation while the user holds a bow and never fires it.
+AutoPotion selects an existing restorative hotbar potion and calls Minecraft's
+normal held-item Use method; no inventory or potion packet is fabricated.
+AntiBot, TargetHUD, and ReachDisplay consume only already-loaded local facts
+and create no network traffic.
+
 AutoArmor, AutoEject, AutoTotem, InventoryManager, and ChestSteal make no
 packet themselves. When their narrow screen/cursor guards pass, the client
 asks Minecraft to process an ordinary vanilla container input (pickup,

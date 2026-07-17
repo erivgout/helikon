@@ -88,6 +88,23 @@ Scaffold is similarly constrained to a selected player-provided hotbar block,
 a loaded replaceable target with local support, an existing vanilla use
 cooldown, and one normal held-block interaction.
 
+Combat uses `CombatTarget`, `CombatTargetFilter`, `CombatAim`, and
+`AutoPotion`'s candidate/action policy without Minecraft types. The combat
+adapter collects only rendered living entities and local tab-list/profile facts,
+then invokes Minecraft's normal `attack` or held-item `useItem` method after
+the corresponding module policy permits it. A shared per-tick guard permits at
+most one Helikon attack request across TriggerBot, CriticalAssist, and
+KillAura. KillAura/TriggerBot/CriticalAssist require the locally observed
+line-of-sight fact, so the adapter never requests attacks through solid blocks.
+BowAimAssist only updates the local view while the user holds a normal bow; it
+does not fire it. AntiBot is an in-memory heuristic filter, not a remote lookup.
+TargetHUD and ReachDisplay render session-only observed data; the latter records
+only Helikon's normal attack request distance and does not imply server reach.
+KillAura applies the same bounded local rotation policy before its normal attack
+request. TargetHUD retains the last crosshair or Helikon attack target while it
+remains in the current locally rendered target set, then clears it on absence or
+world loss; it does not flash a non-crosshair target for only one frame.
+
 The inventory-automation modules keep armor ranking, item-ID/slot parsing,
 totem restore conditions, chest priority, and conservative manager choices in
 Minecraft-free classes. `MinecraftContainerClicker` is the sole narrow adapter:

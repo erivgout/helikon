@@ -110,6 +110,48 @@ class CombatPolicyTest {
     }
 
     @Test
+    void autoPearlThrowsAtFleeingTargetThenRestoresOwnedSlot() {
+        AutoPearl pearl = enabled(new AutoPearl());
+        CombatTarget fleeing = fleeing("run", 20.0D, 0.5D);
+
+        AutoPearl.Action thrown = pearl.update(0L, new AutoPearl.Context(4, 2, false, false, List.of(fleeing)));
+        assertEquals(AutoPearl.ActionType.SELECT_AND_THROW, thrown.type());
+        assertEquals(2, thrown.slot());
+        assertTrue(thrown.rotate());
+        assertTrue(thrown.pitch() < 0.0F, "an away-and-level target requires a slight upward pearl arc");
+
+        AutoPearl.Action restore = pearl.update(1L, new AutoPearl.Context(2, 2, false, false, List.of()));
+        assertEquals(AutoPearl.ActionType.RESTORE_SLOT, restore.type());
+        assertEquals(4, restore.slot());
+    }
+
+    @Test
+    void autoPearlSkipsApproachingNearCoolingDownAndFriendTargets() {
+        AutoPearl pearl = enabled(new AutoPearl());
+        CombatTarget approaching = fleeing("toward", 20.0D, -0.5D);
+        CombatTarget tooNear = fleeing("near", 5.0D, 0.5D);
+        CombatTarget fleeing = fleeing("run", 20.0D, 0.5D);
+        CombatTarget friend = new CombatTarget("friend", "friend", CombatEntityType.PLAYER, true, false, true, true,
+                false, 20.0D, 0.0D, 0.0D, 0.0D, 20.0D, 0.0D, 0.0D, 0.5D, 20.0D, 0, "minecraft:air", List.of());
+
+        assertEquals(AutoPearl.ActionType.NONE,
+                pearl.update(0L, new AutoPearl.Context(4, 2, false, false, List.of(approaching))).type());
+        assertEquals(AutoPearl.ActionType.NONE,
+                pearl.update(0L, new AutoPearl.Context(4, 2, false, false, List.of(tooNear))).type());
+        assertEquals(AutoPearl.ActionType.NONE,
+                pearl.update(0L, new AutoPearl.Context(4, 2, false, false, List.of(friend))).type());
+        assertEquals(AutoPearl.ActionType.NONE,
+                pearl.update(0L, new AutoPearl.Context(4, 2, false, true, List.of(fleeing))).type());
+        assertEquals(AutoPearl.ActionType.NONE,
+                pearl.update(0L, new AutoPearl.Context(4, -1, false, false, List.of(fleeing))).type());
+    }
+
+    private static CombatTarget fleeing(String id, double distance, double awayVelocityZ) {
+        return new CombatTarget(id, id, CombatEntityType.PLAYER, false, false, true, true, false, distance, 0.0D,
+                0.0D, 0.0D, distance, 0.0D, 0.0D, awayVelocityZ, 20.0D, 0, "minecraft:air", List.of());
+    }
+
+    @Test
     void antiBotAndHudTrackerRemainLocalAndBounded() {
         AntiBot antiBot = enabled(new AntiBot());
         assertTrue(antiBot.isSuspected(new AntiBot.Facts(false, false, 20, false, false, true)));

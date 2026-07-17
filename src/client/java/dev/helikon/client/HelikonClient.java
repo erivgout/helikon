@@ -75,6 +75,7 @@ import dev.helikon.client.macro.MinecraftMacroServerContextProvider;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.ModuleTimingMetrics;
 import dev.helikon.client.module.combat.AntiBot;
+import dev.helikon.client.module.combat.AutoPearl;
 import dev.helikon.client.module.combat.AutoPotion;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
@@ -451,6 +452,7 @@ public final class HelikonClient implements ClientModInitializer {
         BowAimAssist bowAimAssist = new BowAimAssist();
         CriticalAssist criticalAssist = new CriticalAssist();
         AutoPotion autoPotion = new AutoPotion();
+        AutoPearl autoPearl = new AutoPearl();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
         ReachDisplay reachDisplay = new ReachDisplay();
@@ -523,6 +525,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(bowAimAssist);
         modules.register(criticalAssist);
         modules.register(autoPotion);
+        modules.register(autoPearl);
         modules.register(targetHud);
         modules.register(killAura);
         modules.register(reachDisplay);
@@ -606,6 +609,8 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(targetHud, "tick", () -> MinecraftCombatAccess.observeTarget(targetHud,
                         combatSnapshot.get(), combatTracker));
                 modules.runGuarded(autoPotion, "tick", () -> MinecraftCombatAccess.tickAutoPotion(clientTick, autoPotion));
+                modules.runGuarded(autoPearl, "tick", () -> MinecraftCombatAccess.tickAutoPearl(clientTick, autoPearl,
+                        combatSnapshot.get()));
                 modules.runGuarded(bowAimAssist, "tick", () -> MinecraftCombatAccess.tickBowAim(bowAimAssist,
                         combatSnapshot.get()));
                 modules.runGuarded(triggerBot, "tick", () -> {

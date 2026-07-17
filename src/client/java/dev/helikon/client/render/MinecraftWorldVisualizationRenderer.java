@@ -60,6 +60,9 @@ import java.util.PriorityQueue;
  */
 public final class MinecraftWorldVisualizationRenderer {
     private static final int MAXIMUM_CACHED_BLOCKS = 512;
+    private static final double NAMETAG_BASE_OFFSET = 0.35D;
+    /** Vanilla debug-gizmo spacing (0.25 at scale 0.5) at the default 0.32 text scale. */
+    private static final double NAMETAG_LINE_SPACING = 0.17D;
     private static final TrajectorySimulator.Physics ARROW_PHYSICS = new TrajectorySimulator.Physics(
             0.05D, 0.99D, TrajectorySimulator.GravityOrder.AFTER_DRAG, TrajectorySimulator.UpdateTiming.AFTER_MOVE
     );
@@ -413,14 +416,17 @@ public final class MinecraftWorldVisualizationRenderer {
             BetterNametagText.Facts facts = new BetterNametagText.Facts(player.getGameProfile().name(), player.getHealth(),
                     player.getMaxHealth(), player.getArmorValue(), Math.sqrt(player.position().distanceToSqr(localPlayer.position())),
                     BuiltInRegistries.ITEM.getKey(player.getMainHandItem().getItem()).toString());
-            Gizmos.billboardText(BetterNametagText.format(facts, options, friend),
-                    new Vec3(player.getX(), player.getY() + player.getBbHeight() + 0.35D, player.getZ()),
-                    TextGizmo.Style.forColorAndCentered(nametagColor(options, friend)));
+            List<BetterNametagText.Line> lines = BetterNametagText.lines(facts, options, friend);
+            double baseY = player.getY() + player.getBbHeight() + NAMETAG_BASE_OFFSET;
+            for (int index = 0; index < lines.size(); index++) {
+                BetterNametagText.Line line = lines.get(index);
+                Gizmos.billboardText(line.text(),
+                        new Vec3(player.getX(),
+                                baseY + BetterNametagText.stackOffset(index, lines.size()) * NAMETAG_LINE_SPACING,
+                                player.getZ()),
+                        TextGizmo.Style.forColorAndCentered(line.color()));
+            }
         }
-    }
-
-    static int nametagColor(BetterNametags.Options options, boolean friend) {
-        return friend && options.friendStatus() ? 0xFF80CBC4 : 0xFFE5EDF5;
     }
 
     /** Draws one local outline around BowAimAssist's currently predicted target. */

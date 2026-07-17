@@ -2,34 +2,100 @@ package dev.helikon.client.render;
 
 import dev.helikon.client.module.render.BetterNametags;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-/** Minecraft-free composition of bounded local name-tag facts. */
+/**
+ * Minecraft-free composition of bounded local name-tag facts as stacked,
+ * individually colored rows: name, health, armor, then distance/held item.
+ */
 public final class BetterNametagText {
+    public static final int COLOR_NAME = 0xFFE5EDF5;
+    public static final int COLOR_FRIEND = 0xFF80CBC4;
+    public static final int COLOR_HEALTH_HIGH = 0xFF81C784;
+    public static final int COLOR_HEALTH_MEDIUM = 0xFFFFD54F;
+    public static final int COLOR_HEALTH_LOW = 0xFFE57373;
+    public static final int COLOR_ARMOR = 0xFFB0BEC5;
+    public static final int COLOR_DETAIL = 0xFF9AA1AB;
+
+    private static final String VANILLA_NAMESPACE = "minecraft:";
+    private static final String EMPTY_HAND_ID = "minecraft:air";
+
     private BetterNametagText() {
     }
 
-    public static String format(Facts facts, BetterNametags.Options options, boolean friend) {
+    /** Rows ordered top to bottom; only enabled, non-empty facts produce a row. */
+    public static List<Line> lines(Facts facts, BetterNametags.Options options, boolean friend) {
         Objects.requireNonNull(facts, "facts");
         Objects.requireNonNull(options, "options");
-        StringBuilder text = new StringBuilder(facts.name());
-        if (options.friendStatus() && friend) {
-            text.append(" [Friend]");
-        }
+        List<Line> lines = new ArrayList<>(4);
+        boolean markedFriend = options.friendStatus() && friend;
+        lines.add(new Line(markedFriend ? facts.name() + " [Friend]" : facts.name(),
+                markedFriend ? COLOR_FRIEND : COLOR_NAME));
         if (options.health()) {
-            text.append(String.format(Locale.ROOT, " %.1f/%.1f", facts.health(), facts.maximumHealth()));
+            lines.add(new Line(String.format(Locale.ROOT, "♥ %.1f/%.1f", facts.health(), facts.maximumHealth()),
+                    healthColor(facts.health() / facts.maximumHealth())));
         }
-        if (options.armor()) {
-            text.append(" A:").append(facts.armor());
+        if (options.armor() && facts.armor() > 0) {
+            lines.add(new Line("Armor " + facts.armor(), COLOR_ARMOR));
         }
+        String detail = detailLine(facts, options);
+        if (!detail.isEmpty()) {
+            lines.add(new Line(detail, COLOR_DETAIL));
+        }
+        return lines;
+    }
+
+    /** Rows-above-base for one line, so the first (name) line renders topmost. */
+    public static int stackOffset(int index, int lineCount) {
+        if (index < 0 || index >= lineCount) {
+            throw new IllegalArgumentException("Invalid name-tag line index");
+        }
+        return lineCount - 1 - index;
+    }
+
+    static int healthColor(float fraction) {
+        if (fraction >= 2.0F / 3.0F) {
+            return COLOR_HEALTH_HIGH;
+        }
+        return fraction >= 1.0F / 3.0F ? COLOR_HEALTH_MEDIUM : COLOR_HEALTH_LOW;
+    }
+
+    private static String detailLine(Facts facts, BetterNametags.Options options) {
+        StringBuilder text = new StringBuilder();
         if (options.distance()) {
-            text.append(String.format(Locale.ROOT, " %.1fm", facts.distance()));
+            text.append(String.format(Locale.ROOT, "%.1fm", facts.distance()));
         }
-        if (options.heldItem() && !facts.heldItemId().isEmpty()) {
-            text.append(" ").append(facts.heldItemId());
+        if (options.heldItem()) {
+            String item = displayItem(facts.heldItemId());
+            if (!item.isEmpty()) {
+                if (!text.isEmpty()) {
+                    text.append(" • ");
+                }
+                text.append(item);
+            }
         }
         return text.toString();
+    }
+
+    /** Hides the empty hand and drops the vanilla namespace for readability. */
+    private static String displayItem(String heldItemId) {
+        if (heldItemId.isEmpty() || heldItemId.equals(EMPTY_HAND_ID)) {
+            return "";
+        }
+        return heldItemId.startsWith(VANILLA_NAMESPACE) ? heldItemId.substring(VANILLA_NAMESPACE.length()) : heldItemId;
+    }
+
+    /** One rendered name-tag row and its ARGB text color. */
+    public record Line(String text, int color) {
+        public Line {
+            text = Objects.requireNonNull(text, "text").trim();
+            if (text.isEmpty()) {
+                throw new IllegalArgumentException("Name-tag lines must not be blank");
+            }
+        }
     }
 
     public record Facts(String name, float health, float maximumHealth, int armor, double distance, String heldItemId) {

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Redesigns Better Nametags from one concatenated line into stacked,
+  color-coded rows: name (teal for friends), health colored by remaining
+  fraction, armor, then distance and held item. Zero armor and an empty hand
+  are hidden, and vanilla item IDs drop the `minecraft:` prefix.
 - Splits the HUD editor into a drag-only layout canvas and a separate HUD
   settings screen. Every enabled element preview is now draggable directly,
   and the settings screen (reached from the editor's header button) owns all

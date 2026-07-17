@@ -542,10 +542,12 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     clears after disable or a world change. Verify none of these changes are
     visible to another player or affect normal interaction.
     Enable **Better Nametags** and verify each health, distance, armor, held
-    item, and friend-status toggle affects only its corresponding local text.
-    Verify friend color/status disappears when friend status is off, players
-    outside range or the camera frustum do not render, and invisible or
-    solid-block-occluded players receive no name-tag billboard.
+    item, and friend-status toggle adds or removes only its corresponding
+    stacked local row, with health colored by its remaining fraction and no
+    row for zero armor or an empty hand. Verify friend color/status disappears
+    when friend status is off, players outside range or the camera frustum do
+    not render, and invisible or solid-block-occluded players receive no
+    name-tag billboard.
 36. In a permitted local/test world, enable **Trajectories** while arrows,
     tridents, snowballs, eggs, ender pearls, or splash potions are in flight.
     Verify each configured type draws a local path that ends at its first block

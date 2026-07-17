@@ -140,6 +140,7 @@ import dev.helikon.client.module.movement.MinecraftAutoSwimAccess;
 import dev.helikon.client.module.movement.MinecraftFollowAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.NoFall;
+import dev.helikon.client.module.movement.NoLevitation;
 import dev.helikon.client.module.movement.NoSlow;
 import dev.helikon.client.module.movement.NoSlowAccess;
 import dev.helikon.client.module.movement.InventoryWalkAccess;
@@ -486,6 +487,7 @@ public final class HelikonClient implements ClientModInitializer {
         Freecam freecam = new Freecam();
         NoFall noFall = new NoFall();
         Glide glide = new Glide();
+        NoLevitation noLevitation = new NoLevitation();
         ExtraElytra extraElytra = new ExtraElytra();
         Scaffold scaffold = new Scaffold();
         TpClick tpClick = new TpClick();
@@ -595,6 +597,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(freecam);
         modules.register(noFall);
         modules.register(glide);
+        modules.register(noLevitation);
         modules.register(extraElytra);
         modules.register(scaffold);
         modules.register(tpClick);
@@ -728,6 +731,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(noFall, "tick", () -> MinecraftAdvancedMovementAccess.tickNoFall(noFall));
                 modules.runGuarded(blink, "tick", BlinkPacketAccess::tick);
                 modules.runGuarded(glide, "tick", () -> MinecraftAdvancedMovementAccess.tickGlide(glide));
+                modules.runGuarded(noLevitation, "tick", () -> MinecraftAdvancedMovementAccess.tickNoLevitation(noLevitation));
                 modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));
                 modules.runGuarded(scaffold, "tick", () -> MinecraftAdvancedMovementAccess.tickScaffold(scaffold, clientTick));
                 modules.runGuarded(tpClick, "tick", () -> MinecraftTpClickAccess.tick(tpClick, INPUT_READER));

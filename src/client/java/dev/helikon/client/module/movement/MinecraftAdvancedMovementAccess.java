@@ -61,6 +61,23 @@ public final class MinecraftAdvancedMovementAccess {
                 });
     }
 
+    /** Applies Fish's input-gated local velocity only while the player is submerged in water. */
+    public static void tickFish(Fish module) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) {
+            return;
+        }
+        LocalPlayer player = client.player;
+        Vec2 input = player.input.getMoveVector();
+        boolean moving = input.x != 0.0F || input.y != 0.0F;
+        Vec3 velocity = player.getDeltaMovement();
+        module.velocity(new Fish.Context(player.isInWater(), client.gui.screen() != null, player.isPassenger(),
+                player.getAbilities().flying, player.isFallFlying(), moving, player.input.keyPresses.jump(),
+                player.input.keyPresses.shift(), desiredDirection(player, input),
+                new HorizontalVelocity(velocity.x, velocity.z), velocity.y)).ifPresent(adjusted ->
+                player.setDeltaMovement(adjusted.horizontal().x(), adjusted.vertical(), adjusted.horizontal().z()));
+    }
+
     public static void tickSpider(Spider module) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null) {

@@ -87,6 +87,11 @@ an obstructed two-block exit, or any open screen, then can request only
 Minecraft's ordinary local Jump input. It does not set position or velocity,
 interact with a block, or construct a packet.
 
+Fish keeps its contextual eligibility and bounded input-to-velocity policy
+Minecraft-free. The advanced-movement adapter reads only the local player's
+existing water, movement-input, flight, and velocity facts, then applies the
+returned local velocity without changing fluid state or constructing a packet.
+
 AutoTool separates hotbar candidates and deterministic scoring from the small
 Minecraft adapter. The adapter runs only while the user is normally mining a
 block through Minecraft's own game mode, selects an existing hotbar slot, and

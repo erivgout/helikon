@@ -9,6 +9,8 @@ import dev.helikon.client.module.render.BetterNametags;
 import dev.helikon.client.module.render.Breadcrumbs;
 import dev.helikon.client.module.render.DamageIndicators;
 import dev.helikon.client.module.render.EntityEsp;
+import dev.helikon.client.module.render.EntityEspMode;
+import dev.helikon.client.module.render.EntityEspRenderAccess;
 import dev.helikon.client.module.render.StorageEsp;
 import dev.helikon.client.module.render.Trajectories;
 import dev.helikon.client.module.render.Tracers;
@@ -93,6 +95,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private long observedStorageScanRevision = Long.MIN_VALUE;
     private boolean blockScannerWasEnabled;
     private boolean storageScannerWasEnabled;
+    private boolean nativeOutlineWasInstalled;
 
     public MinecraftWorldVisualizationRenderer(ModuleRegistry modules, FriendManager friends, EntityEsp entityEsp,
                                                 BetterNametags betterNametags,
@@ -128,9 +131,17 @@ public final class MinecraftWorldVisualizationRenderer {
             damageIndicators.clear();
             resetBlockScanner();
             resetStorageScanner();
+            clearNativeOutlineTargets();
         }
         if (client.level == null || client.player == null) {
+            clearNativeOutlineTargets();
             return;
+        }
+        if (entityEsp.isEnabled() && entityEsp.mode().usesNativeOutline()) {
+            nativeOutlineWasInstalled = true;
+            modules.runGuarded(entityEsp, "tick", () -> installNativeOutlineTargets(client.level, client.player));
+        } else {
+            clearNativeOutlineTargets();
         }
         if (breadcrumbs.isEnabled()) {
             modules.runGuarded(breadcrumbs, "tick", () -> breadcrumbs.sample(
@@ -312,6 +323,10 @@ public final class MinecraftWorldVisualizationRenderer {
     }
 
     private void renderEntityEsp(ClientLevel level, Player localPlayer) {
+        EntityEspMode mode = entityEsp.mode();
+        if (mode.usesNativeOutline()) {
+            return;
+        }
         EntityRenderFilter.Options options = entityEsp.options();
         int rendered = 0;
         for (Entity entity : level.entitiesForRendering()) {
@@ -320,11 +335,38 @@ public final class MinecraftWorldVisualizationRenderer {
                     entity.position().distanceToSqr(localPlayer.position()))) {
                 continue;
             }
-            GizmoStyle style = GizmoStyle.strokeAndFill(entityEsp.color(friend), entityEsp.lineWidth(), entityEsp.fillColor());
+            GizmoStyle style = mode == EntityEspMode.BOX
+                    ? GizmoStyle.strokeAndFill(entityEsp.color(friend), entityEsp.lineWidth(), entityEsp.fillColor())
+                    : GizmoStyle.stroke(entityEsp.color(friend), entityEsp.lineWidth());
             Gizmos.cuboid(entity.getBoundingBox().inflate(0.05D), style).setAlwaysOnTop();
             if (++rendered >= entityEsp.maximumEntities()) {
                 return;
             }
+        }
+    }
+
+    /** Snapshots this tick's selected entities for Minecraft's native outline pass. */
+    private void installNativeOutlineTargets(ClientLevel level, Player localPlayer) {
+        EntityRenderFilter.Options options = entityEsp.options();
+        EntityEspNativeOutlineTargetsBuilder builder = new EntityEspNativeOutlineTargetsBuilder(
+                entityEsp.maximumEntities(), entityEsp.mode().usesShaderColor());
+        for (Entity entity : level.entitiesForRendering()) {
+            boolean friend = isFriend(entity);
+            if (!EntityRenderFilter.shouldRender(options, entityType(entity), friend, entity == localPlayer,
+                    entity.position().distanceToSqr(localPlayer.position()))) {
+                continue;
+            }
+            if (!builder.offer(entity.getId(), entityEsp.color(friend))) {
+                break;
+            }
+        }
+        EntityEspRenderAccess.install(builder.build());
+    }
+
+    private void clearNativeOutlineTargets() {
+        if (nativeOutlineWasInstalled) {
+            nativeOutlineWasInstalled = false;
+            EntityEspRenderAccess.clear();
         }
     }
 

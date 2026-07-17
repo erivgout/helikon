@@ -478,7 +478,25 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
 35. In a permitted local/test world, enable **EntityESP** and **Tracers**.
     Verify selected nearby player/hostile categories draw local boxes or lines,
     locally saved friends use the friend color, and entities outside the range
-    do not render. Enable **BlockESP** with a harmless known block ID and
+    do not render. Check each EntityESP mode separately:
+    - **Outline**: verify targets get an unfilled local wireframe only (no
+      fill), with the configured line width and module/friend colors.
+    - **Box**: verify the same wireframe plus the configured fill color.
+    - **Glow**: verify targets gain Minecraft's genuine full-body outline
+      (the same visual as the vanilla Glowing effect, including its
+      post-processing halo) in the vanilla team-derived color — white when
+      the entity has no team. Apply a real Glowing effect (e.g.
+      `/effect give` a mob) with EntityESP disabled and verify it looks
+      identical, then verify a genuinely glowing non-target entity still
+      glows while EntityESP is enabled.
+    - **Shader**: verify the same genuine native outline appears but uses the
+      module color, and the friend color for locally saved friends.
+    For Glow and Shader, verify the category/friend/range filters and the
+    maximum-entity cap still choose targets; verify disabling the module,
+    switching the mode back to Outline/Box, and changing worlds each remove
+    every Helikon outline immediately while entities with a real server-given
+    Glowing effect keep glowing. Verify no mode changes how other players see
+    anything or alters interaction. Enable **BlockESP** with a harmless known block ID and
     verify its box appears after a bounded scan pass; move, change the ID list,
     or break/place a target and verify the cache eventually refreshes without
     a frame hitch. Enable **Breadcrumbs**, walk a short path, and verify a

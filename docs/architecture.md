@@ -490,7 +490,21 @@ the first render-utility slice. It registers with Fabric's verified
 `BlockEspScanCursor`, `BlockEspCache`, and `BreadcrumbTrail` are Minecraft-free
 and unit-tested. EntityESP and Tracers iterate only already-rendered local
 entities with configurable category/range/frame caps; local friend names are
-looked up through `FriendManager`. BlockESP advances a bounded cube cursor on
+looked up through `FriendManager`.
+
+EntityESP's Glow and Shader modes reuse Minecraft's own entity-outline
+post-processing pass instead of drawing Gizmos. Each client tick the shared
+renderer filters entities exactly like the Gizmo modes and installs an
+immutable, Minecraft-free `EntityEspNativeOutlineTargets` snapshot (built by
+the bounded `EntityEspNativeOutlineTargetsBuilder`) into the atomic
+`EntityEspRenderAccess` bridge. Two narrowly scoped mixins read that bridge:
+`MinecraftEntityEspGlowMixin` answers `Minecraft.shouldEntityAppearGlowing`
+as true for snapshotted entity IDs (it can only add local outlines, never
+suppress a genuine Glowing effect), and
+`EntityRendererEntityEspOutlineMixin` overrides the extracted
+`EntityRenderState.outlineColor` in Shader mode only. Neither mixin mutates
+`Entity` state, so disabling the module, leaving Glow/Shader, or changing
+worlds restores vanilla behavior by simply clearing the snapshot. BlockESP advances a bounded cube cursor on
 the client tick, checks only loaded chunks, and retains at most 512 matching
 coordinates for rendering. Breadcrumbs samples the local player into a
 bounded session-only deque and clears it when the level instance changes.

@@ -47,9 +47,14 @@ and AntiTotemAnimation hides the local death-protection activation overlay;
 BetterCrosshair draws a local configurable HUD crosshair; Dinnerbone applies
 the existing upside-down entity transform to selected living categories; and
 RainbowEnchant tints local item-stack foil glint without modifying item data.
-EntityESP, BlockESP, Tracers, and Breadcrumbs use Minecraft's
-local world-render Gizmo phase only: they never alter entities, blocks, client
-movement, or packets. BlockESP deliberately scans a bounded cube at a bounded
+EntityESP, BlockESP, Tracers, and Breadcrumbs never alter entities, blocks,
+client movement, or packets. EntityESP's Outline/Box modes (like BlockESP,
+Tracers, and Breadcrumbs) draw only in Minecraft's local world-render Gizmo
+phase, while its Glow/Shader modes reuse Minecraft's genuine entity-outline
+post-processing pass through a local read-only target snapshot — Glow keeps
+the vanilla team-derived outline color, Shader applies the configured
+module/friend colors, and disabling or changing worlds clears the snapshot
+without ever touching server-provided glowing flags. BlockESP deliberately scans a bounded cube at a bounded
 per-tick budget, so newly loaded or changed blocks can take one scan pass to
 appear. Its optional validated per-block colors affect only local Gizmo boxes
 and tracers. AutoSprint, AutoWalk, AutoSneak, and Twerk apply only normal local

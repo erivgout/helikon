@@ -101,6 +101,7 @@ import dev.helikon.client.module.movement.FreecamAccess;
 import dev.helikon.client.module.movement.MinecraftAdvancedMovementAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.NoFall;
+import dev.helikon.client.module.movement.NoLevitation;
 import dev.helikon.client.module.movement.NoSlow;
 import dev.helikon.client.module.movement.NoSlowAccess;
 import dev.helikon.client.module.movement.InventoryWalkAccess;
@@ -407,6 +408,7 @@ public final class HelikonClient implements ClientModInitializer {
         BoatFlight boatFlight = new BoatFlight();
         Freecam freecam = new Freecam();
         NoFall noFall = new NoFall();
+        NoLevitation noLevitation = new NoLevitation();
         ExtraElytra extraElytra = new ExtraElytra();
         Scaffold scaffold = new Scaffold();
         Timer timer = new Timer();
@@ -486,6 +488,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(boatFlight);
         modules.register(freecam);
         modules.register(noFall);
+        modules.register(noLevitation);
         modules.register(extraElytra);
         modules.register(scaffold);
         modules.register(timer);
@@ -580,6 +583,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(boatFlight, "tick", () -> MinecraftAdvancedMovementAccess.tickBoatFlight(boatFlight));
                 modules.runGuarded(freecam, "tick", () -> FreecamAccess.tick(Minecraft.getInstance()));
                 modules.runGuarded(noFall, "tick", () -> MinecraftAdvancedMovementAccess.tickNoFall(noFall));
+                modules.runGuarded(noLevitation, "tick", () -> MinecraftAdvancedMovementAccess.tickNoLevitation(noLevitation));
                 modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));
                 modules.runGuarded(scaffold, "tick", () -> MinecraftAdvancedMovementAccess.tickScaffold(scaffold, clientTick));
                 modules.runGuarded(autoEat, "tick", () -> tickAutoEat(autoEat));

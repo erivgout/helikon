@@ -13,6 +13,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
@@ -181,6 +182,18 @@ public final class MinecraftAdvancedMovementAccess {
             player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(true, false));
             player.fallDistance = 0.0F;
         }
+    }
+
+    /** Applies NoLevitation's bounded local velocity decision to the active local player. */
+    public static void tickNoLevitation(NoLevitation module) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) {
+            return;
+        }
+        LocalPlayer player = client.player;
+        Vec3 velocity = player.getDeltaMovement();
+        module.suppressedVerticalVelocity(player.hasEffect(MobEffects.LEVITATION), player.isPassenger(), velocity.y)
+                .ifPresent(y -> player.setDeltaMovement(velocity.x, y, velocity.z));
     }
 
     public static void tickElytra(ExtraElytra module) {

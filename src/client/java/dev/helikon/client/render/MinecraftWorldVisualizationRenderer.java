@@ -22,6 +22,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gizmos.GizmoProperties;
@@ -186,6 +187,7 @@ public final class MinecraftWorldVisualizationRenderer {
         if (client.level == null || client.player == null) {
             return;
         }
+        CameraRenderState camera = context.levelState().cameraRenderState;
         if (entityEsp.isEnabled()) {
             modules.runGuarded(entityEsp, "render", () -> renderEntityEsp(client.level, client.player));
         }
@@ -193,9 +195,9 @@ public final class MinecraftWorldVisualizationRenderer {
             modules.runGuarded(localCosmetics, "render", () -> renderLocalCosmetics(client.player));
         }
         if (tracers.isEnabled()) {
-            modules.runGuarded(tracers, "render", () -> renderTracers(client.level, client.player));
+            modules.runGuarded(tracers, "render", () -> renderTracers(client.level, client.player, camera));
         }
-        Frustum frustum = context.levelState().cameraRenderState.cullFrustum;
+        Frustum frustum = camera.cullFrustum;
         if (betterNametags.isEnabled()) {
             modules.runGuarded(betterNametags, "render", () -> renderBetterNametags(client.level, client.player, frustum));
         }
@@ -206,7 +208,7 @@ public final class MinecraftWorldVisualizationRenderer {
             modules.runGuarded(trueSight, "render", () -> renderTrueSight(client.level, client.player, frustum));
         }
         if (blockEsp.isEnabled()) {
-            modules.runGuarded(blockEsp, "render", () -> renderBlocks(client.level, client.player));
+            modules.runGuarded(blockEsp, "render", () -> renderBlocks(client.level, client.player, camera));
         }
         if (storageEsp.isEnabled()) {
             modules.runGuarded(storageEsp, "render", () -> renderStorage(client.player, frustum));
@@ -381,9 +383,9 @@ public final class MinecraftWorldVisualizationRenderer {
         }
     }
 
-    private void renderTracers(ClientLevel level, Player localPlayer) {
+    private void renderTracers(ClientLevel level, Player localPlayer, CameraRenderState camera) {
         EntityRenderFilter.Options options = tracers.options();
-        Vec3 start = localPlayer.getEyePosition();
+        Vec3 start = tracerStart(camera, localPlayer);
         int rendered = 0;
         for (Entity entity : level.entitiesForRendering()) {
             boolean friend = isFriend(entity);
@@ -485,8 +487,8 @@ public final class MinecraftWorldVisualizationRenderer {
         }
     }
 
-    private void renderBlocks(ClientLevel level, Player localPlayer) {
-        Vec3 start = blockEsp.tracersEnabled() ? localPlayer.getEyePosition() : null;
+    private void renderBlocks(ClientLevel level, Player localPlayer, CameraRenderState camera) {
+        Vec3 start = blockEsp.tracersEnabled() ? tracerStart(camera, localPlayer) : null;
         for (BlockEspScanCursor.Position position : blockCache.positions()) {
             if (!isWithinCurrentBlockRange(position, localPlayer)) {
                 continue;
@@ -536,6 +538,19 @@ public final class MinecraftWorldVisualizationRenderer {
     /** A missing render frustum is treated as not renderable to preserve the local render boundary. */
     private static boolean isFrustumVisible(Frustum frustum, Entity entity) {
         return frustum != null && frustum.isVisible(entity.getBoundingBox());
+    }
+
+    /**
+     * Tracer lines must start at the interpolated render-camera position, not the
+     * player's tick position: a line that begins on or behind the near plane
+     * renders as disconnected streaks. A short forward offset makes lines radiate
+     * from the crosshair.
+     */
+    private static Vec3 tracerStart(CameraRenderState camera, Player localPlayer) {
+        if (camera == null || camera.pos == null) {
+            return localPlayer.getEyePosition();
+        }
+        return camera.pos.add(Vec3.directionFromRotation(camera.xRot, camera.yRot).scale(0.4D));
     }
 
     private void renderBreadcrumbs() {

@@ -22,6 +22,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.SplashPotionItem;
 import net.minecraft.world.item.ThrowablePotionItem;
@@ -89,6 +90,55 @@ public final class MinecraftCombatAccess {
             return;
         }
         tickAutoPotion(tick, client, autoPotion, client.gui.screen() != null);
+    }
+
+    public static void tickAutoPearl(long tick, AutoPearl autoPearl, Snapshot snapshot) {
+        Minecraft client = Minecraft.getInstance();
+        if (!snapshot.available() || client.player == null || client.gameMode == null) {
+            autoPearl.onPlayerUnavailable();
+            return;
+        }
+        LocalPlayer player = client.player;
+        boolean screenOpen = client.gui.screen() != null;
+        int pearlSlot = firstPearlHotbarSlot(player);
+        boolean onCooldown = pearlSlot >= 0 && player.getCooldowns().isOnCooldown(player.getInventory().getItem(pearlSlot));
+        AutoPearl.Action action = autoPearl.update(tick, new AutoPearl.Context(player.getInventory().getSelectedSlot(),
+                pearlSlot, screenOpen, onCooldown, snapshot.targets()));
+        switch (action.type()) {
+            case SELECT_AND_THROW -> {
+                player.getInventory().setSelectedSlot(action.slot());
+                applyRotation(player, action);
+                if (!screenOpen) {
+                    client.gameMode.useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                }
+            }
+            case THROW_SELECTED -> {
+                applyRotation(player, action);
+                if (!screenOpen) {
+                    client.gameMode.useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                }
+            }
+            case RESTORE_SLOT -> player.getInventory().setSelectedSlot(action.slot());
+            case NONE -> {
+                // No local throw or slot restoration is needed this tick.
+            }
+        }
+    }
+
+    private static void applyRotation(LocalPlayer player, AutoPearl.Action action) {
+        if (action.rotate()) {
+            player.setYRot(action.yaw());
+            player.setXRot(action.pitch());
+        }
+    }
+
+    private static int firstPearlHotbarSlot(LocalPlayer player) {
+        for (int slot = 0; slot < 9; slot++) {
+            if (player.getInventory().getItem(slot).is(Items.ENDER_PEARL)) {
+                return slot;
+            }
+        }
+        return -1;
     }
 
     public static void tickBowAim(BowAimAssist bowAim, Snapshot snapshot) {

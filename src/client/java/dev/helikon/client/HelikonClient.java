@@ -81,6 +81,7 @@ import dev.helikon.client.module.combat.AntiBot;
 import dev.helikon.client.module.combat.AimAssist;
 import dev.helikon.client.module.combat.AutoClicker;
 import dev.helikon.client.module.combat.AntiFireball;
+import dev.helikon.client.module.combat.AutoPearl;
 import dev.helikon.client.module.combat.AutoPotion;
 import dev.helikon.client.module.combat.BlockHit;
 import dev.helikon.client.module.combat.BowAimAssist;
@@ -502,6 +503,7 @@ public final class HelikonClient implements ClientModInitializer {
         CriticalAssist criticalAssist = new CriticalAssist();
         JumpReset jumpReset = new JumpReset();
         AutoPotion autoPotion = new AutoPotion();
+        AutoPearl autoPearl = new AutoPearl();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
         Reach reach = new Reach();
@@ -588,6 +590,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(criticalAssist);
         modules.register(jumpReset);
         modules.register(autoPotion);
+        modules.register(autoPearl);
         modules.register(targetHud);
         modules.register(killAura);
         modules.register(reach);
@@ -690,6 +693,8 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(targetHud, "tick", () -> MinecraftCombatAccess.observeTarget(targetHud,
                         combatSnapshot.get(), combatTracker));
                 modules.runGuarded(autoPotion, "tick", () -> MinecraftCombatAccess.tickAutoPotion(clientTick, autoPotion));
+                modules.runGuarded(autoPearl, "tick", () -> MinecraftCombatAccess.tickAutoPearl(clientTick, autoPearl,
+                        combatSnapshot.get()));
                 modules.runGuarded(bowAimAssist, "tick", () -> MinecraftCombatAccess.tickBowAim(bowAimAssist,
                         combatSnapshot.get()));
                 modules.runGuarded(aimAssist, "tick", () -> MinecraftCombatAccess.tickAimAssist(aimAssist,

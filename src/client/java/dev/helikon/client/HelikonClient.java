@@ -169,6 +169,12 @@ import dev.helikon.client.module.movement.MinecraftFollowAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.NoFall;
 import dev.helikon.client.module.movement.NoLevitation;
+import dev.helikon.client.module.movement.NoClip;
+import dev.helikon.client.module.movement.SnowShoe;
+import dev.helikon.client.module.movement.MountBypass;
+import dev.helikon.client.module.movement.ForcePush;
+import dev.helikon.client.module.movement.Phase;
+import dev.helikon.client.module.movement.MinecraftLegacyMovementAccess;
 import dev.helikon.client.module.movement.NoSlow;
 import dev.helikon.client.module.movement.NoSlowAccess;
 import dev.helikon.client.module.movement.InventoryWalkAccess;
@@ -584,6 +590,11 @@ public final class HelikonClient implements ClientModInitializer {
         NoFall noFall = new NoFall();
         Glide glide = new Glide();
         NoLevitation noLevitation = new NoLevitation();
+        NoClip noClip = new NoClip();
+        SnowShoe snowShoe = new SnowShoe();
+        MountBypass mountBypass = new MountBypass();
+        ForcePush forcePush = new ForcePush();
+        Phase phase = new Phase();
         ExtraElytra extraElytra = new ExtraElytra();
         Scaffold scaffold = new Scaffold();
         TpClick tpClick = new TpClick();
@@ -717,6 +728,11 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(noFall);
         modules.register(glide);
         modules.register(noLevitation);
+        modules.register(noClip);
+        modules.register(snowShoe);
+        modules.register(mountBypass);
+        modules.register(forcePush);
+        modules.register(phase);
         modules.register(extraElytra);
         modules.register(scaffold);
         modules.register(tpClick);
@@ -887,6 +903,13 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(blink, "tick", BlinkPacketAccess::tick);
                 modules.runGuarded(glide, "tick", () -> MinecraftAdvancedMovementAccess.tickGlide(glide));
                 modules.runGuarded(noLevitation, "tick", () -> MinecraftAdvancedMovementAccess.tickNoLevitation(noLevitation));
+                modules.runGuarded(noClip, "tick", () -> MinecraftLegacyMovementAccess.tickNoClip(noClip));
+                modules.runGuarded(snowShoe, "tick", () -> MinecraftLegacyMovementAccess.tickSnowShoe(snowShoe));
+                modules.runGuarded(mountBypass, "tick",
+                        () -> MinecraftLegacyMovementAccess.tickMountBypass(mountBypass));
+                modules.runGuarded(forcePush, "tick",
+                        () -> MinecraftLegacyMovementAccess.tickForcePush(forcePush, friends));
+                modules.runGuarded(phase, "tick", () -> MinecraftLegacyMovementAccess.tickPhase(clientTick, phase));
                 modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));
                 modules.runGuarded(scaffold, "tick", () -> MinecraftAdvancedMovementAccess.tickScaffold(scaffold, clientTick));
                 modules.runGuarded(tpClick, "tick", () -> MinecraftTpClickAccess.tick(tpClick, INPUT_READER));

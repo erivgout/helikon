@@ -98,6 +98,7 @@ import dev.helikon.client.module.combat.JumpReset;
 import dev.helikon.client.module.combat.JumpResetAccess;
 import dev.helikon.client.module.combat.CrystalAura;
 import dev.helikon.client.module.combat.KillAura;
+import dev.helikon.client.module.combat.MaceDmg;
 import dev.helikon.client.module.combat.MinecraftBlockHitUseKey;
 import dev.helikon.client.module.combat.MinecraftAntiFireballAccess;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
@@ -547,6 +548,7 @@ public final class HelikonClient implements ClientModInitializer {
         BowAimAssist bowAimAssist = new BowAimAssist();
         AimAssist aimAssist = new AimAssist();
         CriticalAssist criticalAssist = new CriticalAssist();
+        MaceDmg maceDmg = new MaceDmg();
         JumpReset jumpReset = new JumpReset();
         AutoRespawn autoRespawn = new AutoRespawn();
         AutoPotion autoPotion = new AutoPotion();
@@ -653,6 +655,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(bowAimAssist);
         modules.register(aimAssist);
         modules.register(criticalAssist);
+        modules.register(maceDmg);
         modules.register(jumpReset);
         modules.register(autoRespawn);
         modules.register(autoPotion);
@@ -800,6 +803,12 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(criticalAssist, "tick", () -> {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftCombatAccess.tickCriticalAssist(clientTick, criticalAssist,
+                                combatSnapshot.get(), combatTracker));
+                    }
+                });
+                modules.runGuarded(maceDmg, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftCombatAccess.tickMaceDmg(clientTick, maceDmg,
                                 combatSnapshot.get(), combatTracker));
                     }
                 });

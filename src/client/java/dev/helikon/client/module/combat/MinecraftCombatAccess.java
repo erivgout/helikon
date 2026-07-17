@@ -224,6 +224,36 @@ public final class MinecraftCombatAccess {
         return false;
     }
 
+    public static boolean tickMaceDmg(long tick, MaceDmg maceDmg, Snapshot snapshot,
+                                      CombatTargetTracker tracker) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null || !snapshot.available()) {
+            maceDmg.onContextLost();
+            return false;
+        }
+        if (!readyForAttack(client, snapshot) || snapshot.crosshairTarget() == null) {
+            return false;
+        }
+        LocalPlayer player = client.player;
+        MaceDmg.Context context = new MaceDmg.Context(
+                player.getMainHandItem().is(Items.MACE),
+                client.options.keyAttack.isDown(),
+                player.getAttackStrengthScale(0.0F),
+                player.onGround(),
+                player.isInWater() || player.isInLava(),
+                player.onClimbable(),
+                player.isFallFlying(),
+                player.isPassenger(),
+                player.fallDistance,
+                player.getDeltaMovement().y
+        );
+        CombatTarget target = snapshot.crosshairTarget();
+        if (maceDmg.shouldAttack(tick, target, context)) {
+            return attack(client, snapshot.entities().get(target.id()), target, tracker);
+        }
+        return false;
+    }
+
     public static boolean tickReach(long tick, Reach reach, Snapshot snapshot, CombatTargetTracker tracker) {
         Minecraft client = Minecraft.getInstance();
         if (!readyForAttack(client, snapshot)) {

@@ -114,6 +114,8 @@ import dev.helikon.client.module.movement.AutoWalk;
 import dev.helikon.client.module.movement.AntiWaterPush;
 import dev.helikon.client.module.movement.AntiWaterPushAccess;
 import dev.helikon.client.module.movement.AutoParkour;
+import dev.helikon.client.module.movement.Dolphin;
+import dev.helikon.client.module.movement.DolphinAccess;
 import dev.helikon.client.module.movement.InventoryWalk;
 import dev.helikon.client.module.movement.AntiAfk;
 import dev.helikon.client.module.movement.AdvancedMovementInputAccess;
@@ -458,6 +460,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoSneak autoSneak = new AutoSneak();
         Twerk twerk = new Twerk();
         AutoParkour autoParkour = new AutoParkour();
+        Dolphin dolphin = new Dolphin();
         InventoryWalk inventoryWalk = new InventoryWalk();
         AntiAfk antiAfk = new AntiAfk();
         NoSlow noSlow = new NoSlow();
@@ -562,6 +565,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoSneak);
         modules.register(twerk);
         modules.register(autoParkour);
+        modules.register(dolphin);
         modules.register(inventoryWalk);
         modules.register(antiAfk);
         modules.register(noSlow);
@@ -662,6 +666,7 @@ public final class HelikonClient implements ClientModInitializer {
         ParkourAccess.install(autoParkour);
         AntiAfkAccess.install(antiAfk);
         AdvancedMovementInputAccess.install(bunnyHop, scaffold);
+        DolphinAccess.install(dolphin);
         FreecamAccess.install(freecam);
         NoSlowAccess.install(noSlow);
         AntiWaterPushAccess.install(antiWaterPush);

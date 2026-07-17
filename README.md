@@ -24,11 +24,12 @@ packets, or server state.
 
 The internal event bus uses typed, Minecraft-free event models. Its currently
 wired lifecycle bridge covers ticks, local world connections, identity-aware
-screen changes, accepted ordinary chat, world rendering, local player-state
+screen changes, accepted ordinary chat, HUD/world/entity/block-outline rendering,
+ordinary local interactions, packet-class boundaries, local player-state
 observations, raw key/mouse/scroll input, loaded-chunk lifecycle, and resource
 reload start/completion. The narrow verified callback bridge only observes
-metadata; it never consumes input, cancels reloads, changes chunk state, or
-exposes packets.
+metadata; it never consumes input, cancels reloads, changes chunk state, creates
+or edits packets, alters an interaction result, or exposes packet contents.
 
 Its local settings API supports booleans, integers and decimals, enums,
 colors, keyboard/mouse binds with modifiers, bounded text and text lists, block/item/entity ID

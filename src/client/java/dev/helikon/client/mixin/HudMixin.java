@@ -1,5 +1,7 @@
 package dev.helikon.client.mixin;
 
+import dev.helikon.client.event.ClientEventAccess;
+import dev.helikon.client.event.RenderEvent;
 import dev.helikon.client.module.render.RenderModuleAccess;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -20,6 +22,12 @@ import java.util.Optional;
 /** Keeps AntiBlind and BetterCrosshair HUD interception narrow and local-only. */
 @Mixin(targets = "net.minecraft.client.gui.Hud")
 abstract class HudMixin {
+    @Inject(method = "extractRenderState", at = @At("HEAD"))
+    private void helikon$observeHudRender(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker,
+                                          CallbackInfo callback) {
+        ClientEventAccess.postRender(RenderEvent.Kind.HUD, deltaTracker.getGameTimeDeltaTicks(), "");
+    }
+
     @Inject(method = "extractCrosshair", at = @At("HEAD"), cancellable = true)
     private void helikon$hideVanillaCrosshair(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker,
                                                CallbackInfo callback) {

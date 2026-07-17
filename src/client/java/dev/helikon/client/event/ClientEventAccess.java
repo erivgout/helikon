@@ -51,6 +51,21 @@ public final class ClientEventAccess {
         post(new ChunkEvent(phase, chunkX, chunkZ));
     }
 
+    /** Publishes a render boundary using only its local primitive metadata. */
+    public static void postRender(RenderEvent.Kind kind, double tickProgress, String subjectId) {
+        post(new RenderEvent(kind, tickProgress, subjectId));
+    }
+
+    /** Publishes an ordinary local interaction after Minecraft has accepted it. */
+    public static void postInteraction(InteractionEvent.Kind kind, String subjectId) {
+        post(new InteractionEvent(kind, subjectId));
+    }
+
+    /** Publishes a packet boundary without retaining or exposing the packet object. */
+    public static void postPacket(PacketObservationEvent.Direction direction, String packetType) {
+        post(new PacketObservationEvent(direction, packetType));
+    }
+
     /** Returns whether packet processing changed an absent cache entry into a loaded chunk. */
     public static boolean isInitialChunkLoad(boolean wasLoaded, boolean packetReturnedChunk) {
         return !wasLoaded && packetReturnedChunk;

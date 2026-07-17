@@ -30,6 +30,7 @@ import dev.helikon.client.event.ClientTickEvent;
 import dev.helikon.client.event.ClientEventAccess;
 import dev.helikon.client.event.ChatEvent;
 import dev.helikon.client.event.EventBus;
+import dev.helikon.client.event.InteractionEvent;
 import dev.helikon.client.event.ScreenEvent;
 import dev.helikon.client.event.ScreenTransitionTracker;
 import dev.helikon.client.event.WorldEvent;
@@ -716,6 +717,8 @@ public final class HelikonClient implements ClientModInitializer {
         });
         ClientPlayerBlockBreakEvents.AFTER.register((level, player, position, state) -> {
             if (player == Minecraft.getInstance().player) {
+                ClientEventAccess.postInteraction(InteractionEvent.Kind.BLOCK_BREAK,
+                        BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
                 AnnouncerAccess.enqueue(AnnouncementTrigger.BLOCK_MINED,
                         BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
             }
@@ -757,7 +760,7 @@ public final class HelikonClient implements ClientModInitializer {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "plan_telemetry"),
                 new PlanTelemetryHud(hudLayout, panicState, tpsEstimate));
         LevelRenderEvents.BEFORE_GIZMOS.register(context -> {
-            events.post(new RenderEvent(RenderEvent.Kind.WORLD, 0.0D, ""));
+            ClientEventAccess.postRender(RenderEvent.Kind.WORLD, 0.0D, "");
             worldVisuals.render(context);
         });
         ClientTickEvents.START_CLIENT_TICK.register(client -> {

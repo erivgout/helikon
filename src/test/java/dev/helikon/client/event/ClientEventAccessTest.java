@@ -21,6 +21,9 @@ class ClientEventAccessTest {
         events.subscribe(InputEvent.class, observed::add);
         events.subscribe(ChunkEvent.class, observed::add);
         events.subscribe(ResourceReloadEvent.class, observed::add);
+        events.subscribe(RenderEvent.class, observed::add);
+        events.subscribe(InteractionEvent.class, observed::add);
+        events.subscribe(PacketObservationEvent.class, observed::add);
         ClientEventAccess.install(events);
 
         ClientEventAccess.postKey(GLFW.GLFW_PRESS, new KeyEvent(GLFW.GLFW_KEY_R, 17, GLFW.GLFW_MOD_CONTROL));
@@ -29,6 +32,10 @@ class ClientEventAccessTest {
         ClientEventAccess.postMouseScroll(1.25D, -2.5D);
         ClientEventAccess.postChunk(ChunkEvent.Phase.LOAD, 4, -8);
         ClientEventAccess.postResourceReload(ResourceReloadEvent.Phase.COMPLETE);
+        ClientEventAccess.postRender(RenderEvent.Kind.ENTITY, 0.5D, "minecraft:zombie");
+        ClientEventAccess.postInteraction(InteractionEvent.Kind.ATTACK, "minecraft:zombie");
+        ClientEventAccess.postPacket(PacketObservationEvent.Direction.SEND,
+                "net.minecraft.network.protocol.game.ServerboundAttackPacket");
 
         assertEquals(new InputEvent(InputEvent.Kind.KEY, InputEvent.Action.PRESS, GLFW.GLFW_KEY_R, 17,
                 GLFW.GLFW_MOD_CONTROL, 0.0D, 0.0D), observed.get(0));
@@ -38,6 +45,10 @@ class ClientEventAccessTest {
                 1.25D, -2.5D), observed.get(2));
         assertEquals(new ChunkEvent(ChunkEvent.Phase.LOAD, 4, -8), observed.get(3));
         assertEquals(new ResourceReloadEvent(ResourceReloadEvent.Phase.COMPLETE), observed.get(4));
+        assertEquals(new RenderEvent(RenderEvent.Kind.ENTITY, 0.5D, "minecraft:zombie"), observed.get(5));
+        assertEquals(new InteractionEvent(InteractionEvent.Kind.ATTACK, "minecraft:zombie"), observed.get(6));
+        assertEquals(new PacketObservationEvent(PacketObservationEvent.Direction.SEND,
+                "net.minecraft.network.protocol.game.ServerboundAttackPacket"), observed.get(7));
     }
 
     @Test

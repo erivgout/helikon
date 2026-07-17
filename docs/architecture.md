@@ -192,6 +192,13 @@ crosshair hit through the public `useItemOn`/`interact`/`useItem` methods, tries
 the main then off hand, swings only on a consuming result, and briefly raises the
 transient `rightClickDelay` so vanilla's own held-use path does not double the
 configured rate. It builds no packet and leaves server authority intact.
+AntiFireball keeps its nearest-approaching-visible-in-range selection and delay
+policy Minecraft-free; `MinecraftAntiFireballAccess` observes only rendered
+`LargeFireball`/`SmallFireball` entities, then requests one ordinary
+`MultiPlayerGameMode.attack` and swing for the single selected fireball. It joins
+the same per-tick attack guard, so Helikon still issues at most one ordinary
+attack per client tick, and it never builds a packet or extends reach; the server
+remains authoritative over whether a hit deflects the fireball.
 
 The inventory-automation modules keep armor ranking, item-ID/slot parsing,
 totem restore conditions, chest priority, and conservative manager choices in

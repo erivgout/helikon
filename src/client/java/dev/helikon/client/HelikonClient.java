@@ -80,6 +80,7 @@ import dev.helikon.client.module.ModuleTimingMetrics;
 import dev.helikon.client.module.combat.AntiBot;
 import dev.helikon.client.module.combat.AimAssist;
 import dev.helikon.client.module.combat.AutoClicker;
+import dev.helikon.client.module.combat.AntiFireball;
 import dev.helikon.client.module.combat.AutoPotion;
 import dev.helikon.client.module.combat.BlockHit;
 import dev.helikon.client.module.combat.BowAimAssist;
@@ -91,6 +92,7 @@ import dev.helikon.client.module.combat.JumpResetAccess;
 import dev.helikon.client.module.combat.CrystalAura;
 import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MinecraftBlockHitUseKey;
+import dev.helikon.client.module.combat.MinecraftAntiFireballAccess;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
 import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
@@ -510,6 +512,7 @@ public final class HelikonClient implements ClientModInitializer {
         SilentAura silentAura = new SilentAura();
         WTap wtap = new WTap();
         CrystalAura crystalAura = new CrystalAura();
+        AntiFireball antiFireball = new AntiFireball();
         ReachDisplay reachDisplay = new ReachDisplay();
         RightClicker rightClicker = new RightClicker();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
@@ -595,6 +598,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(silentAura);
         modules.register(wtap);
         modules.register(crystalAura);
+        modules.register(antiFireball);
         modules.register(reachDisplay);
         modules.register(rightClicker);
         modules.register(annoy);
@@ -690,6 +694,11 @@ public final class HelikonClient implements ClientModInitializer {
                         combatSnapshot.get()));
                 modules.runGuarded(aimAssist, "tick", () -> MinecraftCombatAccess.tickAimAssist(aimAssist,
                         combatSnapshot.get()));
+                modules.runGuarded(antiFireball, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftAntiFireballAccess.tick(clientTick, antiFireball));
+                    }
+                });
                 modules.runGuarded(triggerBot, "tick", () -> {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftCombatAccess.tickTriggerBot(clientTick, triggerBot,

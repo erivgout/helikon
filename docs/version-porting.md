@@ -25,8 +25,11 @@ When porting:
 7. Revalidate Fabric's client `MODIFY_CHAT` callback. Preserve local commands
    and protected command-like text before transforming ordinary chat, and keep
    all behavior on Minecraft's normal send path.
-8. Run the manual smoke test in an empty profile and with no internet access.
-9. Document compatibility changes and retained limitations before release.
+8. Revalidate Fabric's incoming chat/game allow callbacks and the 26.2
+   `Component`/`TranslatableContents` APIs. If category extraction breaks,
+   prefer showing messages over hiding them.
+9. Run the manual smoke test in an empty profile and with no internet access.
+10. Document compatibility changes and retained limitations before release.
 
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

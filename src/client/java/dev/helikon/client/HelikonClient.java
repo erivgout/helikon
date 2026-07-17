@@ -6,6 +6,8 @@ import dev.helikon.client.command.CommandDispatcher;
 import dev.helikon.client.command.HelikonCommands;
 import dev.helikon.client.command.MinecraftKeyNameResolver;
 import dev.helikon.client.chat.OutgoingChatFormatter;
+import dev.helikon.client.chat.IncomingChatMessage;
+import dev.helikon.client.chat.IncomingMessageAdapter;
 import dev.helikon.client.config.ConfigurationException;
 import dev.helikon.client.config.ConfigurationManager;
 import dev.helikon.client.config.HudConfigurationManager;
@@ -45,6 +47,8 @@ import dev.helikon.client.module.player.FoodCandidate;
 import dev.helikon.client.module.player.MinecraftUseKeyAccess;
 import dev.helikon.client.module.chat.ChatPrefix;
 import dev.helikon.client.module.chat.ChatSuffix;
+import dev.helikon.client.module.chat.ChatMute;
+import dev.helikon.client.module.chat.ChatFilter;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
@@ -63,6 +67,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
@@ -150,6 +155,8 @@ public final class HelikonClient implements ClientModInitializer {
         FastPlace fastPlace = new FastPlace(new MinecraftUseCooldownAccess());
         ChatPrefix chatPrefix = new ChatPrefix();
         ChatSuffix chatSuffix = new ChatSuffix();
+        ChatMute chatMute = new ChatMute();
+        ChatFilter chatFilter = new ChatFilter();
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
@@ -158,6 +165,8 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(fastPlace);
         modules.register(chatPrefix);
         modules.register(chatSuffix);
+        modules.register(chatMute);
+        modules.register(chatFilter);
         MovementModuleAccess.install(autoWalk, autoSneak);
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
@@ -204,6 +213,14 @@ public final class HelikonClient implements ClientModInitializer {
                 () -> macroServerContext.currentServerAddress().orElse(null),
                 () -> ThreadLocalRandom.current().nextInt());
         ClientSendMessageEvents.MODIFY_CHAT.register(outgoingChat::format);
+        ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, chatType, receivedAt) ->
+                allowIncomingMessage(chatMute, chatFilter,
+                        IncomingMessageAdapter.chat(message, sender, receivedAt.toEpochMilli()))
+        );
+        ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) ->
+                allowIncomingMessage(chatMute, chatFilter,
+                        IncomingMessageAdapter.game(message, overlay, System.currentTimeMillis()))
+        );
 
         HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "active_modules"),
@@ -420,6 +437,20 @@ public final class HelikonClient implements ClientModInitializer {
             candidates.add(new FoodCandidate(slot, itemId, food.nutrition(), food.saturation(), food.canAlwaysEat()));
         }
         return candidates;
+    }
+
+    /** Evaluates local incoming-message policies through normal module failure isolation. */
+    private boolean allowIncomingMessage(ChatMute chatMute, ChatFilter chatFilter, IncomingChatMessage message) {
+        if (shouldHideIncoming(chatMute, "incoming-message", () -> chatMute.shouldHide(message))) {
+            return false;
+        }
+        return !shouldHideIncoming(chatFilter, "incoming-message", () -> chatFilter.shouldHide(message));
+    }
+
+    private boolean shouldHideIncoming(dev.helikon.client.module.Module module, String operation, java.util.function.BooleanSupplier policy) {
+        java.util.concurrent.atomic.AtomicBoolean hidden = new java.util.concurrent.atomic.AtomicBoolean();
+        boolean successful = modules.runGuarded(module, operation, () -> hidden.set(policy.getAsBoolean()));
+        return successful && hidden.get();
     }
 
     /** Applies a FastPlace cooldown reduction after Minecraft has handled this tick's normal use input. */

@@ -42,6 +42,8 @@ covered by `SettingTest` and `BuiltinCommandsTest`.
 ChatPrefix/ChatSuffix composition, per-server entries, deterministic random
 selection, and protected-command preservation are covered by
 `OutgoingChatFormatterTest`, including the vanilla 256-character send limit.
+Incoming category recognition, duplicate hiding, custom text rules, player
+rules, and safe-regex rejection are covered by `IncomingChatPolicyTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -165,6 +167,11 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     private-message command; verify each is unchanged and the local command is
     still cancelled before any server send. Configure one local per-server
     suffix entry and a random list, then verify the matching entry wins.
+24. Enable **ChatMute** with one category at a time and verify only the local
+    chat HUD hides the chosen message type. Enable **ChatFilter** with a simple
+    keyword, player name, and safe regex; verify matching incoming messages are
+    hidden locally. Enter a malformed or nested-quantifier regex and verify it
+    does not freeze the client or hide unrelated messages.
 
 ## Manual command and keybind smoke test
 

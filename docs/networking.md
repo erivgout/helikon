@@ -41,6 +41,10 @@ They never touch slash, private-message, likely authentication, or Helikon
 local-command input, and they do not create requests, retries, proxies, or
 external connections.
 
+ChatMute and ChatFilter only decide whether an incoming message is shown in
+this client. They do not acknowledge, alter, suppress at the protocol layer,
+or forward messages, and never affect another player or the server.
+
 ## Future policy
 
 Optional external integrations must be isolated under

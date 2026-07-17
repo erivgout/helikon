@@ -80,6 +80,13 @@ result to Minecraft's existing chat path; it never creates a new connection or
 retries a message. It also declines formatting that would exceed the verified
 26.2 normal-chat packet limit.
 
+Incoming chat filtering first converts Minecraft components into a small record
+of local text, sender, channel, overlay flag, and top-level translation key.
+ChatMute and ChatFilter then make fully testable local hide decisions. Their
+Fabric allow callbacks are guarded through `ModuleRegistry`, so a failed filter
+is disabled while the incoming message remains visible rather than disrupting
+the client chat stream.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

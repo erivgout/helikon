@@ -29,6 +29,11 @@ guards for Helikon commands, slash commands, private messages, and likely
 authentication commands. They use the player's normal server chat connection;
 no messages are relayed through a Helikon service.
 
+ChatMute and ChatFilter apply only local incoming-message decisions. They can
+hide structured vanilla message categories or bounded keyword/player/regex
+matches from the local HUD without affecting what a server sends to anyone
+else.
+
 The ClickGUI currently provides:
 
 - a category sidebar driven by `ModuleCategory`

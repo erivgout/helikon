@@ -258,6 +258,7 @@ import dev.helikon.client.module.render.MinecraftGammaAccess;
 import dev.helikon.client.module.render.MinecraftNightVisionAccess;
 import dev.helikon.client.module.render.MiniPlayer;
 import dev.helikon.client.module.render.ProjectilePreview;
+import dev.helikon.client.module.render.NoWeather;
 import dev.helikon.client.module.render.RenderModuleAccess;
 import dev.helikon.client.module.render.Radar;
 import dev.helikon.client.module.render.ProjectileWarning;
@@ -434,6 +435,7 @@ public final class HelikonClient implements ClientModInitializer {
         BetterNametags betterNametags = new BetterNametags();
         Dinnerbone dinnerbone = new Dinnerbone();
         RainbowEnchant rainbowEnchant = new RainbowEnchant();
+        NoWeather noWeather = new NoWeather();
         EntityEsp entityEsp = new EntityEsp();
         Chams chams = new Chams();
         BlockEsp blockEsp = new BlockEsp();
@@ -465,6 +467,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(betterNametags);
         modules.register(dinnerbone);
         modules.register(rainbowEnchant);
+        modules.register(noWeather);
         modules.register(entityEsp);
         modules.register(chams);
         modules.register(blockEsp);
@@ -483,14 +486,14 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(arrows);
         modules.register(explosions);
         modules.register(health);
-        RenderModuleAccess.install(antiBlind, noFireOverlay, betterCrosshair, antiTotemAnimation, dinnerbone, rainbowEnchant,
-                hudLayout, panicState);
         AntiDebuffAccess.install(antiDebuff);
         CameraModuleAccess.install(cameraDistance);
         RenderModuleAccess.installCameraNoClip(cameraNoClip);
         RenderModuleAccess.installNoFog(noFog);
         RenderModuleAccess.installNoHurtcam(noHurtcam);
         RenderModuleAccess.installNoShieldOverlay(noShieldOverlay);
+        RenderModuleAccess.install(antiBlind, noFireOverlay, betterCrosshair, antiTotemAnimation, dinnerbone,
+                rainbowEnchant, noWeather, hudLayout, panicState);
         AutoSprint autoSprint = new AutoSprint();
         AutoSwim autoSwim = new AutoSwim();
         AutoWalk autoWalk = new AutoWalk();

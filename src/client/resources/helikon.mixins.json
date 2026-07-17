@@ -43,6 +43,7 @@
     "MouseEventMixin",
     "MinecraftEntityEspGlowMixin",
     "MinecraftResourceReloadEventMixin",
+    "WeatherEffectRendererMixin",
     "MultiPlayerGameModeEventMixin",
     "MultiPlayerGameModeAccessor",
     "WTapAttackMixin",

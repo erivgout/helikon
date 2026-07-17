@@ -39,7 +39,7 @@ class BetterCrosshairTest {
         ModuleRegistry registry = new ModuleRegistry();
         registry.register(crosshair);
         RenderModuleAccess.install(new AntiBlind(), new NoFireOverlay(), crosshair, new AntiTotemAnimation(), new Dinnerbone(),
-                new RainbowEnchant(), layout, panic);
+                new RainbowEnchant(), new NoWeather(), layout, panic);
 
         registry.setEnabled(crosshair, true);
         assertTrue(RenderModuleAccess.hideVanillaCrosshair());

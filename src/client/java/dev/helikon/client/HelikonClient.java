@@ -287,6 +287,8 @@ import dev.helikon.client.module.render.RenderModuleAccess;
 import dev.helikon.client.module.render.Radar;
 import dev.helikon.client.module.render.ProjectileWarning;
 import dev.helikon.client.module.render.RainbowEnchant;
+import dev.helikon.client.module.render.RemoteView;
+import dev.helikon.client.module.render.RemoteViewAccess;
 import dev.helikon.client.module.render.SaturationDisplay;
 import dev.helikon.client.module.render.StorageEsp;
 import dev.helikon.client.module.render.Trajectories;
@@ -472,6 +474,7 @@ public final class HelikonClient implements ClientModInitializer {
         Radar radar = new Radar();
         SaturationDisplay saturationDisplay = new SaturationDisplay();
         StorageEsp storageEsp = new StorageEsp();
+        RemoteView remoteView = new RemoteView();
         XRay xray = new XRay(new MinecraftXRayRendererInvalidator());
         MiniPlayer miniPlayer = new MiniPlayer();
         DamageIndicators damageIndicators = new DamageIndicators();
@@ -505,6 +508,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(radar);
         modules.register(saturationDisplay);
         modules.register(storageEsp);
+        modules.register(remoteView);
         modules.register(xray);
         modules.register(miniPlayer);
         modules.register(damageIndicators);
@@ -780,6 +784,7 @@ public final class HelikonClient implements ClientModInitializer {
         AdvancedMovementInputAccess.install(bunnyHop, scaffold);
         DolphinAccess.install(dolphin);
         FreecamAccess.install(freecam);
+        RemoteViewAccess.install(remoteView, friends);
         NoSlowAccess.install(noSlow);
         AntiWaterPushAccess.install(antiWaterPush);
         StepAccess.install(step);
@@ -823,6 +828,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(boatFlight, "tick", () -> MinecraftAdvancedMovementAccess.tickBoatFlight(boatFlight));
                 modules.runGuarded(jetpack, "tick", () -> MinecraftAdvancedMovementAccess.tickJetpack(jetpack));
                 modules.runGuarded(freecam, "tick", () -> FreecamAccess.tick(Minecraft.getInstance()));
+                modules.runGuarded(remoteView, "tick", () -> RemoteViewAccess.tick(Minecraft.getInstance()));
                 modules.runGuarded(fakeLag, "tick", FakeLagAccess::tick);
                 modules.runGuarded(noFall, "tick", () -> MinecraftAdvancedMovementAccess.tickNoFall(noFall));
                 modules.runGuarded(blink, "tick", BlinkPacketAccess::tick);

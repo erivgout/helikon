@@ -178,7 +178,8 @@ Minecraft-free water-edge fact. Its 26.2 input adapter is covered by the
 advanced-movement smoke check below.
 Combat filtering, deterministic selection, bounded bow smoothing, legitimate
 critical gates, restorative-potion slot ownership, anti-bot heuristics, and
-session HUD tracking are covered by `CombatPolicyTest`. Minecraft combat and
+session HUD tracking are covered by `CombatPolicyTest`. `AutoLeaveTest` covers
+its disabled default, independent danger triggers, and invalid local facts. Minecraft combat and
 HUD wiring additionally have the manual checklist below because they depend on
 verified 26.2 local game APIs.
 Configuration migration coverage verifies that legacy Fullbright state loads
@@ -672,6 +673,11 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     healing splash/drink potion and a non-healing potion in the hotbar; verify
     **AutoPotion** selects only the configured healing potion below its health
     threshold, uses Minecraft's normal item path, then restores its owned slot.
+    On a disposable multiplayer server, set **AutoLeave** to a safe test
+    threshold and verify it uses Minecraft's ordinary leave flow only for an
+    enabled low-health or dangerous-fall condition. Disable each condition in
+    turn to verify it cannot leave, and verify it never leaves a local world or
+    causes **AutoReconnect** to rejoin after its intentional leave.
     Verify **TargetHUD** shows only local crosshair/attack facts and
     **ReachDisplay** reports only a measured Helikon attack request distance.
     Finally toggle **AntiBot** options with a test player/list state and verify

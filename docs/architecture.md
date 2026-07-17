@@ -229,6 +229,11 @@ the same per-tick attack guard, so Helikon still issues at most one ordinary
 attack per client tick, and it never builds a packet or extends reach; the server
 remains authoritative over whether a hit deflects the fireball.
 
+AutoLeave evaluates its low-health and fall-distance thresholds from an
+immutable Minecraft-free context. `MinecraftAutoLeaveAccess` reads only local
+player facts and invokes Minecraft's ordinary multiplayer disconnect flow;
+Helikon marks that intentional leave so AutoReconnect does not rejoin.
+
 The inventory-automation modules keep armor ranking, item-ID/slot parsing,
 totem restore conditions, chest priority, and conservative manager choices in
 Minecraft-free classes. `MinecraftContainerClicker` is the sole narrow adapter:

@@ -86,6 +86,8 @@ import dev.helikon.client.module.combat.AutoPotion;
 import dev.helikon.client.module.combat.BlockHit;
 import dev.helikon.client.module.combat.BackTrack;
 import dev.helikon.client.module.combat.MinecraftBackTrackAccess;
+import dev.helikon.client.module.combat.AutoLeave;
+import dev.helikon.client.module.combat.MinecraftAutoLeaveAccess;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.HitFlick;
@@ -388,6 +390,7 @@ public final class HelikonClient implements ClientModInitializer {
     private ServerData reconnectServer;
     private ServerData lastConnectedServer;
     private boolean reconnectAttemptInFlight;
+    private boolean autoLeaveDisconnectInFlight;
 
     /** The live registry, exposed only for client gametests; null before client init. */
     public static ModuleRegistry activeModuleRegistry() {
@@ -544,6 +547,7 @@ public final class HelikonClient implements ClientModInitializer {
         JumpReset jumpReset = new JumpReset();
         AutoPotion autoPotion = new AutoPotion();
         AutoPearl autoPearl = new AutoPearl();
+        AutoLeave autoLeave = new AutoLeave();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
         Reach reach = new Reach();
@@ -647,6 +651,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(jumpReset);
         modules.register(autoPotion);
         modules.register(autoPearl);
+        modules.register(autoLeave);
         modules.register(targetHud);
         modules.register(killAura);
         modules.register(reach);
@@ -742,6 +747,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(autoEject, "tick", () -> tickAutoEject(autoEject, clientTick));
                 modules.runGuarded(autoFish, "tick", () -> tickAutoFish(autoFish, clientTick));
                 modules.runGuarded(autoReconnect, "tick", () -> tickAutoReconnect(autoReconnect, clientTick));
+                modules.runGuarded(autoLeave, "tick", () -> tickAutoLeave(autoLeave));
                 modules.runGuarded(autoTotem, "tick", () -> tickAutoTotem(autoTotem, clientTick));
                 modules.runGuarded(inventoryManager, "tick", () -> tickInventoryManager(inventoryManager, clientTick));
                 modules.runGuarded(inventoryFill, "tick", () -> tickInventoryFill(inventoryFill, clientTick));
@@ -935,7 +941,12 @@ public final class HelikonClient implements ClientModInitializer {
             MinecraftHitFlickAccess.reset();
             MinecraftHitFlickAccess.reset();
             playerStateEvents.reset();
-            modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));
+            if (autoLeaveDisconnectInFlight) {
+                autoLeaveDisconnectInFlight = false;
+                modules.runGuarded(autoReconnect, "disconnect", autoReconnect::onConnected);
+            } else {
+                modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));
+            }
             if (timer.isEnabled()) {
                 modules.setEnabled(timer, false);
             }
@@ -1311,6 +1322,14 @@ public final class HelikonClient implements ClientModInitializer {
             reconnectAttemptInFlight = true;
             ConnectScreen.startConnecting(reconnectParent, client, ServerAddress.parseString(address), reconnectServer,
                     false, null);
+        });
+    }
+
+    /** Uses the normal client disconnect flow only after the pure module policy observes a configured danger. */
+    private void tickAutoLeave(AutoLeave autoLeave) {
+        MinecraftAutoLeaveAccess.observedDanger(autoLeave).ifPresent(danger -> {
+            autoLeaveDisconnectInFlight = true;
+            MinecraftAutoLeaveAccess.disconnect(danger);
         });
     }
 

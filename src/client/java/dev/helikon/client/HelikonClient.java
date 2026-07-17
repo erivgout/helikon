@@ -108,6 +108,7 @@ import dev.helikon.client.module.combat.TriggerBot;
 import dev.helikon.client.module.combat.WTap;
 import dev.helikon.client.module.combat.WTapAccess;
 import dev.helikon.client.module.movement.AutoSprint;
+import dev.helikon.client.module.movement.AutoSwim;
 import dev.helikon.client.module.movement.AutoSneak;
 import dev.helikon.client.module.movement.AutoWalk;
 import dev.helikon.client.module.movement.AntiWaterPush;
@@ -129,6 +130,7 @@ import dev.helikon.client.module.movement.FreecamAccess;
 import dev.helikon.client.module.movement.Jetpack;
 import dev.helikon.client.module.movement.Clutch;
 import dev.helikon.client.module.movement.MinecraftAdvancedMovementAccess;
+import dev.helikon.client.module.movement.MinecraftAutoSwimAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.NoFall;
 import dev.helikon.client.module.movement.NoSlow;
@@ -451,6 +453,7 @@ public final class HelikonClient implements ClientModInitializer {
                 hudLayout, panicState);
         AntiDebuffAccess.install(antiDebuff);
         AutoSprint autoSprint = new AutoSprint();
+        AutoSwim autoSwim = new AutoSwim();
         AutoWalk autoWalk = new AutoWalk();
         AutoSneak autoSneak = new AutoSneak();
         Twerk twerk = new Twerk();
@@ -554,6 +557,7 @@ public final class HelikonClient implements ClientModInitializer {
         LogoutCoordinates logoutCoordinates = new LogoutCoordinates();
         CoordinateTracker coordinateTracker = new CoordinateTracker();
         modules.register(autoSprint);
+        modules.register(autoSwim);
         modules.register(autoWalk);
         modules.register(autoSneak);
         modules.register(twerk);
@@ -689,6 +693,7 @@ public final class HelikonClient implements ClientModInitializer {
                 }
                 modules.runGuarded(fullbright, "tick", fullbright::tick);
                 modules.runGuarded(autoSprint, "tick", () -> tickAutoSprint(autoSprint));
+                modules.runGuarded(autoSwim, "tick", () -> MinecraftAutoSwimAccess.tick(autoSwim));
                 modules.runGuarded(fastLadders, "tick", () -> MinecraftAdvancedMovementAccess.tickFastLadders(fastLadders));
                 modules.runGuarded(jesus, "tick", () -> MinecraftAdvancedMovementAccess.tickJesus(jesus));
                 modules.runGuarded(spider, "tick", () -> MinecraftAdvancedMovementAccess.tickSpider(spider));

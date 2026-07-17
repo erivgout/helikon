@@ -7,6 +7,7 @@
     "ClientInputAccessor",
     "ChatAlphaCalculatorMixin",
     "ChatScreenMixin",
+    "BookEditScreenMixin",
     "ChatComponentMixin",
     "ChatComponentAccessor",
     "CameraNoClipMixin",

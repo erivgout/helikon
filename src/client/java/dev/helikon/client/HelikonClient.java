@@ -512,6 +512,7 @@ public final class HelikonClient implements ClientModInitializer {
         NoWeather noWeather = new NoWeather();
         dev.helikon.client.module.render.Zoom zoom = new dev.helikon.client.module.render.Zoom();
         dev.helikon.client.module.render.RainbowUi rainbowUi = new dev.helikon.client.module.render.RainbowUi();
+        dev.helikon.client.module.render.HelikonLogo helikonLogo = new dev.helikon.client.module.render.HelikonLogo();
         dev.helikon.client.module.miscellaneous.LegacyFunModules.Derp derp =
                 new dev.helikon.client.module.miscellaneous.LegacyFunModules.Derp();
         dev.helikon.client.module.miscellaneous.LegacyFunModules.HeadRoll headRoll =
@@ -570,6 +571,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(noWeather);
         modules.register(zoom);
         modules.register(rainbowUi);
+        modules.register(helikonLogo);
         modules.register(derp);
         modules.register(headRoll);
         modules.register(lsd);
@@ -772,6 +774,12 @@ public final class HelikonClient implements ClientModInitializer {
         KnockbackDelay knockbackDelay = new KnockbackDelay(MinecraftKnockbackDelayAccess::apply);
         WindCharge windCharge = new WindCharge();
         Annoy annoy = new Annoy();
+        dev.helikon.client.module.miscellaneous.BookHack bookHack =
+                new dev.helikon.client.module.miscellaneous.BookHack();
+        dev.helikon.client.module.miscellaneous.Changelog changelog =
+                new dev.helikon.client.module.miscellaneous.Changelog();
+        dev.helikon.client.module.miscellaneous.ServerCleanUp serverCleanUp =
+                new dev.helikon.client.module.miscellaneous.ServerCleanUp();
         OneClickFriends oneClickFriends = new OneClickFriends();
         SkinBlinker skinBlinker = new SkinBlinker(new MinecraftSkinLayerAccess());
         DebugOverlay debugOverlay = new DebugOverlay(timingMetrics);
@@ -928,6 +936,10 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(knockbackDelay);
         modules.register(windCharge);
         modules.register(annoy);
+        modules.register(bookHack);
+        modules.register(changelog);
+        modules.register(serverCleanUp);
+        dev.helikon.client.module.miscellaneous.BookHackAccess.install(bookHack);
         modules.register(oneClickFriends);
         modules.register(skinBlinker);
         modules.register(debugOverlay);
@@ -1091,6 +1103,12 @@ public final class HelikonClient implements ClientModInitializer {
                 Minecraft minecraft = Minecraft.getInstance();
                 modules.runGuarded(windCharge, "tick", () -> MinecraftWindChargeAccess.tick(windCharge, clientTick));
                 modules.runGuarded(annoy, "tick", () -> MinecraftMiscellaneousAccess.tickAnnoy(minecraft, annoy, clientTick));
+                modules.runGuarded(changelog, "tick",
+                        () -> dev.helikon.client.module.miscellaneous.MinecraftInterfaceActions.tickChangelog(
+                                changelog, modules));
+                modules.runGuarded(serverCleanUp, "tick",
+                        () -> dev.helikon.client.module.miscellaneous.MinecraftInterfaceActions.tickServerCleanup(
+                                serverCleanUp, modules));
                 modules.runGuarded(skinBlinker, "tick", () -> skinBlinker.tick(clientTick, minecraft.player != null,
                         minecraft.gui.screen() != null));
                 modules.runGuarded(knockbackDelay, "tick", () -> MinecraftKnockbackDelayAccess.tick(clientTick));
@@ -1410,6 +1428,8 @@ public final class HelikonClient implements ClientModInitializer {
                 debugOverlayHud);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "plan_telemetry"),
                 new PlanTelemetryHud(hudLayout, panicState, tpsEstimate));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "helikon_logo"),
+                new dev.helikon.client.hud.HelikonLogoHud(helikonLogo, panicState));
         LevelRenderEvents.BEFORE_GIZMOS.register(context -> {
             ClientEventAccess.postRender(RenderEvent.Kind.WORLD, 0.0D, "");
             worldVisuals.render(context);

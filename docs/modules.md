@@ -50,6 +50,7 @@
 | `rainbow_ui` | Render | Animates the ClickGUI accent through the color spectrum. | `speed`, `saturation` | This affects only Helikon's local ClickGUI colors. |
 | `lsd` | Render | Applies a reversible client-local nausea visual. | `refresh_ticks` | It does not grant or alter a server-side potion effect and removes only the local effect it added. |
 | `headless` | Render | Displaces the local head with an extreme downward pose. | none | Minecraft has no vanilla head-detach packet; this is a reversible pose displacement and servers may correct the rotation. |
+| `helikon_logo` | Render | Controls an original compact Helikon HUD wordmark. | `color` | Clean-room branding is used instead of copying another client's logo or assets. |
 
 ## Combat modules
 
@@ -248,6 +249,9 @@ Module IDs are lowercase and stable; display names are not used as identifiers.
 | `miley_cyrus` | Miscellaneous | Repeatedly swings both local hands. | `interval` | Uses ordinary bounded swing actions and does not target entities. |
 | `tired` | Miscellaneous | Keeps the local player in a prone swimming pose. | none | The pose is restored on disable; servers can correct it. |
 | `too_many_hax` | Miscellaneous | Prevents known movement, aura, and packet-buffer incompatibilities. | none | It deterministically retains the first enabled module in each documented group and disables later conflicts. |
+| `book_hack` | Miscellaneous | Adds Ctrl+Shift+V bulk clipboard pagination to writable books. | none | Import is capped at vanilla's 100 pages and 1,024 characters per page; it never emits oversized or malformed book data. |
+| `changelog` | Miscellaneous | Opens Helikon's bundled release notes in a local screen. | none | This is a one-shot local interface action and performs no network request. |
+| `server_cleanup` | Miscellaneous | Sorts the local saved server list and removes exact duplicate addresses. | none | This is an explicit one-shot local file change; the first entry for a duplicate address is retained. |
 
 ## ClickGUI
 

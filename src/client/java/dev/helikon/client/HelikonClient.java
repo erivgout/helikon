@@ -137,6 +137,7 @@ import dev.helikon.client.module.player.AutoReconnect;
 import dev.helikon.client.module.player.AutoTotem;
 import dev.helikon.client.module.player.ArmorCandidate;
 import dev.helikon.client.module.player.ArmorSlot;
+import dev.helikon.client.module.player.InventoryFill;
 import dev.helikon.client.module.player.InventoryItem;
 import dev.helikon.client.module.player.InventoryManager;
 import dev.helikon.client.module.player.ToolCandidate;
@@ -417,6 +418,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoReconnect autoReconnect = new AutoReconnect();
         AutoTotem autoTotem = new AutoTotem();
         InventoryManager inventoryManager = new InventoryManager();
+        InventoryFill inventoryFill = new InventoryFill();
         FastPlace fastPlace = new FastPlace(new MinecraftUseCooldownAccess());
         FastBreak fastBreak = new FastBreak(new MinecraftBreakCooldownAccess());
         Nuker nuker = new Nuker();
@@ -496,6 +498,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoReconnect);
         modules.register(autoTotem);
         modules.register(inventoryManager);
+        modules.register(inventoryFill);
         modules.register(fastPlace);
         modules.register(fastBreak);
         modules.register(nuker);
@@ -589,6 +592,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(autoReconnect, "tick", () -> tickAutoReconnect(autoReconnect, clientTick));
                 modules.runGuarded(autoTotem, "tick", () -> tickAutoTotem(autoTotem, clientTick));
                 modules.runGuarded(inventoryManager, "tick", () -> tickInventoryManager(inventoryManager, clientTick));
+                modules.runGuarded(inventoryFill, "tick", () -> tickInventoryFill(inventoryFill, clientTick));
                 modules.runGuarded(fastPlace, "tick", () -> tickFastPlace(fastPlace));
                 modules.runGuarded(fastBreak, "tick", () -> MinecraftMiningAccess.tickFastBreak(fastBreak));
                 modules.runGuarded(nuker, "tick", () -> MinecraftMiningAccess.tickNuker(nuker));
@@ -1119,6 +1123,18 @@ public final class HelikonClient implements ClientModInitializer {
         InventoryMenu menu = client.player.inventoryMenu;
         Inventory inventory = client.player.getInventory();
         inventoryManager.nextAction(tick, inventoryItems(menu, inventory), inventoryMenuSlots(menu, inventory))
+                .ifPresent(clicks -> MinecraftContainerClicker.apply(client, clicks));
+    }
+
+    /** Runs one normal refill swap for a configured hotbar slot on the open vanilla inventory. */
+    private static void tickInventoryFill(InventoryFill inventoryFill, long tick) {
+        Minecraft client = Minecraft.getInstance();
+        if (!isOwnInventoryScreen(client)) {
+            return;
+        }
+        InventoryMenu menu = client.player.inventoryMenu;
+        Inventory inventory = client.player.getInventory();
+        inventoryFill.nextAction(tick, inventoryItems(menu, inventory), inventoryMenuSlots(menu, inventory))
                 .ifPresent(clicks -> MinecraftContainerClicker.apply(client, clicks));
     }
 

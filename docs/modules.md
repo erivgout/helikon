@@ -104,6 +104,15 @@
 | `announcer` | Chat | Sends a bounded ordinary chat line for individually selected local gameplay moments. | `death`, `kill`, `item_pickup`, `distance_traveled`, `block_mined`, `dimension_change`, `join`, `leave`, `advancement`, `low_health`, `totem_use`, `distance_blocks`, `low_health_threshold`, `minimum_delay_seconds`, `session_message_cap`, `pause_in_gui`, `message_template` | All triggers are disabled by default. It uses only normal client chat with a 1–300 second local cooldown and 1–100 session cap; slash/local-command templates are rejected. Kills require a locally observed direct melee attempt followed by a dead entity unload. Leave is local Helikon feedback because it occurs after the normal server connection is closed. |
 | `local_translator` | Chat | Displays an additional offline translation for visible incoming chat. | `glossary` | It is off by default and has no HTTP/API mode. `glossary` accepts up to 64 exact `source=translation` entries. Original chat remains unchanged. |
 
+## Miscellaneous modules
+
+| ID | Category | Description | Settings | Limitation |
+| --- | --- | --- | --- | --- |
+| `twerk` | Miscellaneous | Alternates local sneak input. | `half_cycle_ticks` | It only changes a fresh local input snapshot, never runs with a screen open, and releases immediately when disabled or panicked. Physical sneak input is preserved. |
+| `annoy` | Miscellaneous | Makes sparse ordinary main-hand swings. | `interval_ticks` | Disabled by default; it requires a local player and no screen, waits 20–600 ticks between swings, never attacks/targets/chats, and uses only Minecraft's ordinary swing path. A server can observe or reject the normal swing. |
+| `one_click_friends` | Miscellaneous | Enables the local middle-click friend gesture. | none | It records an edge before applying the gate, so enabling it while the button is held cannot change a friend. It never consumes or changes normal middle-click behavior. |
+| `skin_blinker` | Miscellaneous | Alternates the local player skin-layer options. | `half_cycle_ticks` | It changes no saved or broadcast option, pauses for screens, and restores layer values it still owns on disable, panic, or world exit. |
+
 Every production module will document its stable ID, category, settings,
 limitations, acceptance criteria, and automated or manual test coverage here.
 
@@ -159,8 +168,9 @@ they neither inspect nor send server data beyond the user-provided identifier.
 ## Friends
 
 Friends are local player-name entries, managed through `.friend list`,
-`.friend add`, `.friend remove`, and `.friend color`. Middle-click a targeted
-player in the game world to add or remove that name without opening chat.
+`.friend add`, `.friend remove`, and `.friend color`. Enable
+**OneClickFriends**, then middle-click a targeted player in the game world to
+add or remove that name without opening chat.
 Each entry stores a local ARGB render color in `friends.json`; no friend data is
 sent to a server. Targeting modules will use the friend list for their default
 friend-exclusion policy when those modules are introduced.

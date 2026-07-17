@@ -62,6 +62,11 @@ normal careful-movement handling guards ledges. The bridge is always inactive
 while a screen is open, and it recomputes the effective movement vector after
 the final input transformation.
 
+Twerk uses that same fresh-input bridge after AutoSneak. Its small
+Minecraft-free state machine alternates a bounded local sneak pulse and always
+resets on a screen, disable, or panic, so it cannot leave a pressed mapping
+behind. The bridge combines policies only for a fresh vanilla input snapshot.
+
 AutoParkour's screen/ground/forward/speed/ledge/lava/drop policy is likewise
 Minecraft-free. Its narrow keyboard adapter samples only loaded blocks at the
 cardinal forward position, declines an absent, lava, obstructed, non-sturdy,
@@ -393,11 +398,20 @@ Minecraft classes in the storage layer.
 
 `FriendManager` is likewise a Minecraft-free, schema-versioned local store for
 validated player names and ARGB render colors. `FriendToggleGesture` contains
-the middle-click edge and screen-suppression policy; the client entrypoint is
-limited to resolving the targeted player through the 26.2 hit result and
-calling the store. Future targeting modules can query `FriendManager.contains`
-to exclude friends by default without coupling their decision logic to input or
-JSON handling.
+the middle-click edge and screen-suppression policy; `OneClickFriends` is the
+explicit module gate. The client entrypoint records every physical edge before
+consulting that gate, then is limited to resolving a targeted player through
+the 26.2 hit result and calling the store. Future targeting modules can query
+`FriendManager.contains` to exclude friends by default without coupling their
+decision logic to input or JSON handling.
+
+`Annoy` is a Minecraft-free interval policy whose narrow adapter uses only
+Minecraft's verified ordinary main-hand swing method after a player/no-screen
+check. `SkinBlinker` owns a small `SkinLayerAccess` port: it snapshots the
+session-local skin-layer options, alternates their visible state, and restores
+only values it still owns on disable, panic, world exit, or a screen opening. Its Minecraft
+adapter calls the local options API only; it neither saves nor broadcasts those
+option changes.
 
 `WaypointManager` follows the same atomic local-storage rules for
 `waypoints.json`. `WaypointContext`, `WaypointLocation`, and

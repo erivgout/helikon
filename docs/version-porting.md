@@ -109,9 +109,14 @@ When porting:
     Gizmo cuboids before changing combat modules. Preserve the single ordinary
     Helikon attack-per-tick guard, line-of-sight rule, user-held bow rule, and
     no-packet policy.
-29. Run the manual smoke test in an empty profile and with no internet access.
-30. Document compatibility changes and retained limitations before release.
-31. Re-run `check releaseBundle`, inspect the generated checksum and resolved
+29. Revalidate `KeyboardInput.tick` fresh input records for Twerk, plus
+    `LocalPlayer.swing(InteractionHand)`, `Options.setModelPart`, and
+    `Options.isModelPartEnabled` for Annoy and SkinBlinker. Preserve Twerk's
+    screen suppression, Annoy's ordinary bounded swing path, and SkinBlinker's
+    session-only no-save/no-broadcast restoration behavior.
+30. Run the manual smoke test in an empty profile and with no internet access.
+31. Document compatibility changes and retained limitations before release.
+32. Re-run `check releaseBundle`, inspect the generated checksum and resolved
     dependency report, and repeat the focused live-client smoke checks before
     packaging a release for the target version.
 

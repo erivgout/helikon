@@ -100,6 +100,12 @@ import dev.helikon.client.module.movement.Timer;
 import dev.helikon.client.module.movement.TimerModuleAccess;
 import dev.helikon.client.module.movement.WaterJump;
 import dev.helikon.client.module.movement.WaterJumpAccess;
+import dev.helikon.client.module.miscellaneous.Annoy;
+import dev.helikon.client.module.miscellaneous.MinecraftMiscellaneousAccess;
+import dev.helikon.client.module.miscellaneous.MinecraftSkinLayerAccess;
+import dev.helikon.client.module.miscellaneous.OneClickFriends;
+import dev.helikon.client.module.miscellaneous.SkinBlinker;
+import dev.helikon.client.module.miscellaneous.Twerk;
 import dev.helikon.client.module.player.AutoTool;
 import dev.helikon.client.module.player.AutoArmor;
 import dev.helikon.client.module.player.AutoEject;
@@ -334,6 +340,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoSprint autoSprint = new AutoSprint();
         AutoWalk autoWalk = new AutoWalk();
         AutoSneak autoSneak = new AutoSneak();
+        Twerk twerk = new Twerk();
         AutoParkour autoParkour = new AutoParkour();
         InventoryWalk inventoryWalk = new InventoryWalk();
         AntiAfk antiAfk = new AntiAfk();
@@ -394,9 +401,13 @@ public final class HelikonClient implements ClientModInitializer {
         KillAura killAura = new KillAura();
         ReachDisplay reachDisplay = new ReachDisplay();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
+        Annoy annoy = new Annoy();
+        OneClickFriends oneClickFriends = new OneClickFriends();
+        SkinBlinker skinBlinker = new SkinBlinker(new MinecraftSkinLayerAccess());
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
+        modules.register(twerk);
         modules.register(autoParkour);
         modules.register(inventoryWalk);
         modules.register(antiAfk);
@@ -449,11 +460,14 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(targetHud);
         modules.register(killAura);
         modules.register(reachDisplay);
+        modules.register(annoy);
+        modules.register(oneClickFriends);
+        modules.register(skinBlinker);
         ChatDisplayAccess.install(chatTimestamps);
         ChatDisplayAccess.install(chatColor);
         BetterChatDisplayAccess.install(betterChat);
         AnnouncerAccess.install(announcer, normalChatSender);
-        MovementModuleAccess.install(autoWalk, autoSneak);
+        MovementModuleAccess.install(autoWalk, autoSneak, twerk);
         InventoryWalkAccess.install(inventoryWalk);
         ParkourAccess.install(autoParkour);
         AntiAfkAccess.install(antiAfk);
@@ -500,6 +514,10 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(builderAssist, "tick", () -> MinecraftBuilderAssistAccess.tick(builderAssist, clientTick));
                 modules.runGuarded(chatSpammer, "tick", () -> tickChatSpammer(chatSpammer));
                 modules.runGuarded(announcer, "tick", HelikonClient::tickAnnouncer);
+                Minecraft minecraft = Minecraft.getInstance();
+                modules.runGuarded(annoy, "tick", () -> MinecraftMiscellaneousAccess.tickAnnoy(minecraft, annoy, clientTick));
+                modules.runGuarded(skinBlinker, "tick", () -> skinBlinker.tick(clientTick, minecraft.player != null,
+                        minecraft.gui.screen() != null));
                 combatAttackStarted.set(false);
                 combatSnapshot.set(MinecraftCombatAccess.Snapshot.unavailable());
                 modules.runGuarded(antiBot, "observe", () -> combatSnapshot.set(MinecraftCombatAccess.observe(friends, antiBot)));
@@ -695,7 +713,7 @@ public final class HelikonClient implements ClientModInitializer {
                     key -> InputConstants.isKeyDown(client.getWindow(), key),
                     anyScreenOpen || panicTriggered
             );
-            toggleFriendOnMiddleClick(client);
+            toggleFriendOnMiddleClick(client, oneClickFriends);
             tickMacro(client);
 
             Runnable screenAction = pendingScreenAction.getAndSet(null);
@@ -781,7 +799,7 @@ public final class HelikonClient implements ClientModInitializer {
                 || client.gui.screen() instanceof HelikonThemeEditorScreen;
     }
 
-    private void toggleFriendOnMiddleClick(Minecraft client) {
+    private void toggleFriendOnMiddleClick(Minecraft client, OneClickFriends oneClickFriends) {
         String targetedPlayerName = null;
         if (client.hitResult instanceof EntityHitResult entityHit
                 && entityHit.getEntity() instanceof Player player) {
@@ -792,7 +810,7 @@ public final class HelikonClient implements ClientModInitializer {
                 client.mouseHandler.isMiddlePressed(),
                 client.gui.screen() != null,
                 targetedPlayerName
-        ).ifPresent(this::toggleFriend);
+        ).filter(ignored -> oneClickFriends.allowsToggle()).ifPresent(this::toggleFriend);
     }
 
     private void toggleFriend(String playerName) {

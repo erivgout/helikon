@@ -48,6 +48,11 @@ plus AutoWalk's GUI and steering input policy, are covered by
 AutoSneak's Toggle, bound-key Hold, Edge-only, and screen-suppression policies,
 plus enum-setting recovery and command validation, are covered by
 `AutoSneakTest`, `SettingTest`, and `BuiltinCommandsTest`.
+Twerk's local pulse interval, physical-sneak preservation, and screen/disable
+reset rules are covered by `TwerkTest`. Annoy's enabled/player/screen gates and
+minimum swing interval are covered by `AnnoyTest`. SkinBlinker's local-layer
+alternation, ownership-aware restoration, and world-exit cleanup are covered
+by `SkinBlinkerTest`; `OneClickFriendsTest` covers its explicit module gate.
 AutoParkour's safe shallow-ledge gate and malformed-fact rejection,
 InventoryWalk's inventory/text-focus and Shift-preservation policy, and
 AntiAFK's interval, local-activity reset, and grounded-jump policy are covered
@@ -573,6 +578,28 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
    log reports only local detection status and that Helikon starts with the
    same controls either way. It must not download Baritone, expose a remote
    endpoint, or invoke an optional Baritone command/API.
+
+## Manual Phase K miscellaneous-control smoke test
+
+1. In a disposable local/test world, enable **Twerk**. Verify local sneaking
+   alternates at the configured half-cycle, physical Shift stays effective,
+   opening chat or the ClickGUI stops the pulse immediately, and disable or
+   panic leaves no forced sneak input.
+2. Enable **OneClickFriends**, target a player, and middle-click once to add
+   then again after release to remove that local friend. Disable the module and
+   verify the same gesture changes nothing; enable it while holding middle
+   click and verify it still waits for a release and a new click. Screens must
+   never change the friend store.
+3. Enable **SkinBlinker** in third-person view. Verify only the local skin
+   layers alternate at the configured interval, disable or panic restores the
+   previous layers, opening a screen pauses/restores them, and leaving the
+   world restores them while the module stays enabled. Quit without changing
+   vanilla skin options and verify it did not persist a blink state.
+4. Enable **Annoy** only in a permitted disposable/local test. With no screen,
+   verify it makes one ordinary visible main-hand swing no faster than the
+   configured interval; with chat/ClickGUI open, no player, or the module
+   disabled, it must not swing. Verify it never attacks, changes a target, or
+   sends chat. Server policy remains authoritative for normal swings.
 
 ## Manual LocalTranslator smoke test
 

@@ -2,6 +2,8 @@ package dev.helikon.client.module.movement;
 
 import net.minecraft.world.entity.player.Input;
 
+import dev.helikon.client.module.miscellaneous.Twerk;
+
 import java.util.Objects;
 import java.util.function.IntPredicate;
 
@@ -9,13 +11,15 @@ import java.util.function.IntPredicate;
 public final class MovementModuleAccess {
     private static volatile AutoWalk autoWalk;
     private static volatile AutoSneak autoSneak;
+    private static volatile Twerk twerk;
 
     private MovementModuleAccess() {
     }
 
-    public static void install(AutoWalk autoWalkModule, AutoSneak autoSneakModule) {
+    public static void install(AutoWalk autoWalkModule, AutoSneak autoSneakModule, Twerk twerkModule) {
         autoWalk = Objects.requireNonNull(autoWalkModule, "autoWalkModule");
         autoSneak = Objects.requireNonNull(autoSneakModule, "autoSneakModule");
+        twerk = Objects.requireNonNull(twerkModule, "twerkModule");
     }
 
     /** Returns an input record with only the local movement-module policies applied. */
@@ -32,6 +36,10 @@ public final class MovementModuleAccess {
         AutoSneak sneakModule = autoSneak;
         if (sneakModule != null) {
             result = sneakModule.apply(result, screenOpen, autoSneakKeyDown);
+        }
+        Twerk twerkModule = twerk;
+        if (twerkModule != null) {
+            result = twerkModule.apply(result, screenOpen);
         }
         if (result.forward() == current.forward()
                 && result.backward() == current.backward()

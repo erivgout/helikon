@@ -48,7 +48,7 @@ EntityESP, BlockESP, Tracers, and Breadcrumbs use Minecraft's
 local world-render Gizmo phase only: they never alter entities, blocks, client
 movement, or packets. BlockESP deliberately scans a bounded cube at a bounded
 per-tick budget, so newly loaded or changed blocks can take one scan pass to
-appear. AutoSprint, AutoWalk, and AutoSneak apply only normal local
+appear. AutoSprint, AutoWalk, AutoSneak, and Twerk apply only normal local
 movement input and sprint state; AutoTool selects a safe local hotbar tool only
 while the user is already mining; FastPlace can lower Minecraft's transient
 local use cooldown only while the user holds Use; and FastBreak can lower an
@@ -329,9 +329,13 @@ Key names follow Minecraft's keyboard names, for example `r`, `f6`, or
 into chat or a search box cannot toggle modules. Tab completion is not
 implemented yet. Profile names are local, lowercase file-safe tokens (letters,
 digits, `_`, and `-`), and no profile data is synchronized or sent to a server.
-Friend names and colors are also stored locally only in `friends.json`.
-Middle-clicking a player in the world toggles that local friend entry; this
-does not consume or alter normal middle-click actions on blocks or items.
+Friend names and colors are also stored locally only in `friends.json`. With
+**OneClickFriends** enabled, middle-clicking a player in the world toggles that
+local friend entry; this does not consume or alter normal middle-click actions
+on blocks or items. SkinBlinker changes only the session-local skin-layer
+options and restores them on disable or world exit. Annoy is disabled by
+default and makes at most one ordinary main-hand swing every configured 20–600
+ticks; it never attacks, targets, or sends chat.
 Waypoints are scoped locally to the current server/world and dimension; their
 nearest enabled entries appear as a small direction-and-distance HUD list.
 Waypoint names, coordinates, world/server scope, dimension, colors, icons, and

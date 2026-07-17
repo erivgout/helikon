@@ -42,6 +42,16 @@ requests combat data, or sends packets.
 AutoSprint, AutoWalk, and AutoSneak use ordinary local client input and player
 sprint state. They do not construct, alter, replay, or bypass Minecraft
 packets; the connected server remains authoritative for all resulting movement.
+Twerk uses the same fresh local input path for a bounded sneak pulse.
+
+SkinBlinker changes only the local in-memory model-part option set. It neither
+saves nor broadcasts those option changes and restores its own unmodified
+values on disable, panic, world exit, or screen opening. OneClickFriends changes only the local
+friend JSON store when its explicit module gate is enabled. Annoy is the single
+exception in this group: its 20-tick-or-longer local interval can ask
+Minecraft's normal main-hand swing path for one ordinary swing. That path is
+server-visible under normal Minecraft rules, but Annoy never constructs,
+modifies, or replays a packet, attacks, changes a target, or sends chat.
 
 AutoTool only selects an existing local hotbar slot while the player is already
 using Minecraft's normal mining interaction. It does not construct or replay

@@ -67,6 +67,12 @@ recast state and durability reserve are covered by `AutoFishTest`; AutoReconnect
 countdown, cancellation, visible-screen guard, and bounded retries are covered
 by `AutoReconnectTest`. Builder plan bounds/geometry and Use/repeat/delay gates
 are covered by `BuilderPlanTest` and `BuilderAssistTest`.
+Advanced Movement's NoSlow gates, bounded ladder/step/velocity rules,
+ability-only flight/no-fall behavior, Elytra pitch/status, scaffold target and
+hotbar selection, and safe timer multiplier are covered by
+`AdvancedMovementPolicyTest`. Mixin/HUD/freecam wiring is additionally covered
+by the live-client checklist below because it relies on verified 26.2 client
+hooks.
 
 ## Manual Active Modules HUD smoke test
 
@@ -333,6 +339,25 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     width, height, and color settings. Verify repeat placement honors its delay
     and stops when Use is released, the held item is not a block, a screen is
     open, a target is unloaded/occupied, or normal vanilla placement fails.
+42. In a disposable local/test world, enable each Advanced Movement module
+    separately. With **NoSlow**, verify each enabled food/block/bow/sneak/
+    soul-sand/honey/cobweb category changes only local responsiveness and no
+    other entity is affected. Verify **FastLadders** changes only normal
+    climbable movement, **Step** honors its 1.5-block cap through normal
+    collisions, and **Speed**/**BunnyHop** remain within their configured caps
+    and do nothing in screens. On a creative/spectator or otherwise permitted
+    test environment, verify **Flight** enables normal permitted flight then
+    restores its own speed/state; enable its Freecam view, move and look around,
+    confirm the player does not move, then disable it and confirm the camera
+    returns. Verify **NoFall** does nothing without `mayfly`. While gliding,
+    verify **ExtraElytra**'s gradual pitch/near-ground adjustment, speed HUD,
+    durability warning, and panic hide. With player-provided hotbar blocks,
+    hold Use for **Scaffold** and verify one normal supported placement per
+    delay, hotbar selection, below/ahead mode, optional local rotation/tower/
+    edge-safety requests, and no action for unloaded/occupied targets or open
+    screens. Finally set **Timer** within its safe range, verify it disables on
+    disconnect/world leave, and confirm no module claims server-side movement
+    or tick-rate changes.
 
 ## Manual command and keybind smoke test
 

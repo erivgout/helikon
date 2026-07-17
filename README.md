@@ -46,6 +46,16 @@ one ordinary Use interaction at its configured cadence. Combat tools, packet
 manipulation, external networking, telemetry, a custom backend, and a
 server-side component remain unimplemented.
 
+The advanced movement modules remain deliberately conservative. NoSlow changes
+only selected local vanilla slowdown calculations; FastLadders, Step, Speed,
+and BunnyHop use bounded local input/collision/velocity choices with no
+anti-cheat-named modes. Flight and NoFall enable only Minecraft-granted flight
+abilities, while Flight's optional freecam view is a local invisible camera
+that suppresses player movement keys and never moves the player. ExtraElytra adds local pitch/speed/durability
+assistance. Scaffold uses player-provided hotbar blocks and normal Use
+interactions only while Use is held. Timer is constrained to 0.5×–1.25×,
+resets on world leave, and cannot make a multiplayer server advance faster.
+
 Trajectories predicts only frustum-visible in-flight arrows, tridents, and
 thrown items through a local block-collision simulation; it does not alter
 projectile physics or generate an aiming preview. TrueSight makes selected

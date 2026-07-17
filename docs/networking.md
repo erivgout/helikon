@@ -55,6 +55,21 @@ ordinary local Use binding. It never directly invokes, repeats, or fabricates
 an interaction or packet; normal client interaction rules and all server-side
 food, inventory, and combat rules remain authoritative.
 
+NoSlow, FastLadders, Step, Speed, BunnyHop, ExtraElytra, and Timer change only
+local movement/input, collision, view, or client-time calculations. They do
+not create, modify, replay, or spoof movement packets, and a server can reject
+or correct any client-side motion it does not permit. Flight and NoFall call
+Minecraft's ordinary ability-update path only after its existing `mayfly`
+permission is present; neither claims survival multiplayer flight.
+
+Freecam is entirely local: its camera entity is not added to the client level,
+suppresses player movement keys, never moves the player, and never sends a
+position, rotation, or camera packet.
+Scaffold requires the user to hold Use and routes one selected player-provided
+block through Minecraft's normal `useItemOn` path after loaded-target/support
+checks. It does not choose blocks outside the hotbar or construct placement
+packets.
+
 AutoArmor, AutoEject, AutoTotem, InventoryManager, and ChestSteal make no
 packet themselves. When their narrow screen/cursor guards pass, the client
 asks Minecraft to process an ordinary vanilla container input (pickup,

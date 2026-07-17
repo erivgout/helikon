@@ -30,6 +30,7 @@ import dev.helikon.client.gui.HelikonThemeEditorScreen;
 import dev.helikon.client.gui.HelikonAutoReconnectScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
 import dev.helikon.client.hud.BetterCrosshairHud;
+import dev.helikon.client.hud.ElytraHud;
 import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.hud.MiniPlayerHud;
 import dev.helikon.client.hud.RadarHud;
@@ -47,8 +48,24 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.movement.AutoSprint;
 import dev.helikon.client.module.movement.AutoSneak;
 import dev.helikon.client.module.movement.AutoWalk;
+import dev.helikon.client.module.movement.AdvancedMovementInputAccess;
+import dev.helikon.client.module.movement.BunnyHop;
+import dev.helikon.client.module.movement.ExtraElytra;
+import dev.helikon.client.module.movement.FastLadders;
+import dev.helikon.client.module.movement.Flight;
+import dev.helikon.client.module.movement.FreecamAccess;
+import dev.helikon.client.module.movement.MinecraftAdvancedMovementAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
+import dev.helikon.client.module.movement.NoFall;
+import dev.helikon.client.module.movement.NoSlow;
+import dev.helikon.client.module.movement.NoSlowAccess;
+import dev.helikon.client.module.movement.Scaffold;
 import dev.helikon.client.module.movement.SprintContext;
+import dev.helikon.client.module.movement.Step;
+import dev.helikon.client.module.movement.StepAccess;
+import dev.helikon.client.module.movement.Speed;
+import dev.helikon.client.module.movement.Timer;
+import dev.helikon.client.module.movement.TimerModuleAccess;
 import dev.helikon.client.module.player.AutoTool;
 import dev.helikon.client.module.player.AutoArmor;
 import dev.helikon.client.module.player.AutoEject;
@@ -248,6 +265,16 @@ public final class HelikonClient implements ClientModInitializer {
         AutoSprint autoSprint = new AutoSprint();
         AutoWalk autoWalk = new AutoWalk();
         AutoSneak autoSneak = new AutoSneak();
+        NoSlow noSlow = new NoSlow();
+        FastLadders fastLadders = new FastLadders();
+        Step step = new Step();
+        Speed speed = new Speed();
+        BunnyHop bunnyHop = new BunnyHop();
+        Flight flight = new Flight();
+        NoFall noFall = new NoFall();
+        ExtraElytra extraElytra = new ExtraElytra();
+        Scaffold scaffold = new Scaffold();
+        Timer timer = new Timer();
         AutoEat autoEat = new AutoEat(new MinecraftUseKeyAccess());
         AutoTool autoTool = new AutoTool();
         AutoArmor autoArmor = new AutoArmor();
@@ -276,6 +303,16 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
+        modules.register(noSlow);
+        modules.register(fastLadders);
+        modules.register(step);
+        modules.register(speed);
+        modules.register(bunnyHop);
+        modules.register(flight);
+        modules.register(noFall);
+        modules.register(extraElytra);
+        modules.register(scaffold);
+        modules.register(timer);
         modules.register(autoEat);
         modules.register(autoTool);
         modules.register(autoArmor);
@@ -303,14 +340,29 @@ public final class HelikonClient implements ClientModInitializer {
         ChatDisplayAccess.install(chatColor);
         BetterChatDisplayAccess.install(betterChat);
         MovementModuleAccess.install(autoWalk, autoSneak);
+        AdvancedMovementInputAccess.install(bunnyHop, scaffold);
+        FreecamAccess.install(flight);
+        NoSlowAccess.install(noSlow);
+        StepAccess.install(step);
+        TimerModuleAccess.install(timer);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
                 breadcrumbs, builderAssist
         );
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
+                if (Minecraft.getInstance().level == null && timer.isEnabled()) {
+                    modules.setEnabled(timer, false);
+                }
                 modules.runGuarded(fullbright, "tick", fullbright::tick);
                 modules.runGuarded(autoSprint, "tick", () -> tickAutoSprint(autoSprint));
+                modules.runGuarded(fastLadders, "tick", () -> MinecraftAdvancedMovementAccess.tickFastLadders(fastLadders));
+                modules.runGuarded(speed, "tick", () -> MinecraftAdvancedMovementAccess.tickSpeed(speed));
+                modules.runGuarded(bunnyHop, "tick", () -> MinecraftAdvancedMovementAccess.tickBunnyHop(bunnyHop));
+                modules.runGuarded(flight, "tick", () -> MinecraftAdvancedMovementAccess.tickFlight(flight));
+                modules.runGuarded(noFall, "tick", () -> MinecraftAdvancedMovementAccess.tickNoFall(noFall));
+                modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));
+                modules.runGuarded(scaffold, "tick", () -> MinecraftAdvancedMovementAccess.tickScaffold(scaffold, clientTick));
                 modules.runGuarded(autoEat, "tick", () -> tickAutoEat(autoEat));
                 modules.runGuarded(autoTool, "tick", () -> tickAutoTool(autoTool));
                 modules.runGuarded(autoArmor, "tick", () -> tickAutoArmor(autoArmor, clientTick));
@@ -379,9 +431,12 @@ public final class HelikonClient implements ClientModInitializer {
             reconnectAttemptInFlight = false;
             modules.runGuarded(autoReconnect, "connect", autoReconnect::onConnected);
         });
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
-                modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client))
-        );
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));
+            if (timer.isEnabled()) {
+                modules.setEnabled(timer, false);
+            }
+        });
 
         HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "active_modules"),
@@ -394,6 +449,8 @@ public final class HelikonClient implements ClientModInitializer {
                 new RadarHud(radar, friends, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "mini_player"),
                 new MiniPlayerHud(miniPlayer, panicState));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "elytra"),
+                new ElytraHud(extraElytra, panicState));
         LevelRenderEvents.BEFORE_GIZMOS.register(worldVisuals::render);
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             screenWasOpenAtTickStart = client.gui.screen() != null;

@@ -72,6 +72,22 @@ control. When AutoEat ends its own use hold, the input port separately polls
 the configured keyboard, mouse, or scancode binding so an overlapping physical
 player hold is never cancelled.
 
+Advanced movement keeps category gates, bounded velocity math, step height,
+ability-flight ownership, Elytra pitch/status, scaffold target selection, and
+timer-rate limits in Minecraft-free modules. The version-sensitive edge is
+narrow: NoSlow/Step/Timer mixins target verified local movement and
+`DeltaTracker` calculations; the controller adapts current local input,
+velocity, abilities, and held blocks to ordinary Minecraft APIs. No module
+constructs movement/container packets or treats client motion as server truth.
+
+Flight's normal mode changes only `Abilities` that already permit flight and
+restores only values it owns. Its optional Freecam uses an invisible, unadded
+client-side camera entity; input and mouse turn are redirected locally while
+the player receives no movement input, then the normal camera is restored.
+Scaffold is similarly constrained to a selected player-provided hotbar block,
+a loaded replaceable target with local support, an existing vanilla use
+cooldown, and one normal held-block interaction.
+
 The inventory-automation modules keep armor ranking, item-ID/slot parsing,
 totem restore conditions, chest priority, and conservative manager choices in
 Minecraft-free classes. `MinecraftContainerClicker` is the sole narrow adapter:

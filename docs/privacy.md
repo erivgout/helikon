@@ -48,3 +48,9 @@ memory for the current client session; it does not persist inventory contents,
 fishing events, build locations, or server addresses outside Minecraft's own
 normal server list/configuration. No automation data is sent to a Helikon
 service because no such service exists.
+
+Advanced movement keeps only transient local input, velocity, camera, ability,
+and Elytra status needed for the current session. Freecam's temporary camera
+entity is never added to the world, persisted, or transmitted. No movement
+module writes a route, block-placement history, speed trace, fall trace, or
+camera position to disk or a service.

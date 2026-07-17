@@ -75,8 +75,25 @@ When porting:
    `MultiPlayerGameMode.useItemOn`, `rightClickDelay`, and Gizmo cuboids before
    changing BuilderAssist. Keep plans bounded and every placement a normal
    held-block use request.
-23. Run the manual smoke test in an empty profile and with no internet access.
-24. Document compatibility changes and retained limitations before release.
+23. Revalidate `LocalPlayer` input/use-speed methods, `Entity` block-speed,
+   stuck-in-block, and step-height methods, plus the relevant use-animation,
+   sneaking attribute, honey/soul-sand/cobweb state APIs before changing
+   NoSlow or Step. Keep every mixin restricted to the local player.
+24. Revalidate local input records, climbable/fall-flying state, movement
+   vectors, velocity setters, permitted `Abilities`, and ability-update path
+   before changing FastLadders, Speed, BunnyHop, Flight, NoFall, or
+   ExtraElytra. Retain bounded settings and server-authority warnings.
+25. Revalidate `DeltaTracker.Timer.advanceGameTime` and its target-ms-per-tick
+   provider before changing Timer. Preserve its safe range and reset-on-leave
+   behavior; never use it to fabricate or alter packets.
+26. Revalidate `Minecraft.setCameraEntity`, client-only camera-entity
+   construction, local mouse-turn routing, and input suppression before
+   changing Freecam. It must not add an entity to the level or move the player.
+27. Revalidate hotbar selection, held-block tests, loaded target/support
+   checks, normal `useItemOn`, rotation, and use-cooldown APIs before changing
+   Scaffold. Keep player-provided blocks and ordinary interaction requirements.
+28. Run the manual smoke test in an empty profile and with no internet access.
+29. Document compatibility changes and retained limitations before release.
 
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

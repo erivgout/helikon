@@ -214,6 +214,17 @@ import dev.helikon.client.module.miscellaneous.Twerk;
 import dev.helikon.client.module.miscellaneous.WindCharge;
 import dev.helikon.client.module.player.AutoTool;
 import dev.helikon.client.module.player.AutoSwitch;
+import dev.helikon.client.module.player.AntiFire;
+import dev.helikon.client.module.player.AntiHunger;
+import dev.helikon.client.module.player.AntiPotion;
+import dev.helikon.client.module.player.CommandBlock;
+import dev.helikon.client.module.player.CreativeItemModule;
+import dev.helikon.client.module.player.FastEat;
+import dev.helikon.client.module.player.ItemGenerator;
+import dev.helikon.client.module.player.KillPotion;
+import dev.helikon.client.module.player.MinecraftCreativeItemAccess;
+import dev.helikon.client.module.player.MinecraftLegacyPlayerAccess;
+import dev.helikon.client.module.player.TrollPotion;
 import dev.helikon.client.module.player.MinecraftAutoSwitchAccess;
 import dev.helikon.client.module.player.AutoArmor;
 import dev.helikon.client.module.player.AutoEject;
@@ -618,6 +629,14 @@ public final class HelikonClient implements ClientModInitializer {
         AutoEat autoEat = new AutoEat(new MinecraftUseKeyAccess());
         AutoTool autoTool = new AutoTool();
         AutoSwitch autoSwitch = new AutoSwitch();
+        AntiFire antiFire = new AntiFire();
+        AntiHunger antiHunger = new AntiHunger();
+        AntiPotion antiPotion = new AntiPotion();
+        CommandBlock commandBlock = new CommandBlock();
+        FastEat fastEat = new FastEat();
+        ItemGenerator itemGenerator = new ItemGenerator();
+        KillPotion killPotion = new KillPotion();
+        TrollPotion trollPotion = new TrollPotion();
         AutoArmor autoArmor = new AutoArmor();
         AutoEject autoEject = new AutoEject();
         AutoFish autoFish = new AutoFish();
@@ -768,6 +787,14 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoEat);
         modules.register(autoTool);
         modules.register(autoSwitch);
+        modules.register(antiFire);
+        modules.register(antiHunger);
+        modules.register(antiPotion);
+        modules.register(commandBlock);
+        modules.register(fastEat);
+        modules.register(itemGenerator);
+        modules.register(killPotion);
+        modules.register(trollPotion);
         modules.register(autoArmor);
         modules.register(autoEject);
         modules.register(autoFish);
@@ -954,6 +981,18 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(autoEat, "tick", () -> tickAutoEat(autoEat));
                 modules.runGuarded(autoTool, "tick", () -> tickAutoTool(autoTool));
                 modules.runGuarded(autoSwitch, "tick", () -> MinecraftAutoSwitchAccess.tick(autoSwitch));
+                modules.runGuarded(antiFire, "tick",
+                        () -> MinecraftLegacyPlayerAccess.tickAntiFire(clientTick, antiFire));
+                modules.runGuarded(antiHunger, "tick",
+                        () -> MinecraftLegacyPlayerAccess.tickAntiHunger(antiHunger));
+                modules.runGuarded(antiPotion, "tick",
+                        () -> MinecraftLegacyPlayerAccess.tickAntiPotion(clientTick, antiPotion));
+                modules.runGuarded(fastEat, "tick",
+                        () -> MinecraftLegacyPlayerAccess.tickFastEat(clientTick, fastEat));
+                for (CreativeItemModule creativeItem : List.of(itemGenerator, killPotion, trollPotion, commandBlock)) {
+                    modules.runGuarded(creativeItem, "tick",
+                            () -> MinecraftCreativeItemAccess.tick(creativeItem));
+                }
                 modules.runGuarded(autoArmor, "tick", () -> tickAutoArmor(autoArmor, clientTick));
                 modules.runGuarded(autoEject, "tick", () -> tickAutoEject(autoEject, clientTick));
                 modules.runGuarded(autoFish, "tick", () -> tickAutoFish(autoFish, clientTick));

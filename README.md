@@ -24,6 +24,11 @@ threshold and combat rules permit it. Other gameplay automation, combat tools, p
 external networking, telemetry, a custom backend, and a server-side component
 remain unimplemented.
 
+ChatPrefix and ChatSuffix can format only ordinary outgoing chat, with explicit
+guards for Helikon commands, slash commands, private messages, and likely
+authentication commands. They use the player's normal server chat connection;
+no messages are relayed through a Helikon service.
+
 The ClickGUI currently provides:
 
 - a category sidebar driven by `ModuleCategory`

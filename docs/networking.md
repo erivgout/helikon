@@ -35,6 +35,12 @@ ordinary local Use binding. It never directly invokes, repeats, or fabricates
 an interaction or packet; normal client interaction rules and all server-side
 food, inventory, and combat rules remain authoritative.
 
+ChatPrefix and ChatSuffix modify only a normal outgoing chat string immediately
+before Minecraft sends it through the player's existing server connection.
+They never touch slash, private-message, likely authentication, or Helikon
+local-command input, and they do not create requests, retries, proxies, or
+external connections.
+
 ## Future policy
 
 Optional external integrations must be isolated under

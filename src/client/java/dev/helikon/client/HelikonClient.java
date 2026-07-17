@@ -5,6 +5,7 @@ import dev.helikon.client.command.ChatCommands;
 import dev.helikon.client.command.CommandDispatcher;
 import dev.helikon.client.command.HelikonCommands;
 import dev.helikon.client.command.MinecraftKeyNameResolver;
+import dev.helikon.client.chat.OutgoingChatFormatter;
 import dev.helikon.client.config.ConfigurationException;
 import dev.helikon.client.config.ConfigurationManager;
 import dev.helikon.client.config.HudConfigurationManager;
@@ -42,6 +43,8 @@ import dev.helikon.client.module.player.ToolCandidate;
 import dev.helikon.client.module.player.AutoEat;
 import dev.helikon.client.module.player.FoodCandidate;
 import dev.helikon.client.module.player.MinecraftUseKeyAccess;
+import dev.helikon.client.module.chat.ChatPrefix;
+import dev.helikon.client.module.chat.ChatSuffix;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
@@ -59,6 +62,7 @@ import dev.helikon.client.waypoint.WaypointManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
@@ -76,6 +80,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -143,12 +148,16 @@ public final class HelikonClient implements ClientModInitializer {
         AutoEat autoEat = new AutoEat(new MinecraftUseKeyAccess());
         AutoTool autoTool = new AutoTool();
         FastPlace fastPlace = new FastPlace(new MinecraftUseCooldownAccess());
+        ChatPrefix chatPrefix = new ChatPrefix();
+        ChatSuffix chatSuffix = new ChatSuffix();
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
         modules.register(autoEat);
         modules.register(autoTool);
         modules.register(fastPlace);
+        modules.register(chatPrefix);
+        modules.register(chatSuffix);
         MovementModuleAccess.install(autoWalk, autoSneak);
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
@@ -191,6 +200,10 @@ public final class HelikonClient implements ClientModInitializer {
                 friends, waypoints, waypointLocations, macros, macroRunner, macroServerContext,
                 panic, panicKeybinds, panicConfiguration);
         ChatCommands.register(commands, notifier);
+        OutgoingChatFormatter outgoingChat = new OutgoingChatFormatter(chatPrefix, chatSuffix,
+                () -> macroServerContext.currentServerAddress().orElse(null),
+                () -> ThreadLocalRandom.current().nextInt());
+        ClientSendMessageEvents.MODIFY_CHAT.register(outgoingChat::format);
 
         HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "active_modules"),

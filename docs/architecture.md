@@ -72,6 +72,14 @@ control. When AutoEat ends its own use hold, the input port separately polls
 the configured keyboard, mouse, or scancode binding so an overlapping physical
 player hold is never cancelled.
 
+Outgoing chat formatting is a Minecraft-free policy layer. ChatPrefix and
+ChatSuffix share a conservative guard that preserves local commands, slash
+commands, private-message commands, and likely authentication commands
+verbatim. The Fabric adapter receives only normal outgoing chat and passes its
+result to Minecraft's existing chat path; it never creates a new connection or
+retries a message. It also declines formatting that would exceed the verified
+26.2 normal-chat packet limit.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

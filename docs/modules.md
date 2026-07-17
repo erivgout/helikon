@@ -29,6 +29,13 @@
 | --- | --- | --- | --- | --- |
 | `fast_place` | World | Lowers the ordinary local item-use cooldown while Use is held. | `use_delay`, `item_filter` (`all`, `blocks`, `non_blocks`), `safe_minimum_delay` | It only lowers a cooldown Minecraft has already created for a non-empty held item, and restores an unchanged module-owned cooldown immediately on disable or panic. It never generates uses, clicks, or packets; the server still controls all interaction rate limits. |
 
+## Chat modules
+
+| ID | Category | Description | Settings | Limitation |
+| --- | --- | --- | --- | --- |
+| `chat_prefix` | Chat | Adds configured text before safe ordinary outgoing chat. | `prefix`, `separator`, `exclude_commands`, `exclude_private_messages` | Helikon commands, slash commands, likely authentication commands, and private-message commands are preserved verbatim. Formatting is declined if it would exceed the vanilla normal-chat limit. |
+| `chat_suffix` | Chat | Appends configured text to safe ordinary outgoing chat. | `suffix`, `separator`, `per_server_suffixes`, `random_suffixes`, `exclude_commands`, `exclude_private_messages` | A normalized local `server=suffix` entry takes priority; otherwise one random-list entry is chosen locally or the fallback suffix is used. Protected input and over-limit messages are preserved verbatim. |
+
 Every production module will document its stable ID, category, settings,
 limitations, acceptance criteria, and automated or manual test coverage here.
 

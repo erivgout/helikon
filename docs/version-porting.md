@@ -22,8 +22,11 @@ When porting:
    health, hotbar, hurt-time, configured-key, and normal Use-key APIs. Preserve
    physical keyboard, mouse, and scancode Use input; keep selection and use
    input local and do not replace the ordinary client interaction path.
-7. Run the manual smoke test in an empty profile and with no internet access.
-8. Document compatibility changes and retained limitations before release.
+7. Revalidate Fabric's client `MODIFY_CHAT` callback. Preserve local commands
+   and protected command-like text before transforming ordinary chat, and keep
+   all behavior on Minecraft's normal send path.
+8. Run the manual smoke test in an empty profile and with no internet access.
+9. Document compatibility changes and retained limitations before release.
 
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

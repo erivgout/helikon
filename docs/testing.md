@@ -39,6 +39,9 @@ interruption, owned Use-key cleanup, and slot safety are covered by
 `AutoEatTest`, including always-edible foods at full hunger and physical-key
 handoff. Bounded text-setting validation and local command support are
 covered by `SettingTest` and `BuiltinCommandsTest`.
+ChatPrefix/ChatSuffix composition, per-server entries, deterministic random
+selection, and protected-command preservation are covered by
+`OutgoingChatFormatterTest`, including the vanilla 256-character send limit.
 
 ## Manual Active Modules HUD smoke test
 
@@ -156,6 +159,12 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     immediately unless the player is physically holding the configured Use
     binding, in which case that physical hold continues normally. At full
     hunger with low health, verify only a normally always-edible food is chosen.
+23. Enable **ChatPrefix** and **ChatSuffix**, send an ordinary harmless chat
+    message, and verify the configured prefix/suffix appears once through the
+    normal server chat route. Send `.help`, `/login <test value>`, and a common
+    private-message command; verify each is unchanged and the local command is
+    still cancelled before any server send. Configure one local per-server
+    suffix entry and a random list, then verify the matching entry wins.
 
 ## Manual command and keybind smoke test
 

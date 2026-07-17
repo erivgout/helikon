@@ -124,6 +124,14 @@ When porting:
     constructor, and `ClientPacketListener.send`. Keep it sending only well-formed
     vanilla rotation packets (a flicked yaw before the attack, a restore yaw the
     next tick); never change local aim or build a custom/malformed packet.
+    Helikon attack-per-tick guard, line-of-sight rule, and user-held bow rule.
+    Most combat modules stay packet-free; the exception is SilentAura, which
+    sends a well-formed, vanilla-shaped `ServerboundMovePlayerPacket.Rot`
+    through `ClientPacketListener` (via `LocalPlayer.connection`) to aim
+    server-side and then restores the rotation to the untouched local camera.
+    Revalidate that packet's `(float, float, boolean, boolean)` constructor and
+    `LocalPlayer.onGround`/`horizontalCollision` before changing SilentAura, and
+    keep it honest that the server remains authoritative and may reject it.
 29. Revalidate `KeyboardInput.tick` fresh input records for Twerk, plus
     `LocalPlayer.swing(InteractionHand)`, `Options.setModelPart`, and
     `Options.isModelPartEnabled` for Annoy and SkinBlinker. Preserve Twerk's

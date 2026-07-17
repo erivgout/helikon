@@ -91,6 +91,7 @@ import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
 import dev.helikon.client.module.combat.ReachDisplay;
 import dev.helikon.client.module.combat.RightClicker;
+import dev.helikon.client.module.combat.SilentAura;
 import dev.helikon.client.module.combat.TriggerBot;
 import dev.helikon.client.module.movement.AutoSprint;
 import dev.helikon.client.module.movement.AutoSneak;
@@ -474,6 +475,7 @@ public final class HelikonClient implements ClientModInitializer {
         BlockHit blockHit = new BlockHit(new MinecraftBlockHitUseKey());
         HitFlick hitFlick = new HitFlick();
         HitSelect hitSelect = new HitSelect();
+        SilentAura silentAura = new SilentAura();
         ReachDisplay reachDisplay = new ReachDisplay();
         RightClicker rightClicker = new RightClicker();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
@@ -555,6 +557,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(blockHit);
         modules.register(hitFlick);
         modules.register(hitSelect);
+        modules.register(silentAura);
         modules.register(reachDisplay);
         modules.register(rightClicker);
         modules.register(annoy);
@@ -687,6 +690,12 @@ public final class HelikonClient implements ClientModInitializer {
                 });
                 modules.runGuarded(rightClicker, "tick",
                         () -> MinecraftCombatAccess.tickRightClicker(clientTick, rightClicker, friends));
+                modules.runGuarded(silentAura, "tick", () -> {
+                    if (!combatAttackStarted.get()) {
+                        combatAttackStarted.set(MinecraftCombatAccess.tickSilentAura(clientTick, silentAura,
+                                combatSnapshot.get(), combatTracker));
+                    }
+                });
             }
         });
 

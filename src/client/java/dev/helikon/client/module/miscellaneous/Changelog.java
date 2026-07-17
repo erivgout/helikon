@@ -35,7 +35,7 @@ public final class Changelog extends Module {
 
     public List<String> notes() {
         return List.of(
-                "Helikon 1.0.0",
+                "Helikon 1.1.0",
                 "Completed the permitted legacy issue backlog.",
                 "Added Enderman Aura and bounded anime/JJK combat.",
                 "Added interface, chat, world, player, and render utilities.",

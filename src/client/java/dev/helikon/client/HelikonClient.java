@@ -95,6 +95,7 @@ import dev.helikon.client.module.combat.AutoSoup;
 import dev.helikon.client.module.combat.ClickAura;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
+import dev.helikon.client.module.combat.FightBot;
 import dev.helikon.client.module.combat.HitFlick;
 import dev.helikon.client.module.combat.HitSelect;
 import dev.helikon.client.module.combat.HitSwap;
@@ -110,6 +111,7 @@ import dev.helikon.client.module.combat.MinecraftCombatAccess;
 import dev.helikon.client.module.combat.MinecraftAutoAnchorAccess;
 import dev.helikon.client.module.combat.MinecraftVelocityAccess;
 import dev.helikon.client.module.combat.MinecraftGojoInfinityAccess;
+import dev.helikon.client.module.combat.MinecraftFightBotAccess;
 import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
 import dev.helikon.client.module.combat.MinecraftCrystalAccess;
@@ -606,6 +608,7 @@ public final class HelikonClient implements ClientModInitializer {
         ThrowDebuff throwDebuff = new ThrowDebuff();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
+        FightBot fightBot = new FightBot();
         Reach reach = new Reach();
         AutoClicker autoClicker = new AutoClicker();
         BlockHit blockHit = new BlockHit(new MinecraftBlockHitUseKey());
@@ -722,6 +725,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(throwDebuff);
         modules.register(targetHud);
         modules.register(killAura);
+        modules.register(fightBot);
         modules.register(reach);
         modules.register(autoClicker);
         modules.register(blockHit);
@@ -894,6 +898,13 @@ public final class HelikonClient implements ClientModInitializer {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftCombatAccess.tickKillAura(clientTick, killAura,
                                 combatSnapshot.get(), combatTracker));
+                    }
+                });
+                modules.runGuarded(fightBot, "tick", () -> {
+                    boolean attacked = MinecraftFightBotAccess.tick(clientTick, fightBot, combatSnapshot.get(),
+                            combatTracker, !combatAttackStarted.get());
+                    if (attacked) {
+                        combatAttackStarted.set(true);
                     }
                 });
                 modules.runGuarded(reach, "tick", () -> {

@@ -184,6 +184,7 @@ import dev.helikon.client.module.render.Dinnerbone;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.Breadcrumbs;
 import dev.helikon.client.module.render.DamageIndicators;
+import dev.helikon.client.module.render.Chams;
 import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.MinecraftGammaAccess;
 import dev.helikon.client.module.render.MinecraftNightVisionAccess;
@@ -356,6 +357,7 @@ public final class HelikonClient implements ClientModInitializer {
         Dinnerbone dinnerbone = new Dinnerbone();
         RainbowEnchant rainbowEnchant = new RainbowEnchant();
         EntityEsp entityEsp = new EntityEsp();
+        Chams chams = new Chams();
         BlockEsp blockEsp = new BlockEsp();
         Tracers tracers = new Tracers();
         Trajectories trajectories = new Trajectories();
@@ -374,6 +376,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(dinnerbone);
         modules.register(rainbowEnchant);
         modules.register(entityEsp);
+        modules.register(chams);
         modules.register(blockEsp);
         modules.register(tracers);
         modules.register(trajectories);
@@ -553,8 +556,8 @@ public final class HelikonClient implements ClientModInitializer {
         TimerModuleAccess.install(timer);
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
-                modules, friends, entityEsp, betterNametags, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
-                breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics
+                modules, friends, entityEsp, chams, betterNametags, blockEsp, tracers, trajectories, trueSight, storageEsp,
+                damageIndicators, breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics
         );
         DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,
                 events, configuration, panicState, hudLayout);

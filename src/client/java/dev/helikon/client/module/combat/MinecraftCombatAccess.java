@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /** Narrow 26.2 bridge for ordinary attacks, held-potion use, and local aim rotation. */
 public final class MinecraftCombatAccess {
@@ -119,6 +120,20 @@ public final class MinecraftCombatAccess {
             return attack(client, snapshot.entities().get(snapshot.crosshairTarget().id()), snapshot.crosshairTarget(), tracker);
         }
         return false;
+    }
+
+    public static boolean tickReach(long tick, Reach reach, Snapshot snapshot, CombatTargetTracker tracker) {
+        Minecraft client = Minecraft.getInstance();
+        if (!readyForAttack(client, snapshot)) {
+            return false;
+        }
+        Optional<CombatTarget> selected = reach.reachAttack(tick, snapshot.targets(), client.options.keyAttack.isDown(),
+                attackReady(client.player), snapshot.crosshairTarget() != null);
+        if (selected.isEmpty()) {
+            return false;
+        }
+        CombatTarget target = selected.get();
+        return attack(client, snapshot.entities().get(target.id()), target, tracker);
     }
 
     public static boolean tickKillAura(long tick, KillAura killAura, Snapshot snapshot, CombatTargetTracker tracker) {

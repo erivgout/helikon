@@ -211,6 +211,8 @@
 | `announcer` | Chat | Sends a bounded ordinary chat line for individually selected local gameplay moments. | `death`, `kill`, `item_pickup`, `distance_traveled`, `block_mined`, `dimension_change`, `join`, `leave`, `advancement`, `low_health`, `totem_use`, `distance_blocks`, `low_health_threshold`, `minimum_delay_seconds`, `session_message_cap`, `pause_in_gui`, `message_template` | All triggers are disabled by default. It uses only normal client chat with a 1–300 second local cooldown and 1–100 session cap; slash/local-command templates are rejected. Kills require a locally observed direct melee attempt followed by a dead entity unload. Leave is local Helikon feedback because it occurs after the normal server connection is closed. |
 | `local_translator` | Chat | Displays an additional offline translation for visible incoming chat. | `glossary` | It is off by default and has no HTTP/API mode. `glossary` accepts up to 64 exact `source=translation` entries. Original chat remains unchanged. |
 
+| `no_chat_reports` | Chat | Blocks ordinary player chat before it is signed or transmitted. | none | This privacy mode does not forge signatures or make server-visible messages unreportable; commands and local dot commands remain separate. |
+
 ## Miscellaneous modules
 
 | ID | Category | Description | Settings | Limitation |
@@ -284,6 +286,8 @@ module row with wrapping and automatic list scrolling, and Enter or Space
 toggles the selected module through `ModuleRegistry`.
 
 ## Commands and keybinds
+
+`.taco` prints a harmless taco easter egg only in local chat. Local command-name Tab completion is built into the chat screen for every registered dot command.
 
 Modules can also be controlled through local chat commands (`.toggle`,
 `.setting`, `.reset`, `.bind`, `.unbind`, `.profile` — see the README) and

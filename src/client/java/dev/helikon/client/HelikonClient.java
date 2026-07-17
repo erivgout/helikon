@@ -696,6 +696,8 @@ public final class HelikonClient implements ClientModInitializer {
         FancyChat fancyChat = new FancyChat();
         InfiniChat infiniChat = new InfiniChat();
         MassTpa massTpa = new MassTpa();
+        dev.helikon.client.module.chat.NoChatReports noChatReports =
+                new dev.helikon.client.module.chat.NoChatReports();
         ChatSuffix chatSuffix = new ChatSuffix();
         ChatMute chatMute = new ChatMute();
         ChatFilter chatFilter = new ChatFilter();
@@ -854,6 +856,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(fancyChat);
         modules.register(infiniChat);
         modules.register(massTpa);
+        modules.register(noChatReports);
         modules.register(chatSuffix);
         modules.register(chatMute);
         modules.register(chatFilter);
@@ -1232,11 +1235,16 @@ public final class HelikonClient implements ClientModInitializer {
                 new MinecraftTextClipboard()));
         commands.register(new ChatHistoryCommand(chatHistoryModule, chatHistory, new MinecraftTextClipboard(),
                 new ScheduledChatInputReopener(new MinecraftChatInputReopener(), pendingScreenAction::set)));
+        commands.register(new dev.helikon.client.command.TacoCommand());
         ChatCommands.register(commands, notifier);
         OutgoingChatFormatter outgoingChat = new OutgoingChatFormatter(chatPrefix, chatSuffix, fancyChat,
                 () -> macroServerContext.currentServerAddress().orElse(null),
                 () -> ThreadLocalRandom.current().nextInt());
         ClientSendMessageEvents.ALLOW_CHAT.register(message -> {
+            if (!noChatReports.allowsOrdinaryChat(message)) {
+                notifier.info("NoChatReports blocked ordinary signed chat. Disable it to send player chat.");
+                return false;
+            }
             List<String> parts = infiniChat.split(message);
             if (parts.isEmpty()) {
                 return true;

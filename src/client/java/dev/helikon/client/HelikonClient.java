@@ -98,6 +98,7 @@ import dev.helikon.client.module.movement.FastLadders;
 import dev.helikon.client.module.movement.Flight;
 import dev.helikon.client.module.movement.Freecam;
 import dev.helikon.client.module.movement.FreecamAccess;
+import dev.helikon.client.module.movement.HighJump;
 import dev.helikon.client.module.movement.MinecraftAdvancedMovementAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.NoFall;
@@ -400,6 +401,7 @@ public final class HelikonClient implements ClientModInitializer {
         WaterJump waterJump = new WaterJump();
         Jesus jesus = new Jesus();
         Spider spider = new Spider();
+        HighJump highJump = new HighJump();
         Step step = new Step();
         Speed speed = new Speed();
         BunnyHop bunnyHop = new BunnyHop();
@@ -479,6 +481,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(waterJump);
         modules.register(jesus);
         modules.register(spider);
+        modules.register(highJump);
         modules.register(step);
         modules.register(speed);
         modules.register(bunnyHop);
@@ -574,6 +577,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(fastLadders, "tick", () -> MinecraftAdvancedMovementAccess.tickFastLadders(fastLadders));
                 modules.runGuarded(jesus, "tick", () -> MinecraftAdvancedMovementAccess.tickJesus(jesus));
                 modules.runGuarded(spider, "tick", () -> MinecraftAdvancedMovementAccess.tickSpider(spider));
+                modules.runGuarded(highJump, "tick", () -> MinecraftAdvancedMovementAccess.tickHighJump(highJump));
                 modules.runGuarded(speed, "tick", () -> MinecraftAdvancedMovementAccess.tickSpeed(speed));
                 modules.runGuarded(bunnyHop, "tick", () -> MinecraftAdvancedMovementAccess.tickBunnyHop(bunnyHop));
                 modules.runGuarded(flight, "tick", () -> MinecraftAdvancedMovementAccess.tickFlight(flight));

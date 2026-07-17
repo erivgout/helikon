@@ -76,6 +76,21 @@ public final class MinecraftAdvancedMovementAccess {
                 .ifPresent(y -> player.setDeltaMovement(velocity.x, y, velocity.z));
     }
 
+    /** Applies one local velocity boost after an eligible ordinary ground jump. */
+    public static void tickHighJump(HighJump module) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) {
+            module.onContextLost();
+            return;
+        }
+        LocalPlayer player = client.player;
+        Vec3 velocity = player.getDeltaMovement();
+        module.verticalVelocity(new HighJump.Context(client.gui.screen() != null, player.onGround(),
+                player.input.keyPresses.jump(), player.onClimbable(), player.isInWater() || player.isInLava(),
+                player.isPassenger(), player.getAbilities().flying, player.isFallFlying(), velocity.y))
+                .ifPresent(y -> player.setDeltaMovement(velocity.x, y, velocity.z));
+    }
+
     public static void tickSpeed(Speed speed) {
         Minecraft client = Minecraft.getInstance();
         if (!isInteractive(client) || client.player.isFallFlying() || client.player.onClimbable()) {

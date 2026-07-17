@@ -178,6 +178,8 @@ import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.world.Nuker;
 import dev.helikon.client.module.render.Fullbright;
 import dev.helikon.client.module.render.AntiBlind;
+import dev.helikon.client.module.render.CameraDistance;
+import dev.helikon.client.module.render.CameraModuleAccess;
 import dev.helikon.client.module.render.AntiTotemAnimation;
 import dev.helikon.client.module.render.BetterCrosshair;
 import dev.helikon.client.module.render.BetterNametags;
@@ -351,6 +353,7 @@ public final class HelikonClient implements ClientModInitializer {
         Fullbright fullbright = new Fullbright(new MinecraftGammaAccess(), new MinecraftNightVisionAccess());
         modules.register(fullbright);
         AntiBlind antiBlind = new AntiBlind();
+        CameraDistance cameraDistance = new CameraDistance();
         AntiTotemAnimation antiTotemAnimation = new AntiTotemAnimation();
         BetterCrosshair betterCrosshair = new BetterCrosshair();
         BetterNametags betterNametags = new BetterNametags();
@@ -369,6 +372,7 @@ public final class HelikonClient implements ClientModInitializer {
         DamageIndicators damageIndicators = new DamageIndicators();
         Breadcrumbs breadcrumbs = new Breadcrumbs();
         modules.register(antiBlind);
+        modules.register(cameraDistance);
         modules.register(antiTotemAnimation);
         modules.register(betterCrosshair);
         modules.register(betterNametags);
@@ -388,6 +392,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(breadcrumbs);
         RenderModuleAccess.install(antiBlind, betterCrosshair, antiTotemAnimation, dinnerbone, rainbowEnchant,
                 hudLayout, panicState);
+        CameraModuleAccess.install(cameraDistance);
         AutoSprint autoSprint = new AutoSprint();
         AutoWalk autoWalk = new AutoWalk();
         AutoSneak autoSneak = new AutoSneak();

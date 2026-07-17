@@ -109,6 +109,7 @@ final class HudPreviewRenderer {
             case MINI_PLAYER -> "Mini Player";
             case DEBUG_OVERLAY -> "Debug Overlay";
             case BETTER_CROSSHAIR -> "Better Crosshair";
+            case HEALTH -> "Health";
             case DIRECTION -> "Direction";
             case FPS -> "FPS";
             case PING -> "Ping";

@@ -766,6 +766,13 @@ public final class HelikonClient implements ClientModInitializer {
         AntiFireball antiFireball = new AntiFireball();
         GojosInfinity gojosInfinity = new GojosInfinity();
         EndermanAura endermanAura = new EndermanAura();
+        dev.helikon.client.module.combat.AnimeAura animeAura = new dev.helikon.client.module.combat.AnimeAura();
+        dev.helikon.client.module.combat.MinecraftAnimeAuraAccess animeAuraAccess =
+                new dev.helikon.client.module.combat.MinecraftAnimeAuraAccess();
+        dev.helikon.client.module.combat.GojoAbilities gojoAbilities =
+                new dev.helikon.client.module.combat.GojoAbilities();
+        dev.helikon.client.module.combat.MinecraftGojoAbilitiesAccess gojoAbilitiesAccess =
+                new dev.helikon.client.module.combat.MinecraftGojoAbilitiesAccess();
         BackTrack backTrack = new BackTrack();
         Velocity velocity = new Velocity();
         ReachDisplay reachDisplay = new ReachDisplay();
@@ -929,6 +936,8 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(antiFireball);
         modules.register(gojosInfinity);
         modules.register(endermanAura);
+        modules.register(animeAura);
+        modules.register(gojoAbilities);
         modules.register(backTrack);
         modules.register(velocity);
         modules.register(reachDisplay);
@@ -1221,6 +1230,15 @@ public final class HelikonClient implements ClientModInitializer {
                                 combatSnapshot.get(), combatTracker));
                     }
                 });
+                modules.runGuarded(animeAura, "tick", () -> {
+                    boolean attacked = animeAuraAccess.tick(clientTick, animeAura, combatSnapshot.get(),
+                            combatTracker, !combatAttackStarted.get());
+                    if (attacked) {
+                        combatAttackStarted.set(true);
+                    }
+                });
+                modules.runGuarded(gojoAbilities, "tick",
+                        () -> gojoAbilitiesAccess.tick(clientTick, gojoAbilities, combatSnapshot.get()));
                 modules.runGuarded(crystalAura, "tick", () -> {
                     if (!combatAttackStarted.get()) {
                         combatAttackStarted.set(MinecraftCrystalAccess.tick(clientTick, crystalAura,

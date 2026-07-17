@@ -12,6 +12,7 @@ import dev.helikon.client.module.movement.ParkourAccess;
 import dev.helikon.client.module.movement.ParkourContext;
 import dev.helikon.client.module.movement.WaterJumpAccess;
 import dev.helikon.client.module.movement.WaterJumpContext;
+import dev.helikon.client.module.combat.WTapAccess;
 import dev.helikon.client.input.KeybindManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
@@ -84,6 +85,7 @@ abstract class KeyboardInputMixin {
             input.keyPresses = withAntiAfkAction(input.keyPresses, antiAfkAction);
         }
         input.keyPresses = FreecamAccess.captureAndSuppress(input.keyPresses);
+        input.keyPresses = WTapAccess.apply(input.keyPresses, screenOpen);
         var vector = MovementModuleAccess.movementVector(input.keyPresses);
         ((ClientInputAccessor) input).helikon$setMoveVector(new Vec2(vector.x(), vector.y()));
     }

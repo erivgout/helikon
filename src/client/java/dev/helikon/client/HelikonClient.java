@@ -82,6 +82,8 @@ import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
 import dev.helikon.client.module.combat.ReachDisplay;
 import dev.helikon.client.module.combat.TriggerBot;
+import dev.helikon.client.module.combat.WTap;
+import dev.helikon.client.module.combat.WTapAccess;
 import dev.helikon.client.module.movement.AutoSprint;
 import dev.helikon.client.module.movement.AutoSneak;
 import dev.helikon.client.module.movement.AutoWalk;
@@ -453,6 +455,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoPotion autoPotion = new AutoPotion();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
+        WTap wtap = new WTap();
         ReachDisplay reachDisplay = new ReachDisplay();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
         Annoy annoy = new Annoy();
@@ -525,6 +528,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoPotion);
         modules.register(targetHud);
         modules.register(killAura);
+        modules.register(wtap);
         modules.register(reachDisplay);
         modules.register(annoy);
         modules.register(oneClickFriends);
@@ -550,6 +554,7 @@ public final class HelikonClient implements ClientModInitializer {
         StepAccess.install(step);
         AntiCactusAccess.install(antiCactus);
         WaterJumpAccess.install(waterJump);
+        WTapAccess.install(wtap, friends);
         TimerModuleAccess.install(timer);
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
@@ -721,6 +726,7 @@ public final class HelikonClient implements ClientModInitializer {
             modules.runGuarded(announcer, "leave", () -> announcer.messageFor(AnnouncementTrigger.LEAVE,
                     "left the world", System.currentTimeMillis(), false).ifPresent(notifier::info));
             AnnouncerAccess.reset();
+            WTapAccess.onPlayerUnavailable();
             try {
                 chatHistory.saveIfNeeded();
             } catch (ConfigurationException exception) {

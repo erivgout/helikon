@@ -190,6 +190,7 @@ import dev.helikon.client.module.render.MinecraftNightVisionAccess;
 import dev.helikon.client.module.render.MiniPlayer;
 import dev.helikon.client.module.render.RenderModuleAccess;
 import dev.helikon.client.module.render.Radar;
+import dev.helikon.client.module.render.ProjectileWarning;
 import dev.helikon.client.module.render.RainbowEnchant;
 import dev.helikon.client.module.render.SaturationDisplay;
 import dev.helikon.client.module.render.StorageEsp;
@@ -359,6 +360,7 @@ public final class HelikonClient implements ClientModInitializer {
         BlockEsp blockEsp = new BlockEsp();
         Tracers tracers = new Tracers();
         Trajectories trajectories = new Trajectories();
+        ProjectileWarning projectileWarning = new ProjectileWarning();
         TrueSight trueSight = new TrueSight();
         Radar radar = new Radar();
         SaturationDisplay saturationDisplay = new SaturationDisplay();
@@ -377,6 +379,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(blockEsp);
         modules.register(tracers);
         modules.register(trajectories);
+        modules.register(projectileWarning);
         modules.register(trueSight);
         modules.register(radar);
         modules.register(saturationDisplay);
@@ -553,7 +556,8 @@ public final class HelikonClient implements ClientModInitializer {
         TimerModuleAccess.install(timer);
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
-                modules, friends, entityEsp, betterNametags, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
+                modules, friends, entityEsp, betterNametags, blockEsp, tracers, trajectories, projectileWarning, trueSight,
+                storageEsp, damageIndicators,
                 breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics
         );
         DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,

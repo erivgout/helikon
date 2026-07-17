@@ -119,6 +119,15 @@ The entrypoint alone passes that string to
 Minecraft's normal chat sender through `ModuleRegistry.runGuarded`, so a
 failure disables only the responsible module and never creates a packet.
 
+`AntiSpam` follows the same Minecraft-free incoming-message model. It bounds
+its duplicate identities, sender timestamp queues, and join/leave timestamps;
+then returns a typed local show/hide decision plus a repeat count. The client
+entrypoint evaluates it after the existing mute/filter policies and before
+mention or auto-reply side effects, so a locally suppressed message cannot
+produce a notification or outgoing response. A future chat-display adapter can
+use the retained repeat count to replace duplicate lines with a counter without
+coupling detection to Minecraft rendering.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

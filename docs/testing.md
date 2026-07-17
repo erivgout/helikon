@@ -203,6 +203,13 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     sender inside cooldown, and per-minute cap do not send anything. Configure
     the reply text as the trigger and verify an echoed matching reply does not
     cause a response loop.
+29. Enable **AntiSpam** and send or receive harmless repeated chat in a
+    permitted test environment. Verify its configured repeat window hides only
+    the local duplicate, a rapid single sender exceeds the local limit while
+    other senders remain visible, and the configured whitelist keeps its
+    message type visible. Enable join/leave collapsing and verify a same-type
+    burst is hidden locally. The first slice intentionally does not display a
+    duplicate counter yet.
 
 ## Manual command and keybind smoke test
 

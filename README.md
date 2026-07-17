@@ -46,6 +46,12 @@ rule only, ignores the local player's own messages, pauses in screens by
 default, bounds replies per minute, and sends only safe ordinary chat through
 Minecraft's normal connection. It never sends commands or retries a failure.
 
+AntiSpam is also off by default. Its local policy can hide repeated or rapid
+incoming messages, collapse bursts of same-type join/leave notices, and exempt
+message categories. It has no server effect and never changes protocol traffic.
+The first slice records duplicate counts for a later display-level stacker; it
+does not yet replace shown chat lines with a visible counter.
+
 PrivateMessageHelper intercepts `.pm` and `.reply` locally, validates a player
 name and a bounded message, then uses Minecraft's normal server-command route
 with configurable `msg` and `r` command tokens. The `.` command itself is

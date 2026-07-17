@@ -67,6 +67,11 @@ pauses in screens by default, uses the existing normal chat sender, and keeps
 per-sender and per-minute cooldown state locally. It never constructs packets,
 retries a failed send, or relays chat through a Helikon service.
 
+AntiSpam uses only local incoming-message facts to decide whether the chat HUD
+should show a repeated, rapid, or same-type join/leave message. It neither
+acknowledges nor changes messages at the protocol layer, and sends no data to
+the server or another service.
+
 ## Future policy
 
 Optional external integrations must be isolated under

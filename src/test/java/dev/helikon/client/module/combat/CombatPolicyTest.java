@@ -8,6 +8,7 @@ import dev.helikon.client.combat.CombatTargetTracker;
 import dev.helikon.client.combat.PotionCandidate;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.EnumSetting;
 import dev.helikon.client.setting.NumberSetting;
 import org.junit.jupiter.api.Test;
@@ -63,6 +64,46 @@ class CombatPolicyTest {
         assertTrue(critical.shouldAttack(0L, target, falling));
         assertFalse(critical.shouldAttack(4L, target,
                 new CriticalAssist.Context(true, true, true, false, false, false, 0.5D, -0.1D)));
+    }
+
+    @Test
+    void hitSelectGatesOnHeldAttackChargeCriticalSprintAndFriends() {
+        CombatTarget target = target("target", CombatEntityType.HOSTILE, false, false, true, 3.0D, 0.0D, 10.0D);
+        HitSelect hitSelect = enabled(new HitSelect());
+
+        // Held, fully charged, weapon in hand: releases, then respects the delay cadence.
+        assertTrue(hitSelect.shouldAttack(0L, target, hitContext(true, 1.0D, false, true, true)));
+        assertFalse(hitSelect.shouldAttack(1L, target, hitContext(true, 1.0D, false, true, true)));
+        assertTrue(hitSelect.shouldAttack(4L, target, hitContext(true, 1.0D, false, true, true)));
+
+        // Attack not held, below the charge threshold, or missing a weapon: no release.
+        assertFalse(hitSelect.shouldAttack(8L, target, hitContext(false, 1.0D, false, true, true)));
+        assertFalse(hitSelect.shouldAttack(8L, target, hitContext(true, 0.5D, false, true, true)));
+        assertFalse(hitSelect.shouldAttack(8L, target, hitContext(true, 1.0D, false, true, false)));
+
+        // Require critical: a grounded window is rejected, a falling window passes.
+        HitSelect criticalOnly = enabled(new HitSelect());
+        booleanSetting(criticalOnly, "require_critical").set(true);
+        assertFalse(criticalOnly.shouldAttack(0L, target, hitContext(true, 1.0D, false, true, true)));
+        assertTrue(criticalOnly.shouldAttack(0L, target, hitContext(true, 1.0D, false, false, true)));
+
+        // Require sprint: only a sprinting hit is allowed.
+        HitSelect sprintOnly = enabled(new HitSelect());
+        booleanSetting(sprintOnly, "require_sprint").set(true);
+        assertFalse(sprintOnly.shouldAttack(0L, target, hitContext(true, 1.0D, false, true, true)));
+        assertTrue(sprintOnly.shouldAttack(0L, target, hitContext(true, 1.0D, true, true, true)));
+
+        // Friends are excluded by default.
+        CombatTarget friend = target("friend", CombatEntityType.PLAYER, true, false, true, 2.0D, 0.0D, 20.0D);
+        assertFalse(enabled(new HitSelect()).shouldAttack(0L, friend, hitContext(true, 1.0D, false, true, true)));
+    }
+
+    private static HitSelect.Context hitContext(boolean attackHeld, double charge, boolean sprinting,
+                                                boolean onGround, boolean holdingWeapon) {
+        double fallDistance = onGround ? 0.0D : 0.5D;
+        double verticalVelocity = onGround ? 0.0D : -0.1D;
+        return new HitSelect.Context(attackHeld, charge, sprinting, onGround, false, false, false,
+                fallDistance, verticalVelocity, holdingWeapon);
     }
 
     @Test
@@ -149,5 +190,9 @@ class CombatPolicyTest {
 
     private static NumberSetting numberSetting(Module module, String id) {
         return (NumberSetting) module.settings().stream().filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
+    }
+
+    private static BooleanSetting booleanSetting(Module module, String id) {
+        return (BooleanSetting) module.settings().stream().filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
     }
 }

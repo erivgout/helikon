@@ -95,6 +95,7 @@ import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.HitFlick;
 import dev.helikon.client.module.combat.HitSelect;
+import dev.helikon.client.module.combat.HitSwap;
 import dev.helikon.client.module.combat.JumpReset;
 import dev.helikon.client.module.combat.JumpResetAccess;
 import dev.helikon.client.module.combat.CrystalAura;
@@ -106,6 +107,7 @@ import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
 import dev.helikon.client.module.combat.MinecraftCrystalAccess;
 import dev.helikon.client.module.combat.MinecraftAutoRespawnAccess;
+import dev.helikon.client.module.combat.MinecraftHitSwapAccess;
 import dev.helikon.client.module.combat.ReachDisplay;
 import dev.helikon.client.module.combat.RightClicker;
 import dev.helikon.client.module.combat.SilentAura;
@@ -589,6 +591,7 @@ public final class HelikonClient implements ClientModInitializer {
         BlockHit blockHit = new BlockHit(new MinecraftBlockHitUseKey());
         HitFlick hitFlick = new HitFlick();
         HitSelect hitSelect = new HitSelect();
+        HitSwap hitSwap = new HitSwap();
         SilentAura silentAura = new SilentAura();
         WTap wtap = new WTap();
         CrystalAura crystalAura = new CrystalAura();
@@ -696,6 +699,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(blockHit);
         modules.register(hitFlick);
         modules.register(hitSelect);
+        modules.register(hitSwap);
         modules.register(silentAura);
         modules.register(wtap);
         modules.register(crystalAura);
@@ -717,6 +721,7 @@ public final class HelikonClient implements ClientModInitializer {
         ChatDisplayAccess.install(chatColor);
         BetterChatDisplayAccess.install(betterChat, privateMessageHelper, antiSpam);
         MinecraftHitFlickAccess.install(hitFlick, friends);
+        MinecraftHitSwapAccess.install(hitSwap);
         MinecraftHitFlickAccess.install(hitFlick, friends);
         AnnouncerAccess.install(announcer, normalChatSender);
         MovementModuleAccess.install(autoWalk, autoSneak, twerk);
@@ -803,6 +808,7 @@ public final class HelikonClient implements ClientModInitializer {
                         minecraft.gui.screen() != null));
                 combatAttackStarted.set(false);
                 combatSnapshot.set(MinecraftCombatAccess.Snapshot.unavailable());
+                modules.runGuarded(hitSwap, "restore", MinecraftHitSwapAccess::tickRestore);
                 modules.runGuarded(hitFlick, "restore", MinecraftHitFlickAccess::tickRestore);
                 modules.runGuarded(antiBot, "observe", () -> combatSnapshot.set(MinecraftCombatAccess.observe(friends, antiBot, targetFilter)));
                 modules.runGuarded(targetHud, "tick", () -> MinecraftCombatAccess.observeTarget(targetHud,

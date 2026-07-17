@@ -45,6 +45,7 @@
     "MinecraftResourceReloadEventMixin",
     "WeatherEffectRendererMixin",
     "MultiPlayerGameModeEventMixin",
+    "MultiPlayerGameModeHitSwapMixin",
     "MultiPlayerGameModeAccessor",
     "WTapAttackMixin",
     "SectionCompilerXRayMixin",

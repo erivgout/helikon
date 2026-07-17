@@ -55,6 +55,14 @@ local use cooldown only while the user holds Use. AutoEat selects existing safe
 hotbar food and holds Minecraft's ordinary Use key only while its local
 threshold and combat rules permit it.
 
+AutoParkour requests only Minecraft's ordinary Jump input at a locally loaded,
+non-lava ledge with a shallow observed landing; it never jumps in a screen or
+over a larger drop. InventoryWalk allows configured keyboard movement only in
+the vanilla player inventory while no widget is focused. AntiAFK is disabled by
+default and, after its configurable idle interval, can make a small local view
+turn, grounded Jump request, or one-tick forward request. None creates a
+packet or changes server movement authority.
+
 AutoArmor, AutoEject, AutoTotem, and InventoryManager act only in the player's
 open vanilla inventory with an empty carried cursor, using Minecraft's normal
 container interactions. ChestSteal similarly runs only in an open vanilla

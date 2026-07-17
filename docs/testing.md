@@ -48,6 +48,11 @@ plus AutoWalk's GUI and steering input policy, are covered by
 AutoSneak's Toggle, bound-key Hold, Edge-only, and screen-suppression policies,
 plus enum-setting recovery and command validation, are covered by
 `AutoSneakTest`, `SettingTest`, and `BuiltinCommandsTest`.
+AutoParkour's safe shallow-ledge gate and malformed-fact rejection,
+InventoryWalk's inventory/text-focus and Shift-preservation policy, and
+AntiAFK's interval, local-activity reset, and grounded-jump policy are covered
+by `AutoParkourTest`, `InventoryWalkTest`, and `AntiAfkTest`. Their client input
+bridges additionally require the movement smoke checklist below.
 AutoTool's correct-tool scoring, durability guard, ownership-aware slot restore,
 and safe no-selection behavior are covered by `AutoToolTest`.
 FastPlace's held-use gate, item filtering, safe delay floor, and invalid input
@@ -141,6 +146,28 @@ key (`ConfigurationManagerTest`).
    still occur.
 3. Disable the module and repeat once more. Verify Minecraft's normal item
    activation overlay returns immediately without reconnecting.
+
+## Manual Phase C movement-control smoke test
+
+1. In a local/test world, enable **AutoParkour**, walk forward at normal speed
+   toward a shallow one- or two-block loaded drop with clear local space and a
+   solid landing, and verify it requests only Minecraft's ordinary jump. Test
+   a lava landing, a three-block-or-greater drop, an obstructed landing, a
+   screen-open state, and low forward speed; none may request a jump. Verify
+   no chunk loads, interaction, or packet-specific behavior is claimed.
+2. Open the vanilla player inventory and enable **InventoryWalk**. Hold the
+   configured keyboard movement and jump bindings to verify local movement,
+   then hold Shift while quick-moving an item to verify it is not converted to
+   sneak. Focus the recipe-book search or another inventory widget and verify
+   movement pauses while typing. Open chat, the ClickGUI, a chest, or a screen
+   with a mouse/scancode movement bind and verify InventoryWalk stays inactive.
+3. Enable **AntiAFK** in a local/test world with a short permitted interval and
+   one action setting at a time. Verify a turn is at most 15 degrees, Jump is
+   requested only while grounded, and Short movement lasts one input tick.
+   Move manually or open a screen before the interval elapses and verify the
+   timer restarts. Disable it and verify no further local action occurs. In a
+   permitted multiplayer check, confirm these are ordinary client inputs only;
+   server movement rules remain authoritative.
 
 ## Manual Dinnerbone and RainbowEnchant smoke test
 

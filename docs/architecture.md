@@ -62,6 +62,18 @@ normal careful-movement handling guards ledges. The bridge is always inactive
 while a screen is open, and it recomputes the effective movement vector after
 the final input transformation.
 
+AutoParkour's screen/ground/forward/speed/ledge/lava/drop policy is likewise
+Minecraft-free. Its narrow keyboard adapter samples only loaded blocks at the
+cardinal forward position, declines an absent, lava, obstructed, non-sturdy,
+or greater-than-two-block landing, and requests only the normal local Jump
+input. It does not call a movement method or create a packet. InventoryWalk is another input
+policy: the adapter reads configured physical **keyboard** movement bindings
+only for `InventoryScreen`, preserves Shift for inventory use, and declines a
+focused child widget so typing cannot move the player. AntiAFK keeps its idle
+timer and selected action policy Minecraft-free; the same adapter only applies
+its bounded local yaw change and ordinary one-tick input requests after the
+configured idle interval, never while a screen is open or the user is moving.
+
 AutoTool separates hotbar candidates and deterministic scoring from the small
 Minecraft adapter. The adapter runs only while the user is normally mining a
 block through Minecraft's own game mode, selects an existing hotbar slot, and

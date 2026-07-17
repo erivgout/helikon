@@ -19,6 +19,7 @@ import dev.helikon.client.module.render.Explosions;
 import dev.helikon.client.module.render.MobSpawnEsp;
 import dev.helikon.client.module.render.NewChunks;
 import dev.helikon.client.module.render.OpenWaterEsp;
+import dev.helikon.client.module.render.PlayerFinder;
 import dev.helikon.client.module.render.ProjectileWarning;
 import dev.helikon.client.module.render.ProjectilePreview;
 import dev.helikon.client.module.render.StorageEsp;
@@ -113,6 +114,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final BlockEsp blockEsp;
     private final CaveFinder caveFinder;
     private final Tracers tracers;
+    private final PlayerFinder playerFinder;
     private final Trajectories trajectories;
     private final ProjectileWarning projectileWarning;
     private final ProjectilePreview projectilePreview;
@@ -169,7 +171,7 @@ public final class MinecraftWorldVisualizationRenderer {
                                                 Chams chams, BetterNametags betterNametags,
                                                 BaseFinder baseFinder,
                                                 BlockEsp blockEsp, CaveFinder caveFinder,
-                                                Tracers tracers, Trajectories trajectories,
+                                                Tracers tracers, PlayerFinder playerFinder, Trajectories trajectories,
                                                 ProjectileWarning projectileWarning, ProjectilePreview projectilePreview,
                                                 TrueSight trueSight,
                                                 StorageEsp storageEsp, OpenWaterEsp openWaterEsp,
@@ -186,6 +188,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.blockEsp = Objects.requireNonNull(blockEsp, "blockEsp");
         this.caveFinder = Objects.requireNonNull(caveFinder, "caveFinder");
         this.tracers = Objects.requireNonNull(tracers, "tracers");
+        this.playerFinder = Objects.requireNonNull(playerFinder, "playerFinder");
         this.trajectories = Objects.requireNonNull(trajectories, "trajectories");
         this.projectileWarning = Objects.requireNonNull(projectileWarning, "projectileWarning");
         this.projectilePreview = Objects.requireNonNull(projectilePreview, "projectilePreview");
@@ -337,6 +340,10 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (tracers.isEnabled()) {
             modules.runGuarded(tracers, "render", () -> renderTracers(client.level, client.player, camera));
+        }
+        if (playerFinder.isEnabled()) {
+            modules.runGuarded(playerFinder, "render",
+                    () -> renderPlayerFinder(client.level, client.player, camera));
         }
         Frustum frustum = camera.cullFrustum;
         if (betterNametags.isEnabled()) {
@@ -810,6 +817,50 @@ public final class MinecraftWorldVisualizationRenderer {
             Gizmos.line(start, entity.getBoundingBox().getCenter(), tracers.color(friend), tracers.lineWidth()).setAlwaysOnTop();
             if (++rendered >= tracers.maximumEntities()) {
                 return;
+            }
+        }
+    }
+
+    private void renderPlayerFinder(ClientLevel level, Player localPlayer, CameraRenderState camera) {
+        List<PlayerFinder.Candidate> candidates = new ArrayList<>();
+        for (Player target : level.players()) {
+            if (target == localPlayer) {
+                continue;
+            }
+            String name = target.getGameProfile().name();
+            candidates.add(new PlayerFinder.Candidate(target.getId(), name,
+                    target.position().distanceToSqr(localPlayer.position()), friends.contains(name),
+                    target.isSpectator()));
+        }
+        Vec3 tracerStart = playerFinder.tracers() ? tracerStart(camera, localPlayer) : null;
+        for (PlayerFinder.Candidate candidate : playerFinder.select(candidates)) {
+            Entity entity = level.getEntity(candidate.entityId());
+            if (!(entity instanceof Player target) || target == localPlayer) {
+                continue;
+            }
+            int color = playerFinder.color(candidate.friend());
+            if (tracerStart != null) {
+                GizmoProperties tracer = Gizmos.line(tracerStart, target.getBoundingBox().getCenter(),
+                        color, playerFinder.lineWidth());
+                if (playerFinder.alwaysOnTop()) {
+                    tracer.setAlwaysOnTop();
+                }
+            }
+            double labelY = target.getY() + target.getBbHeight() + 0.5D;
+            if (playerFinder.beacons()) {
+                GizmoProperties beacon = Gizmos.line(target.position(),
+                        new Vec3(target.getX(), target.getY() + playerFinder.beaconHeight(), target.getZ()),
+                        color, playerFinder.lineWidth());
+                if (playerFinder.alwaysOnTop()) {
+                    beacon.setAlwaysOnTop();
+                }
+            }
+            if (playerFinder.labels()) {
+                GizmoProperties label = Gizmos.billboardText(playerFinder.label(candidate),
+                        new Vec3(target.getX(), labelY, target.getZ()), TextGizmo.Style.forColorAndCentered(color));
+                if (playerFinder.alwaysOnTop()) {
+                    label.setAlwaysOnTop();
+                }
             }
         }
     }

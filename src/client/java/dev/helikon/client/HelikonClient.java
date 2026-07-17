@@ -289,6 +289,7 @@ import dev.helikon.client.module.render.NameProtect;
 import dev.helikon.client.module.render.NameProtectTextAccess;
 import dev.helikon.client.module.render.NewChunks;
 import dev.helikon.client.module.render.OpenWaterEsp;
+import dev.helikon.client.module.render.PlayerFinder;
 import dev.helikon.client.module.render.ProjectilePreview;
 import dev.helikon.client.module.render.NoWeather;
 import dev.helikon.client.module.render.MobSpawnEsp;
@@ -475,6 +476,7 @@ public final class HelikonClient implements ClientModInitializer {
         BlockEsp blockEsp = new BlockEsp();
         CaveFinder caveFinder = new CaveFinder();
         Tracers tracers = new Tracers();
+        PlayerFinder playerFinder = new PlayerFinder();
         Trajectories trajectories = new Trajectories();
         ProjectileWarning projectileWarning = new ProjectileWarning();
         ProjectilePreview projectilePreview = new ProjectilePreview();
@@ -513,6 +515,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(blockEsp);
         modules.register(caveFinder);
         modules.register(tracers);
+        modules.register(playerFinder);
         modules.register(trajectories);
         modules.register(projectileWarning);
         modules.register(projectilePreview);
@@ -815,6 +818,7 @@ public final class HelikonClient implements ClientModInitializer {
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, chams, betterNametags, baseFinder, blockEsp, caveFinder, tracers,
+                playerFinder,
                 trajectories, projectileWarning,
                 projectilePreview, trueSight, storageEsp, openWaterEsp, mobSpawnEsp, newChunks,
                 damageIndicators, breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics, explosions

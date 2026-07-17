@@ -191,6 +191,18 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     in `global.json`. To message a player literally named `history`, use
     `.pm -- history hello`; the `--` escape also lets `.reply -- history`
     send that literal reply instead of opening local history.
+27. Enable **MentionNotifier**, set a local term, and have another permitted
+    player send it in ordinary chat. Verify one local Helikon notice appears,
+    a repeated mention inside the configured cooldown is quiet, and a message
+    from the local player's own name is ignored. Verify no sound, desktop, or
+    taskbar notification is requested by this first slice.
+28. In a permitted test environment, enable **AutoReply** with a harmless
+    trigger and reply. Verify a matching chat message from an allowed player
+    produces one ordinary chat reply, while a local-player message, blacklisted
+    player, non-matching server, screen-open state, slash/dot reply, repeated
+    sender inside cooldown, and per-minute cap do not send anything. Configure
+    the reply text as the trigger and verify an echoed matching reply does not
+    cause a response loop.
 
 ## Manual command and keybind smoke test
 

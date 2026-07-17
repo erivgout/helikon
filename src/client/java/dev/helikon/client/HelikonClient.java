@@ -53,6 +53,8 @@ import dev.helikon.client.module.chat.ChatFilter;
 import dev.helikon.client.module.chat.ChatSpammer;
 import dev.helikon.client.module.chat.MinecraftChatSender;
 import dev.helikon.client.module.chat.PrivateMessageHelper;
+import dev.helikon.client.module.chat.MentionNotifier;
+import dev.helikon.client.module.chat.AutoReply;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
@@ -163,9 +165,12 @@ public final class HelikonClient implements ClientModInitializer {
         ChatSuffix chatSuffix = new ChatSuffix();
         ChatMute chatMute = new ChatMute();
         ChatFilter chatFilter = new ChatFilter();
-        ChatSpammer chatSpammer = new ChatSpammer(new MinecraftChatSender(),
+        MinecraftChatSender normalChatSender = new MinecraftChatSender();
+        ChatSpammer chatSpammer = new ChatSpammer(normalChatSender,
                 () -> ThreadLocalRandom.current().nextInt());
         PrivateMessageHelper privateMessageHelper = new PrivateMessageHelper();
+        MentionNotifier mentionNotifier = new MentionNotifier();
+        AutoReply autoReply = new AutoReply();
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
@@ -178,6 +183,8 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(chatFilter);
         modules.register(chatSpammer);
         modules.register(privateMessageHelper);
+        modules.register(mentionNotifier);
+        modules.register(autoReply);
         MovementModuleAccess.install(autoWalk, autoSneak);
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
@@ -228,11 +235,11 @@ public final class HelikonClient implements ClientModInitializer {
         ClientSendMessageEvents.MODIFY_CHAT.register(outgoingChat::format);
         ClientSendMessageEvents.CHAT_CANCELED.register(chatSpammer::reportRejected);
         ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, chatType, receivedAt) ->
-                allowIncomingMessage(chatMute, chatFilter,
-                        IncomingMessageAdapter.chat(message, sender, receivedAt.toEpochMilli()))
+                allowIncomingMessage(chatMute, chatFilter, mentionNotifier, autoReply, normalChatSender,
+                        IncomingMessageAdapter.chat(message, signedMessage, sender, receivedAt.toEpochMilli()))
         );
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) ->
-                allowIncomingMessage(chatMute, chatFilter,
+                allowIncomingMessage(chatMute, chatFilter, mentionNotifier, autoReply, normalChatSender,
                         IncomingMessageAdapter.game(message, overlay, System.currentTimeMillis()))
         );
 
@@ -454,11 +461,38 @@ public final class HelikonClient implements ClientModInitializer {
     }
 
     /** Evaluates local incoming-message policies through normal module failure isolation. */
-    private boolean allowIncomingMessage(ChatMute chatMute, ChatFilter chatFilter, IncomingChatMessage message) {
+    private boolean allowIncomingMessage(ChatMute chatMute, ChatFilter chatFilter, MentionNotifier mentionNotifier,
+                                         AutoReply autoReply, MinecraftChatSender normalChatSender,
+                                         IncomingChatMessage message) {
         if (shouldHideIncoming(chatMute, "incoming-message", () -> chatMute.shouldHide(message))) {
             return false;
         }
-        return !shouldHideIncoming(chatFilter, "incoming-message", () -> chatFilter.shouldHide(message));
+        if (shouldHideIncoming(chatFilter, "incoming-message", () -> chatFilter.shouldHide(message))) {
+            return false;
+        }
+        observeIncomingMessage(mentionNotifier, autoReply, normalChatSender, message);
+        return true;
+    }
+
+    /** Runs local post-display chat actions through module failure isolation. */
+    private void observeIncomingMessage(MentionNotifier mentionNotifier, AutoReply autoReply,
+                                        MinecraftChatSender normalChatSender, IncomingChatMessage message) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null) {
+            return;
+        }
+        String localPlayerName = client.player.getGameProfile().name();
+        modules.runGuarded(mentionNotifier, "incoming-message", () -> {
+            if (mentionNotifier.shouldNotify(message, localPlayerName)) {
+                notifier.info("Mention from '" + message.sender() + "'.");
+            }
+        });
+        modules.runGuarded(autoReply, "incoming-message", () -> autoReply.replyFor(
+                message,
+                localPlayerName,
+                macroServerContext.currentServerAddress().orElse(""),
+                client.gui.screen() != null
+        ).ifPresent(normalChatSender::send));
     }
 
     private boolean shouldHideIncoming(dev.helikon.client.module.Module module, String operation, java.util.function.BooleanSupplier policy) {

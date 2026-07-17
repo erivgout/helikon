@@ -39,6 +39,13 @@ waits at least two seconds between sends, pauses in screens by default, stops
 after disconnect, and has a small per-session cap. Servers may still punish
 spam, so it is off by default.
 
+MentionNotifier and AutoReply are off by default. MentionNotifier watches
+ordinary incoming player chat for the local player's name or configured local
+terms and posts an in-game Helikon notice. AutoReply evaluates one configured
+rule only, ignores the local player's own messages, pauses in screens by
+default, bounds replies per minute, and sends only safe ordinary chat through
+Minecraft's normal connection. It never sends commands or retries a failure.
+
 PrivateMessageHelper intercepts `.pm` and `.reply` locally, validates a player
 name and a bounded message, then uses Minecraft's normal server-command route
 with configurable `msg` and `r` command tokens. The `.` command itself is

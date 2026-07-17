@@ -57,6 +57,16 @@ length limit. Its Minecraft adapter calls the normal `sendCommand` connection
 method; it does not create packets, probe a server's private-message syntax,
 retry failures, or send conversation history anywhere.
 
+MentionNotifier reads ordinary incoming chat only to decide whether to show a
+local Helikon notification. It sends no acknowledgement, sound request, taskbar
+signal, or external desktop notification.
+
+AutoReply can send one validated ordinary chat string only after its local
+incoming-message policy permits it. It rejects local/slash-command output,
+pauses in screens by default, uses the existing normal chat sender, and keeps
+per-sender and per-minute cooldown state locally. It never constructs packets,
+retries a failed send, or relays chat through a Helikon service.
+
 ## Future policy
 
 Optional external integrations must be isolated under

@@ -105,6 +105,20 @@ server traffic while still letting an explicitly requested normal server PM
 use the ordinary connection path. The current history is session-only and
 does not infer incoming private messages from arbitrary server chat text.
 
+`MentionNotifier` and `AutoReply` evaluate their incoming-message policies in
+Minecraft-free modules. The entrypoint first lets the existing mute/filter
+policy reject a message; only a locally visible message can then generate a
+notice or automatic reply. Mention notifications use the existing local-only
+`ChatNotifier`. AutoReply returns an optional already-validated ordinary text
+string after applying name allow/deny lists, server restriction, per-sender
+cooldown, rolling minute cap, screen pause, safe-regex matching, and a small
+recent-own-reply loop guard. Incoming chat keeps both its displayed decorated
+text and its signed raw body; AutoReply uses the latter so a normal `<name>`
+chat decoration cannot alter exact trigger matching or bypass its loop guard.
+The entrypoint alone passes that string to
+Minecraft's normal chat sender through `ModuleRegistry.runGuarded`, so a
+failure disables only the responsible module and never creates a packet.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

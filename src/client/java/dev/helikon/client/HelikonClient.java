@@ -253,6 +253,7 @@ import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.MinecraftGammaAccess;
 import dev.helikon.client.module.render.MinecraftNightVisionAccess;
 import dev.helikon.client.module.render.MiniPlayer;
+import dev.helikon.client.module.render.OpenWaterEsp;
 import dev.helikon.client.module.render.ProjectilePreview;
 import dev.helikon.client.module.render.RenderModuleAccess;
 import dev.helikon.client.module.render.Radar;
@@ -437,6 +438,7 @@ public final class HelikonClient implements ClientModInitializer {
         Radar radar = new Radar();
         SaturationDisplay saturationDisplay = new SaturationDisplay();
         StorageEsp storageEsp = new StorageEsp();
+        OpenWaterEsp openWaterEsp = new OpenWaterEsp();
         XRay xray = new XRay(new MinecraftXRayRendererInvalidator());
         MiniPlayer miniPlayer = new MiniPlayer();
         DamageIndicators damageIndicators = new DamageIndicators();
@@ -464,6 +466,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(radar);
         modules.register(saturationDisplay);
         modules.register(storageEsp);
+        modules.register(openWaterEsp);
         modules.register(xray);
         modules.register(miniPlayer);
         modules.register(damageIndicators);
@@ -721,7 +724,7 @@ public final class HelikonClient implements ClientModInitializer {
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, chams, betterNametags, blockEsp, tracers, trajectories, projectileWarning,
-                projectilePreview, trueSight, storageEsp,
+                projectilePreview, trueSight, storageEsp, openWaterEsp,
                 damageIndicators, breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics, explosions
         );
         DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,

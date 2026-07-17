@@ -90,6 +90,7 @@ import dev.helikon.client.module.combat.MinecraftCombatAccess;
 import dev.helikon.client.module.combat.Reach;
 import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
 import dev.helikon.client.module.combat.ReachDisplay;
+import dev.helikon.client.module.combat.RightClicker;
 import dev.helikon.client.module.combat.TriggerBot;
 import dev.helikon.client.module.movement.AutoSprint;
 import dev.helikon.client.module.movement.AutoSneak;
@@ -474,6 +475,7 @@ public final class HelikonClient implements ClientModInitializer {
         HitFlick hitFlick = new HitFlick();
         HitSelect hitSelect = new HitSelect();
         ReachDisplay reachDisplay = new ReachDisplay();
+        RightClicker rightClicker = new RightClicker();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
         Annoy annoy = new Annoy();
         OneClickFriends oneClickFriends = new OneClickFriends();
@@ -554,6 +556,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(hitFlick);
         modules.register(hitSelect);
         modules.register(reachDisplay);
+        modules.register(rightClicker);
         modules.register(annoy);
         modules.register(oneClickFriends);
         modules.register(skinBlinker);
@@ -682,6 +685,8 @@ public final class HelikonClient implements ClientModInitializer {
                                 combatSnapshot.get(), combatTracker));
                     }
                 });
+                modules.runGuarded(rightClicker, "tick",
+                        () -> MinecraftCombatAccess.tickRightClicker(clientTick, rightClicker, friends));
             }
         });
 

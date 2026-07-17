@@ -184,6 +184,14 @@ owns the ordinary local Use key (raising a held `BLOCKS_ATTACKS` shield) while a
 eligible non-friend target is inside its bounded range, releasing that key around
 a ready attack and on disable, panic, or player loss. It never constructs a
 packet, so the server still validates every shield-blocked or unblocked hit.
+world loss; it does not flash a non-crosshair target for only one frame.
+RightClicker keeps its click-rate, hand-target, and friend-exclusion policy in a
+Minecraft-free `decide` method that returns a single interaction category per
+tick. Its narrow adapter mirrors Minecraft's own use handling for the current
+crosshair hit through the public `useItemOn`/`interact`/`useItem` methods, tries
+the main then off hand, swings only on a consuming result, and briefly raises the
+transient `rightClickDelay` so vanilla's own held-use path does not double the
+configured rate. It builds no packet and leaves server authority intact.
 
 The inventory-automation modules keep armor ranking, item-ID/slot parsing,
 totem restore conditions, chest priority, and conservative manager choices in

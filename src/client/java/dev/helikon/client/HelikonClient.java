@@ -133,6 +133,7 @@ import dev.helikon.client.module.movement.FreecamAccess;
 import dev.helikon.client.module.movement.Jetpack;
 import dev.helikon.client.module.movement.Clutch;
 import dev.helikon.client.module.movement.Fish;
+import dev.helikon.client.module.movement.Glide;
 import dev.helikon.client.module.movement.MinecraftAdvancedMovementAccess;
 import dev.helikon.client.module.movement.MinecraftAutoSwimAccess;
 import dev.helikon.client.module.movement.MinecraftFollowAccess;
@@ -482,6 +483,7 @@ public final class HelikonClient implements ClientModInitializer {
         Jetpack jetpack = new Jetpack();
         Freecam freecam = new Freecam();
         NoFall noFall = new NoFall();
+        Glide glide = new Glide();
         ExtraElytra extraElytra = new ExtraElytra();
         Scaffold scaffold = new Scaffold();
         TpClick tpClick = new TpClick();
@@ -589,6 +591,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(jetpack);
         modules.register(freecam);
         modules.register(noFall);
+        modules.register(glide);
         modules.register(extraElytra);
         modules.register(scaffold);
         modules.register(tpClick);
@@ -720,6 +723,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(fakeLag, "tick", FakeLagAccess::tick);
                 modules.runGuarded(noFall, "tick", () -> MinecraftAdvancedMovementAccess.tickNoFall(noFall));
                 modules.runGuarded(blink, "tick", BlinkPacketAccess::tick);
+                modules.runGuarded(glide, "tick", () -> MinecraftAdvancedMovementAccess.tickGlide(glide));
                 modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));
                 modules.runGuarded(scaffold, "tick", () -> MinecraftAdvancedMovementAccess.tickScaffold(scaffold, clientTick));
                 modules.runGuarded(tpClick, "tick", () -> MinecraftTpClickAccess.tick(tpClick, INPUT_READER));

@@ -150,6 +150,9 @@ narrow: NoSlow/Step/Timer mixins target verified local movement and
 `DeltaTracker` calculations; the controller adapts current local input,
 velocity, abilities, and held blocks to ordinary Minecraft APIs. No module
 constructs movement/container packets or treats client motion as server truth.
+Glide's descent cap is a separate Minecraft-free policy. Its adapter reads the
+current local falling context and changes only an excessive downward velocity;
+it never resets fall distance or sends a movement-status packet.
 
 Flight changes only `Abilities` that already permit flight and restores only
 values it owns. The independent Freecam module uses an invisible, unadded

@@ -13,8 +13,14 @@ review, and republish.
 - No networking in core code. The Gradle `verifyClientOnlyArchitecture` check
   rejects HTTP/WebSocket usage; optional integrations require the isolation
   and documentation rules in [networking.md](networking.md).
-- No anti-cheat bypass presets, malformed packets, telemetry, hidden
-  behavior, or arbitrary code execution.
+- Client-side gameplay-advantage modules are allowed (see RULES.md §1a): they
+  may send well-formed, vanilla-shaped packets and stay honest that the server
+  is authoritative and may reject the action. Still prohibited: server
+  crash/DoS/resource-exhaustion, malformed or crash-inducing packets,
+  privilege-escalation or authentication-bypass exploits, mass server scanning,
+  credential/token storage, telemetry, remote code/module loading, arbitrary
+  code execution, and any feature whose purpose is to evade anti-cheat or spoof
+  the client as unmodified.
 - Keep decision logic Minecraft-free and unit-tested; only thin adapters and
   narrowly scoped mixins may touch Minecraft classes. Verify every Minecraft
   API against the mapped jars before use (see

@@ -9,12 +9,32 @@ Before a feature is accepted for implementation, it must satisfy every applicabl
 1. It supports Helikon's purpose as a clean-room, open-source, client-side Fabric utility mod.
 2. It can run without a Helikon-operated backend, server plugin, account system, proxy, database, VPS, API, or persistent WebSocket connection.
 3. It stores Helikon-owned data locally unless the user explicitly invokes an optional third-party integration.
-4. It is honest about Minecraft server authority: a client-side interface must never promise a server-side result that the server may reject.
-5. It does not add malformed or exploitative packets, authentication bypasses, remote code/module loading, telemetry, hidden behavior, malware, or arbitrary code execution.
+4. It is honest about Minecraft server authority: the server is authoritative and may reject, rubber-band, correct, or kick. A module may attempt client-side gameplay actions (movement, interaction, timing, rotation) that the server can refuse, but its UI and documentation must not promise a guaranteed server-side result.
+5. It does not attack third-party infrastructure or evade detection. Specifically prohibited: server crash / denial-of-service / resource-exhaustion behavior; malformed or intentionally crash-inducing packets; authentication bypasses or privilege escalation against servers; internet-wide or mass server scanning; storing Minecraft credentials or access tokens; remote code/module loading or arbitrary code execution; telemetry; malware; and any feature whose primary purpose is to evade anti-cheat or spoof the client as unmodified. Well-formed, vanilla-shaped gameplay packets that seek a client advantage are permitted even if a server may reject them (see §1a).
 6. It has a clear user-facing purpose, a stable identity, configurable behavior where needed, defined limitations, acceptance criteria, and test coverage.
 7. Its performance, security, privacy, failure behavior, documentation, and version-compatibility implications are understood before it is merged.
 
 Reject, redesign, or defer a feature that cannot meet these criteria.
+
+## 1a. Gameplay-advantage ("cheat") modules
+
+Helikon is a utility client. Modules that grant an in-game advantage — extended
+reach, combat auras, movement or interaction tricks, timing changes, and similar
+behavior — are permitted when they:
+
+- operate entirely client-side and require no Helikon backend or server plugin;
+- send only well-formed, vanilla-shaped packets and treat the server as
+  authoritative (it may reject, correct, rubber-band, or kick);
+- are honest in their UI and documentation that the server can refuse the action;
+- do not attack third parties or evade detection as described in §1 item 5.
+
+The governing distinction is between giving the local user an advantage the
+server remains free to reject (permitted) and attacking other people's servers,
+escalating server privileges, scanning the internet, harvesting credentials, or
+hiding the client from anti-cheat (prohibited). When a requested feature is
+fundamentally one of the prohibited kinds, reject it even if a benign subset is
+imaginable; when it is an ordinary client-side advantage, it is admissible even
+though a server's anti-cheat may flag or reject it.
 
 ## 2. Clean-room and product identity
 

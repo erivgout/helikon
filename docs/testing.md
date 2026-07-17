@@ -71,6 +71,10 @@ ChatSpammer's command rejection, sequential/random selection, minimum-delay
 countdown (including toggles), screen pause, session cap, cancellation stop,
 and disconnect stop are covered by
 `ChatSpammerTest`.
+ChatHistory's opt-in per-server persistence, atomic backup, corrupt-file
+recovery, retention pruning, safe scope validation, local command search,
+clipboard selection, and unsent-draft reopening decisions are covered by
+`ChatHistoryManagerTest` and `ChatHistoryCommandTest`.
 Entity category/friend/range gating, local block-ID parsing, incremental cube
 scan order, cache eviction, and Breadcrumb sampling/age bounds are covered by
 `EntityRenderFilterTest`, `BlockEspPolicyTest`, and `BreadcrumbTrailTest`.
@@ -364,7 +368,18 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     fade, compact mode, and smooth scroll; verify unfocused chat timing,
     line-height, and multi-line scroll easing change locally. Relaunch and
     verify settings persist but no old chat lines do.
-33. In a permitted local/test world, enable **EntityESP** and **Tracers**.
+33. Enable **ChatHistory** in a local/test world and receive harmless chat,
+   then send one ordinary message. Run `.history list`, `.history search`,
+   `.history copy`, `.history player` on an entry with a normal player name,
+   and `.history reopen` on the outgoing entry. Verify clipboard operations
+   reach only the local clipboard and reopen creates an unsent chat draft.
+   Send a `.` command and verify it neither reaches the server nor appears in
+   history. With **Persistent logging** left off, quit and verify no
+   `chat-history/` file exists. Enable it explicitly, relaunch on the same
+   server, and verify bounded retained entries return; join another server and
+   verify its history is separate. Replace one log with malformed JSON and
+   verify a matching `.corrupt-<timestamp>.json` recovery file appears.
+34. In a permitted local/test world, enable **EntityESP** and **Tracers**.
     Verify selected nearby player/hostile categories draw local boxes or lines,
     locally saved friends use the friend color, and entities outside the range
     do not render. Enable **BlockESP** with a harmless known block ID and
@@ -379,7 +394,7 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     Verify friend color/status disappears when friend status is off, players
     outside range or the camera frustum do not render, and invisible or
     solid-block-occluded players receive no name-tag billboard.
-34. In a permitted local/test world, enable **Trajectories** while arrows,
+35. In a permitted local/test world, enable **Trajectories** while arrows,
     tridents, snowballs, eggs, ender pearls, or splash potions are in flight.
     Verify each configured type draws a local path that ends at its first block
     impact marker, and that disabling it immediately removes the preview.
@@ -392,21 +407,21 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     rotation, zoom, local friend color, and category filters, and confirm no
     unloaded or out-of-range entities appear. None of these results should be
     visible to another player or change a normal projectile/entity interaction.
-35. In a disposable local/test world, enable **XRay** and verify only its
+36. In a disposable local/test world, enable **XRay** and verify only its
     configured locally loaded block models remain visible after the geometry
     rebuild; change the block list and opacity, wait for the local rebuild, and
     verify the display follows it. Disable XRay and verify normal world geometry
     fully returns. Enable **StorageESP** near known selected storage, then
     verify its box appears after a bounded scan pass, is culled when offscreen,
     honors category/custom-ID settings, and never opens or changes a container.
-36. In a local/test world, enable **MiniPlayer** and verify the local player
+37. In a local/test world, enable **MiniPlayer** and verify the local player
     model appears in its fixed HUD panel, responds to rotation/scale/background
     settings, and armor on/off changes only the panel. Enable **DamageIndicators**
     near an eligible mob/player, observe a normal local health loss, and verify
     one amount rises and fades with the configured duration/color. Verify a
     target outside range or behind the camera has no label, no damage changes
     occur without a local health decrease, and neither feature affects combat.
-37. In a disposable local/test world, open the player's normal inventory with
+38. In a disposable local/test world, open the player's normal inventory with
     an empty cursor. Enable **AutoArmor**, confirm it equips only a strictly
     better piece after its delay, then equip a Binding Curse piece and verify
     protection leaves it in place. Configure **AutoEject** with a harmless
@@ -417,30 +432,30 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     **InventoryManager** with a harmless preferred hotbar entry and junk item;
     verify named, enchanted, and protected/durability-reserved items remain
     untouched and close the screen to verify every module stops immediately.
-38. In a disposable chest containing harmless items, enable **ChestSteal** and
+39. In a disposable chest containing harmless items, enable **ChestSteal** and
     verify one normal quick move occurs per configured delay, whitelist and
     blacklist filters leave the correct items, priority changes the transfer
     order, and close-after-completion closes only after eligible items are
     exhausted. Keep a nonempty cursor or leave the chest screen and verify no
     action occurs.
-39. In a permitted fishing test world, select a player-provided rod and enable
+40. In a permitted fishing test world, select a player-provided rod and enable
     **AutoFish**. Verify it casts once, waits for a visible bite and the reel
     delay, then reels and waits for the recast delay before casting again.
     Turn on open-water-only near non-open water and verify it does not reel;
     set the durability reserve above the remaining rod durability and verify it
     stops. Open a screen and verify it does nothing.
-40. On a disposable multiplayer target, disconnect unexpectedly with
+41. On a disposable multiplayer target, disconnect unexpectedly with
     **AutoReconnect** enabled. Verify the local countdown and Cancel button,
     cancel once to verify no connection is made, then retry and verify no more
     than the configured attempts use Minecraft's normal connect screen. Leave
     explicitly or use a local world and verify it never reconnects.
-41. In a local/test world with ordinary blocks, enable **BuilderAssist**, hold
+42. In a local/test world with ordinary blocks, enable **BuilderAssist**, hold
     Use with a player-provided block, and target a replaceable face. Verify the
     bounded local preview follows each single/line/floor/wall mode and length,
     width, height, and color settings. Verify repeat placement honors its delay
     and stops when Use is released, the held item is not a block, a screen is
     open, a target is unloaded/occupied, or normal vanilla placement fails.
-42. In a disposable local/test world, enable each Advanced Movement module
+43. In a disposable local/test world, enable each Advanced Movement module
     separately. With **NoSlow**, verify each enabled food/block/bow/sneak/
     soul-sand/honey/cobweb category changes only local responsiveness and no
     other entity is affected. Verify **FastLadders** changes only normal
@@ -459,7 +474,7 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     screens. Finally set **Timer** within its safe range, verify it disables on
     disconnect/world leave, and confirm no module claims server-side movement
     or tick-rate changes.
-43. In a disposable local/test world, enable each **Combat** module separately.
+44. In a disposable local/test world, enable each **Combat** module separately.
     Verify **TriggerBot** acts only for a visible crosshair target with normal
     cooldown and, with its option enabled, a conventional melee item. Verify
     **BowAimAssist** moves the local view gradually only while Use is held with
@@ -477,7 +492,7 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     **ReachDisplay** reports only a measured Helikon attack request distance.
     Finally toggle **AntiBot** options with a test player/list state and verify
     they merely exclude local targets and create no network/service request.
-44. Before a release candidate, start from a fresh Minecraft profile and run
+45. Before a release candidate, start from a fresh Minecraft profile and run
     the relevant module smoke checks above. Run `./gradlew.bat check
     releaseBundle`, confirm the bundle contains the remapped non-dev JAR,
     SHA-256 checksum, and dependency report, then inspect the source-style and

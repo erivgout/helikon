@@ -241,6 +241,19 @@ local entry, then asks Minecraft to rebuild its local trimmed display. Search,
 history listing, and clipboard copying use explicit `.` commands and a
 non-persistent current-display provider; no chat text is written to disk.
 
+`ChatHistory`, `ChatHistoryEntry`, and `ChatHistoryManager` are deliberately
+separate from BetterChat's display queue. The manager owns bounded,
+Minecraft-free entries and optional schema-versioned per-server storage;
+`ChatHistoryCommand` owns local search, explicit clipboard actions, and draft
+selection. The client bridge records a non-overlay message only after existing
+incoming filters allow it, records ordinary outgoing chat only after Fabric
+accepts it, and records no local `.` command. Persistence defaults off and writes only at
+lifecycle boundaries with atomic replacement, backup, retention pruning, and
+corrupt-file recovery. `MinecraftChatInputReopener` is the sole Minecraft
+adapter for reopening an unsent `ChatScreen` draft; the Minecraft-free
+`ScheduledChatInputReopener` queues that action for the next client tick so
+the local-command callback cannot race normal chat-screen closure.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

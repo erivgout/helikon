@@ -115,6 +115,18 @@ and a command mutation rolls back if saving cannot complete. Macro definitions
 are never sent to a server; configured chat and command actions use only the
 player's existing normal Minecraft connection.
 
+ChatHistory creates no log file unless both the module and its
+`persistent_logging` setting are enabled. Opted-in records are bounded by
+`history_limit` and `retention_days`, and are written only on module disable,
+server-scope change, disconnect, or client shutdown — never per chat line,
+frame, or tick. Each schema-versioned record is stored under
+`chat-history/<opaque-server-hash>.json`; the filename does not expose the
+server address. Replacements first create a `.bak` copy and use an atomic move
+when available. A malformed per-server file becomes
+`<opaque-server-hash>.corrupt-<timestamp>.json` and is ignored. Only accepted
+non-overlay incoming lines and accepted ordinary outgoing chat can enter the
+store; local `.` commands are neither sent nor retained.
+
 `panic.json` stores only a schema-versioned keyboard token for the optional
 local panic key. It has the same atomic write, `.bak`, corrupt-file recovery,
 invalid-key fallback rules as other local stores; the reserved Helikon GUI key

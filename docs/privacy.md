@@ -5,8 +5,10 @@ configuration remains under `.minecraft/config/helikon/`.
 
 The project must not collect or transmit account tokens, session IDs, hardware
 identifiers, installed-mod lists, chat history, coordinates, friends, waypoints,
-or screenshots. Future optional integrations require explicit user action and
-must be documented in [networking.md](networking.md).
+or screenshots. ChatHistory can retain chat content only in its explicit
+off-by-default local persistence mode; it is never collected or transmitted.
+Future optional integrations require explicit user action and must be documented
+in [networking.md](networking.md).
 
 PrivateMessageHelper keeps only a bounded, session-memory view of outgoing
 `.pm` text for local command history. It never persists that text, transmits it
@@ -23,6 +25,15 @@ client session. Its `.chat search`, `.chat history`, and explicit `.chat copy`
 operations read that in-memory display list; the copied selection goes only to
 the local system clipboard. BetterChat does not create a chat-log file, persist
 chat content, transmit search text, or send display settings anywhere.
+
+ChatHistory is independent of BetterChat and disabled by default. It retains
+accepted non-overlay incoming and accepted ordinary outgoing chat only while
+enabled; local `.` commands are excluded. Its optional `persistent_logging` setting also
+defaults off. If a user enables it, bounded records are kept only in local
+per-server files with opaque hashed names, retention pruning, backup, and
+corrupt-file recovery. `.history copy` and `.history player` send text only to
+the local system clipboard, while `.history reopen` opens an unsent local
+draft. No record, search query, or clipboard selection is transmitted.
 
 EntityESP, BlockESP, Tracers, and Breadcrumbs use only the entities, blocks,
 and local player positions that Minecraft has already loaded for the current

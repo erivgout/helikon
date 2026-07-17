@@ -175,6 +175,14 @@ longer visibility with an adjustable fade, compact line height, and eased
 multi-line scrolling. Its `.chat` command searches, lists, or explicitly copies
 currently retained local lines; no history is persisted.
 
+ChatHistory is a separate, off-by-default local record module. It keeps a
+bounded searchable history while enabled and its `.history` command can list
+or search entries, copy a selected message or valid player name, and reopen a
+locally sent line as an unsent draft. Persistent logging is disabled by default.
+When explicitly enabled, records stay in schema-versioned per-server local
+files with retention pruning; they are never transmitted or used for private
+message inference.
+
 PrivateMessageHelper intercepts `.pm` and `.reply` locally, validates a player
 name and a bounded message, then uses Minecraft's normal server-command route
 with configurable `msg` and `r` command tokens. The `.` command itself is
@@ -289,6 +297,7 @@ sent to the server:
 | `.pm <player> <message>` / `.pm history [player]` | Sends one validated normal server PM or views bounded local outgoing history. Prefix a literal `history` target with `--`. |
 | `.reply <message>` / `.reply history [player]` | Sends one validated normal server reply or views the same local history. Prefix a literal `history` reply with `--`. |
 | `.chat search <text>` / `.chat copy <newest-index>` / `.chat history [count]` | Searches, explicitly copies, or lists bounded local BetterChat display history while BetterChat is enabled. |
+| `.history search <text>` / `.history copy\|player\|reopen <newest-index>` / `.history list [count]` | Searches or lists ChatHistory entries, copies a retained message/player name, or reopens a sent line as an unsent local draft. |
 | `.panic` | Disables modules, hides custom HUD for this session, and closes Helikon GUI screens. |
 | `.panic bind <key>` / `.panic unbind` | Configures or clears the local persisted panic key. |
 | `.panic status` / `.panic restorehud` | Shows the bind or restores HUD visibility without re-enabling modules. |
@@ -311,6 +320,11 @@ delays. There is no macro scripting or arbitrary code execution.
 PrivateMessageHelper's command-token settings are stored with the other module
 settings in `global.json`; its recent message text is deliberately session-only
 memory and is discarded on client exit.
+ChatHistory persistence remains opt-in: enabled logs use opaque hashed
+per-server filenames below `chat-history/`, atomic replacement and `.bak`
+backups, bounded retention, and corrupt-file recovery. They contain only
+accepted non-overlay incoming lines and ordinary sent chat, never local `.`
+commands.
 The optional panic key is stored locally in `panic.json`; it is suppressed while
 typing in chat or ordinary screens, but works inside Helikon screens to close
 them immediately.

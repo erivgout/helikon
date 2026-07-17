@@ -155,6 +155,11 @@ string. `.chat copy` writes only the user-selected retained line to the local
 system clipboard. BetterChat never sends history, search text, counters, or
 display settings to a server or external service.
 
+ChatHistory records only local copies of already accepted non-overlay chat and
+has no network path of its own. Persistent logging is explicit and disabled by
+default; enabling it writes a local per-server file rather than sending logs,
+searches, copied content, player names, or reopened drafts to any service.
+
 ## Future policy
 
 Optional external integrations must be isolated under

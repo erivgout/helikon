@@ -2,13 +2,17 @@ package dev.helikon.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.helikon.client.command.ChatCommands;
+import dev.helikon.client.command.ChatHistoryCommand;
 import dev.helikon.client.command.CommandDispatcher;
 import dev.helikon.client.command.HelikonCommands;
 import dev.helikon.client.command.BetterChatCommand;
+import dev.helikon.client.command.MinecraftChatInputReopener;
+import dev.helikon.client.command.ScheduledChatInputReopener;
 import dev.helikon.client.command.MinecraftTextClipboard;
 import dev.helikon.client.command.MinecraftServerCommandSender;
 import dev.helikon.client.command.MinecraftKeyNameResolver;
 import dev.helikon.client.chat.OutgoingChatFormatter;
+import dev.helikon.client.chat.ChatHistoryManager;
 import dev.helikon.client.chat.ChatDisplayAccess;
 import dev.helikon.client.chat.BetterChatDisplayAccess;
 import dev.helikon.client.chat.IncomingChatMessage;
@@ -118,6 +122,7 @@ import dev.helikon.client.module.chat.AntiSpam;
 import dev.helikon.client.module.chat.ChatTimestamps;
 import dev.helikon.client.module.chat.ChatColor;
 import dev.helikon.client.module.chat.BetterChat;
+import dev.helikon.client.module.chat.ChatHistory;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.BuilderAssist;
 import dev.helikon.client.module.world.ChestItem;
@@ -232,6 +237,9 @@ public final class HelikonClient implements ClientModInitializer {
     private final WaypointManager waypoints = new WaypointManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
     private final WaypointLocationProvider waypointLocations = new MinecraftWaypointLocationProvider();
     private final MacroManager macros = new MacroManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
+    private final ChatHistoryManager chatHistory = new ChatHistoryManager(
+            FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
+    );
     private final MacroRunner macroRunner = new MacroRunner();
     private final MacroServerContextProvider macroServerContext = new MinecraftMacroServerContextProvider();
     private final PrivateMessageHistory privateMessageHistory = new PrivateMessageHistory();
@@ -346,6 +354,12 @@ public final class HelikonClient implements ClientModInitializer {
         ChatTimestamps chatTimestamps = new ChatTimestamps();
         ChatColor chatColor = new ChatColor();
         BetterChat betterChat = new BetterChat();
+        ChatHistory chatHistoryModule = new ChatHistory();
+        chatHistoryModule.setStorageHooks(
+                () -> chatHistory.activate(chatHistoryModule, currentChatHistoryScope()),
+                chatHistory::deactivate,
+                () -> chatHistory.updateSettings(chatHistoryModule)
+        );
         AntiBot antiBot = new AntiBot();
         TriggerBot triggerBot = new TriggerBot();
         BowAimAssist bowAimAssist = new BowAimAssist();
@@ -394,6 +408,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(chatTimestamps);
         modules.register(chatColor);
         modules.register(betterChat);
+        modules.register(chatHistoryModule);
         modules.register(antiBot);
         modules.register(triggerBot);
         modules.register(bowAimAssist);
@@ -509,6 +524,8 @@ public final class HelikonClient implements ClientModInitializer {
                 new MinecraftServerCommandSender());
         commands.register(new BetterChatCommand(betterChat, BetterChatDisplayAccess::localHistory,
                 new MinecraftTextClipboard()));
+        commands.register(new ChatHistoryCommand(chatHistoryModule, chatHistory, new MinecraftTextClipboard(),
+                new ScheduledChatInputReopener(new MinecraftChatInputReopener(), pendingScreenAction::set)));
         ChatCommands.register(commands, notifier);
         OutgoingChatFormatter outgoingChat = new OutgoingChatFormatter(chatPrefix, chatSuffix,
                 () -> macroServerContext.currentServerAddress().orElse(null),
@@ -517,14 +534,28 @@ public final class HelikonClient implements ClientModInitializer {
         ClientSendMessageEvents.CHAT_CANCELED.register(chatSpammer::reportRejected);
         ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, chatType, receivedAt) -> {
             IncomingChatMessage incoming = IncomingMessageAdapter.chat(message, signedMessage, sender, receivedAt.toEpochMilli());
-            return allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply, normalChatSender, incoming);
+            boolean allowed = allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply,
+                    normalChatSender, incoming);
+            if (allowed && !incoming.overlay()) {
+                chatHistory.recordIncoming(chatHistoryModule, incoming);
+            }
+            return allowed;
         });
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
             IncomingChatMessage incoming = IncomingMessageAdapter.game(message, overlay, System.currentTimeMillis());
-            return allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply, normalChatSender, incoming);
+            boolean allowed = allowIncomingMessage(chatMute, chatFilter, antiSpam, mentionNotifier, autoReply,
+                    normalChatSender, incoming);
+            if (allowed && !incoming.overlay()) {
+                chatHistory.recordIncoming(chatHistoryModule, incoming);
+            }
+            return allowed;
         });
-        ClientSendMessageEvents.CHAT.register(message ->
-                events.post(new ChatEvent(ChatEvent.Direction.SEND, message, false)));
+        ClientSendMessageEvents.CHAT.register(message -> {
+            if (!message.startsWith(CommandDispatcher.PREFIX)) {
+                chatHistory.recordOutgoing(chatHistoryModule, message, System.currentTimeMillis());
+            }
+            events.post(new ChatEvent(ChatEvent.Direction.SEND, message, false));
+        });
         ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, chatType, receivedAt) ->
                 events.post(new ChatEvent(ChatEvent.Direction.RECEIVE, message.getString(), false)));
         ClientReceiveMessageEvents.GAME.register((message, overlay) ->
@@ -533,10 +564,16 @@ public final class HelikonClient implements ClientModInitializer {
             reconnectServer = null;
             lastConnectedServer = client.getCurrentServer();
             reconnectAttemptInFlight = false;
+            chatHistory.switchScope(chatHistoryModule, currentChatHistoryScope());
             events.post(new WorldEvent(WorldEvent.Phase.JOIN, serverAddress(lastConnectedServer)));
             modules.runGuarded(autoReconnect, "connect", autoReconnect::onConnected);
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            try {
+                chatHistory.saveIfNeeded();
+            } catch (ConfigurationException exception) {
+                LOGGER.log(Level.WARNING, "Unable to save local chat history while disconnecting", exception);
+            }
             events.post(new WorldEvent(WorldEvent.Phase.LEAVE, serverAddress(lastConnectedServer)));
             playerStateEvents.reset();
             modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));
@@ -624,6 +661,10 @@ public final class HelikonClient implements ClientModInitializer {
 
     private static String serverAddress(ServerData server) {
         return server == null || server.ip == null ? "" : server.ip;
+    }
+
+    private String currentChatHistoryScope() {
+        return macroServerContext.currentServerAddress().orElse(ChatHistoryManager.SINGLEPLAYER_SCOPE);
     }
 
     /** Samples only local player state; event interpretation remains in the Minecraft-free tracker. */
@@ -1178,6 +1219,11 @@ public final class HelikonClient implements ClientModInitializer {
             macros.save();
         } catch (ConfigurationException exception) {
             LOGGER.log(Level.WARNING, "Unable to save macros while stopping", exception);
+        }
+        try {
+            chatHistory.saveIfNeeded();
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to save local chat history while stopping", exception);
         }
         try {
             panicConfiguration.save(panicKeybinds);

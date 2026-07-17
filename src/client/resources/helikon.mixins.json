@@ -24,6 +24,7 @@
     "EntityMovementMixin",
     "FogRendererMixin",
     "NoFogMixin",
+    "FontNameProtectMixin",
     "FishingHookAccessor",
     "GameRendererMixin",
     "HurtCameraMixin",

@@ -53,6 +53,12 @@ Minecraft's normal main-hand swing path for one ordinary swing. That path is
 server-visible under normal Minecraft rules, but Annoy never constructs,
 modifies, or replays a packet, attacks, changes a target, or sends chat.
 
+Local Cape generates one in-memory texture from locally stored color settings
+and substitutes it only in the local player's transient render state. Local
+Cosmetics produces at most 48 local Gizmo lines around that player. Neither
+feature requests a profile, downloads/uploads an asset, reads another player's
+cosmetic data, creates a packet, or has a network path.
+
 Inventory Preview and Durability Warnings read only local `Inventory` and
 `ItemStack` state to produce HUD extraction calls. They never open a screen,
 move an item, or send a packet. Death Coordinates and Logout Coordinates retain

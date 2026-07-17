@@ -109,6 +109,8 @@ import dev.helikon.client.module.miscellaneous.DeathCoordinates;
 import dev.helikon.client.module.miscellaneous.DurabilityWarnings;
 import dev.helikon.client.module.miscellaneous.InventoryPreview;
 import dev.helikon.client.module.miscellaneous.LogoutCoordinates;
+import dev.helikon.client.module.miscellaneous.LocalCape;
+import dev.helikon.client.module.miscellaneous.LocalCosmetics;
 import dev.helikon.client.module.miscellaneous.MinecraftMiscellaneousAccess;
 import dev.helikon.client.module.miscellaneous.MinecraftSkinLayerAccess;
 import dev.helikon.client.module.miscellaneous.OneClickFriends;
@@ -187,6 +189,7 @@ import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.privatechat.PrivateMessageHistory;
 import dev.helikon.client.render.MinecraftWorldVisualizationRenderer;
+import dev.helikon.client.render.LocalCapeRenderer;
 import dev.helikon.client.render.MinecraftXRayRendererInvalidator;
 import dev.helikon.client.waypoint.MinecraftWaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
@@ -412,6 +415,8 @@ public final class HelikonClient implements ClientModInitializer {
         Annoy annoy = new Annoy();
         OneClickFriends oneClickFriends = new OneClickFriends();
         SkinBlinker skinBlinker = new SkinBlinker(new MinecraftSkinLayerAccess());
+        LocalCape localCape = new LocalCape();
+        LocalCosmetics localCosmetics = new LocalCosmetics();
         InventoryPreview inventoryPreview = new InventoryPreview();
         DurabilityWarnings durabilityWarnings = new DurabilityWarnings();
         DeathCoordinates deathCoordinates = new DeathCoordinates();
@@ -476,6 +481,8 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(annoy);
         modules.register(oneClickFriends);
         modules.register(skinBlinker);
+        modules.register(localCape);
+        modules.register(localCosmetics);
         modules.register(inventoryPreview);
         modules.register(durabilityWarnings);
         modules.register(deathCoordinates);
@@ -495,9 +502,10 @@ public final class HelikonClient implements ClientModInitializer {
         AntiCactusAccess.install(antiCactus);
         WaterJumpAccess.install(waterJump);
         TimerModuleAccess.install(timer);
+        LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, betterNametags, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
-                breadcrumbs, builderAssist, blockSelection, bowAimAssist
+                breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics
         );
         AtomicReference<MinecraftCombatAccess.Snapshot> combatSnapshot = new AtomicReference<>(
                 MinecraftCombatAccess.Snapshot.unavailable());

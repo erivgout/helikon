@@ -3,6 +3,7 @@ package dev.helikon.client.render;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.combat.BowAimAssist;
+import dev.helikon.client.module.miscellaneous.LocalCosmetics;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.BetterNametags;
 import dev.helikon.client.module.render.Breadcrumbs;
@@ -80,6 +81,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final BuilderAssist builderAssist;
     private final BlockSelection blockSelection;
     private final BowAimAssist bowAimAssist;
+    private final LocalCosmetics localCosmetics;
     private final BlockEspScanCursor blockCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor blockAnchor = new BlockEspScanAnchor();
     private final BlockEspCache blockCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
@@ -97,7 +99,7 @@ public final class MinecraftWorldVisualizationRenderer {
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
                                                 TrueSight trueSight, StorageEsp storageEsp, DamageIndicators damageIndicators,
                                                 Breadcrumbs breadcrumbs, BuilderAssist builderAssist, BlockSelection blockSelection,
-                                                BowAimAssist bowAimAssist) {
+                                                BowAimAssist bowAimAssist, LocalCosmetics localCosmetics) {
         this.modules = Objects.requireNonNull(modules, "modules");
         this.friends = Objects.requireNonNull(friends, "friends");
         this.entityEsp = Objects.requireNonNull(entityEsp, "entityEsp");
@@ -112,6 +114,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.builderAssist = Objects.requireNonNull(builderAssist, "builderAssist");
         this.blockSelection = Objects.requireNonNull(blockSelection, "blockSelection");
         this.bowAimAssist = Objects.requireNonNull(bowAimAssist, "bowAimAssist");
+        this.localCosmetics = Objects.requireNonNull(localCosmetics, "localCosmetics");
         this.blockEsp.setCacheClearer(this::resetBlockScanner);
         this.storageEsp.setCacheClearer(this::resetStorageScanner);
     }
@@ -174,6 +177,9 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (entityEsp.isEnabled()) {
             modules.runGuarded(entityEsp, "render", () -> renderEntityEsp(client.level, client.player));
+        }
+        if (localCosmetics.isEnabled()) {
+            modules.runGuarded(localCosmetics, "render", () -> renderLocalCosmetics(client.player));
         }
         if (tracers.isEnabled()) {
             modules.runGuarded(tracers, "render", () -> renderTracers(client.level, client.player));
@@ -309,6 +315,17 @@ public final class MinecraftWorldVisualizationRenderer {
             if (++rendered >= entityEsp.maximumEntities()) {
                 return;
             }
+        }
+    }
+
+    /** Renders one bounded local-only aura at the local player's feet. */
+    private void renderLocalCosmetics(Player localPlayer) {
+        for (LocalAuraGeometry.Segment segment : LocalAuraGeometry.ring(localPlayer.getX(),
+                localPlayer.getY() + 0.06D, localPlayer.getZ(), localCosmetics.radius(), localCosmetics.segments())) {
+            LocalAuraGeometry.Point from = segment.from();
+            LocalAuraGeometry.Point to = segment.to();
+            Gizmos.line(new Vec3(from.x(), from.y(), from.z()), new Vec3(to.x(), to.y(), to.z()),
+                    localCosmetics.color(), 1.25F);
         }
     }
 

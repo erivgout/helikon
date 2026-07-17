@@ -413,6 +413,17 @@ only values it still owns on disable, panic, world exit, or a screen opening. It
 adapter calls the local options API only; it neither saves nor broadcasts those
 option changes.
 
+`LocalCapeTexturePattern` and `LocalAuraGeometry` keep the cosmetic decisions
+Minecraft-free and bounded. The only version-sensitive cape adapter runs after
+`AvatarRenderer` has extracted a transient `AvatarRenderState`; it substitutes
+an in-memory `DynamicTexture` only when that avatar is `Minecraft.player` and
+the Local Cape module is enabled. The original skin object is never mutated,
+and the next vanilla state extraction restores it automatically. The texture
+is procedural from the module's locally persisted colors; it has no profile,
+file download, or publishing path. The supported world-Gizmo adapter renders
+at most 48 aura segments around that same local player and does not inspect
+other players.
+
 `InventoryPreviewLayout` chooses at most the 27 storage slots and optional
 nine hotbar slots from the verified local 36-item inventory list without a
 Minecraft import. Its HUD adapter only submits existing item stacks through the

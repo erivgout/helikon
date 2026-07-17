@@ -336,6 +336,11 @@ on blocks or items. SkinBlinker changes only the session-local skin-layer
 options and restores them on disable, screen open, or world exit. Annoy is disabled by
 default and makes at most one ordinary main-hand swing every configured 20–600
 ticks; it never attacks, targets, or sends chat.
+Local Cape replaces only this client's transient local-player cape render state
+with a procedurally generated texture based on its locally stored color
+settings. Local Cosmetics draws one bounded local aura ring at the local
+player's feet. Neither feature downloads, uploads, distributes, or changes a
+cape or cosmetic for another player.
 Inventory Preview and Durability Warnings render only already-loaded local
 inventory facts; neither opens an inventory nor changes an item. Death
 Coordinates and Logout Coordinates retain one enabled-only, session-local

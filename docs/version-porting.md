@@ -120,9 +120,16 @@ When porting:
     local inventory preview or durability warnings. Revalidate the local
     waypoint-location adapter at death/disconnect boundaries; retain the
     session-only, no-waypoint/no-file coordinate policy.
-31. Run the manual smoke test in an empty profile and with no internet access.
-32. Document compatibility changes and retained limitations before release.
-33. Re-run `check releaseBundle`, inspect the generated checksum and resolved
+31. Revalidate `AvatarRenderer.extractRenderState(Avatar, AvatarRenderState,
+    float)`, `AvatarRenderState.skin`/`showCape`, `PlayerSkin`,
+    `TextureManager.register`, `DynamicTexture`, and `NativeImage` before
+    changing Local Cape. Preserve its local-player identity check, transient
+    render-state substitution, locally generated texture, and no-network rule.
+    Revalidate world Gizmo lines for Local Cosmetics and retain its 12–48
+    segment bound.
+32. Run the manual smoke test in an empty profile and with no internet access.
+33. Document compatibility changes and retained limitations before release.
+34. Re-run `check releaseBundle`, inspect the generated checksum and resolved
     dependency report, and repeat the focused live-client smoke checks before
     packaging a release for the target version.
 

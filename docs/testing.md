@@ -56,6 +56,10 @@ by `SkinBlinkerTest`; `OneClickFriendsTest` covers its explicit module gate.
 `InventoryPreviewLayoutTest` covers bounded storage/hotbar selection and grid
 geometry; `DurabilityWarningsTest` covers the inclusive local threshold; and
 `CoordinateTrackerTest` covers enabled-only session death/logout snapshots.
+`LocalCapeTexturePatternTest` covers the bounded opaque procedural cape
+pattern and ARGB-to-ABGR conversion, while `LocalAuraGeometryTest` covers its
+closed bounded ring and malformed-fact rejection. Their render integrations
+require the Phase K smoke checks below.
 AutoParkour's safe shallow-ledge gate and malformed-fact rejection,
 InventoryWalk's inventory/text-focus and Shift-preservation policy, and
 AntiAFK's interval, local-activity reset, and grounded-jump policy are covered
@@ -603,16 +607,25 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
    configured interval; with chat/ClickGUI open, no player, or the module
    disabled, it must not swing. Verify it never attacks, changes a target, or
    sends chat. Server policy remains authoritative for normal swings.
-5. Enable **Inventory Preview** and verify a read-only grid shows the selected
+5. In third-person view, enable **Local Cape** and verify only the local player
+   receives the generated cape. Change either local color setting and verify
+   the cape updates; disable the module and verify the next render uses the
+   normal local cape state. Join a multiplayer test server and verify another
+   client never receives an asset or sees a changed cape.
+6. Enable **Local Cosmetics** and verify one local aura ring follows the local
+   player, the configured radius and 12–48 segment count take effect, and it
+   disappears immediately when disabled or panicked. Verify it does not appear
+   around other players and no new file/network activity occurs.
+7. Enable **Inventory Preview** and verify a read-only grid shows the selected
    1–3 storage rows; enable its hotbar option and verify one extra final row.
    Move or consume an item normally and verify the preview updates without
    opening an inventory or affecting the item. Panic must hide it.
-6. Damage a held tool or armor piece in a disposable world, enable
+8. Damage a held tool or armor piece in a disposable world, enable
    **Durability Warnings**, and set its threshold above the observed percentage.
    Verify only configured held/armor items at or below the inclusive threshold
    appear, raising the threshold reveals an eligible item, and panic hides the
    warning. No item durability or inventory position may change.
-7. Enable **Death Coordinates**, die in a disposable local/test world, and
+9. Enable **Death Coordinates**, die in a disposable local/test world, and
    verify one local chat/HUD entry gives the observed block position and
    dimension without adding a waypoint. Enable **Logout Coordinates**, leave a
    world after moving, and verify the last observed position is reported. Both

@@ -7,6 +7,7 @@ import dev.helikon.client.config.HudConfigurationManager;
 import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.input.HelikonKeybinds;
 import dev.helikon.client.input.Keybind;
+import dev.helikon.client.input.KeybindConflicts;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
@@ -228,6 +229,11 @@ public final class HelikonClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        KeybindAssignment.Result captureResult = keybindAssignment.acceptMouseButton(event.button(), event.modifiers());
+        if (captureResult != KeybindAssignment.Result.IGNORED) {
+            keybindStatus = keybindStatus(captureResult);
+            return true;
+        }
         if (super.mouseClicked(event, doubleClick)) {
             return true;
         }
@@ -285,7 +291,7 @@ public final class HelikonClickGuiScreen extends Screen {
         if (keyCaptureSuppression.consumesKeyPress(event.key())) {
             return true;
         }
-        KeybindAssignment.Result result = keybindAssignment.acceptKey(event.key());
+        KeybindAssignment.Result result = keybindAssignment.acceptKey(event.key(), event.modifiers());
         if (result != KeybindAssignment.Result.IGNORED) {
             if (isTerminalCaptureResult(result)) {
                 keyCaptureSuppression.begin(event.key());
@@ -454,7 +460,7 @@ public final class HelikonClickGuiScreen extends Screen {
         int bindY = moduleResetY + MODULE_RESET_ROW_HEIGHT;
         String bindText = keybindAssignment.isAssigning(module)
                 ? keybindStatus.isBlank() ? "Press a key..." : keybindStatus
-                : "Bind: " + keyDisplayName(module.keybind());
+                : "Bind: " + keyDisplayName(module.keybind()) + conflictWarning(module);
         drawWideButton(graphics, Component.literal(font.plainSubstrByWidth(bindText, SETTINGS_WIDTH - 18)), bindY, mouseX, mouseY);
 
         int enabledY = bindY + BIND_ROW_HEIGHT;
@@ -783,7 +789,7 @@ public final class HelikonClickGuiScreen extends Screen {
     }
 
     private static String keybindStatus(KeybindAssignment.Result result) {
-        return switch (result) {
+        String status = switch (result) {
             case ASSIGNED -> "Bound";
             case UNBOUND -> "Unbound";
             case CANCELLED -> "Cancelled";
@@ -791,6 +797,18 @@ public final class HelikonClickGuiScreen extends Screen {
             case INVALID -> "Unsupported key";
             case IGNORED -> "";
         };
+        return status;
+    }
+
+    private String conflictWarning(Module module) {
+        StringBuilder conflicts = new StringBuilder();
+        for (Module conflict : KeybindConflicts.find(module, modules.all())) {
+            if (!conflicts.isEmpty()) {
+                conflicts.append(", ");
+            }
+            conflicts.append(conflict.id());
+        }
+        return conflicts.isEmpty() ? "" : " [conflicts: " + conflicts + "]";
     }
 
     private static boolean isTerminalCaptureResult(KeybindAssignment.Result result) {
@@ -803,7 +821,13 @@ public final class HelikonClickGuiScreen extends Screen {
         if (!keybind.isBound()) {
             return "Unbound";
         }
-        return InputConstants.Type.KEYSYM.getOrCreate(keybind.keyCode()).getDisplayName().getString()
+        String primary = (keybind.isKeyboard() ? InputConstants.Type.KEYSYM : InputConstants.Type.MOUSE)
+                .getOrCreate(keybind.keyCode()).getDisplayName().getString();
+        String modifiers = keybind.modifiers().stream()
+                .sorted()
+                .map(modifier -> modifier.name().charAt(0) + modifier.name().substring(1).toLowerCase(Locale.ROOT))
+                .collect(java.util.stream.Collectors.joining("+"));
+        return (modifiers.isEmpty() ? "" : modifiers + "+") + primary
                 + " (" + keybind.activation().name().toLowerCase(Locale.ROOT) + ")";
     }
 

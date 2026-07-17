@@ -4,6 +4,7 @@ import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
 import org.junit.jupiter.api.Test;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -27,6 +28,29 @@ class KeybindManagerTest {
 
         void tick(boolean suppressed) {
             manager.tick(downKeys::contains, suppressed);
+        }
+    }
+
+    private record MouseFixture(ModuleRegistry registry, KeybindManager manager, Set<Integer> downKeys,
+                                Set<Integer> downButtons) {
+        static MouseFixture of(Module module) {
+            ModuleRegistry registry = new ModuleRegistry();
+            registry.register(module);
+            return new MouseFixture(registry, new KeybindManager(registry), new HashSet<>(), new HashSet<>());
+        }
+
+        void tick(boolean suppressed) {
+            manager.tick(new KeybindManager.KeyStateReader() {
+                @Override
+                public boolean isKeyDown(int keyCode) {
+                    return downKeys.contains(keyCode);
+                }
+
+                @Override
+                public boolean isMouseButtonDown(int button) {
+                    return downButtons.contains(button);
+                }
+            }, suppressed);
         }
     }
 
@@ -137,6 +161,21 @@ class KeybindManagerTest {
         fixture.registry().setEnabled(module, true);
         fixture.tick(false);
         fixture.downKeys().remove(KEY);
+        fixture.tick(false);
+        assertTrue(module.isEnabled());
+    }
+
+    @Test
+    void mouseBindRequiresEveryConfiguredModifier() {
+        TestModule module = new TestModule(new Keybind(Keybind.InputType.MOUSE_BUTTON, GLFW.GLFW_MOUSE_BUTTON_4,
+                Set.of(Keybind.Modifier.CONTROL), Keybind.Activation.TOGGLE));
+        MouseFixture fixture = MouseFixture.of(module);
+
+        fixture.downButtons().add(GLFW.GLFW_MOUSE_BUTTON_4);
+        fixture.tick(false);
+        assertFalse(module.isEnabled());
+
+        fixture.downKeys().add(GLFW.GLFW_KEY_LEFT_CONTROL);
         fixture.tick(false);
         assertTrue(module.isEnabled());
     }

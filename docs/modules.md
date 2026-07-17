@@ -143,10 +143,12 @@ crashing the client. Setting edits and enabled state persist to
 
 The settings panel also has **Reset module** plus small **R** buttons for each
 visible setting. Reset operations use the existing validated setting defaults.
-Its **Bind** row captures one keyboard key locally; Escape cancels capture,
+Its **Bind** row captures a keyboard key or mouse button locally with any held
+Shift, Control, Alt, or Super modifiers; Escape cancels capture,
 Backspace/Delete clears the bind, and the key that opens the Helikon GUI is
 rejected. Existing activation mode (`toggle`, `hold`, or `press_once`) is
-preserved when rebinding. Drag an unused portion of the header to move the
+preserved when rebinding, and a local warning identifies exact module-bind
+collisions. Drag an unused portion of the header to move the
 window, or its bottom-right handle to resize it. The clamped top-left position
 and custom dimensions persist in `global.json`.
 
@@ -220,7 +222,7 @@ timer, FOV, or step changes). It closes any Helikon GUI screen, stops queued
 macro work, and hides all custom HUD for the current session without deleting
 or changing user configuration. Use `.panic restorehud` to show HUD again
 without re-enabling modules. `.panic bind <key>` stores a separate local
-keyboard-only panic key; chat and ordinary screens suppress it, while Helikon
+keyboard/mouse panic bind; chat and ordinary screens suppress it, while Helikon
 screens permit it as an emergency close control.
 
 ## HUD

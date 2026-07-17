@@ -12,6 +12,7 @@ import dev.helikon.client.module.movement.ParkourAccess;
 import dev.helikon.client.module.movement.ParkourContext;
 import dev.helikon.client.module.movement.WaterJumpAccess;
 import dev.helikon.client.module.movement.WaterJumpContext;
+import dev.helikon.client.input.KeybindManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -29,10 +30,23 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.lwjgl.glfw.GLFW;
 
 /** Applies local movement modules after Minecraft 26.2 has freshly polled physical movement keys. */
 @Mixin(KeyboardInput.class)
 abstract class KeyboardInputMixin {
+    private static final KeybindManager.KeyStateReader HELIKON_INPUT = new KeybindManager.KeyStateReader() {
+        @Override
+        public boolean isKeyDown(int keyCode) {
+            return InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), keyCode);
+        }
+
+        @Override
+        public boolean isMouseButtonDown(int button) {
+            return GLFW.glfwGetMouseButton(Minecraft.getInstance().getWindow().handle(), button) == GLFW.GLFW_PRESS;
+        }
+    };
+
     @Inject(method = "tick", at = @At("TAIL"))
     private void helikon$applyMovementModules(CallbackInfo callback) {
         KeyboardInput input = (KeyboardInput) (Object) this;
@@ -43,7 +57,7 @@ abstract class KeyboardInputMixin {
         input.keyPresses = MovementModuleAccess.applyMovement(
                 input.keyPresses,
                 screenOpen,
-                MovementModuleAccess.isAutoSneakKeyDown(key -> InputConstants.isKeyDown(client.getWindow(), key))
+                MovementModuleAccess.isAutoSneakKeyDown(HELIKON_INPUT)
         );
         boolean ordinaryInventoryScreen = screen instanceof InventoryScreen;
         Input inventoryPhysicalInput = ordinaryInventoryScreen ? physicalInventoryInput(client) : physicalInput;

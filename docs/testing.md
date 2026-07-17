@@ -265,6 +265,12 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     reserved GUI key and does not replace the module bind. Start capture after
     focusing Search or the Brightness field and verify the captured printable
     key does not enter or change that field.
+    Repeat capture with Ctrl held and `R`, then with Mouse 4; after closing the
+    GUI verify only the complete Ctrl+R or Mouse 4 input activates the module.
+    Give a second module the same bind and verify the ClickGUI reports the
+    local collision without altering either module.
+    Rebind **Open GUI** to Mouse 4 in Minecraft Controls and verify both
+    ClickGUI capture and `.bind ... mouse4` reject it as reserved.
 11. Drag an unused portion of the header to every edge. Verify the complete
     window and its search/number fields move together and remain visible;
     close and reopen the GUI to verify the saved position is restored.
@@ -679,6 +685,11 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
    toggles. Open chat, type `r`, and verify the module does not toggle. Send
    `.bind fullbright r hold`, hold R, and verify it enables only while
    held.
+   Send `.bind fullbright ctrl+mouse4`, close chat, and verify Mouse 4 alone
+   does nothing while Ctrl+Mouse 4 activates it. Bind another module to the
+   same combination and verify the command emits a local conflict warning.
+   In chat type `.tog` and press Tab; verify it completes `.toggle` locally,
+   while Tab on `/` commands and after `.toggle ` remains vanilla.
 5. Send `.gui` and verify the ClickGUI opens after chat closes.
 6. Send `.panic` and verify all modules disable.
 7. Quit and relaunch; verify the keybind still works (persisted in

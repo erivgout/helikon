@@ -339,20 +339,29 @@ Minecraft-facing piece), so dispatcher and command behavior is unit-tested
 directly. Responses go through `CommandFeedback`, implemented in game by
 `ChatNotifier`.
 
+`CommandCompletion` is similarly Minecraft-free. `ChatScreenMixin` forwards
+only Tab presses in a dot-command's first token; it replaces an unambiguous
+name locally and leaves normal server-command suggestions and arguments to
+vanilla. Completion is never a send path.
+
 `.gui` cannot open a screen while the chat screen is still closing, so the
 entrypoint queues the screen change and applies it on the next tick once no
 screen is open.
 
 ## Module keybinds
 
-`KeybindManager` polls bound module keys once per client tick and applies the
+`KeybindManager` polls bound module keyboard keys or mouse buttons once per client tick and applies the
 `Keybind.Activation` mode (toggle on press edge, hold enables while down,
 press_once only enables). All transitions go through `ModuleRegistry`. While
 any screen is open, keybind actions are suppressed and HOLD modules release;
 physical key state keeps being tracked so a key held across the end of
-suppression does not count as a fresh press. The key source is an injected
-`KeyStateReader`, keeping the edge/hold logic unit-testable. Keybinds are
-assigned with `.bind`/`.unbind` and persist in `global.json`.
+suppression does not count as a fresh press. A bind may require Shift,
+Control, Alt, and/or Super; all required modifiers must be held with the
+primary input. The key source is an injected `KeyStateReader`, keeping the
+edge/hold logic unit-testable. Keybinds are assigned with `.bind`/`.unbind`
+and persist in `global.json`. `KeybindConflicts` compares the primary input
+and modifiers independently of activation mode so the command and ClickGUI
+can warn about overlapping module binds without changing them.
 
 ## Notifications
 
@@ -569,10 +578,12 @@ view layer:
 Keyboard safety: the GUI keybind only opens the screen when no other screen is
 active, and while the ClickGUI is open Minecraft routes key input to the
 focused widget (search box or a number field) rather than to game keybinds.
-While a ClickGUI key-capture row is active, it consumes the next keyboard
-token before widgets do: Escape cancels, Backspace/Delete unbinds, and the
-reserved GUI key is rejected. The module keybind dispatcher continues to
-ignore input while any screen is open.
+While a ClickGUI key-capture row is active, it consumes the next keyboard or
+mouse token before widgets do and captures its supplied modifier mask: Escape
+cancels, Backspace/Delete unbinds, and the reserved GUI key or mouse binding
+is rejected. The reservation asks the current Minecraft `KeyMapping`, so it
+also follows a user rebind in Controls. The
+module keybind dispatcher continues to ignore input while any screen is open.
 
 `ActiveModulesHud` is registered through Fabric's supported
 `HudElementRegistry` API and only renders enabled modules. `ActiveModules`

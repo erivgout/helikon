@@ -5,6 +5,7 @@
   "client": [
     "ClientInputAccessor",
     "ChatAlphaCalculatorMixin",
+    "ChatScreenMixin",
     "ChatComponentMixin",
     "ChatComponentAccessor",
     "AnnouncerAdvancementMixin",

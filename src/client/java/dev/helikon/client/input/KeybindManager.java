@@ -2,6 +2,7 @@ package dev.helikon.client.input;
 
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +17,39 @@ public final class KeybindManager {
     /** Reads whether a raw key code is currently held down. */
     @FunctionalInterface
     public interface KeyStateReader {
-        boolean isDown(int keyCode);
+        boolean isKeyDown(int keyCode);
+
+        /** Mouse polling is optional for keyboard-only test readers. */
+        default boolean isMouseButtonDown(int button) {
+            return false;
+        }
+
+        default boolean isDown(Keybind keybind) {
+            if (!keybind.isBound()) {
+                return false;
+            }
+            boolean primaryDown = keybind.isKeyboard()
+                    ? isKeyDown(keybind.keyCode())
+                    : isMouseButtonDown(keybind.keyCode());
+            if (!primaryDown) {
+                return false;
+            }
+            for (Keybind.Modifier modifier : keybind.modifiers()) {
+                if (!isModifierDown(modifier)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private boolean isModifierDown(Keybind.Modifier modifier) {
+            return switch (modifier) {
+                case SHIFT -> isKeyDown(GLFW.GLFW_KEY_LEFT_SHIFT) || isKeyDown(GLFW.GLFW_KEY_RIGHT_SHIFT);
+                case CONTROL -> isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL) || isKeyDown(GLFW.GLFW_KEY_RIGHT_CONTROL);
+                case ALT -> isKeyDown(GLFW.GLFW_KEY_LEFT_ALT) || isKeyDown(GLFW.GLFW_KEY_RIGHT_ALT);
+                case SUPER -> isKeyDown(GLFW.GLFW_KEY_LEFT_SUPER) || isKeyDown(GLFW.GLFW_KEY_RIGHT_SUPER);
+            };
+        }
     }
 
     private final ModuleRegistry modules;
@@ -42,7 +75,7 @@ public final class KeybindManager {
                 continue;
             }
 
-            boolean down = keys.isDown(keybind.keyCode());
+            boolean down = keys.isDown(keybind);
             boolean wasDown = Boolean.TRUE.equals(previouslyDown.put(module.id(), down));
             boolean pressed = down && !wasDown;
 

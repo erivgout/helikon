@@ -29,7 +29,7 @@ observations; the remaining event models await target-version-specific adapter
 verification.
 
 Its local settings API supports booleans, integers and decimals, enums,
-colors, keyboard binds, bounded text and text lists, block/item/entity ID
+colors, keyboard/mouse binds with modifiers, bounded text and text lists, block/item/entity ID
 selections, enum multi-selections, numeric ranges, and bounded safe regular
 expressions. Every value is validated and stored only in local JSON.
 
@@ -217,7 +217,7 @@ The ClickGUI currently provides:
 - a scrollable module list with per-module toggles
 - search across module names, IDs, and descriptions
 - a settings panel with metadata plus editable boolean, number, and ARGB color settings
-- in-GUI keyboard keybind assignment (Backspace/Delete unbinds; Escape cancels)
+- in-GUI keyboard or mouse keybind assignment with held modifier capture (Backspace/Delete unbinds; Escape cancels)
 - reset buttons for individual settings and whole modules
 - a draggable, resizable, clamped window saved in `global.json`
 - three local ClickGUI palettes, selected from the Theme editor and saved in `global.json`
@@ -296,7 +296,7 @@ sent to the server:
 | `.search <text>` | Finds modules by name, ID, or description. |
 | `.setting <module> <setting> <value>` | Changes a boolean, number, `#AARRGGBB` color, or documented enum setting. |
 | `.reset <module>` | Resets a module's settings to defaults. |
-| `.bind <module> <key> [toggle\|hold\|press_once]` | Binds a key to a module. |
+| `.bind <module> <key> [toggle\|hold\|press_once]` | Binds a keyboard/mouse input, optionally with modifiers, to a module. |
 | `.unbind <module>` | Removes a module's keybind. |
 | `.gui` | Opens the ClickGUI. |
 | `.profile list` | Lists saved local profiles. |
@@ -321,13 +321,18 @@ sent to the server:
 | `.chat search <text>` / `.chat copy <newest-index>` / `.chat history [count]` | Searches, explicitly copies, or lists bounded local BetterChat display history while BetterChat is enabled. |
 | `.history search <text>` / `.history copy\|player\|reopen <newest-index>` / `.history list [count]` | Searches or lists ChatHistory entries, copies a retained message/player name, or reopens a sent line as an unsent local draft. |
 | `.panic` | Disables modules, hides custom HUD for this session, and closes Helikon GUI screens. |
-| `.panic bind <key>` / `.panic unbind` | Configures or clears the local persisted panic key. |
+| `.panic bind <key>` / `.panic unbind` | Configures or clears the local persisted panic keyboard/mouse bind. |
 | `.panic status` / `.panic restorehud` | Shows the bind or restores HUD visibility without re-enabling modules. |
 
 Key names follow Minecraft's keyboard names, for example `r`, `f6`, or
-`right.shift`. Module keybinds never fire while any screen is open, so typing
-into chat or a search box cannot toggle modules. Tab completion is not
-implemented yet. Profile names are local, lowercase file-safe tokens (letters,
+`right.shift`; binds also accept `mouse1` through `mouse8` and modifiers such
+as `ctrl+r` or `alt+mouse1`. Module keybinds never fire while any screen is
+open, so typing into chat or a search box cannot toggle modules. The chat
+screen completes unambiguous dot-command names with Tab; it never intercepts
+server command completion or command arguments. A local warning identifies
+module keybind collisions without silently changing either bind. This reservation
+also follows any mouse binding assigned to **Open GUI** in Minecraft Controls.
+Profile names are local, lowercase file-safe tokens (letters,
 digits, `_`, and `-`), and no profile data is synchronized or sent to a server.
 Friend names and colors are also stored locally only in `friends.json`. With
 **OneClickFriends** enabled, middle-clicking a player in the world toggles that

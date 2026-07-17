@@ -10,12 +10,13 @@ import dev.helikon.client.module.chat.PrivateMessageHelper;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.config.PanicConfigurationManager;
 import dev.helikon.client.input.PanicKeybindManager;
+import dev.helikon.client.input.Keybind;
 import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.privatechat.PrivateMessageHistory;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointManager;
 
-import java.util.function.IntPredicate;
+import java.util.function.Predicate;
 
 /** Registers the built-in local commands. */
 public final class HelikonCommands {
@@ -27,7 +28,7 @@ public final class HelikonCommands {
             CommandDispatcher dispatcher,
             ModuleRegistry registry,
             KeyNameResolver keyNames,
-            IntPredicate reservedKeys,
+            Predicate<Keybind> reservedKeybinds,
             Runnable guiOpener,
             ProfileManager profiles,
             ClickGuiWindowState clickGuiWindow,
@@ -50,10 +51,10 @@ public final class HelikonCommands {
         dispatcher.register(new SearchCommand(registry));
         dispatcher.register(new SettingCommand(registry));
         dispatcher.register(new ResetCommand(registry));
-        dispatcher.register(new BindCommand(registry, keyNames, reservedKeys));
+        dispatcher.register(new BindCommand(registry, keyNames, reservedKeybinds));
         dispatcher.register(new UnbindCommand(registry));
         dispatcher.register(new GuiCommand(guiOpener));
-        dispatcher.register(new PanicCommand(panic, panicKeybinds, panicConfiguration, keyNames, reservedKeys));
+        dispatcher.register(new PanicCommand(panic, panicKeybinds, panicConfiguration, keyNames, reservedKeybinds));
         dispatcher.register(new ProfileCommand(profiles, registry, clickGuiWindow));
         dispatcher.register(new FriendCommand(friends));
         dispatcher.register(new WaypointCommand(waypoints, waypointLocations));

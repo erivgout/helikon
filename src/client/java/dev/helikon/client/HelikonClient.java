@@ -210,6 +210,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
+import org.lwjgl.glfw.GLFW;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -254,6 +255,17 @@ import java.util.logging.Logger;
 /** Fabric client entrypoint for the Helikon bootstrap. */
 public final class HelikonClient implements ClientModInitializer {
     public static final String MOD_ID = "helikon";
+    private static final KeybindManager.KeyStateReader INPUT_READER = new KeybindManager.KeyStateReader() {
+        @Override
+        public boolean isKeyDown(int keyCode) {
+            return InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), keyCode);
+        }
+
+        @Override
+        public boolean isMouseButtonDown(int button) {
+            return GLFW.glfwGetMouseButton(Minecraft.getInstance().getWindow().handle(), button) == GLFW.GLFW_PRESS;
+        }
+    };
     public static final Logger LOGGER = Logger.getLogger(MOD_ID);
 
     private final ModuleRegistry modules = new ModuleRegistry();
@@ -752,7 +764,7 @@ public final class HelikonClient implements ClientModInitializer {
 
             boolean anyScreenOpen = screenWasOpenAtTickStart || client.gui.screen() != null;
             boolean panicTriggered = panicKeybinds.tick(
-                    key -> InputConstants.isKeyDown(client.getWindow(), key),
+                    INPUT_READER,
                     anyScreenOpen,
                     helikonScreenWasOpenAtTickStart || isHelikonScreen(client),
                     this::activatePanic
@@ -762,7 +774,7 @@ public final class HelikonClient implements ClientModInitializer {
             // typing into text fields can never trigger them. A panic press
             // also suppresses this tick so a shared key cannot re-enable one.
             keybinds.tick(
-                    key -> InputConstants.isKeyDown(client.getWindow(), key),
+                    INPUT_READER,
                     anyScreenOpen || panicTriggered
             );
             toggleFriendOnMiddleClick(client, oneClickFriends);
@@ -780,6 +792,7 @@ public final class HelikonClient implements ClientModInitializer {
         LOGGER.info(baritoneStatus.detail());
         LOGGER.info("Helikon bootstrap initialized with " + modules.all().size() + " module(s)");
     }
+
 
     private void openClickGui() {
         Minecraft.getInstance().setScreenAndShow(new HelikonClickGuiScreen(

@@ -36,6 +36,7 @@ import java.util.OptionalInt;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.lwjgl.glfw.GLFW;
 
 class BuiltinCommandsTest {
     private static final int KEY_R = 82;
@@ -75,7 +76,7 @@ class BuiltinCommandsTest {
         PanicState panicState = new PanicState();
         PanicKeybindManager panicKeybinds = new PanicKeybindManager();
         HelikonCommands.registerDefaults(dispatcher, registry, fakeKeys,
-                key -> key == KEY_RIGHT_SHIFT, () -> guiOpened = true,
+                keybind -> keybind.isKeyboard() && keybind.keyCode() == KEY_RIGHT_SHIFT, () -> guiOpened = true,
                 new ProfileManager(new ConfigurationManager(temporaryDirectory.resolve("helikon"))),
                 new ClickGuiWindowState(), new FriendManager(temporaryDirectory.resolve("helikon")),
                 new WaypointManager(temporaryDirectory.resolve("helikon")),
@@ -196,6 +197,40 @@ class BuiltinCommandsTest {
 
         dispatcher.dispatch(".bind configurable f6 hold", feedback);
         assertEquals(Keybind.Activation.HOLD, module.keybind().activation());
+    }
+
+    @Test
+    void bindSupportsModifierAndMouseCombinationsAndWarnsAboutConflicts() {
+        dispatcher.dispatch(".bind configurable ctrl+mouse4", feedback);
+        assertEquals(new Keybind(Keybind.InputType.MOUSE_BUTTON, GLFW.GLFW_MOUSE_BUTTON_4,
+                java.util.Set.of(Keybind.Modifier.CONTROL), Keybind.Activation.TOGGLE), module.keybind());
+
+        PrivateMessageHelper other = (PrivateMessageHelper) registry.find("private_message_helper").orElseThrow();
+        other.setKeybind(module.keybind());
+        dispatcher.dispatch(".bind configurable ctrl+mouse4", feedback);
+        assertTrue(feedback.infos.stream().anyMatch(line -> line.contains("also used by private_message_helper")));
+    }
+
+    @Test
+    void bindRejectsReservedMouseButton() {
+        CommandDispatcher local = new CommandDispatcher();
+        local.register(new BindCommand(registry, fakeKeys, keybind -> keybind.isMouseButton()
+                && keybind.keyCode() == GLFW.GLFW_MOUSE_BUTTON_4));
+        RecordingFeedback localFeedback = new RecordingFeedback();
+
+        local.dispatch(".bind configurable mouse4", localFeedback);
+
+        assertTrue(localFeedback.errors.getFirst().contains("opens the Helikon GUI"));
+        assertFalse(module.keybind().isBound());
+    }
+
+    @Test
+    void panicBindSupportsModifierAndMouseCombinations() throws java.io.IOException {
+        dispatcher.dispatch(".panic bind alt+mouse4", feedback);
+
+        assertTrue(feedback.infos.stream().anyMatch(line -> line.contains("Bound local panic key")));
+        Path panicPath = temporaryDirectory.resolve("helikon").resolve("panic.json");
+        assertTrue(java.nio.file.Files.readString(panicPath).contains("mouse_button"));
     }
 
     @Test

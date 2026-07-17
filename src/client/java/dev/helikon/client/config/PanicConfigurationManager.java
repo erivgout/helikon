@@ -1,6 +1,7 @@
 package dev.helikon.client.config;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.helikon.client.input.Keybind;
@@ -14,7 +15,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.function.IntPredicate;
+import java.util.EnumSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,15 +28,15 @@ public final class PanicConfigurationManager {
     private static final Logger LOGGER = Logger.getLogger(PanicConfigurationManager.class.getName());
 
     private final Path panicPath;
-    private final IntPredicate reservedKeys;
+    private final Predicate<Keybind> reservedKeybinds;
 
     public PanicConfigurationManager(Path configurationDirectory) {
-        this(configurationDirectory, key -> false);
+        this(configurationDirectory, keybind -> false);
     }
 
-    public PanicConfigurationManager(Path configurationDirectory, IntPredicate reservedKeys) {
+    public PanicConfigurationManager(Path configurationDirectory, Predicate<Keybind> reservedKeybinds) {
         panicPath = Objects.requireNonNull(configurationDirectory, "configurationDirectory").resolve("panic.json");
-        this.reservedKeys = Objects.requireNonNull(reservedKeys, "reservedKeys");
+        this.reservedKeybinds = Objects.requireNonNull(reservedKeybinds, "reservedKeybinds");
     }
 
     public synchronized LoadResult load(PanicKeybindManager keybind) {
@@ -50,7 +54,11 @@ public final class PanicConfigurationManager {
             if (requiredInt(root, "schemaVersion") != SCHEMA_VERSION) {
                 throw new IllegalArgumentException("Unsupported panic configuration schema");
             }
-            keybind.setKeybind(requireAllowed(new Keybind(requiredInt(root, "key"), Keybind.Activation.TOGGLE)));
+            Keybind.InputType inputType = root.has("inputType")
+                    ? Keybind.InputType.valueOf(requiredString(root, "inputType").toUpperCase(Locale.ROOT))
+                    : Keybind.InputType.KEYBOARD;
+            keybind.setKeybind(requireAllowed(new Keybind(inputType, requiredInt(root, "key"),
+                    parseModifiers(root.get("modifiers")), Keybind.Activation.TOGGLE)));
             return LoadResult.LOADED;
         } catch (IOException exception) {
             throw new ConfigurationException("Unable to read panic configuration", exception);
@@ -79,7 +87,12 @@ public final class PanicConfigurationManager {
         Objects.requireNonNull(keybind, "keybind");
         JsonObject root = new JsonObject();
         root.addProperty("schemaVersion", SCHEMA_VERSION);
-        root.addProperty("key", keybind.keybind().keyCode());
+        Keybind saved = keybind.keybind();
+        root.addProperty("inputType", saved.inputType().name().toLowerCase(Locale.ROOT));
+        root.addProperty("key", saved.keyCode());
+        JsonArray modifiers = new JsonArray();
+        saved.modifiers().stream().sorted().forEach(modifier -> modifiers.add(modifier.name().toLowerCase(Locale.ROOT)));
+        root.add("modifiers", modifiers);
         try {
             Files.createDirectories(panicPath.getParent());
             Path temporary = Files.createTempFile(panicPath.getParent(), "panic-", ".json.tmp");
@@ -110,7 +123,7 @@ public final class PanicConfigurationManager {
     }
 
     private Keybind requireAllowed(Keybind keybind) {
-        if (keybind.isBound() && reservedKeys.test(keybind.keyCode())) {
+        if (keybind.isBound() && reservedKeybinds.test(keybind)) {
             throw new IllegalArgumentException("The Helikon GUI key is reserved");
         }
         return keybind;
@@ -126,6 +139,31 @@ public final class PanicConfigurationManager {
             throw new IllegalArgumentException("Invalid '" + property + "'");
         }
         return (int) number;
+    }
+
+    private static String requiredString(JsonObject object, String property) {
+        JsonElement value = object.get(property);
+        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
+            throw new IllegalArgumentException("Invalid '" + property + "'");
+        }
+        return value.getAsString();
+    }
+
+    private static Set<Keybind.Modifier> parseModifiers(JsonElement element) {
+        if (element == null) {
+            return Set.of();
+        }
+        if (!element.isJsonArray()) {
+            throw new IllegalArgumentException("Invalid 'modifiers'");
+        }
+        EnumSet<Keybind.Modifier> modifiers = EnumSet.noneOf(Keybind.Modifier.class);
+        for (JsonElement modifier : element.getAsJsonArray()) {
+            if (!modifier.isJsonPrimitive() || !modifier.getAsJsonPrimitive().isString()) {
+                throw new IllegalArgumentException("Invalid modifier");
+            }
+            modifiers.add(Keybind.Modifier.valueOf(modifier.getAsString().toUpperCase(Locale.ROOT)));
+        }
+        return Set.copyOf(modifiers);
     }
 
     private static void moveAtomically(Path source, Path destination) throws IOException {

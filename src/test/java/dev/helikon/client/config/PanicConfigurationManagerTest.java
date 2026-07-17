@@ -4,6 +4,7 @@ import dev.helikon.client.input.Keybind;
 import dev.helikon.client.input.PanicKeybindManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,11 +50,26 @@ class PanicConfigurationManagerTest {
     }
 
     @Test
+    void persistsMouseModifierPanicBind() {
+        PanicConfigurationManager configuration = new PanicConfigurationManager(temporaryDirectory.resolve("helikon"));
+        PanicKeybindManager source = new PanicKeybindManager();
+        Keybind bind = new Keybind(Keybind.InputType.MOUSE_BUTTON, GLFW.GLFW_MOUSE_BUTTON_5,
+                java.util.Set.of(Keybind.Modifier.SHIFT), Keybind.Activation.TOGGLE);
+
+        configuration.setKeybindAndSave(source, bind);
+        PanicKeybindManager loaded = new PanicKeybindManager();
+
+        assertEquals(PanicConfigurationManager.LoadResult.LOADED, configuration.load(loaded));
+        assertEquals(bind, loaded.keybind());
+    }
+
+    @Test
     void treatsPersistedGuiKeyAsInvalidAndRecoversSafely() throws IOException {
         Path directory = temporaryDirectory.resolve("helikon");
         Files.createDirectories(directory);
         Files.writeString(directory.resolve("panic.json"), "{\"schemaVersion\":1,\"key\":344}");
-        PanicConfigurationManager configuration = new PanicConfigurationManager(directory, key -> key == 344);
+        PanicConfigurationManager configuration = new PanicConfigurationManager(directory,
+                keybind -> keybind.isKeyboard() && keybind.keyCode() == 344);
         PanicKeybindManager keybinds = new PanicKeybindManager();
 
         assertEquals(PanicConfigurationManager.LoadResult.RECOVERED_FROM_ERROR, configuration.load(keybinds));

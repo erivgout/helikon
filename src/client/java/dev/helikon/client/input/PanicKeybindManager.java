@@ -34,7 +34,7 @@ public final class PanicKeybindManager {
             return false;
         }
 
-        boolean down = keys.isDown(keybind.keyCode());
+        boolean down = keys.isDown(keybind);
         boolean pressed = down && !previouslyDown;
         previouslyDown = down;
         if (pressed && (!anyScreenOpen || helikonScreenOpen)) {

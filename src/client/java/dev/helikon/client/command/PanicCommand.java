@@ -7,8 +7,7 @@ import dev.helikon.client.panic.PanicController;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.OptionalInt;
-import java.util.function.IntPredicate;
+import java.util.function.Predicate;
 
 /**
  * Disables every enabled module through the registry so each module's
@@ -19,20 +18,20 @@ public final class PanicCommand implements HelikonCommand {
     private final PanicKeybindManager keybinds;
     private final PanicConfigurationManager configuration;
     private final KeyNameResolver keyNames;
-    private final IntPredicate reservedKeys;
+    private final Predicate<Keybind> reservedKeybinds;
 
     public PanicCommand(
             PanicController controller,
             PanicKeybindManager keybinds,
             PanicConfigurationManager configuration,
             KeyNameResolver keyNames,
-            IntPredicate reservedKeys
+            Predicate<Keybind> reservedKeybinds
     ) {
         this.controller = Objects.requireNonNull(controller, "controller");
         this.keybinds = Objects.requireNonNull(keybinds, "keybinds");
         this.configuration = Objects.requireNonNull(configuration, "configuration");
         this.keyNames = Objects.requireNonNull(keyNames, "keyNames");
-        this.reservedKeys = Objects.requireNonNull(reservedKeys, "reservedKeys");
+        this.reservedKeybinds = Objects.requireNonNull(reservedKeybinds, "reservedKeybinds");
     }
 
     @Override
@@ -77,19 +76,20 @@ public final class PanicCommand implements HelikonCommand {
 
     private void bind(List<String> arguments, CommandFeedback feedback) {
         if (arguments.size() != 2) {
-            feedback.error("Usage: .panic bind <key>");
+            feedback.error("Usage: .panic bind <key|modifier+key|modifier+mouseN>");
             return;
         }
-        OptionalInt key = keyNames.resolve(arguments.get(1));
-        if (key.isEmpty()) {
+        KeybindArgument input = KeybindArgument.parse(arguments.get(1), keyNames).orElse(null);
+        if (input == null) {
             feedback.error("Unknown key '" + arguments.get(1) + "'.");
             return;
         }
-        if (reservedKeys.test(key.getAsInt())) {
+        Keybind keybind = new Keybind(input.inputType(), input.code(), input.modifiers(), Keybind.Activation.TOGGLE);
+        if (reservedKeybinds.test(keybind)) {
             feedback.error("That key opens the Helikon GUI and is reserved.");
             return;
         }
-        configuration.setKeybindAndSave(keybinds, new Keybind(key.getAsInt(), Keybind.Activation.TOGGLE));
+        configuration.setKeybindAndSave(keybinds, keybind);
         feedback.info("Bound local panic key to '" + arguments.get(1) + "'.");
     }
 

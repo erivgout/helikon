@@ -52,11 +52,15 @@ public final class HelikonKeybinds {
     }
 
     /**
-     * Whether the key currently opens the Helikon GUI. Such a key can never
-     * activate a module (the GUI opens first and suppresses module keybinds),
-     * so {@code .bind} rejects it.
+     * Whether this keyboard or mouse input currently opens the Helikon GUI.
+     * Such a bind can never activate a module (the GUI opens first and
+     * suppresses module keybinds), so every bind assignment path rejects it.
      */
-    public static boolean isGuiKey(int keyCode) {
-        return openGui != null && openGui.matches(InputConstants.Type.KEYSYM.getOrCreate(keyCode));
+    public static boolean isGuiKey(Keybind keybind) {
+        if (openGui == null || !keybind.isBound()) {
+            return false;
+        }
+        InputConstants.Type type = keybind.isKeyboard() ? InputConstants.Type.KEYSYM : InputConstants.Type.MOUSE;
+        return openGui.matches(type.getOrCreate(keybind.keyCode()));
     }
 }

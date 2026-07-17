@@ -2,10 +2,10 @@ package dev.helikon.client.module.movement;
 
 import net.minecraft.world.entity.player.Input;
 
+import dev.helikon.client.input.KeybindManager;
 import dev.helikon.client.module.miscellaneous.Twerk;
 
 import java.util.Objects;
-import java.util.function.IntPredicate;
 
 /** Narrow Minecraft-facing bridge for the verified keyboard-input mixin. */
 public final class MovementModuleAccess {
@@ -62,9 +62,9 @@ public final class MovementModuleAccess {
     }
 
     /** Reads the configured AutoSneak key only through a caller-supplied platform adapter. */
-    public static boolean isAutoSneakKeyDown(IntPredicate keyStateReader) {
-        IntPredicate reader = Objects.requireNonNull(keyStateReader, "keyStateReader");
+    public static boolean isAutoSneakKeyDown(KeybindManager.KeyStateReader keyStateReader) {
+        KeybindManager.KeyStateReader reader = Objects.requireNonNull(keyStateReader, "keyStateReader");
         AutoSneak module = autoSneak;
-        return module != null && module.keybind().isBound() && reader.test(module.keybind().keyCode());
+        return module != null && reader.isDown(module.keybind());
     }
 }

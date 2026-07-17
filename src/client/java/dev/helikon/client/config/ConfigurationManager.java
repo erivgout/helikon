@@ -1,6 +1,7 @@
 package dev.helikon.client.config;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.helikon.client.input.Keybind;
@@ -18,9 +19,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -343,8 +346,13 @@ public final class ConfigurationManager {
 
     private static JsonObject serializeKeybind(Keybind keybind) {
         JsonObject keybindObject = new JsonObject();
+        keybindObject.addProperty("inputType", keybind.inputType().name().toLowerCase(Locale.ROOT));
         keybindObject.addProperty("key", keybind.keyCode());
         keybindObject.addProperty("activation", keybind.activation().name().toLowerCase(Locale.ROOT));
+        JsonArray modifiers = new JsonArray();
+        keybind.modifiers().stream().sorted().forEach(modifier ->
+                modifiers.add(modifier.name().toLowerCase(Locale.ROOT)));
+        keybindObject.add("modifiers", modifiers);
         return keybindObject;
     }
 
@@ -358,6 +366,9 @@ public final class ConfigurationManager {
         try {
             JsonObject keybindObject = element.getAsJsonObject();
             int keyCode = getRequiredInt(keybindObject, "key");
+            Keybind.InputType inputType = keybindObject.has("inputType")
+                    ? Keybind.InputType.valueOf(getRequiredString(keybindObject, "inputType").toUpperCase(Locale.ROOT))
+                    : Keybind.InputType.KEYBOARD;
             JsonElement activationElement = keybindObject.get("activation");
             if (activationElement == null || !activationElement.isJsonPrimitive()
                     || !activationElement.getAsJsonPrimitive().isString()) {
@@ -365,13 +376,31 @@ public final class ConfigurationManager {
             }
             Keybind.Activation activation = Keybind.Activation.valueOf(
                     activationElement.getAsString().toUpperCase(Locale.ROOT));
+            Set<Keybind.Modifier> modifiers = parseKeybindModifiers(keybindObject.get("modifiers"));
             // The Keybind constructor rejects key codes outside the supported
             // range, sending manually edited garbage to the catch below.
-            module.setKeybind(new Keybind(keyCode, activation));
+            module.setKeybind(new Keybind(inputType, keyCode, modifiers, activation));
         } catch (RuntimeException exception) {
             LOGGER.warning(() -> "Invalid keybind for module '" + module.id() + "'; keeping it unbound");
             module.setKeybind(Keybind.unbound());
         }
+    }
+
+    private static Set<Keybind.Modifier> parseKeybindModifiers(JsonElement element) {
+        if (element == null) {
+            return Set.of();
+        }
+        if (!element.isJsonArray()) {
+            throw new IllegalArgumentException("Invalid keybind modifiers");
+        }
+        EnumSet<Keybind.Modifier> modifiers = EnumSet.noneOf(Keybind.Modifier.class);
+        for (JsonElement modifier : element.getAsJsonArray()) {
+            if (!modifier.isJsonPrimitive() || !modifier.getAsJsonPrimitive().isString()) {
+                throw new IllegalArgumentException("Invalid keybind modifier");
+            }
+            modifiers.add(Keybind.Modifier.valueOf(modifier.getAsString().toUpperCase(Locale.ROOT)));
+        }
+        return Set.copyOf(modifiers);
     }
 
     private void preserveMalformedConfiguration() {
@@ -400,6 +429,14 @@ public final class ConfigurationManager {
             throw new IllegalArgumentException("Missing or invalid '" + property + "'");
         }
         return (int) parsed;
+    }
+
+    private static String getRequiredString(JsonObject object, String property) {
+        JsonElement value = object.get(property);
+        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
+            throw new IllegalArgumentException("Invalid '" + property + "'");
+        }
+        return value.getAsString();
     }
 
     private static JsonObject getRequiredObject(JsonObject object, String property) {

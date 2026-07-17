@@ -2,6 +2,7 @@ package dev.helikon.client.config;
 
 import com.google.gson.JsonParser;
 import dev.helikon.client.input.Keybind;
+import org.lwjgl.glfw.GLFW;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.ClickGuiTheme;
 import dev.helikon.client.module.Module;
@@ -134,6 +135,25 @@ class ConfigurationManagerTest {
 
         assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(targetRegistry));
         assertEquals(new Keybind(82, Keybind.Activation.HOLD), target.keybind());
+    }
+
+    @Test
+    void mouseModifierKeybindsRoundTripThroughConfiguration() {
+        ModuleRegistry sourceRegistry = new ModuleRegistry();
+        ConfigurableModule source = new ConfigurableModule();
+        sourceRegistry.register(source);
+        source.setKeybind(new Keybind(Keybind.InputType.MOUSE_BUTTON, GLFW.GLFW_MOUSE_BUTTON_5,
+                java.util.Set.of(Keybind.Modifier.ALT), Keybind.Activation.PRESS_ONCE));
+
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        manager.save(sourceRegistry);
+
+        ModuleRegistry targetRegistry = new ModuleRegistry();
+        ConfigurableModule target = new ConfigurableModule();
+        targetRegistry.register(target);
+
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(targetRegistry));
+        assertEquals(source.keybind(), target.keybind());
     }
 
     @Test

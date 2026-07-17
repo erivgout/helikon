@@ -7,8 +7,9 @@ The bootstrap stores only global module state at:
 ```
 
 The schema currently contains `schemaVersion` and one entry per registered
-module. Each module stores its enabled state, its keybind (`key` code and
-`activation` of `toggle`, `hold`, or `press_once`), and setting values. A
+module. Each module stores its enabled state, its keybind (`inputType`, `key`
+code, optional `modifiers`, and `activation` of `toggle`, `hold`, or
+`press_once`), and setting values. A
 missing keybind entry keeps the module's default; an invalid one resets to
 unbound and is logged. The same local file optionally stores a `clickGui`
 block with its saved top-left window position. Missing or invalid GUI layout
@@ -43,7 +44,8 @@ provider, credential, or network configuration.
 `IntegerSetting`, `KeybindSetting`, `StringListSetting`, block/item/entity
 selector settings, `MultiSelectEnumSetting`, `RangeSetting`, and `RegexSetting`
 share the same per-setting recovery path. Integers reject fractional JSON;
-keybinds use the validated local keyboard token set; text lists and selectors
+keybinds use validated local keyboard-token or mouse-button ranges plus an
+optional immutable modifier set; text lists and selectors
 have bounded immutable entries; selector IDs are normalized lowercase resource
 tokens; enum selections reject unknown or duplicate tokens; ranges require
 finite ordered values inside their configured bounds; and regex settings reject
@@ -129,8 +131,8 @@ when available. A malformed per-server file becomes
 non-overlay incoming lines and accepted ordinary outgoing chat can enter the
 store; local `.` commands are neither sent nor retained.
 
-`panic.json` stores only a schema-versioned keyboard token for the optional
-local panic key. It has the same atomic write, `.bak`, corrupt-file recovery,
+`panic.json` stores a schema-versioned keyboard or mouse input plus optional
+modifiers for the local panic bind. It has the same atomic write, `.bak`, corrupt-file recovery,
 invalid-key fallback rules as other local stores; the reserved Helikon GUI key
 is invalid even when manually written to the file. Panic activation does not
 rewrite `global.json`, `hud.json`, or module settings: HUD hiding is transient

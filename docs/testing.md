@@ -34,6 +34,10 @@ AntiBlind and AntiTotemAnimation enable-state gating, BetterCrosshair geometry,
 and strict ARGB color settings are covered by `AntiBlindTest`,
 `AntiTotemAnimationTest`, `BetterCrosshairTest`,
 `CrosshairGeometryTest`, and `SettingTest`.
+Dinnerbone's selected-category enable-state policy and RainbowEnchant's
+configured/rainbow color policy are covered by `DinnerboneTest`,
+`RainbowEnchantTest`, and `GlintColorTest`; their version-specific render hooks
+need the visual smoke test below.
 `SettingTest` also covers integral and range bounds, keybind JSON recovery,
 immutable bounded string/identifier lists, item/block/entity selector tokens,
 stable multi-select enum JSON, safe-regex rejection, visibility predicates,
@@ -137,6 +141,25 @@ key (`ConfigurationManagerTest`).
    still occur.
 3. Disable the module and repeat once more. Verify Minecraft's normal item
    activation overlay returns immediately without reconnecting.
+
+## Manual Dinnerbone and RainbowEnchant smoke test
+
+1. Run `./gradlew.bat runClient` and join a local/test world with a player, a
+   hostile `Monster`, and a passive living entity in view. Enable
+   **Dinnerbone**. Verify its default player and hostile categories flip only
+   those local models, then toggle **Passive** to flip the other living entity.
+   Disable the module and verify all selected models return immediately to
+   their normal presentation. A normally named Dinnerbone/Grumm entity must
+   keep Minecraft's own upside-down behavior throughout.
+2. Hold or open the inventory containing an enchanted item. With
+   **RainbowEnchant** disabled, note the normal glint. Enable it, set a solid
+   local `#AARRGGBB` color, and verify only this client's item-stack glint is
+   tinted. Enable **Rainbow** and vary **Rainbow speed**; verify the tint cycles
+   locally and returns to vanilla immediately when disabled. Worn armor-layer
+   glint intentionally remains vanilla in this initial implementation.
+3. In a permitted multiplayer check, confirm another player sees neither the
+   entity transforms nor the item-glint tint, and that no interaction, item
+   data, or server message changes.
 
 ## Manual ClickGUI smoke test
 

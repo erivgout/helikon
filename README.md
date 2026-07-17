@@ -17,6 +17,11 @@ AntiTotemAnimation hides only the local death-protection item activation
 overlay. It leaves totem gameplay, particles, sound, and server processing
 unchanged.
 
+Dinnerbone applies Minecraft's existing upside-down living-entity transform to
+selected local render categories. RainbowEnchant recolors only the local
+item-stack enchantment glint; neither feature changes entity data, items,
+packets, or server state.
+
 The internal event bus uses typed, Minecraft-free event models. Its currently
 wired lifecycle bridge covers ticks, local world connections, identity-aware
 screen changes, accepted ordinary chat, world rendering, and local player-state
@@ -33,11 +38,13 @@ branding, or configuration formats from that project.
 
 ## Status
 
-Helikon currently includes seventeen client-only render modules: Fullbright restores
+Helikon currently includes nineteen client-only render modules: Fullbright restores
 the previous gamma and Night Vision state when disabled; AntiBlind selectively
 and AntiTotemAnimation hides the local death-protection activation overlay;
-BetterCrosshair draws a local configurable
-HUD crosshair. EntityESP, BlockESP, Tracers, and Breadcrumbs use Minecraft's
+BetterCrosshair draws a local configurable HUD crosshair; Dinnerbone applies
+the existing upside-down entity transform to selected living categories; and
+RainbowEnchant tints local item-stack foil glint without modifying item data.
+EntityESP, BlockESP, Tracers, and Breadcrumbs use Minecraft's
 local world-render Gizmo phase only: they never alter entities, blocks, client
 movement, or packets. BlockESP deliberately scans a bounded cube at a bounded
 per-tick budget, so newly loaded or changed blocks can take one scan pass to
@@ -233,6 +240,10 @@ select a module, and Enter or Space to toggle it.
 Select **ChatColor** in the Chat category to edit its `#AARRGGBB` local
 palette, opacity multiplier, and text-shadow setting. The module never changes
 outgoing chat or server-visible formatting.
+Select **Dinnerbone** in the Render category to flip selected local player,
+hostile, or other living-entity models. Select **RainbowEnchant** to choose a
+local `#AARRGGBB` item-glint tint or cycle through a rainbow; worn armor-layer
+glint remains vanilla in this initial implementation.
 
 ## Local commands
 

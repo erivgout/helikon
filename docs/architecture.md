@@ -36,6 +36,14 @@ AntiTotemAnimation uses one separate `GameRenderer.displayItemActivation`
 head mixin. It cancels only an item activation with the verified
 `DEATH_PROTECTION` component while the module is enabled; the client still
 handles the totem event, particles, sound, and every normal server packet.
+Dinnerbone uses the verified `LivingEntityRenderer.isEntityUpsideDown` return
+value. Its narrow mixin only changes a false vanilla result to true for the
+selected local Player, `Monster`, or other living-entity category, so the
+normal named-entity behavior is preserved. RainbowEnchant wraps the verified
+`ItemFeatureRenderer.getFoilBuffer` return value only while enabled. The wrapper
+delegates every vertex attribute and replaces only the ARGB vertex color for
+item-stack foil rendering; it does not change item data, textures, or the
+separate worn armor-layer glint path.
 
 AutoWalk uses one narrow `KeyboardInput.tick` tail mixin after Minecraft has
 freshly polled the user's physical keys. Its transformation is a tested,

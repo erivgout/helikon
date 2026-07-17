@@ -1,5 +1,6 @@
 package dev.helikon.client.module.render;
 
+import dev.helikon.client.render.EntityRenderFilter;
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffects;
@@ -11,15 +12,20 @@ public final class RenderModuleAccess {
     private static volatile AntiBlind antiBlind;
     private static volatile BetterCrosshair betterCrosshair;
     private static volatile AntiTotemAnimation antiTotemAnimation;
+    private static volatile Dinnerbone dinnerbone;
+    private static volatile RainbowEnchant rainbowEnchant;
 
     private RenderModuleAccess() {
     }
 
     public static void install(AntiBlind antiBlindModule, BetterCrosshair crosshairModule,
-                               AntiTotemAnimation antiTotemAnimationModule) {
+                               AntiTotemAnimation antiTotemAnimationModule, Dinnerbone dinnerboneModule,
+                               RainbowEnchant rainbowEnchantModule) {
         antiBlind = Objects.requireNonNull(antiBlindModule, "antiBlindModule");
         betterCrosshair = Objects.requireNonNull(crosshairModule, "crosshairModule");
         antiTotemAnimation = Objects.requireNonNull(antiTotemAnimationModule, "antiTotemAnimationModule");
+        dinnerbone = Objects.requireNonNull(dinnerboneModule, "dinnerboneModule");
+        rainbowEnchant = Objects.requireNonNull(rainbowEnchantModule, "rainbowEnchantModule");
     }
 
     public static boolean hideMobEffectFog(Holder<MobEffect> effect) {
@@ -47,5 +53,20 @@ public final class RenderModuleAccess {
     public static boolean shouldHideItemActivation(boolean hasDeathProtection) {
         AntiTotemAnimation module = antiTotemAnimation;
         return module != null && module.shouldSuppressItemActivation(hasDeathProtection);
+    }
+
+    public static boolean shouldFlipDinnerbone(EntityRenderFilter.EntityType entityType) {
+        Dinnerbone module = dinnerbone;
+        return module != null && module.shouldFlip(entityType);
+    }
+
+    public static boolean rainbowEnchantEnabled() {
+        RainbowEnchant module = rainbowEnchant;
+        return module != null && module.isEnabled();
+    }
+
+    public static int rainbowEnchantColor(long nowMillis) {
+        RainbowEnchant module = rainbowEnchant;
+        return module == null ? 0xFFFFFFFF : module.glintColor(nowMillis);
     }
 }

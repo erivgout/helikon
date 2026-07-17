@@ -20,6 +20,7 @@
     "FogRendererMixin",
     "FishingHookAccessor",
     "GameRendererMixin",
+    "HurtCameraMixin",
     "HudMixin",
     "IndigoXRayMixin",
     "ItemFeatureRendererMixin",

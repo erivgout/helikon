@@ -46,6 +46,7 @@ public final class Nuker extends Module {
 
     private final NumberSetting radius;
     private final NumberSetting blocksPerTick;
+    private final BooleanSetting allBlocks;
     private final StringSetting whitelist;
     private final StringSetting blacklist;
     private final BooleanSetting toolSelection;
@@ -67,8 +68,11 @@ public final class Nuker extends Module {
                 2.0D, 1.0D, 4.0D));
         blocksPerTick = addSetting(new NumberSetting("blocks_per_tick", "Blocks per tick",
                 "Maximum ordinary destroy requests considered each tick.", 1.0D, 1.0D, HARD_MAXIMUM_ACTIONS_PER_TICK));
+        allBlocks = addSetting(new BooleanSetting("all_blocks", "All blocks",
+                "Target every non-air block, ignoring the whitelist. The blacklist still applies.", false));
         whitelist = addSetting(new StringSetting("whitelist", "Whitelist",
-                "Optional semicolon-separated block IDs; blank targets every non-air block.", "", 1_024, true));
+                "Optional semicolon-separated block IDs; blank targets every non-air block.", "", 1_024, true,
+                () -> !allBlocks.value()));
         blacklist = addSetting(new StringSetting("blacklist", "Blacklist",
                 "Semicolon-separated block IDs never selected locally.", "", 1_024, true));
         toolSelection = addSetting(new BooleanSetting("tool_selection", "Tool selection",
@@ -157,7 +161,7 @@ public final class Nuker extends Module {
     /** Lets the narrow scanner avoid retaining irrelevant targets before bounded local ray checks. */
     public boolean isConfiguredTarget(String blockId) {
         return blockId != null && !blockId.isBlank()
-                && (allowedBlocks.isEmpty() || allowedBlocks.contains(blockId))
+                && (allBlocks.value() || allowedBlocks.isEmpty() || allowedBlocks.contains(blockId))
                 && !blockedBlocks.contains(blockId);
     }
 

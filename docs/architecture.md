@@ -382,9 +382,12 @@ identifier selector, multi-select enum, numeric-range, and safe-regex values.
 Collection-backed settings store defensive immutable copies; all types serialize
 their own JSON and reset only themselves after malformed input. Settings can
 also expose a pure `BooleanSupplier` visibility predicate and notify local
-change listeners after a validated change. Editors decide how to present a
-type, while configuration remains type-agnostic through `Setting.toJson()` and
-`Setting.applyJson()`.
+change listeners after a validated change. The ClickGUI settings panel skips
+rows whose predicate is false and re-evaluates after every boolean toggle or
+enum cycle, so dependent rows appear and disappear immediately; hidden
+settings keep their stored value and stay reachable through `.setting`.
+Editors decide how to present a type, while configuration remains
+type-agnostic through `Setting.toJson()` and `Setting.applyJson()`.
 
 `ProfileManager` stores named module and ClickGUI snapshots below
 `config/helikon/profiles/`. It reuses the global configuration codec so profile

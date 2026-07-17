@@ -38,6 +38,22 @@ class NukerTest {
     }
 
     @Test
+    void allBlocksOverridesTheWhitelistButNotTheBlacklist() {
+        Nuker module = new Nuker();
+        enable(module);
+        numberSetting(module, "blocks_per_tick").set(2.0D);
+        numberSetting(module, "safety_limit").set(2.0D);
+        stringSetting(module, "whitelist").set("minecraft:stone");
+        List<Nuker.Target> candidates = List.of(STONE_NEAR, DIRT_NEAR);
+
+        assertEquals(List.of(STONE_NEAR), module.selectTargets(new Nuker.Context(false, true), candidates));
+        booleanSetting(module, "all_blocks").set(true);
+        assertEquals(List.of(DIRT_NEAR, STONE_NEAR), module.selectTargets(new Nuker.Context(false, true), candidates));
+        stringSetting(module, "blacklist").set("minecraft:dirt");
+        assertEquals(List.of(STONE_NEAR), module.selectTargets(new Nuker.Context(false, true), candidates));
+    }
+
+    @Test
     void enforcesLineOfSightDistanceFiltersAndTwoActionHardCap() {
         Nuker module = new Nuker();
         enable(module);

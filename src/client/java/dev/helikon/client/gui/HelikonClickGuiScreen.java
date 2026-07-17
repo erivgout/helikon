@@ -671,11 +671,13 @@ public final class HelikonClickGuiScreen extends Screen {
             if (setting instanceof BooleanSetting booleanSetting
                     && isInside(mouseX, mouseY, settingsX, rowY, SETTINGS_WIDTH, BOOLEAN_ROW_HEIGHT)) {
                 booleanSetting.set(!booleanSetting.value());
+                rebuildSettingWidgets();
                 return true;
             }
             if (setting instanceof EnumSetting<?> enumSetting
                     && isInside(mouseX, mouseY, settingsX, rowY, SETTINGS_WIDTH, BOOLEAN_ROW_HEIGHT)) {
                 enumSetting.cycle();
+                rebuildSettingWidgets();
                 return true;
             }
         }
@@ -817,6 +819,9 @@ public final class HelikonClickGuiScreen extends Screen {
         List<SettingRow> rows = new ArrayList<>();
         int y = settingControlsTop(module) + MODULE_RESET_ROW_HEIGHT + BIND_ROW_HEIGHT + ENABLED_ROW_HEIGHT;
         for (Setting<?> setting : module.settings()) {
+            if (!setting.isVisible()) {
+                continue;
+            }
             int rowHeight = setting instanceof ColorSetting ? COLOR_PICKER_ROW_HEIGHT
                     : SettingText.isEditable(setting) ? NUMBER_ROW_HEIGHT : BOOLEAN_ROW_HEIGHT;
             rows.add(new SettingRow(setting, y, rowHeight));

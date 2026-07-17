@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Adds an **All blocks** checkbox to Nuker that targets every non-air block
+  regardless of the whitelist (the blacklist still applies); the whitelist row
+  is hidden while it is on.
 - Redesigns Better Nametags from one concatenated line into stacked,
   color-coded rows: name (teal for friends), health colored by remaining
   fraction, armor, then distance and held item. Zero armor and an empty hand

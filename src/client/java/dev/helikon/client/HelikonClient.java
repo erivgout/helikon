@@ -93,6 +93,8 @@ import dev.helikon.client.module.movement.AntiAfkAccess;
 import dev.helikon.client.module.movement.BoatFlight;
 import dev.helikon.client.module.movement.BunnyHop;
 import dev.helikon.client.module.movement.ExtraElytra;
+import dev.helikon.client.module.movement.FakeLag;
+import dev.helikon.client.module.movement.FakeLagAccess;
 import dev.helikon.client.module.movement.FastLadders;
 import dev.helikon.client.module.movement.Flight;
 import dev.helikon.client.module.movement.Freecam;
@@ -409,6 +411,7 @@ public final class HelikonClient implements ClientModInitializer {
         ExtraElytra extraElytra = new ExtraElytra();
         Scaffold scaffold = new Scaffold();
         Timer timer = new Timer();
+        FakeLag fakeLag = new FakeLag();
         AutoEat autoEat = new AutoEat(new MinecraftUseKeyAccess());
         AutoTool autoTool = new AutoTool();
         AutoArmor autoArmor = new AutoArmor();
@@ -488,6 +491,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(extraElytra);
         modules.register(scaffold);
         modules.register(timer);
+        modules.register(fakeLag);
         modules.register(autoEat);
         modules.register(autoTool);
         modules.register(autoArmor);
@@ -551,6 +555,7 @@ public final class HelikonClient implements ClientModInitializer {
         AntiCactusAccess.install(antiCactus);
         WaterJumpAccess.install(waterJump);
         TimerModuleAccess.install(timer);
+        FakeLagAccess.install(fakeLag);
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, betterNametags, blockEsp, tracers, trajectories, trueSight, storageEsp, damageIndicators,
@@ -578,6 +583,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(flight, "tick", () -> MinecraftAdvancedMovementAccess.tickFlight(flight));
                 modules.runGuarded(boatFlight, "tick", () -> MinecraftAdvancedMovementAccess.tickBoatFlight(boatFlight));
                 modules.runGuarded(freecam, "tick", () -> FreecamAccess.tick(Minecraft.getInstance()));
+                modules.runGuarded(fakeLag, "tick", FakeLagAccess::tick);
                 modules.runGuarded(noFall, "tick", () -> MinecraftAdvancedMovementAccess.tickNoFall(noFall));
                 modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));
                 modules.runGuarded(scaffold, "tick", () -> MinecraftAdvancedMovementAccess.tickScaffold(scaffold, clientTick));
@@ -732,6 +738,7 @@ public final class HelikonClient implements ClientModInitializer {
             if (timer.isEnabled()) {
                 modules.setEnabled(timer, false);
             }
+            FakeLagAccess.reset();
             coordinateTracker.clearObservedLocation();
         });
         events.subscribe(PlayerLifecycleEvent.class, event -> {

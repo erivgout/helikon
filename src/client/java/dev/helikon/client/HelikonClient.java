@@ -226,6 +226,10 @@ import dev.helikon.client.module.player.MinecraftUseKeyAccess;
 import dev.helikon.client.module.player.MinecraftThrowDebuffAccess;
 import dev.helikon.client.module.player.ThrowDebuff;
 import dev.helikon.client.module.chat.ChatPrefix;
+import dev.helikon.client.module.chat.FancyChat;
+import dev.helikon.client.module.chat.InfiniChat;
+import dev.helikon.client.module.chat.MassTpa;
+import dev.helikon.client.module.chat.MinecraftMassTpaAccess;
 import dev.helikon.client.module.chat.ChatSuffix;
 import dev.helikon.client.module.chat.ChatMute;
 import dev.helikon.client.module.chat.ChatFilter;
@@ -607,6 +611,9 @@ public final class HelikonClient implements ClientModInitializer {
         BlockSelection blockSelection = new BlockSelection();
         BlockIn blockIn = new BlockIn();
         ChatPrefix chatPrefix = new ChatPrefix();
+        FancyChat fancyChat = new FancyChat();
+        InfiniChat infiniChat = new InfiniChat();
+        MassTpa massTpa = new MassTpa();
         ChatSuffix chatSuffix = new ChatSuffix();
         ChatMute chatMute = new ChatMute();
         ChatFilter chatFilter = new ChatFilter();
@@ -737,6 +744,9 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(blockSelection);
         modules.register(blockIn);
         modules.register(chatPrefix);
+        modules.register(fancyChat);
+        modules.register(infiniChat);
+        modules.register(massTpa);
         modules.register(chatSuffix);
         modules.register(chatMute);
         modules.register(chatFilter);
@@ -900,6 +910,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(blockIn, "tick", () -> MinecraftBlockInAccess.tick(blockIn, clientTick));
                 modules.runGuarded(airPlace, "tick", () -> MinecraftAirPlaceAccess.tick(airPlace, clientTick));
                 modules.runGuarded(chatSpammer, "tick", () -> tickChatSpammer(chatSpammer));
+                modules.runGuarded(massTpa, "tick", () -> MinecraftMassTpaAccess.tick(clientTick, massTpa, friends));
                 modules.runGuarded(announcer, "tick", HelikonClient::tickAnnouncer);
                 Minecraft minecraft = Minecraft.getInstance();
                 modules.runGuarded(windCharge, "tick", () -> MinecraftWindChargeAccess.tick(windCharge, clientTick));
@@ -1069,9 +1080,17 @@ public final class HelikonClient implements ClientModInitializer {
         commands.register(new ChatHistoryCommand(chatHistoryModule, chatHistory, new MinecraftTextClipboard(),
                 new ScheduledChatInputReopener(new MinecraftChatInputReopener(), pendingScreenAction::set)));
         ChatCommands.register(commands, notifier);
-        OutgoingChatFormatter outgoingChat = new OutgoingChatFormatter(chatPrefix, chatSuffix,
+        OutgoingChatFormatter outgoingChat = new OutgoingChatFormatter(chatPrefix, chatSuffix, fancyChat,
                 () -> macroServerContext.currentServerAddress().orElse(null),
                 () -> ThreadLocalRandom.current().nextInt());
+        ClientSendMessageEvents.ALLOW_CHAT.register(message -> {
+            List<String> parts = infiniChat.split(message);
+            if (parts.isEmpty()) {
+                return true;
+            }
+            parts.stream().map(outgoingChat::format).forEach(normalChatSender::send);
+            return false;
+        });
         ClientSendMessageEvents.MODIFY_CHAT.register(outgoingChat::format);
         ClientSendMessageEvents.CHAT_CANCELED.register(chatSpammer::reportRejected);
         ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, chatType, receivedAt) -> {

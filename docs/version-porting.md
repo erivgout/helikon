@@ -39,16 +39,18 @@ When porting:
    `Gizmos` box/line APIs before changing EntityESP, BlockESP, Tracers, or
    Breadcrumbs. Keep visualizers in that supported render phase; do not
    replace them with legacy OpenGL calls or stateful shader hooks.
-   For EntityESP's Glow/Shader modes, also revalidate
+   For EntityESP's Glow/Shader modes and Chams, also revalidate
    `Minecraft.shouldEntityAppearGlowing(Entity)`,
    `EntityRenderer.extractRenderState(Entity, EntityRenderState, float)`, and
    the mutable `EntityRenderState.outlineColor` field (javap-confirmed on
    26.2: `extractRenderState` calls `shouldEntityAppearGlowing`, which checks
    `Entity.isCurrentlyGlowing()` first, and writes
    `outlineColor = glowing ? ARGB.opaque(getTeamColor()) : 0`). Keep both
-   mixins read-only against the `EntityEspRenderAccess` snapshot: never call
+   EntityESP mixins read-only against the `EntityEspRenderAccess` snapshot, and
+   Chams's `MinecraftChamsGlowMixin`/`EntityRendererChamsOutlineMixin`
+   read-only against the separate `ChamsRenderAccess` snapshot: never call
    `Entity.setGlowingTag`, never force `shouldEntityAppearGlowing` to false,
-   and keep Shader colors opaque because the outline pass treats color 0 as
+   and keep outline colors opaque because the outline pass treats color 0 as
    "no outline".
 11. Revalidate `ClientLevel.entitiesForRendering`, loaded-chunk checks,
    `BlockState.getBlock`, registry ID lookup, and local player/entity bounding

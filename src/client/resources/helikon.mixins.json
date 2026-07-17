@@ -9,6 +9,8 @@
     "ChatComponentMixin",
     "ChatComponentAccessor",
     "ClientChunkCacheEventMixin",
+    "EntityRendererChamsOutlineMixin",
+    "MinecraftChamsGlowMixin",
     "AnnouncerAdvancementMixin",
     "AnnouncerGameModeMixin",
     "AnnouncerItemEntityMixin",

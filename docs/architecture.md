@@ -533,7 +533,23 @@ suppress a genuine Glowing effect), and
 `EntityRendererEntityEspOutlineMixin` overrides the extracted
 `EntityRenderState.outlineColor` in Shader mode only. Neither mixin mutates
 `Entity` state, so disabling the module, leaving Glow/Shader, or changing
-worlds restores vanilla behavior by simply clearing the snapshot. BlockESP advances a bounded cube cursor on
+worlds restores vanilla behavior by simply clearing the snapshot. Chams reuses that same native-outline mechanism through its own independent
+bridge. `ChamsColorPolicy`, `ChamsTargets`, and `ChamsTargetsBuilder` are
+Minecraft-free and unit-tested: the policy resolves an opaque friend, health, or
+base color, while the bounded builder snapshots at most `maximum_entities`
+selected IDs. Each client tick the shared renderer filters entities exactly like
+EntityESP (via `EntityRenderFilter`, with local friends looked up through
+`FriendManager`), then installs an immutable `ChamsTargets` snapshot into the
+atomic `ChamsRenderAccess` bridge. Two narrowly scoped mixins read that bridge:
+`MinecraftChamsGlowMixin` answers `Minecraft.shouldEntityAppearGlowing` as true
+for snapshotted IDs (it can only add local outlines, never suppress a genuine
+Glowing effect), and `EntityRendererChamsOutlineMixin` overrides the extracted
+`EntityRenderState.outlineColor` for those IDs. Neither mixin mutates `Entity`
+state, so disabling the module or changing worlds clears the snapshot and
+restores vanilla behavior exactly. Chams therefore renders an occlusion-visible
+colored silhouette (an outline material), distinct from EntityESP's box/wireframe
+modes and its static Shader color by defaulting to players and offering
+health-based coloring. BlockESP advances a bounded cube cursor on
 the client tick, checks only loaded chunks, and retains at most 512 matching
 coordinates for rendering. Breadcrumbs samples the local player into a
 bounded session-only deque and clears it when the level instance changes.

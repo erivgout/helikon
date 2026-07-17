@@ -7,6 +7,8 @@ import dev.helikon.client.module.miscellaneous.LocalCosmetics;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.BetterNametags;
 import dev.helikon.client.module.render.Breadcrumbs;
+import dev.helikon.client.module.render.Chams;
+import dev.helikon.client.module.render.ChamsRenderAccess;
 import dev.helikon.client.module.render.DamageIndicators;
 import dev.helikon.client.module.render.EntityEsp;
 import dev.helikon.client.module.render.EntityEspMode;
@@ -76,6 +78,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final ModuleRegistry modules;
     private final FriendManager friends;
     private final EntityEsp entityEsp;
+    private final Chams chams;
     private final BetterNametags betterNametags;
     private final BlockEsp blockEsp;
     private final Tracers tracers;
@@ -100,9 +103,10 @@ public final class MinecraftWorldVisualizationRenderer {
     private boolean blockScannerWasEnabled;
     private boolean storageScannerWasEnabled;
     private boolean nativeOutlineWasInstalled;
+    private boolean chamsWasInstalled;
 
     public MinecraftWorldVisualizationRenderer(ModuleRegistry modules, FriendManager friends, EntityEsp entityEsp,
-                                                BetterNametags betterNametags,
+                                                Chams chams, BetterNametags betterNametags,
                                                 BlockEsp blockEsp, Tracers tracers, Trajectories trajectories,
                                                 TrueSight trueSight, StorageEsp storageEsp, DamageIndicators damageIndicators,
                                                 Breadcrumbs breadcrumbs, BuilderAssist builderAssist, BlockSelection blockSelection,
@@ -110,6 +114,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.modules = Objects.requireNonNull(modules, "modules");
         this.friends = Objects.requireNonNull(friends, "friends");
         this.entityEsp = Objects.requireNonNull(entityEsp, "entityEsp");
+        this.chams = Objects.requireNonNull(chams, "chams");
         this.betterNametags = Objects.requireNonNull(betterNametags, "betterNametags");
         this.blockEsp = Objects.requireNonNull(blockEsp, "blockEsp");
         this.tracers = Objects.requireNonNull(tracers, "tracers");
@@ -136,9 +141,11 @@ public final class MinecraftWorldVisualizationRenderer {
             resetBlockScanner();
             resetStorageScanner();
             clearNativeOutlineTargets();
+            clearChamsTargets();
         }
         if (client.level == null || client.player == null) {
             clearNativeOutlineTargets();
+            clearChamsTargets();
             return;
         }
         if (entityEsp.isEnabled() && entityEsp.mode().usesNativeOutline()) {
@@ -146,6 +153,12 @@ public final class MinecraftWorldVisualizationRenderer {
             modules.runGuarded(entityEsp, "tick", () -> installNativeOutlineTargets(client.level, client.player));
         } else {
             clearNativeOutlineTargets();
+        }
+        if (chams.isEnabled()) {
+            chamsWasInstalled = true;
+            modules.runGuarded(chams, "tick", () -> installChamsTargets(client.level, client.player));
+        } else {
+            clearChamsTargets();
         }
         if (breadcrumbs.isEnabled()) {
             modules.runGuarded(breadcrumbs, "tick", () -> breadcrumbs.sample(
@@ -372,6 +385,36 @@ public final class MinecraftWorldVisualizationRenderer {
         if (nativeOutlineWasInstalled) {
             nativeOutlineWasInstalled = false;
             EntityEspRenderAccess.clear();
+        }
+    }
+
+    /** Snapshots this tick's selected entities and colors for the Chams outline pass. */
+    private void installChamsTargets(ClientLevel level, Player localPlayer) {
+        EntityRenderFilter.Options options = chams.options();
+        ChamsTargetsBuilder builder = new ChamsTargetsBuilder(chams.maximumEntities());
+        for (Entity entity : level.entitiesForRendering()) {
+            boolean friend = isFriend(entity);
+            if (!EntityRenderFilter.shouldRender(options, entityType(entity), friend, entity == localPlayer,
+                    entity.position().distanceToSqr(localPlayer.position()))) {
+                continue;
+            }
+            boolean living = entity instanceof LivingEntity;
+            double healthFraction = 1.0D;
+            if (entity instanceof LivingEntity livingEntity) {
+                float maxHealth = livingEntity.getMaxHealth();
+                healthFraction = maxHealth > 0.0F ? livingEntity.getHealth() / maxHealth : 0.0D;
+            }
+            if (!builder.offer(entity.getId(), chams.colorFor(friend, living, healthFraction))) {
+                break;
+            }
+        }
+        ChamsRenderAccess.install(builder.build());
+    }
+
+    private void clearChamsTargets() {
+        if (chamsWasInstalled) {
+            chamsWasInstalled = false;
+            ChamsRenderAccess.clear();
         }
     }
 

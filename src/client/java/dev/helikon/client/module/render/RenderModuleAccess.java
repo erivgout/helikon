@@ -13,6 +13,7 @@ import java.util.Objects;
 /** Narrow static bridge used only by verified client-render mixins. */
 public final class RenderModuleAccess {
     private static volatile AntiBlind antiBlind;
+    private static volatile NoShieldOverlay noShieldOverlay;
     private static volatile BetterCrosshair betterCrosshair;
     private static volatile AntiTotemAnimation antiTotemAnimation;
     private static volatile Dinnerbone dinnerbone;
@@ -51,6 +52,15 @@ public final class RenderModuleAccess {
 
     public static boolean hidePowderSnowOverlay() {
         return antiBlind != null && antiBlind.hidesPowderSnowOverlay();
+    }
+
+    public static void installNoShieldOverlay(NoShieldOverlay module) {
+        noShieldOverlay = Objects.requireNonNull(module, "module");
+    }
+
+    public static boolean hideRaisedShield(boolean usingItem, boolean usingShield) {
+        NoShieldOverlay module = noShieldOverlay;
+        return module != null && module.hidesRaisedShield(usingItem, usingShield);
     }
 
     public static boolean hideVanillaCrosshair() {

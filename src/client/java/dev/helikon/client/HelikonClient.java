@@ -288,6 +288,7 @@ import dev.helikon.client.module.render.MiniPlayer;
 import dev.helikon.client.module.render.NameProtect;
 import dev.helikon.client.module.render.NameProtectTextAccess;
 import dev.helikon.client.module.render.NewChunks;
+import dev.helikon.client.module.render.OpenWaterEsp;
 import dev.helikon.client.module.render.ProjectilePreview;
 import dev.helikon.client.module.render.NoWeather;
 import dev.helikon.client.module.render.MobSpawnEsp;
@@ -481,6 +482,7 @@ public final class HelikonClient implements ClientModInitializer {
         Radar radar = new Radar();
         SaturationDisplay saturationDisplay = new SaturationDisplay();
         StorageEsp storageEsp = new StorageEsp();
+        OpenWaterEsp openWaterEsp = new OpenWaterEsp();
         MobSpawnEsp mobSpawnEsp = new MobSpawnEsp();
         NewChunks newChunks = new NewChunks();
         XRay xray = new XRay(new MinecraftXRayRendererInvalidator());
@@ -518,6 +520,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(radar);
         modules.register(saturationDisplay);
         modules.register(storageEsp);
+        modules.register(openWaterEsp);
         modules.register(mobSpawnEsp);
         modules.register(newChunks);
         modules.register(xray);
@@ -813,7 +816,7 @@ public final class HelikonClient implements ClientModInitializer {
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(
                 modules, friends, entityEsp, chams, betterNametags, baseFinder, blockEsp, caveFinder, tracers,
                 trajectories, projectileWarning,
-                projectilePreview, trueSight, storageEsp, mobSpawnEsp, newChunks,
+                projectilePreview, trueSight, storageEsp, openWaterEsp, mobSpawnEsp, newChunks,
                 damageIndicators, breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics, explosions
         );
         events.subscribe(ChunkEvent.class, event -> modules.runGuarded(newChunks, "chunk-event",

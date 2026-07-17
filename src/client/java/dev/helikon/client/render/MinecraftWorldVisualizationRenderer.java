@@ -18,6 +18,7 @@ import dev.helikon.client.module.render.EntityEspRenderAccess;
 import dev.helikon.client.module.render.Explosions;
 import dev.helikon.client.module.render.MobSpawnEsp;
 import dev.helikon.client.module.render.NewChunks;
+import dev.helikon.client.module.render.OpenWaterEsp;
 import dev.helikon.client.module.render.ProjectileWarning;
 import dev.helikon.client.module.render.ProjectilePreview;
 import dev.helikon.client.module.render.StorageEsp;
@@ -67,7 +68,9 @@ import net.minecraft.world.item.TridentItem;
 import net.minecraft.world.item.component.ChargedProjectiles;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
@@ -76,6 +79,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -114,6 +118,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final ProjectilePreview projectilePreview;
     private final TrueSight trueSight;
     private final StorageEsp storageEsp;
+    private final OpenWaterEsp openWaterEsp;
     private final MobSpawnEsp mobSpawnEsp;
     private final NewChunks newChunks;
     private final DamageIndicators damageIndicators;
@@ -129,6 +134,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final BlockEspScanCursor storageCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor storageAnchor = new BlockEspScanAnchor();
     private final BlockEspCache storageCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
+    private final LinkedHashMap<OpenWaterColumn, BlockPos> openWaterSites = new LinkedHashMap<>();
     private final BlockEspScanCursor baseFinderCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor baseFinderAnchor = new BlockEspScanAnchor();
     private final BlockEspCache baseFinderCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
@@ -145,9 +151,16 @@ public final class MinecraftWorldVisualizationRenderer {
     private ClientLevel observedLevel;
     private long observedBlockScanRevision = Long.MIN_VALUE;
     private long observedStorageScanRevision = Long.MIN_VALUE;
+    private long observedOpenWaterScanRevision = Long.MIN_VALUE;
     private long observedMobSpawnScanRevision = Long.MIN_VALUE;
+    private int openWaterAnchorX;
+    private int openWaterAnchorY;
+    private int openWaterAnchorZ;
+    private int openWaterScanIndex;
+    private boolean openWaterAnchorSet;
     private boolean blockScannerWasEnabled;
     private boolean storageScannerWasEnabled;
+    private boolean openWaterScannerWasEnabled;
     private boolean mobSpawnScannerWasEnabled;
     private boolean nativeOutlineWasInstalled;
     private boolean chamsWasInstalled;
@@ -159,7 +172,8 @@ public final class MinecraftWorldVisualizationRenderer {
                                                 Tracers tracers, Trajectories trajectories,
                                                 ProjectileWarning projectileWarning, ProjectilePreview projectilePreview,
                                                 TrueSight trueSight,
-                                                StorageEsp storageEsp, MobSpawnEsp mobSpawnEsp, NewChunks newChunks,
+                                                StorageEsp storageEsp, OpenWaterEsp openWaterEsp,
+                                                MobSpawnEsp mobSpawnEsp, NewChunks newChunks,
                                                 DamageIndicators damageIndicators,
                                                 Breadcrumbs breadcrumbs, BuilderAssist builderAssist, BlockSelection blockSelection,
                                                 BowAimAssist bowAimAssist, LocalCosmetics localCosmetics, Explosions explosions) {
@@ -177,6 +191,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.projectilePreview = Objects.requireNonNull(projectilePreview, "projectilePreview");
         this.trueSight = Objects.requireNonNull(trueSight, "trueSight");
         this.storageEsp = Objects.requireNonNull(storageEsp, "storageEsp");
+        this.openWaterEsp = Objects.requireNonNull(openWaterEsp, "openWaterEsp");
         this.mobSpawnEsp = Objects.requireNonNull(mobSpawnEsp, "mobSpawnEsp");
         this.newChunks = Objects.requireNonNull(newChunks, "newChunks");
         this.damageIndicators = Objects.requireNonNull(damageIndicators, "damageIndicators");
@@ -188,6 +203,7 @@ public final class MinecraftWorldVisualizationRenderer {
         this.explosions = Objects.requireNonNull(explosions, "explosions");
         this.blockEsp.setCacheClearer(this::resetBlockScanner);
         this.storageEsp.setCacheClearer(this::resetStorageScanner);
+        this.openWaterEsp.setCacheClearer(this::resetOpenWaterScanner);
         this.baseFinder.setCacheClearer(this::resetBaseFinderScanner);
         this.caveFinder.setCacheClearer(this::resetCaveScanner);
         this.mobSpawnEsp.setCacheClearer(this::resetMobSpawnScanner);
@@ -205,6 +221,7 @@ public final class MinecraftWorldVisualizationRenderer {
             damageIndicators.clear();
             resetBlockScanner();
             resetStorageScanner();
+            resetOpenWaterScanner();
             resetBaseFinderScanner();
             resetCaveScanner();
             resetMobSpawnScanner();
@@ -275,6 +292,15 @@ public final class MinecraftWorldVisualizationRenderer {
                 modules.runGuarded(baseFinder, "scan", () -> scanBaseEvidence(client.level, client.player));
             }
         }
+        if (!openWaterEsp.isEnabled()) {
+            if (openWaterScannerWasEnabled) {
+                resetOpenWaterScanner();
+                openWaterScannerWasEnabled = false;
+            }
+        } else {
+            openWaterScannerWasEnabled = true;
+            modules.runGuarded(openWaterEsp, "scan", () -> scanOpenWater(client.level, client.player));
+        }
         if (!caveFinder.isEnabled()) {
             if (caveScannerWasEnabled) {
                 resetCaveScanner();
@@ -337,6 +363,9 @@ public final class MinecraftWorldVisualizationRenderer {
         }
         if (storageEsp.isEnabled()) {
             modules.runGuarded(storageEsp, "render", () -> renderStorage(client.player, frustum));
+        }
+        if (openWaterEsp.isEnabled()) {
+            modules.runGuarded(openWaterEsp, "render", () -> renderOpenWater(client.player, frustum));
         }
         if (baseFinder.isEnabled()) {
             modules.runGuarded(baseFinder, "render",
@@ -426,6 +455,87 @@ public final class MinecraftWorldVisualizationRenderer {
             String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
             storageCache.observe(position, state.hasBlockEntity() && storageEsp.targetBlocks().contains(blockId));
         }
+    }
+
+    private void scanOpenWater(ClientLevel level, Player player) {
+        if (openWaterEsp.scanRevision() != observedOpenWaterScanRevision) {
+            observedOpenWaterScanRevision = openWaterEsp.scanRevision();
+            resetOpenWaterScanner();
+        }
+        int range = openWaterEsp.horizontalRange();
+        int verticalSearch = openWaterEsp.verticalSearch();
+        int recenterHorizontal = Math.max(4, range / 2);
+        int recenterVertical = Math.max(4, verticalSearch / 2);
+        if (!openWaterAnchorSet
+                || Math.abs(player.getBlockX() - openWaterAnchorX) > recenterHorizontal
+                || Math.abs(player.getBlockY() - openWaterAnchorY) > recenterVertical
+                || Math.abs(player.getBlockZ() - openWaterAnchorZ) > recenterHorizontal) {
+            openWaterAnchorX = player.getBlockX();
+            openWaterAnchorY = player.getBlockY();
+            openWaterAnchorZ = player.getBlockZ();
+            openWaterAnchorSet = true;
+            openWaterScanIndex = 0;
+            openWaterSites.clear();
+        }
+        int diameter = range * 2 + 1;
+        int columnCount = diameter * diameter;
+        for (int checked = 0; checked < openWaterEsp.scanBudget(); checked++) {
+            int index = openWaterScanIndex;
+            openWaterScanIndex = (openWaterScanIndex + 1) % columnCount;
+            int x = openWaterAnchorX + index % diameter - range;
+            int z = openWaterAnchorZ + index / diameter - range;
+            observeOpenWaterColumn(level, x, z, openWaterAnchorY, verticalSearch);
+        }
+        trimOpenWaterSites();
+    }
+
+    private void observeOpenWaterColumn(ClientLevel level, int x, int z, int centerY, int verticalSearch) {
+        OpenWaterColumn column = new OpenWaterColumn(x, z);
+        openWaterSites.remove(column);
+        if (!level.hasChunk(x >> 4, z >> 4)) {
+            return;
+        }
+        for (int y = centerY + verticalSearch; y >= centerY - verticalSearch; y--) {
+            BlockPos candidate = new BlockPos(x, y, z);
+            if (openWaterCellType(level, candidate) != OpenWaterEsp.CellType.INSIDE_WATER
+                    || openWaterCellType(level, candidate.above()) != OpenWaterEsp.CellType.ABOVE_WATER
+                    || !isOpenWaterSite(level, candidate)) {
+                continue;
+            }
+            openWaterSites.put(column, candidate);
+            return;
+        }
+    }
+
+    private static boolean isOpenWaterSite(ClientLevel level, BlockPos center) {
+        OpenWaterEsp.CellType[] cells =
+                new OpenWaterEsp.CellType[OpenWaterEsp.LAYER_COUNT * OpenWaterEsp.CELLS_PER_LAYER];
+        int index = 0;
+        for (int yOffset = -1; yOffset <= 2; yOffset++) {
+            for (int zOffset = -2; zOffset <= 2; zOffset++) {
+                for (int xOffset = -2; xOffset <= 2; xOffset++) {
+                    cells[index++] = openWaterCellType(level, center.offset(xOffset, yOffset, zOffset));
+                }
+            }
+        }
+        return OpenWaterEsp.isValidSite(cells);
+    }
+
+    private static OpenWaterEsp.CellType openWaterCellType(ClientLevel level, BlockPos position) {
+        if (!level.isInsideBuildHeight(position.getY())
+                || !level.hasChunk(position.getX() >> 4, position.getZ() >> 4)) {
+            return OpenWaterEsp.CellType.INVALID;
+        }
+        BlockState state = level.getBlockState(position);
+        if (state.isAir() || state.is(Blocks.LILY_PAD)) {
+            return OpenWaterEsp.CellType.ABOVE_WATER;
+        }
+        if (state.getFluidState().is(FluidTags.WATER)
+                && state.getFluidState().isSource()
+                && state.getCollisionShape(level, position).isEmpty()) {
+            return OpenWaterEsp.CellType.INSIDE_WATER;
+        }
+        return OpenWaterEsp.CellType.INVALID;
     }
 
     private void scanBaseEvidence(ClientLevel level, Player player) {
@@ -926,6 +1036,27 @@ public final class MinecraftWorldVisualizationRenderer {
         }
     }
 
+    private void renderOpenWater(Player localPlayer, Frustum frustum) {
+        GizmoStyle style = GizmoStyle.strokeAndFill(openWaterEsp.color(), openWaterEsp.lineWidth(),
+                openWaterEsp.fillColor());
+        for (BlockPos position : openWaterSites.values()) {
+            if (Math.abs(position.getX() - localPlayer.getBlockX()) > openWaterEsp.horizontalRange()
+                    || Math.abs(position.getY() - localPlayer.getBlockY()) > openWaterEsp.verticalSearch()
+                    || Math.abs(position.getZ() - localPlayer.getBlockZ()) > openWaterEsp.horizontalRange()) {
+                continue;
+            }
+            AABB surface = new AABB(position.getX(), position.getY() + 0.94D, position.getZ(),
+                    position.getX() + 1.0D, position.getY() + 1.02D, position.getZ() + 1.0D);
+            if (frustum == null || !frustum.isVisible(surface)) {
+                continue;
+            }
+            GizmoProperties gizmo = Gizmos.cuboid(surface, style);
+            if (openWaterEsp.alwaysOnTop()) {
+                gizmo.setAlwaysOnTop();
+            }
+        }
+    }
+
     private void renderBaseEvidence(Player localPlayer, CameraRenderState camera) {
         List<BaseFinder.Evidence> evidence = new ArrayList<>();
         for (BlockEspScanCursor.Position position : baseFinderCache.positions()) {
@@ -1260,6 +1391,29 @@ public final class MinecraftWorldVisualizationRenderer {
         clearStorageResults();
     }
 
+    private void resetOpenWaterScanner() {
+        openWaterAnchorSet = false;
+        openWaterScanIndex = 0;
+        openWaterSites.clear();
+    }
+
+    private void trimOpenWaterSites() {
+        while (openWaterSites.size() > openWaterEsp.maximumSites()) {
+            OpenWaterColumn farthest = null;
+            long farthestDistanceSquared = Long.MIN_VALUE;
+            for (OpenWaterColumn column : openWaterSites.keySet()) {
+                long deltaX = (long) column.x() - openWaterAnchorX;
+                long deltaZ = (long) column.z() - openWaterAnchorZ;
+                long distanceSquared = deltaX * deltaX + deltaZ * deltaZ;
+                if (distanceSquared > farthestDistanceSquared) {
+                    farthest = column;
+                    farthestDistanceSquared = distanceSquared;
+                }
+            }
+            openWaterSites.remove(farthest);
+        }
+    }
+
     private void resetBaseFinderScanner() {
         baseFinderAnchor.clear();
         clearBaseFinderResults();
@@ -1298,5 +1452,8 @@ public final class MinecraftWorldVisualizationRenderer {
     private void clearMobSpawnResults() {
         mobSpawnCursor.clear();
         mobSpawnCache.clear();
+    }
+
+    private record OpenWaterColumn(int x, int z) {
     }
 }

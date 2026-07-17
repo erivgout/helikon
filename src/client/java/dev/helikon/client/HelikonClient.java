@@ -78,8 +78,10 @@ import dev.helikon.client.module.combat.AntiBot;
 import dev.helikon.client.module.combat.AutoPotion;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
+import dev.helikon.client.module.combat.HitFlick;
 import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
+import dev.helikon.client.module.combat.MinecraftHitFlickAccess;
 import dev.helikon.client.module.combat.ReachDisplay;
 import dev.helikon.client.module.combat.TriggerBot;
 import dev.helikon.client.module.movement.AutoSprint;
@@ -453,6 +455,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoPotion autoPotion = new AutoPotion();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
+        HitFlick hitFlick = new HitFlick();
         ReachDisplay reachDisplay = new ReachDisplay();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
         Annoy annoy = new Annoy();
@@ -525,6 +528,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoPotion);
         modules.register(targetHud);
         modules.register(killAura);
+        modules.register(hitFlick);
         modules.register(reachDisplay);
         modules.register(annoy);
         modules.register(oneClickFriends);
@@ -539,6 +543,7 @@ public final class HelikonClient implements ClientModInitializer {
         ChatDisplayAccess.install(chatTimestamps);
         ChatDisplayAccess.install(chatColor);
         BetterChatDisplayAccess.install(betterChat, privateMessageHelper, antiSpam);
+        MinecraftHitFlickAccess.install(hitFlick, friends);
         AnnouncerAccess.install(announcer, normalChatSender);
         MovementModuleAccess.install(autoWalk, autoSneak, twerk);
         InventoryWalkAccess.install(inventoryWalk);
@@ -602,6 +607,7 @@ public final class HelikonClient implements ClientModInitializer {
                         minecraft.gui.screen() != null));
                 combatAttackStarted.set(false);
                 combatSnapshot.set(MinecraftCombatAccess.Snapshot.unavailable());
+                modules.runGuarded(hitFlick, "restore", MinecraftHitFlickAccess::tickRestore);
                 modules.runGuarded(antiBot, "observe", () -> combatSnapshot.set(MinecraftCombatAccess.observe(friends, antiBot)));
                 modules.runGuarded(targetHud, "tick", () -> MinecraftCombatAccess.observeTarget(targetHud,
                         combatSnapshot.get(), combatTracker));
@@ -727,6 +733,7 @@ public final class HelikonClient implements ClientModInitializer {
                 LOGGER.log(Level.WARNING, "Unable to save local chat history while disconnecting", exception);
             }
             events.post(new WorldEvent(WorldEvent.Phase.LEAVE, serverAddress(lastConnectedServer)));
+            MinecraftHitFlickAccess.reset();
             playerStateEvents.reset();
             modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));
             if (timer.isEnabled()) {

@@ -148,7 +148,13 @@ client-side camera entity; input and mouse turn are redirected locally while
 the player receives no movement input, then the normal camera is restored.
 Scaffold is similarly constrained to a selected player-provided hotbar block,
 a loaded replaceable target with local support, an existing vanilla use
-cooldown, and one normal held-block interaction.
+cooldown, and one normal held-block interaction. Clutch keeps its
+falling/ground-proximity/mode/cooldown decision in the Minecraft-free `Clutch`
+policy; the shared advanced-movement adapter only samples the local descent,
+available space below, and hotbar block/water-bucket facts, then requests one
+ordinary block placement onto the loaded ground below or a water-bucket use. It
+never constructs a packet, and the server may still reject or correct the
+resulting interaction.
 
 Blink keeps its hold/release decision in the Minecraft-free `Blink` module and a
 generic bounded `BlinkBuffer`. The only version-sensitive edge is

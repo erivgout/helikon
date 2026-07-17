@@ -15,6 +15,7 @@ import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -26,6 +27,9 @@ import java.util.OptionalDouble;
 
 /** Thin 26.2 client bridge for conservative advanced-movement decisions. */
 public final class MinecraftAdvancedMovementAccess {
+    private static final double CLUTCH_SCAN_LIMIT = 8.0D;
+    private static final int CLUTCH_GROUND_SCAN = 8;
+
     private MinecraftAdvancedMovementAccess() {
     }
 
@@ -243,6 +247,89 @@ public final class MinecraftAdvancedMovementAccess {
             player.setYRot(Direction.getYRot(hit.get().getDirection()));
         }
         client.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit.get());
+    }
+
+    /**
+     * Requests one ordinary clutch interaction (held-block placement or water-bucket
+     * use) beneath a falling local player while vanilla's use cooldown is clear. It
+     * never fabricates a packet; the connected server may still reject or correct it.
+     */
+    public static void tickClutch(Clutch module, long tick) {
+        Minecraft client = Minecraft.getInstance();
+        if (!isInteractive(client) || client.gameMode == null
+                || ((MinecraftAccessor) client).helikon$getRightClickDelay() != 0) {
+            return;
+        }
+        LocalPlayer player = client.player;
+        List<Clutch.HotbarItem> candidates = clutchCandidates(player);
+        boolean hasBlock = candidates.stream().anyMatch(Clutch.HotbarItem::block);
+        boolean hasWater = candidates.stream().anyMatch(Clutch.HotbarItem::water);
+        Vec3 velocity = player.getDeltaMovement();
+        Clutch.State state = new Clutch.State(velocity.y < 0.0D, player.onGround(), player.isPassenger(),
+                player.getAbilities().flying, player.isFallFlying(), player.isInWater() || player.isInLava(),
+                player.fallDistance, player.getAvailableSpaceBelow(CLUTCH_SCAN_LIMIT), hasBlock, hasWater);
+        Clutch.Action action = module.plan(tick, state);
+        if (action == Clutch.Action.NONE) {
+            return;
+        }
+        boolean selectedMatches = matchesAction(player.getInventory().getSelectedItem(), action);
+        module.selectSlot(action, player.getInventory().getSelectedSlot(), selectedMatches, candidates)
+                .ifPresent(player.getInventory()::setSelectedSlot);
+        if (!matchesAction(player.getInventory().getSelectedItem(), action)) {
+            return;
+        }
+        if (module.rotateToTarget()) {
+            player.setXRot(90.0F);
+        }
+        if (action == Clutch.Action.USE_WATER) {
+            client.gameMode.useItem(player, InteractionHand.MAIN_HAND);
+            return;
+        }
+        groundHit(client, player).ifPresent(hit ->
+                client.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit));
+    }
+
+    private static boolean matchesAction(ItemStack stack, Clutch.Action action) {
+        return action == Clutch.Action.PLACE_BLOCK
+                ? stack.getItem() instanceof BlockItem
+                : stack.is(Items.WATER_BUCKET);
+    }
+
+    private static List<Clutch.HotbarItem> clutchCandidates(LocalPlayer player) {
+        List<Clutch.HotbarItem> candidates = new ArrayList<>();
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack stack = player.getInventory().getItem(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            boolean block = stack.getItem() instanceof BlockItem;
+            boolean water = stack.is(Items.WATER_BUCKET);
+            if (block || water) {
+                candidates.add(new Clutch.HotbarItem(slot, block, water));
+            }
+        }
+        return candidates;
+    }
+
+    /** The first open-topped solid support straight below the player within scan range. */
+    private static Optional<BlockHitResult> groundHit(Minecraft client, LocalPlayer player) {
+        BlockPos feet = player.blockPosition();
+        for (int dy = 1; dy <= CLUTCH_GROUND_SCAN; dy++) {
+            BlockPos ground = feet.below(dy);
+            if (!client.level.isInsideBuildHeight(ground.getY())
+                    || !client.level.hasChunk(ground.getX() >> 4, ground.getZ() >> 4)) {
+                return Optional.empty();
+            }
+            if (client.level.getBlockState(ground).canBeReplaced()) {
+                continue;
+            }
+            if (!client.level.getBlockState(ground.above()).canBeReplaced()) {
+                return Optional.empty();
+            }
+            return Optional.of(new BlockHitResult(
+                    Vec3.atCenterOf(ground).add(0.0D, 0.5D, 0.0D), Direction.UP, ground, false));
+        }
+        return Optional.empty();
     }
 
     public static ExtraElytra.Status elytraStatus(ExtraElytra module, LocalPlayer player) {

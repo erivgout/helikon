@@ -122,6 +122,7 @@ import dev.helikon.client.module.movement.Flight;
 import dev.helikon.client.module.movement.Freecam;
 import dev.helikon.client.module.movement.FreecamAccess;
 import dev.helikon.client.module.movement.Jetpack;
+import dev.helikon.client.module.movement.Clutch;
 import dev.helikon.client.module.movement.MinecraftAdvancedMovementAccess;
 import dev.helikon.client.module.movement.MovementModuleAccess;
 import dev.helikon.client.module.movement.NoFall;
@@ -462,6 +463,7 @@ public final class HelikonClient implements ClientModInitializer {
         ExtraElytra extraElytra = new ExtraElytra();
         Scaffold scaffold = new Scaffold();
         TpClick tpClick = new TpClick();
+        Clutch clutch = new Clutch();
         Timer timer = new Timer();
         Blink blink = new Blink();
         AutoEat autoEat = new AutoEat(new MinecraftUseKeyAccess());
@@ -558,6 +560,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(extraElytra);
         modules.register(scaffold);
         modules.register(tpClick);
+        modules.register(clutch);
         modules.register(timer);
         modules.register(blink);
         modules.register(autoEat);
@@ -676,6 +679,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));
                 modules.runGuarded(scaffold, "tick", () -> MinecraftAdvancedMovementAccess.tickScaffold(scaffold, clientTick));
                 modules.runGuarded(tpClick, "tick", () -> MinecraftTpClickAccess.tick(tpClick, INPUT_READER));
+                modules.runGuarded(clutch, "tick", () -> MinecraftAdvancedMovementAccess.tickClutch(clutch, clientTick));
                 modules.runGuarded(autoEat, "tick", () -> tickAutoEat(autoEat));
                 modules.runGuarded(autoTool, "tick", () -> tickAutoTool(autoTool));
                 modules.runGuarded(autoArmor, "tick", () -> tickAutoArmor(autoArmor, clientTick));

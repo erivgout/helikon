@@ -226,10 +226,14 @@ open/close; keyboard, mouse-button, and scroll input; HUD/world/entity/block
 outline rendering; player movement/rotation; item use, attack, block break, and
 block place; inventory updates; chat send/receive; packet observation; chunk
 load/unload; and resource reload boundaries. The current Fabric bridge publishes
-tick, world connection, identity-aware screen transitions, and accepted normal
-chat observations. The catalog is intentionally ahead of adapter coverage:
-future version-specific adapters must publish the remaining boundaries only
-after their 26.2 hooks are verified. Event payloads deliberately contain local primitives
+tick, world connection, identity-aware screen transitions, accepted normal chat,
+world render, and sampled local-player lifecycle/movement/rotation/inventory
+observations. The player sampler uses a bounded local fingerprint of
+the current local inventory and publishes only a revision when it changes; it
+does not retain item stacks or inventory contents. The catalog is intentionally
+ahead of adapter coverage: future version-specific adapters must publish input,
+entity/block-outline render, interaction, packet, chunk, and resource-reload
+boundaries only after their 26.2 hooks are verified. Event payloads deliberately contain local primitives
 and IDs, never Minecraft packet, screen, entity, or world objects.
 
 ## Commands

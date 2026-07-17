@@ -26,6 +26,9 @@ import dev.helikon.client.event.EventBus;
 import dev.helikon.client.event.ScreenEvent;
 import dev.helikon.client.event.ScreenTransitionTracker;
 import dev.helikon.client.event.WorldEvent;
+import dev.helikon.client.event.PlayerStateEventTracker;
+import dev.helikon.client.event.PlayerStateSnapshot;
+import dev.helikon.client.event.RenderEvent;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.friend.FriendToggleGesture;
 import dev.helikon.client.gui.ClickGuiWindowState;
@@ -237,6 +240,7 @@ public final class HelikonClient implements ClientModInitializer {
     private boolean screenWasOpenAtTickStart;
     private boolean helikonScreenWasOpenAtTickStart;
     private final ScreenTransitionTracker screenTransitions = new ScreenTransitionTracker();
+    private final PlayerStateEventTracker playerStateEvents = new PlayerStateEventTracker();
     private long clientTick;
     private ServerData reconnectServer;
     private ServerData lastConnectedServer;
@@ -503,6 +507,7 @@ public final class HelikonClient implements ClientModInitializer {
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             events.post(new WorldEvent(WorldEvent.Phase.LEAVE, serverAddress(lastConnectedServer)));
+            playerStateEvents.reset();
             modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));
             if (timer.isEnabled()) {
                 modules.setEnabled(timer, false);
@@ -526,7 +531,10 @@ public final class HelikonClient implements ClientModInitializer {
                 new TargetHud(targetHud, combatTracker, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "reach_display"),
                 new ReachDisplayHud(reachDisplay, combatTracker, panicState));
-        LevelRenderEvents.BEFORE_GIZMOS.register(worldVisuals::render);
+        LevelRenderEvents.BEFORE_GIZMOS.register(context -> {
+            events.post(new RenderEvent(RenderEvent.Kind.WORLD, 0.0D, ""));
+            worldVisuals.render(context);
+        });
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             observeScreenTransition(client);
             screenWasOpenAtTickStart = client.gui.screen() != null;
@@ -535,6 +543,7 @@ public final class HelikonClient implements ClientModInitializer {
         });
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             clientTick++;
+            playerStateEvents.observe(playerStateSnapshot(client)).forEach(events::post);
             events.post(new ClientTickEvent(ClientTickEvent.Phase.POST));
             BetterChatDisplayAccess.tickSmoothScroll();
             worldVisuals.tick(client);
@@ -582,6 +591,25 @@ public final class HelikonClient implements ClientModInitializer {
 
     private static String serverAddress(ServerData server) {
         return server == null || server.ip == null ? "" : server.ip;
+    }
+
+    /** Samples only local player state; event interpretation remains in the Minecraft-free tracker. */
+    private static PlayerStateSnapshot playerStateSnapshot(Minecraft client) {
+        if (client.player == null) {
+            return null;
+        }
+        Player player = client.player;
+        Inventory inventory = player.getInventory();
+        long fingerprint = 1L;
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            fingerprint = 31L * fingerprint + System.identityHashCode(stack.getItem());
+            fingerprint = 31L * fingerprint + stack.getCount();
+            fingerprint = 31L * fingerprint + stack.getDamageValue();
+            fingerprint = 31L * fingerprint + stack.getComponents().hashCode();
+        }
+        return new PlayerStateSnapshot(player.isAlive(), player.getX(), player.getY(), player.getZ(),
+                player.getYRot(), player.getXRot(), inventory.getSelectedSlot(), fingerprint);
     }
 
     private void activatePanic() {

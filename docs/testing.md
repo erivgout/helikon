@@ -20,6 +20,8 @@ load, atomic backup, malformed-file recovery, safe profile names, and local
 command wiring are covered by `ProfileManagerTest` and `ProfileCommandTest`.
 `EventBusTest` covers typed dispatch, subscription removal, listener-failure
 isolation, event-catalog coverage, and malformed event-payload rejection.
+`PlayerStateEventTrackerTest` covers lifecycle, movement, rotation, inventory
+revision, and world-absence baseline transitions without Minecraft classes.
 Fullbright's gamma restoration, setting-driven Night Vision lifecycle, and
 identity-safe effect restoration are covered by `FullbrightGammaControllerTest`,
 `FullbrightTest`, and `ClientEffectOverrideStateTest`.

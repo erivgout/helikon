@@ -9,8 +9,9 @@ waypoints, local macros, and tests.
 
 The internal event bus uses typed, Minecraft-free event models. Its currently
 wired lifecycle bridge covers ticks, local world connections, identity-aware
-screen changes, and accepted ordinary chat; the remaining event models await
-target-version-specific adapter verification.
+screen changes, accepted ordinary chat, world rendering, and local player-state
+observations; the remaining event models await target-version-specific adapter
+verification.
 
 Its local settings API supports booleans, integers and decimals, enums,
 colors, keyboard binds, bounded text and text lists, block/item/entity ID

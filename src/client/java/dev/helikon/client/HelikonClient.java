@@ -48,6 +48,7 @@ import dev.helikon.client.gui.HelikonHudEditorScreen;
 import dev.helikon.client.gui.HelikonThemeEditorScreen;
 import dev.helikon.client.gui.HelikonAutoReconnectScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
+import dev.helikon.client.hud.ArrowsHud;
 import dev.helikon.client.hud.BetterCrosshairHud;
 import dev.helikon.client.hud.CoordinateHud;
 import dev.helikon.client.hud.ClientTpsEstimate;
@@ -178,6 +179,7 @@ import dev.helikon.client.module.world.Nuker;
 import dev.helikon.client.module.render.Fullbright;
 import dev.helikon.client.module.render.AntiBlind;
 import dev.helikon.client.module.render.AntiTotemAnimation;
+import dev.helikon.client.module.render.Arrows;
 import dev.helikon.client.module.render.BetterCrosshair;
 import dev.helikon.client.module.render.BetterNametags;
 import dev.helikon.client.module.render.Dinnerbone;
@@ -367,6 +369,7 @@ public final class HelikonClient implements ClientModInitializer {
         MiniPlayer miniPlayer = new MiniPlayer();
         DamageIndicators damageIndicators = new DamageIndicators();
         Breadcrumbs breadcrumbs = new Breadcrumbs();
+        Arrows arrows = new Arrows();
         modules.register(antiBlind);
         modules.register(antiTotemAnimation);
         modules.register(betterCrosshair);
@@ -385,6 +388,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(miniPlayer);
         modules.register(damageIndicators);
         modules.register(breadcrumbs);
+        modules.register(arrows);
         RenderModuleAccess.install(antiBlind, betterCrosshair, antiTotemAnimation, dinnerbone, rainbowEnchant,
                 hudLayout, panicState);
         AutoSprint autoSprint = new AutoSprint();
@@ -765,6 +769,8 @@ public final class HelikonClient implements ClientModInitializer {
                 new BetterCrosshairHud(betterCrosshair, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "radar"),
                 new RadarHud(radar, friends, panicState, hudLayout));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "arrows"),
+                new ArrowsHud(arrows, friends, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "saturation"),
                 new SaturationHud(saturationDisplay, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "mini_player"),

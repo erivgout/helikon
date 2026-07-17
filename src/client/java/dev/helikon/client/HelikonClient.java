@@ -12,6 +12,7 @@ import dev.helikon.client.command.MinecraftTextClipboard;
 import dev.helikon.client.command.MinecraftServerCommandSender;
 import dev.helikon.client.command.MinecraftKeyNameResolver;
 import dev.helikon.client.chat.OutgoingChatFormatter;
+import dev.helikon.client.chat.AnnouncerObservationTracker;
 import dev.helikon.client.chat.ChatHistoryManager;
 import dev.helikon.client.chat.ChatDisplayAccess;
 import dev.helikon.client.chat.BetterChatDisplayAccess;
@@ -32,6 +33,7 @@ import dev.helikon.client.event.ScreenTransitionTracker;
 import dev.helikon.client.event.WorldEvent;
 import dev.helikon.client.event.PlayerStateEventTracker;
 import dev.helikon.client.event.PlayerStateSnapshot;
+import dev.helikon.client.event.PlayerLifecycleEvent;
 import dev.helikon.client.event.RenderEvent;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.friend.FriendToggleGesture;
@@ -123,6 +125,9 @@ import dev.helikon.client.module.chat.ChatTimestamps;
 import dev.helikon.client.module.chat.ChatColor;
 import dev.helikon.client.module.chat.BetterChat;
 import dev.helikon.client.module.chat.ChatHistory;
+import dev.helikon.client.module.chat.Announcer;
+import dev.helikon.client.module.chat.AnnouncerAccess;
+import dev.helikon.client.module.chat.AnnouncementTrigger;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.BuilderAssist;
 import dev.helikon.client.module.world.ChestItem;
@@ -163,7 +168,9 @@ import dev.helikon.client.waypoint.WaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.event.client.player.ClientPlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
@@ -354,6 +361,7 @@ public final class HelikonClient implements ClientModInitializer {
         ChatTimestamps chatTimestamps = new ChatTimestamps();
         ChatColor chatColor = new ChatColor();
         BetterChat betterChat = new BetterChat();
+        Announcer announcer = new Announcer();
         ChatHistory chatHistoryModule = new ChatHistory();
         chatHistoryModule.setStorageHooks(
                 () -> chatHistory.activate(chatHistoryModule, currentChatHistoryScope()),
@@ -408,6 +416,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(chatTimestamps);
         modules.register(chatColor);
         modules.register(betterChat);
+        modules.register(announcer);
         modules.register(chatHistoryModule);
         modules.register(antiBot);
         modules.register(triggerBot);
@@ -420,6 +429,7 @@ public final class HelikonClient implements ClientModInitializer {
         ChatDisplayAccess.install(chatTimestamps);
         ChatDisplayAccess.install(chatColor);
         BetterChatDisplayAccess.install(betterChat);
+        AnnouncerAccess.install(announcer, normalChatSender);
         MovementModuleAccess.install(autoWalk, autoSneak);
         InventoryWalkAccess.install(inventoryWalk);
         ParkourAccess.install(autoParkour);
@@ -462,6 +472,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(chestSteal, "tick", () -> tickChestSteal(chestSteal, clientTick));
                 modules.runGuarded(builderAssist, "tick", () -> MinecraftBuilderAssistAccess.tick(builderAssist, clientTick));
                 modules.runGuarded(chatSpammer, "tick", () -> tickChatSpammer(chatSpammer));
+                modules.runGuarded(announcer, "tick", HelikonClient::tickAnnouncer);
                 combatAttackStarted.set(false);
                 combatSnapshot.set(MinecraftCombatAccess.Snapshot.unavailable());
                 modules.runGuarded(antiBot, "observe", () -> combatSnapshot.set(MinecraftCombatAccess.observe(friends, antiBot)));
@@ -564,11 +575,15 @@ public final class HelikonClient implements ClientModInitializer {
             reconnectServer = null;
             lastConnectedServer = client.getCurrentServer();
             reconnectAttemptInFlight = false;
+            AnnouncerAccess.enqueue(AnnouncementTrigger.JOIN, "joined the world");
             chatHistory.switchScope(chatHistoryModule, currentChatHistoryScope());
             events.post(new WorldEvent(WorldEvent.Phase.JOIN, serverAddress(lastConnectedServer)));
             modules.runGuarded(autoReconnect, "connect", autoReconnect::onConnected);
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            modules.runGuarded(announcer, "leave", () -> announcer.messageFor(AnnouncementTrigger.LEAVE,
+                    "left the world", System.currentTimeMillis(), false).ifPresent(notifier::info));
+            AnnouncerAccess.reset();
             try {
                 chatHistory.saveIfNeeded();
             } catch (ConfigurationException exception) {
@@ -579,6 +594,22 @@ public final class HelikonClient implements ClientModInitializer {
             modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));
             if (timer.isEnabled()) {
                 modules.setEnabled(timer, false);
+            }
+        });
+        events.subscribe(PlayerLifecycleEvent.class, event -> {
+            if (event.phase() == PlayerLifecycleEvent.Phase.DEATH) {
+                AnnouncerAccess.enqueue(AnnouncementTrigger.DEATH, "died");
+            }
+        });
+        ClientPlayerBlockBreakEvents.AFTER.register((level, player, position, state) -> {
+            if (player == Minecraft.getInstance().player) {
+                AnnouncerAccess.enqueue(AnnouncementTrigger.BLOCK_MINED,
+                        BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
+            }
+        });
+        ClientEntityEvents.ENTITY_UNLOAD.register((entity, level) -> {
+            if (entity instanceof net.minecraft.world.entity.LivingEntity living) {
+                AnnouncerAccess.observeEntityUnload(entity.getUUID(), living.isDeadOrDying(), System.currentTimeMillis());
             }
         });
 
@@ -661,6 +692,17 @@ public final class HelikonClient implements ClientModInitializer {
 
     private static String serverAddress(ServerData server) {
         return server == null || server.ip == null ? "" : server.ip;
+    }
+
+    private static void tickAnnouncer() {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) {
+            AnnouncerAccess.reset();
+            return;
+        }
+        AnnouncerAccess.tick(new AnnouncerObservationTracker.Fact(client.player.getX(), client.player.getY(),
+                        client.player.getZ(), client.player.getHealth(), client.level.dimension().identifier().toString()),
+                client.gui.screen() != null, System.currentTimeMillis());
     }
 
     private String currentChatHistoryScope() {

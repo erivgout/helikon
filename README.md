@@ -183,6 +183,13 @@ When explicitly enabled, records stay in schema-versioned per-server local
 files with retention pruning; they are never transmitted or used for private
 message inference.
 
+Announcer is off by default, and every local trigger is separately disabled
+until selected. It may send a bounded normal Minecraft chat line for a death,
+confirmed direct melee kill, pickup, distance, mined block, dimension, join,
+advancement, low-health, or totem event, subject to a local cooldown, cap, and
+screen pause. A leave trigger uses local Helikon feedback because no valid
+server connection remains after disconnect.
+
 PrivateMessageHelper intercepts `.pm` and `.reply` locally, validates a player
 name and a bounded message, then uses Minecraft's normal server-command route
 with configurable `msg` and `r` command tokens. The `.` command itself is

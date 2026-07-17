@@ -1,6 +1,8 @@
 package dev.helikon.client.mixin;
 
 import dev.helikon.client.module.render.RenderModuleAccess;
+import dev.helikon.client.module.chat.AnnouncementTrigger;
+import dev.helikon.client.module.chat.AnnouncerAccess;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,6 +15,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class GameRendererMixin {
     @Inject(method = "displayItemActivation", at = @At("HEAD"), cancellable = true)
     private void helikon$hideDeathProtectionActivation(ItemStack itemStack, CallbackInfo callback) {
+        if (itemStack.has(DataComponents.DEATH_PROTECTION)) {
+            AnnouncerAccess.enqueue(AnnouncementTrigger.TOTEM_USE, "used a totem");
+        }
         if (RenderModuleAccess.shouldHideItemActivation(itemStack.has(DataComponents.DEATH_PROTECTION))) {
             callback.cancel();
         }

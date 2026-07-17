@@ -160,6 +160,12 @@ has no network path of its own. Persistent logging is explicit and disabled by
 default; enabling it writes a local per-server file rather than sending logs,
 searches, copied content, player names, or reopened drafts to any service.
 
+Announcer may pass one configured, bounded ordinary chat line to Minecraft's
+existing player-chat connection only after a user enables both the module and
+the relevant trigger. It applies a local cooldown and session cap, rejects
+slash/local-command templates, and never constructs or changes a packet. Its
+observed trigger facts and completed-advancement IDs stay only in session memory.
+
 ## Future policy
 
 Optional external integrations must be isolated under

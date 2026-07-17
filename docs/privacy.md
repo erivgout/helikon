@@ -35,6 +35,13 @@ corrupt-file recovery. `.history copy` and `.history player` send text only to
 the local system clipboard, while `.history reopen` opens an unsent local
 draft. No record, search query, or clipboard selection is transmitted.
 
+Announcer is disabled by default, and every individual trigger is disabled by
+default. Its transient local position/health/dimension observations, recent
+attack candidate, and completed-advancement identifiers stay only in session
+memory. If a user enables a trigger, the resulting configured ordinary chat
+text uses only Minecraft's normal server connection; it is never sent to a
+Helikon service or retained in a Helikon log.
+
 EntityESP, BlockESP, Tracers, and Breadcrumbs use only the entities, blocks,
 and local player positions that Minecraft has already loaded for the current
 session. Their bounded caches and trails are not written to disk or transmitted

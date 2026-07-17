@@ -254,6 +254,16 @@ adapter for reopening an unsent `ChatScreen` draft; the Minecraft-free
 `ScheduledChatInputReopener` queues that action for the next client tick so
 the local-command callback cannot race normal chat-screen closure.
 
+`Announcer` owns a Minecraft-free trigger policy: every trigger defaults off,
+the rendered ordinary-chat template rejects command-like text, and one shared
+minimum delay/session cap prevents automatic bursts. `AnnouncerObservationTracker`
+turns successive local position, health, and dimension facts into threshold
+crossings. `AnnouncerAccess` queues only verified hook observations and drains
+them during the existing guarded client tick; it never constructs a packet.
+Confirmed kills are deliberately conservative (a direct local melee attempt
+followed by that entity unloading dead), while a post-disconnect leave is local
+Helikon feedback because the normal connection is no longer valid.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

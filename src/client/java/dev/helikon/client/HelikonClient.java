@@ -84,6 +84,8 @@ import dev.helikon.client.module.combat.AntiFireball;
 import dev.helikon.client.module.combat.AutoPearl;
 import dev.helikon.client.module.combat.AutoPotion;
 import dev.helikon.client.module.combat.BlockHit;
+import dev.helikon.client.module.combat.BackTrack;
+import dev.helikon.client.module.combat.MinecraftBackTrackAccess;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.HitFlick;
@@ -515,6 +517,7 @@ public final class HelikonClient implements ClientModInitializer {
         WTap wtap = new WTap();
         CrystalAura crystalAura = new CrystalAura();
         AntiFireball antiFireball = new AntiFireball();
+        BackTrack backTrack = new BackTrack();
         ReachDisplay reachDisplay = new ReachDisplay();
         RightClicker rightClicker = new RightClicker();
         CombatTargetTracker combatTracker = new CombatTargetTracker();
@@ -602,6 +605,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(wtap);
         modules.register(crystalAura);
         modules.register(antiFireball);
+        modules.register(backTrack);
         modules.register(reachDisplay);
         modules.register(rightClicker);
         modules.register(annoy);
@@ -756,6 +760,7 @@ public final class HelikonClient implements ClientModInitializer {
                                 combatSnapshot.get()));
                     }
                 });
+                modules.runGuarded(backTrack, "tick", () -> MinecraftBackTrackAccess.tick(backTrack, friends));
             }
         });
 
@@ -857,6 +862,7 @@ public final class HelikonClient implements ClientModInitializer {
             } catch (ConfigurationException exception) {
                 LOGGER.log(Level.WARNING, "Unable to save local chat history while disconnecting", exception);
             }
+            MinecraftBackTrackAccess.reset();
             events.post(new WorldEvent(WorldEvent.Phase.LEAVE, serverAddress(lastConnectedServer)));
             MinecraftHitFlickAccess.reset();
             MinecraftHitFlickAccess.reset();

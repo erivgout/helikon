@@ -44,6 +44,8 @@
     "WTapAttackMixin",
     "SectionCompilerXRayMixin",
     "ConnectionPacketObservationMixin",
+    "ConnectionBackTrackMixin",
+    "ClientboundMoveEntityPacketAccessor",
     "MinecraftAccessor"
   ],
   "injectors": {

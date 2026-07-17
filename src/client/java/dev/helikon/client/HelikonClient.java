@@ -721,27 +721,28 @@ public final class HelikonClient implements ClientModInitializer {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "active_modules"),
                 new ActiveModulesHud(modules, hudLayout, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "waypoints"),
-                new WaypointHud(waypoints, waypointLocations, panicState));
+                new WaypointHud(waypoints, waypointLocations, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "better_crosshair"),
                 new BetterCrosshairHud(betterCrosshair, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "radar"),
                 new RadarHud(radar, friends, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "saturation"),
-                new SaturationHud(saturationDisplay, panicState));
+                new SaturationHud(saturationDisplay, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "mini_player"),
                 new MiniPlayerHud(miniPlayer, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "elytra"),
-                new ElytraHud(extraElytra, panicState));
+                new ElytraHud(extraElytra, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "target_hud"),
                 new TargetHud(targetHud, combatTracker, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "reach_display"),
-                new ReachDisplayHud(reachDisplay, combatTracker, panicState));
+                new ReachDisplayHud(reachDisplay, combatTracker, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "inventory_preview"),
                 new InventoryPreviewHud(inventoryPreview, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "durability_warnings"),
-                new DurabilityWarningsHud(durabilityWarnings, panicState));
+                new DurabilityWarningsHud(durabilityWarnings, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "coordinates"),
-                new CoordinateHud(deathCoordinates, logoutCoordinates, coordinateTracker, waypointLocations, panicState));
+                new CoordinateHud(deathCoordinates, logoutCoordinates, coordinateTracker, waypointLocations, panicState,
+                        hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "debug_overlay"),
                 debugOverlayHud);
         LevelRenderEvents.BEFORE_GIZMOS.register(context -> {

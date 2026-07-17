@@ -23,15 +23,22 @@ public final class DurabilityWarningsHud implements HudElement {
 
     private final DurabilityWarnings module;
     private final PanicState panicState;
+    private final HudLayout layout;
 
     public DurabilityWarningsHud(DurabilityWarnings module, PanicState panicState) {
+        this(module, panicState, new HudLayout());
+    }
+
+    public DurabilityWarningsHud(DurabilityWarnings module, PanicState panicState, HudLayout layout) {
         this.module = Objects.requireNonNull(module, "module");
         this.panicState = Objects.requireNonNull(panicState, "panicState");
+        this.layout = Objects.requireNonNull(layout, "layout");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (!module.isEnabled() || panicState.customHudHidden()) {
+        HudElementPlacement placement = layout.element(HudElementId.DURABILITY_WARNINGS);
+        if (!module.isEnabled() || !placement.enabled() || panicState.customHudHidden()) {
             return;
         }
         Minecraft client = Minecraft.getInstance();
@@ -45,10 +52,11 @@ public final class DurabilityWarningsHud implements HudElement {
         List<String> lines = warnings.stream().map(DurabilityWarningsHud::format).toList();
         int width = lines.stream().mapToInt(client.font::width).max().orElse(0) + PADDING * 2;
         int height = lines.size() * client.font.lineHeight + PADDING * 2;
-        graphics.fill(X, Y, X + width, Y + height, 0xB014161B);
+        HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
+        graphics.fill(bounds.x(), bounds.y(), bounds.x() + width, bounds.y() + height, 0xB014161B);
         for (int index = 0; index < lines.size(); index++) {
-            graphics.text(client.font, Component.literal(lines.get(index)), X + PADDING,
-                    Y + PADDING + index * client.font.lineHeight, 0xFFFF8A80, true);
+            graphics.text(client.font, Component.literal(lines.get(index)), bounds.x() + PADDING,
+                    bounds.y() + PADDING + index * client.font.lineHeight, 0xFFFF8A80, true);
         }
     }
 

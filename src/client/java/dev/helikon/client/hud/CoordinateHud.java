@@ -27,19 +27,28 @@ public final class CoordinateHud implements HudElement {
     private final CoordinateTracker tracker;
     private final WaypointLocationProvider locations;
     private final PanicState panicState;
+    private final HudLayout layout;
 
     public CoordinateHud(DeathCoordinates deathCoordinates, LogoutCoordinates logoutCoordinates,
                          CoordinateTracker tracker, WaypointLocationProvider locations, PanicState panicState) {
+        this(deathCoordinates, logoutCoordinates, tracker, locations, panicState, new HudLayout());
+    }
+
+    public CoordinateHud(DeathCoordinates deathCoordinates, LogoutCoordinates logoutCoordinates,
+                         CoordinateTracker tracker, WaypointLocationProvider locations, PanicState panicState,
+                         HudLayout layout) {
         this.deathCoordinates = Objects.requireNonNull(deathCoordinates, "deathCoordinates");
         this.logoutCoordinates = Objects.requireNonNull(logoutCoordinates, "logoutCoordinates");
         this.tracker = Objects.requireNonNull(tracker, "tracker");
         this.locations = Objects.requireNonNull(locations, "locations");
         this.panicState = Objects.requireNonNull(panicState, "panicState");
+        this.layout = Objects.requireNonNull(layout, "layout");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (panicState.customHudHidden()) {
+        HudElementPlacement placement = layout.element(HudElementId.COORDINATES);
+        if (!placement.enabled() || panicState.customHudHidden()) {
             return;
         }
         List<String> lines = locations.currentLocation().map(location -> lines(location.context().scope())).orElseGet(List::of);
@@ -49,11 +58,11 @@ public final class CoordinateHud implements HudElement {
         Minecraft client = Minecraft.getInstance();
         int width = lines.stream().mapToInt(client.font::width).max().orElse(0) + PADDING * 2;
         int height = lines.size() * client.font.lineHeight + PADDING * 2;
-        int y = Math.max(5, graphics.guiHeight() - height - 5);
-        graphics.fill(X, y, X + width, y + height, 0xB014161B);
+        HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
+        graphics.fill(bounds.x(), bounds.y(), bounds.x() + width, bounds.y() + height, 0xB014161B);
         for (int index = 0; index < lines.size(); index++) {
-            graphics.text(client.font, Component.literal(lines.get(index)), X + PADDING,
-                    y + PADDING + index * client.font.lineHeight, 0xFFB5D8FF, true);
+            graphics.text(client.font, Component.literal(lines.get(index)), bounds.x() + PADDING,
+                    bounds.y() + PADDING + index * client.font.lineHeight, 0xFFB5D8FF, true);
         }
     }
 

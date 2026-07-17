@@ -166,6 +166,10 @@ key (`ConfigurationManagerTest`).
 4. Press Escape and verify the ClickGUI returns. Close it, relaunch the
    client, and verify the enabled state, position, and presentation choices are restored from
    `config/helikon/hud.json`.
+   Cycle the **Telemetry** selector through Waypoints, Coordinates, Saturation,
+   Elytra, Reach, and Durability warnings. Toggle one off, drag another preview
+   to a distinct position, close/reopen the editor, and verify both local
+   settings persist and affect only that HUD element.
 5. Replace `hud.json` with invalid JSON, relaunch, and verify Helikon creates
    `hud.corrupt-<timestamp>.json` and returns the element to its default
    position.

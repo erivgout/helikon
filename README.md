@@ -229,7 +229,9 @@ list. Open the ClickGUI with Right Shift and select **HUD** in its header;
 drag the preview (it snaps to edges and centre), toggle it, choose registry,
 alphabetical, or width sorting, left/right alignment, accent/rainbow color,
 background, text shadow, scale, and padding. The layout is stored locally in
-`config/helikon/hud.json`.
+`config/helikon/hud.json`. The editor also provides selectable draggable local
+placements for the Waypoints, Coordinates, Saturation, Elytra, Reach, and
+Durability Warnings HUD elements.
 
 ## Requirements
 

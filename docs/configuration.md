@@ -58,6 +58,9 @@ The Active Modules HUD has its own schema-versioned `hud.json` in the same
 directory. It stores enabled state, top-left scaled-GUI coordinates, scale,
 padding, backdrop/text-shadow choices, sort/alignment/color modes. Schema 2
 loads the earlier position-only schema 1 safely with presentation defaults.
+Schema 3 also persists enabled state plus anchored offsets for editable
+telemetry elements (waypoints, coordinates, saturation, Elytra, reach, and
+durability warnings); older files retain their safe built-in placements.
 The HUD editor saves it when closed; normal client shutdown also saves it. Its
 writes use `hud.json.bak` and move malformed files to
 `hud.corrupt-<timestamp>.json`. Invalid individual HUD values are logged and

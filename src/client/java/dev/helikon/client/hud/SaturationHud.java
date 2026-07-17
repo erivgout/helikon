@@ -17,24 +17,31 @@ public final class SaturationHud implements HudElement {
 
     private final SaturationDisplay module;
     private final PanicState panicState;
+    private final HudLayout layout;
 
     public SaturationHud(SaturationDisplay module, PanicState panicState) {
+        this(module, panicState, new HudLayout());
+    }
+
+    public SaturationHud(SaturationDisplay module, PanicState panicState, HudLayout layout) {
         this.module = Objects.requireNonNull(module, "module");
         this.panicState = Objects.requireNonNull(panicState, "panicState");
+        this.layout = Objects.requireNonNull(layout, "layout");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
         Minecraft client = Minecraft.getInstance();
-        if (!module.isEnabled() || panicState.customHudHidden() || client.player == null) {
+        HudElementPlacement placement = layout.element(HudElementId.SATURATION);
+        if (!module.isEnabled() || !placement.enabled() || panicState.customHudHidden() || client.player == null) {
             return;
         }
         String text = format(client.player.getFoodData().getSaturationLevel());
         int width = client.font.width(text) + 6;
         int height = client.font.lineHeight + 6;
-        int y = Math.max(5, graphics.guiHeight() - height - 5);
-        graphics.fill(X, y, X + width, y + height, 0xB014161B);
-        graphics.text(client.font, Component.literal(text), X + 3, y + 3, 0xFFE5EDF5, true);
+        HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
+        graphics.fill(bounds.x(), bounds.y(), bounds.x() + width, bounds.y() + height, 0xB014161B);
+        graphics.text(client.font, Component.literal(text), bounds.x() + 3, bounds.y() + 3, 0xFFE5EDF5, true);
     }
 
     static String format(float saturation) {

@@ -20,23 +20,32 @@ public final class ReachDisplayHud implements HudElement {
     private final ReachDisplay module;
     private final CombatTargetTracker tracker;
     private final PanicState panicState;
+    private final HudLayout layout;
 
     public ReachDisplayHud(ReachDisplay module, CombatTargetTracker tracker, PanicState panicState) {
+        this(module, tracker, panicState, new HudLayout());
+    }
+
+    public ReachDisplayHud(ReachDisplay module, CombatTargetTracker tracker, PanicState panicState, HudLayout layout) {
         this.module = Objects.requireNonNull(module, "module");
         this.tracker = Objects.requireNonNull(tracker, "tracker");
         this.panicState = Objects.requireNonNull(panicState, "panicState");
+        this.layout = Objects.requireNonNull(layout, "layout");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (!module.isEnabled() || panicState.customHudHidden()) {
+        HudElementPlacement placement = layout.element(HudElementId.REACH);
+        if (!module.isEnabled() || !placement.enabled() || panicState.customHudHidden()) {
             return;
         }
         String text = tracker.lastAttackDistance().map(distance -> String.format(Locale.ROOT, "Reach %.2f", distance))
                 .orElse("Reach --");
         Minecraft client = Minecraft.getInstance();
         int width = client.font.width(text) + 6;
-        graphics.fill(X, Y, X + width, Y + client.font.lineHeight + 6, 0xB014161B);
-        graphics.text(client.font, Component.literal(text), X + 3, Y + 3, 0xFFE5EDF5, true);
+        int height = client.font.lineHeight + 6;
+        HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width, height);
+        graphics.fill(bounds.x(), bounds.y(), bounds.x() + width, bounds.y() + height, 0xB014161B);
+        graphics.text(client.font, Component.literal(text), bounds.x() + 3, bounds.y() + 3, 0xFFE5EDF5, true);
     }
 }

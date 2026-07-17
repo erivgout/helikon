@@ -595,6 +595,13 @@ snapping without Minecraft imports; `HelikonHudEditorScreen` is only the
 input/render adapter. The editor is reached from the **HUD** button in the
 ClickGUI header, saves once when it closes, and returns to the ClickGUI.
 
+`HudElementPlacement` provides the shared non-Active-Modules layout model:
+validated local enable state plus a top/bottom/left/right/centre anchor and
+offsets. Existing textual telemetry HUD renderers resolve their content bounds
+against that model instead of hard-coding screen coordinates. The editor shows
+one selectable telemetry preview at a time; it can be toggled and dragged,
+with a drag intentionally converting it to a stable top-left placement.
+
 The initial editor intentionally has one draggable element. Alignment, scale,
 background options, snapping, and other HUD elements remain future work.
 

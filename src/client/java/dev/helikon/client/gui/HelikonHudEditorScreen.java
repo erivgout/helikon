@@ -8,6 +8,8 @@ import dev.helikon.client.hud.ActiveModulesHud;
 import dev.helikon.client.hud.ActiveModulesLayout;
 import dev.helikon.client.hud.HudBounds;
 import dev.helikon.client.hud.HudEditorState;
+import dev.helikon.client.hud.HudElementId;
+import dev.helikon.client.hud.HudElementPlacement;
 import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.module.ModuleRegistry;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -33,13 +35,21 @@ public final class HelikonHudEditorScreen extends Screen {
     private static final int COLOR_ACCENT = 0xFFE8A33D;
     private static final int COLOR_DISABLED = 0xFF777D86;
     private static final int CHECKBOX_SIZE = 8;
-    private static final int HEADER_BOTTOM = 130;
+    private static final int HEADER_BOTTOM = 158;
+    private static final HudElementId[] TELEMETRY_ELEMENTS = {
+            HudElementId.WAYPOINTS, HudElementId.COORDINATES, HudElementId.SATURATION,
+            HudElementId.ELYTRA, HudElementId.REACH, HudElementId.DURABILITY_WARNINGS
+    };
 
     private final Screen parent;
     private final ModuleRegistry modules;
     private final HudLayout layout;
     private final HudConfigurationManager configuration;
     private final HudEditorState state;
+    private HudElementId selectedTelemetry = HudElementId.WAYPOINTS;
+    private boolean telemetryDragging;
+    private int telemetryDragOffsetX;
+    private int telemetryDragOffsetY;
 
     public HelikonHudEditorScreen(
             Screen parent,
@@ -86,6 +96,7 @@ public final class HelikonHudEditorScreen extends Screen {
                 style.enabled() ? previewColor() : COLOR_DISABLED, true, style.padding(), style.alignment(),
                 style.background(), style.textShadow());
         graphics.pose().popMatrix();
+        drawTelemetryPreview(graphics);
         super.extractRenderState(graphics, mouseX, mouseY, delta);
     }
 
@@ -101,6 +112,22 @@ public final class HelikonHudEditorScreen extends Screen {
         int mouseX = (int) event.x();
         int mouseY = (int) event.y();
         ActiveModulesLayout style = layout.activeModules();
+        if (isInside(mouseX, mouseY, 14, 126, 220, 11)) {
+            selectedTelemetry = nextTelemetry();
+            return true;
+        }
+        HudElementPlacement telemetry = layout.element(selectedTelemetry);
+        if (isInside(mouseX, mouseY, 14, 139, CHECKBOX_SIZE, CHECKBOX_SIZE)) {
+            telemetry.setEnabled(!telemetry.enabled());
+            return true;
+        }
+        HudBounds telemetryBounds = telemetryPreviewBounds();
+        if (telemetry.enabled() && telemetryBounds.contains(mouseX, mouseY)) {
+            telemetryDragging = true;
+            telemetryDragOffsetX = mouseX - telemetryBounds.x();
+            telemetryDragOffsetY = mouseY - telemetryBounds.y();
+            return true;
+        }
         if (isInside(mouseX, mouseY, 14, 31, CHECKBOX_SIZE, CHECKBOX_SIZE)) {
             style.setEnabled(!style.enabled());
             return true;
@@ -155,6 +182,13 @@ public final class HelikonHudEditorScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (event.button() == 0 && telemetryDragging) {
+            HudBounds bounds = telemetryPreviewBounds();
+            int x = Math.clamp((int) event.x() - telemetryDragOffsetX, 0, Math.max(0, width - bounds.width()));
+            int y = Math.clamp((int) event.y() - telemetryDragOffsetY, 0, Math.max(0, height - bounds.height()));
+            layout.element(selectedTelemetry).setAbsolutePosition(x, y);
+            return true;
+        }
         if (event.button() == 0 && state.dragTo((int) event.x(), (int) event.y(), width, height, previewBounds())) {
             return true;
         }
@@ -163,6 +197,10 @@ public final class HelikonHudEditorScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        if (event.button() == 0 && telemetryDragging) {
+            telemetryDragging = false;
+            return true;
+        }
         if (event.button() == 0 && state.isDragging()) {
             state.endDrag();
             return true;
@@ -208,6 +246,15 @@ public final class HelikonHudEditorScreen extends Screen {
         graphics.text(font, "Pad -", 104, 113, COLOR_TEXT_DIM, false);
         graphics.text(font, "Pad +", 149, 113, COLOR_TEXT_DIM, false);
         graphics.text(font, "Reset", 194, 113, COLOR_ACCENT, false);
+        HudElementPlacement telemetry = layout.element(selectedTelemetry);
+        graphics.text(font, "Telemetry: " + telemetryName(selectedTelemetry) + " (click to change)",
+                14, 126, COLOR_TEXT_DIM, false);
+        if (telemetry.enabled()) {
+            graphics.fill(14, 139, 14 + CHECKBOX_SIZE, 139 + CHECKBOX_SIZE, COLOR_ACCENT);
+        } else {
+            graphics.outline(14, 139, CHECKBOX_SIZE, CHECKBOX_SIZE, COLOR_TEXT_DIM);
+        }
+        graphics.text(font, "Show selected telemetry; drag its preview", 27, 139, COLOR_TEXT, false);
     }
 
     private List<String> previewLines() {
@@ -230,6 +277,43 @@ public final class HelikonHudEditorScreen extends Screen {
         return layout.activeModules().colorMode() == ActiveModulesLayout.ColorMode.RAINBOW
                 ? ActiveModules.rainbowColor(System.currentTimeMillis() / 50L)
                 : ActiveModulesHud.COLOR_TEXT;
+    }
+
+    private void drawTelemetryPreview(GuiGraphicsExtractor graphics) {
+        HudBounds bounds = telemetryPreviewBounds();
+        HudElementPlacement placement = layout.element(selectedTelemetry);
+        int color = placement.enabled() ? COLOR_TEXT : COLOR_DISABLED;
+        graphics.fill(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + bounds.height(), COLOR_PANEL);
+        graphics.outline(bounds.x(), bounds.y(), bounds.width(), bounds.height(), COLOR_ACCENT);
+        graphics.text(font, telemetryName(selectedTelemetry), bounds.x() + 3, bounds.y() + 3, color, true);
+    }
+
+    private HudBounds telemetryPreviewBounds() {
+        String name = telemetryName(selectedTelemetry);
+        int contentWidth = font.width(name) + 6;
+        int contentHeight = font.lineHeight + 6;
+        return layout.element(selectedTelemetry).bounds(width, height, contentWidth, contentHeight);
+    }
+
+    private HudElementId nextTelemetry() {
+        for (int index = 0; index < TELEMETRY_ELEMENTS.length; index++) {
+            if (TELEMETRY_ELEMENTS[index] == selectedTelemetry) {
+                return TELEMETRY_ELEMENTS[(index + 1) % TELEMETRY_ELEMENTS.length];
+            }
+        }
+        return TELEMETRY_ELEMENTS[0];
+    }
+
+    private static String telemetryName(HudElementId element) {
+        return switch (element) {
+            case WAYPOINTS -> "Waypoints";
+            case COORDINATES -> "Coordinates";
+            case SATURATION -> "Saturation";
+            case ELYTRA -> "Elytra";
+            case REACH -> "Reach";
+            case DURABILITY_WARNINGS -> "Durability warnings";
+            default -> throw new IllegalArgumentException("Not an editable telemetry element: " + element);
+        };
     }
 
     private static <E extends Enum<E>> E next(E value) {

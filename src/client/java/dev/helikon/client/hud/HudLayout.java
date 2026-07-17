@@ -1,5 +1,8 @@
 package dev.helikon.client.hud;
 
+import java.util.EnumMap;
+import java.util.Objects;
+
 /**
  * Minecraft-free persisted layout for the first Helikon HUD element. More
  * elements can be added here without coupling layout rules to rendering APIs.
@@ -10,9 +13,27 @@ public final class HudLayout {
     public static final int MAX_COORDINATE = 10_000;
 
     private final ActiveModulesLayout activeModules = new ActiveModulesLayout();
+    private final EnumMap<HudElementId, HudElementPlacement> elements = new EnumMap<>(HudElementId.class);
+
+    public HudLayout() {
+        for (HudElementId element : HudElementId.values()) {
+            elements.put(element, new HudElementPlacement(element));
+        }
+    }
 
     public ActiveModulesLayout activeModules() {
         return activeModules;
+    }
+
+    /** Returns a stable mutable local placement for a registered non-Active-Modules element. */
+    public HudElementPlacement element(HudElementId element) {
+        return elements.get(Objects.requireNonNull(element, "element"));
+    }
+
+    public void resetElements() {
+        for (HudElementId element : HudElementId.values()) {
+            elements.get(element).reset(element);
+        }
     }
 
     public boolean activeModulesEnabled() {

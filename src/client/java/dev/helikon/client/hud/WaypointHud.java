@@ -25,6 +25,7 @@ public final class WaypointHud implements HudElement {
     private final WaypointManager waypoints;
     private final WaypointLocationProvider locations;
     private final PanicState panicState;
+    private final HudLayout layout;
     private WaypointLocation cachedLocation;
     private long cachedRevision = Long.MIN_VALUE;
     private List<WaypointNavigation.LocatedWaypoint> cachedNearest = List.of();
@@ -34,14 +35,20 @@ public final class WaypointHud implements HudElement {
     }
 
     public WaypointHud(WaypointManager waypoints, WaypointLocationProvider locations, PanicState panicState) {
+        this(waypoints, locations, panicState, new HudLayout());
+    }
+
+    public WaypointHud(WaypointManager waypoints, WaypointLocationProvider locations, PanicState panicState,
+                       HudLayout layout) {
         this.waypoints = Objects.requireNonNull(waypoints, "waypoints");
         this.locations = Objects.requireNonNull(locations, "locations");
         this.panicState = Objects.requireNonNull(panicState, "panicState");
+        this.layout = Objects.requireNonNull(layout, "layout");
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (panicState.customHudHidden()) {
+        if (!layout.element(HudElementId.WAYPOINTS).enabled() || panicState.customHudHidden()) {
             clearCache();
             return;
         }
@@ -53,7 +60,7 @@ public final class WaypointHud implements HudElement {
                 cachedNearest = WaypointNavigation.nearestVisible(
                         waypoints.snapshotForContext(location.context()), location, MAX_LINES);
             }
-            draw(graphics, Minecraft.getInstance().font, cachedNearest);
+            draw(graphics, Minecraft.getInstance().font, cachedNearest, layout.element(HudElementId.WAYPOINTS));
         }, this::clearCache);
     }
 
@@ -63,7 +70,8 @@ public final class WaypointHud implements HudElement {
         cachedNearest = List.of();
     }
 
-    private static void draw(GuiGraphicsExtractor graphics, Font font, List<WaypointNavigation.LocatedWaypoint> located) {
+    private static void draw(GuiGraphicsExtractor graphics, Font font, List<WaypointNavigation.LocatedWaypoint> located,
+                             HudElementPlacement placement) {
         int lineCount = located.size();
         if (lineCount == 0) {
             return;
@@ -73,10 +81,11 @@ public final class WaypointHud implements HudElement {
             width = Math.max(width, font.width(line(located.get(index))));
         }
         int height = lineCount * font.lineHeight + PADDING * 2;
-        graphics.fill(X, Y, X + width + PADDING * 2, Y + height, BACKGROUND);
+        HudBounds bounds = placement.bounds(graphics.guiWidth(), graphics.guiHeight(), width + PADDING * 2, height);
+        graphics.fill(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + height, BACKGROUND);
         for (int index = 0; index < lineCount; index++) {
             WaypointNavigation.LocatedWaypoint waypoint = located.get(index);
-            graphics.text(font, line(waypoint), X + PADDING, Y + PADDING + index * font.lineHeight,
+            graphics.text(font, line(waypoint), bounds.x() + PADDING, bounds.y() + PADDING + index * font.lineHeight,
                     waypoint.waypoint().color(), true);
         }
     }

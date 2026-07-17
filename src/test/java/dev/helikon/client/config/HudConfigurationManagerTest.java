@@ -81,6 +81,24 @@ class HudConfigurationManagerTest {
     }
 
     @Test
+    void saveAndLoadPreserveTelemetryPlacements() {
+        HudConfigurationManager manager = new HudConfigurationManager(temporaryDirectory.resolve("helikon"));
+        HudLayout source = new HudLayout();
+        source.element(dev.helikon.client.hud.HudElementId.SATURATION).setEnabled(false);
+        source.element(dev.helikon.client.hud.HudElementId.SATURATION)
+                .set(dev.helikon.client.hud.HudElementId.Anchor.TOP_RIGHT, 9, 12);
+        manager.save(source);
+
+        HudLayout target = new HudLayout();
+        assertEquals(HudConfigurationManager.LoadResult.LOADED, manager.load(target));
+        var saturation = target.element(dev.helikon.client.hud.HudElementId.SATURATION);
+        assertFalse(saturation.enabled());
+        assertEquals(dev.helikon.client.hud.HudElementId.Anchor.TOP_RIGHT, saturation.anchor());
+        assertEquals(9, saturation.offsetX());
+        assertEquals(12, saturation.offsetY());
+    }
+
+    @Test
     void malformedConfigurationIsPreservedAndRestoresDefaults() throws IOException {
         HudConfigurationManager manager = new HudConfigurationManager(temporaryDirectory.resolve("helikon"));
         Files.createDirectories(manager.hudConfigurationPath().getParent());
@@ -89,13 +107,34 @@ class HudConfigurationManagerTest {
         HudLayout layout = new HudLayout();
         layout.setActiveModulesEnabled(false);
         layout.setActiveModulesPosition(50, 50);
+        layout.element(dev.helikon.client.hud.HudElementId.SATURATION).setEnabled(false);
+        layout.element(dev.helikon.client.hud.HudElementId.SATURATION)
+                .setAbsolutePosition(500, 500);
 
         assertEquals(HudConfigurationManager.LoadResult.RECOVERED_FROM_ERROR, manager.load(layout));
         assertTrue(layout.activeModulesEnabled());
         assertEquals(HudLayout.DEFAULT_ACTIVE_MODULES_X, layout.activeModulesX());
         assertEquals(HudLayout.DEFAULT_ACTIVE_MODULES_Y, layout.activeModulesY());
+        assertTrue(layout.element(dev.helikon.client.hud.HudElementId.SATURATION).enabled());
+        assertEquals(dev.helikon.client.hud.HudElementId.SATURATION.defaultAnchor(),
+                layout.element(dev.helikon.client.hud.HudElementId.SATURATION).anchor());
         try (var files = Files.list(manager.hudConfigurationPath().getParent())) {
             assertTrue(files.anyMatch(path -> path.getFileName().toString().startsWith("hud.corrupt-")));
         }
+    }
+
+    @Test
+    void missingActiveModulesResetsTelemetryPlacementsToo() throws IOException {
+        HudConfigurationManager manager = new HudConfigurationManager(temporaryDirectory.resolve("helikon"));
+        Files.createDirectories(manager.hudConfigurationPath().getParent());
+        Files.writeString(manager.hudConfigurationPath(), "{\"schemaVersion\":3}");
+        HudLayout layout = new HudLayout();
+        layout.element(dev.helikon.client.hud.HudElementId.REACH).setEnabled(false);
+        layout.element(dev.helikon.client.hud.HudElementId.REACH).setAbsolutePosition(400, 400);
+
+        assertEquals(HudConfigurationManager.LoadResult.LOADED, manager.load(layout));
+        assertTrue(layout.element(dev.helikon.client.hud.HudElementId.REACH).enabled());
+        assertEquals(dev.helikon.client.hud.HudElementId.REACH.defaultAnchor(),
+                layout.element(dev.helikon.client.hud.HudElementId.REACH).anchor());
     }
 }

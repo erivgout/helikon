@@ -6,6 +6,8 @@ import com.google.gson.JsonParser;
 import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.hud.ActiveModulesLayout;
 import dev.helikon.client.hud.ActiveModulesHud;
+import dev.helikon.client.hud.HudElementId;
+import dev.helikon.client.hud.HudElementPlacement;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -26,7 +28,7 @@ import java.util.logging.Logger;
  * global module configuration.
  */
 public final class HudConfigurationManager {
-    public static final int SCHEMA_VERSION = 2;
+    public static final int SCHEMA_VERSION = 3;
 
     private static final Logger LOGGER = Logger.getLogger(HudConfigurationManager.class.getName());
 
@@ -59,6 +61,7 @@ public final class HudConfigurationManager {
         } catch (Exception exception) {
             LOGGER.log(Level.WARNING, "Unable to load Helikon HUD configuration; using safe defaults", exception);
             layout.resetActiveModules();
+            layout.resetElements();
             preserveMalformedConfiguration();
             return LoadResult.RECOVERED_FROM_ERROR;
         }
@@ -99,6 +102,18 @@ public final class HudConfigurationManager {
         activeModules.addProperty("alignment", state.alignment().name().toLowerCase(Locale.ROOT));
         activeModules.addProperty("colorMode", state.colorMode().name().toLowerCase(Locale.ROOT));
         root.add("activeModules", activeModules);
+
+        JsonObject elements = new JsonObject();
+        for (HudElementId element : HudElementId.values()) {
+            HudElementPlacement placement = layout.element(element);
+            JsonObject value = new JsonObject();
+            value.addProperty("enabled", placement.enabled());
+            value.addProperty("anchor", placement.anchor().name().toLowerCase(Locale.ROOT));
+            value.addProperty("x", placement.offsetX());
+            value.addProperty("y", placement.offsetY());
+            elements.add(element.name().toLowerCase(Locale.ROOT), value);
+        }
+        root.add("elements", elements);
         return root;
     }
 
@@ -112,6 +127,7 @@ public final class HudConfigurationManager {
         if (activeModulesElement == null || !activeModulesElement.isJsonObject()) {
             LOGGER.warning("Missing or invalid activeModules HUD configuration; reset to defaults");
             layout.resetActiveModules();
+            layout.resetElements();
             return;
         }
 
@@ -135,6 +151,39 @@ public final class HudConfigurationManager {
                 ActiveModulesLayout.Alignment.LEFT));
         state.setColorMode(getOptionalEnum(activeModules, "colorMode", ActiveModulesLayout.ColorMode.class,
                 ActiveModulesLayout.ColorMode.ACCENT));
+        applyElementPlacements(root.get("elements"), layout);
+    }
+
+    private static void applyElementPlacements(JsonElement element, HudLayout layout) {
+        layout.resetElements();
+        if (element == null) {
+            return;
+        }
+        if (!element.isJsonObject()) {
+            LOGGER.warning("Invalid HUD element placement block; using defaults");
+            return;
+        }
+        JsonObject values = element.getAsJsonObject();
+        for (HudElementId id : HudElementId.values()) {
+            JsonElement value = values.get(id.name().toLowerCase(Locale.ROOT));
+            if (value == null) {
+                continue;
+            }
+            if (!value.isJsonObject()) {
+                LOGGER.warning(() -> "Invalid HUD placement for '" + id.name().toLowerCase(Locale.ROOT) + "'; reset");
+                continue;
+            }
+            JsonObject object = value.getAsJsonObject();
+            HudElementPlacement placement = layout.element(id);
+            placement.setEnabled(getOptionalBoolean(object, "enabled", true));
+            HudElementId.Anchor anchor = getOptionalEnum(object, "anchor", HudElementId.Anchor.class, id.defaultAnchor());
+            int x = getOptionalCoordinate(object, "x", id.defaultOffsetX());
+            int y = getOptionalCoordinate(object, "y", id.defaultOffsetY());
+            if (!placement.set(anchor, x, y)) {
+                LOGGER.warning(() -> "Invalid HUD placement for '" + id.name().toLowerCase(Locale.ROOT) + "'; reset");
+                placement.reset(id);
+            }
+        }
     }
 
     private static boolean getOptionalBoolean(JsonObject object, String property, boolean defaultValue) {

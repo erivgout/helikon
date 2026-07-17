@@ -37,6 +37,7 @@
     "LightmapRenderStateExtractorMixin",
     "LevelRendererEventMixin",
     "LivingEntityRendererMixin",
+    "LivingEntityPushMixin",
     "LivingEntityStepMixin",
     "LivingEntityEffectParticleMixin",
     "LocalPlayerNoSlowMixin",

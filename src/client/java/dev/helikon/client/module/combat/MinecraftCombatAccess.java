@@ -18,6 +18,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.SplashPotionItem;
 import net.minecraft.world.item.ThrowablePotionItem;
@@ -82,6 +83,35 @@ public final class MinecraftCombatAccess {
             return;
         }
         tickAutoPotion(tick, client, autoPotion, client.gui.screen() != null);
+    }
+
+    /** Applies AutoSoup's pure decision using one ordinary main-hand use request. */
+    public static void tickAutoSoup(long tick, AutoSoup autoSoup) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) {
+            autoSoup.onPlayerUnavailable();
+            return;
+        }
+        LocalPlayer player = client.player;
+        AutoSoup.Action action = autoSoup.update(tick, new AutoSoup.Context(player.getInventory().getSelectedSlot(),
+                player.getHealth(), client.gui.screen() != null, player.isUsingItem(), soupSlots(player)));
+        switch (action.type()) {
+            case SELECT_AND_USE -> {
+                player.getInventory().setSelectedSlot(action.slot());
+                if (client.gameMode != null && client.gui.screen() == null) {
+                    client.gameMode.useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                }
+            }
+            case USE_SELECTED -> {
+                if (client.gameMode != null && client.gui.screen() == null) {
+                    client.gameMode.useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                }
+            }
+            case RESTORE_SLOT -> player.getInventory().setSelectedSlot(action.slot());
+            case NONE -> {
+                // The module has no owned local selection to change this tick.
+            }
+        }
     }
 
     public static void tickBowAim(BowAimAssist bowAim, Snapshot snapshot) {
@@ -299,6 +329,16 @@ public final class MinecraftCombatAccess {
             }
         }
         return List.copyOf(candidates);
+    }
+
+    private static List<Integer> soupSlots(LocalPlayer player) {
+        List<Integer> slots = new ArrayList<>();
+        for (int slot = 0; slot < 9; slot++) {
+            if (player.getInventory().getItem(slot).is(Items.MUSHROOM_STEW)) {
+                slots.add(slot);
+            }
+        }
+        return List.copyOf(slots);
     }
 
     private static boolean isMeleeWeapon(ItemStack stack) {

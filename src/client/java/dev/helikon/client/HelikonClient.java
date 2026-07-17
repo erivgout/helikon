@@ -77,6 +77,7 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.ModuleTimingMetrics;
 import dev.helikon.client.module.combat.AntiBot;
 import dev.helikon.client.module.combat.AutoPotion;
+import dev.helikon.client.module.combat.AutoSoup;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.KillAura;
@@ -452,6 +453,7 @@ public final class HelikonClient implements ClientModInitializer {
         BowAimAssist bowAimAssist = new BowAimAssist();
         CriticalAssist criticalAssist = new CriticalAssist();
         AutoPotion autoPotion = new AutoPotion();
+        AutoSoup autoSoup = new AutoSoup();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
         ReachDisplay reachDisplay = new ReachDisplay();
@@ -524,6 +526,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(bowAimAssist);
         modules.register(criticalAssist);
         modules.register(autoPotion);
+        modules.register(autoSoup);
         modules.register(targetHud);
         modules.register(killAura);
         modules.register(reachDisplay);
@@ -607,6 +610,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(targetHud, "tick", () -> MinecraftCombatAccess.observeTarget(targetHud,
                         combatSnapshot.get(), combatTracker));
                 modules.runGuarded(autoPotion, "tick", () -> MinecraftCombatAccess.tickAutoPotion(clientTick, autoPotion));
+                modules.runGuarded(autoSoup, "tick", () -> MinecraftCombatAccess.tickAutoSoup(clientTick, autoSoup));
                 modules.runGuarded(bowAimAssist, "tick", () -> MinecraftCombatAccess.tickBowAim(bowAimAssist,
                         combatSnapshot.get()));
                 modules.runGuarded(triggerBot, "tick", () -> {

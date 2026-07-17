@@ -8,6 +8,7 @@ import dev.helikon.client.combat.CombatTargetTracker;
 import dev.helikon.client.combat.PotionCandidate;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.EnumSetting;
 import dev.helikon.client.setting.NumberSetting;
 import org.junit.jupiter.api.Test;
@@ -97,6 +98,50 @@ class CombatPolicyTest {
     }
 
     @Test
+    void autoClickerFiresOnScheduleAndHonorsHoldScreenAndFriendGates() {
+        // Fixed jitter source so the interval is deterministic (min==max keeps it exact regardless).
+        AutoClicker clicker = enabled(new AutoClicker(new java.util.Random(1L)));
+        numberSetting(clicker, "min_cps").set(10.0D);
+        numberSetting(clicker, "max_cps").set(10.0D); // 10 CPS -> 100 ms between clicks
+        AutoClicker.Context holdingAir = new AutoClicker.Context(true, false, false, false);
+
+        assertTrue(clicker.shouldClick(0L, holdingAir));       // first eligible moment clicks immediately
+        assertFalse(clicker.shouldClick(50L, holdingAir));     // still inside the 100 ms interval
+        assertTrue(clicker.shouldClick(100L, holdingAir));     // interval elapsed
+        // Releasing the attack button (require_attack_held on) stops clicks and resets the schedule.
+        assertFalse(clicker.shouldClick(120L, new AutoClicker.Context(false, false, false, false)));
+        assertTrue(clicker.shouldClick(130L, holdingAir));     // re-press clicks immediately again
+        // An open screen never clicks.
+        assertFalse(clicker.shouldClick(400L, new AutoClicker.Context(true, true, true, false)));
+    }
+
+    @Test
+    void autoClickerRequiresEntityTargetAndExcludesFriends() {
+        AutoClicker clicker = enabled(new AutoClicker(new java.util.Random(1L)));
+        boolSetting(clicker, "require_attack_held").set(false);
+        boolSetting(clicker, "require_entity_target").set(true);
+        AutoClicker.Context friend = new AutoClicker.Context(false, false, true, true);
+        AutoClicker.Context foe = new AutoClicker.Context(false, false, true, false);
+        AutoClicker.Context air = new AutoClicker.Context(false, false, false, false);
+
+        assertFalse(clicker.shouldAttackEntity(friend)); // excluded friend is never attacked
+        assertTrue(clicker.shouldAttackEntity(foe));
+        assertFalse(clicker.shouldClick(0L, air));       // require_entity_target: no entity -> no click
+        assertFalse(clicker.shouldClick(0L, friend));    // only a friend under crosshair -> no click
+        assertTrue(clicker.shouldClick(0L, foe));        // eligible foe -> click
+    }
+
+    @Test
+    void autoClickerIntervalMathIsBoundedAndRateOrdered() {
+        assertEquals(100L, AutoClicker.intervalMillis(10.0D, 10.0D, 0.5D));
+        assertEquals(50L, AutoClicker.intervalMillis(20.0D, 20.0D, 0.0D));
+        assertEquals(1000L, AutoClicker.intervalMillis(1.0D, 1.0D, 1.0D));
+        // Swapped bounds and out-of-range fraction are tolerated.
+        assertEquals(AutoClicker.intervalMillis(5.0D, 15.0D, 1.0D), AutoClicker.intervalMillis(15.0D, 5.0D, 1.0D));
+        assertTrue(AutoClicker.intervalMillis(5.0D, 15.0D, 2.0D) >= 1L);
+    }
+
+    @Test
     void autoPotionUsesOnlyRestorativeWhitelistedPotionAndRestoresOwnedSlot() {
         AutoPotion autoPotion = enabled(new AutoPotion());
         PotionCandidate safe = new PotionCandidate(3, "healing", PotionCandidate.Kind.SPLASH, true);
@@ -149,5 +194,9 @@ class CombatPolicyTest {
 
     private static NumberSetting numberSetting(Module module, String id) {
         return (NumberSetting) module.settings().stream().filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
+    }
+
+    private static BooleanSetting boolSetting(Module module, String id) {
+        return (BooleanSetting) module.settings().stream().filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
     }
 }

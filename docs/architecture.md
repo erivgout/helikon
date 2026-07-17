@@ -155,8 +155,13 @@ Combat uses `CombatTarget`, `CombatTargetFilter`, `CombatAim`, and
 adapter collects only rendered living entities and local tab-list/profile facts,
 then invokes Minecraft's normal `attack` or held-item `useItem` method after
 the corresponding module policy permits it. A shared per-tick guard permits at
-most one of TriggerBot, CriticalAssist, or KillAura to begin attacks. KillAura's
+most one of TriggerBot, CriticalAssist, KillAura, or AutoClicker to begin attacks. KillAura's
 Multi mode may issue a bounded group of ordinary attacks within that one cycle.
+AutoClicker keeps its randomized clicks-per-second timing, hold/screen/entity-target/friend gates, and
+first-click scheduling in a Minecraft-free policy; it runs last within that guard and turns each due click
+into Minecraft's normal `attack` on the eligible crosshair entity (after the ordinary attack cooldown and
+local line-of-sight) or an ordinary main-hand swing, so it replays a physical left click without building a
+packet or bypassing server authority.
 KillAura/TriggerBot/CriticalAssist require the locally observed
 line-of-sight fact, so the adapter never requests attacks through solid blocks.
 BowAimAssist only updates the local view while the user holds a normal bow; it

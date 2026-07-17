@@ -30,6 +30,7 @@
     "LevelRendererEventMixin",
     "LivingEntityRendererMixin",
     "LivingEntityStepMixin",
+    "LivingEntityEffectParticleMixin",
     "LocalPlayerNoSlowMixin",
     "ModelBlockRendererXRayMixin",
     "MouseFreecamMixin",

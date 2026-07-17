@@ -565,6 +565,7 @@ public final class HelikonClient implements ClientModInitializer {
         ChatDisplayAccess.install(chatColor);
         BetterChatDisplayAccess.install(betterChat, privateMessageHelper, antiSpam);
         MinecraftHitFlickAccess.install(hitFlick, friends);
+        MinecraftHitFlickAccess.install(hitFlick, friends);
         AnnouncerAccess.install(announcer, normalChatSender);
         MovementModuleAccess.install(autoWalk, autoSneak, twerk);
         InventoryWalkAccess.install(inventoryWalk);
@@ -630,6 +631,7 @@ public final class HelikonClient implements ClientModInitializer {
                         minecraft.gui.screen() != null));
                 combatAttackStarted.set(false);
                 combatSnapshot.set(MinecraftCombatAccess.Snapshot.unavailable());
+                modules.runGuarded(hitFlick, "restore", MinecraftHitFlickAccess::tickRestore);
                 modules.runGuarded(hitFlick, "restore", MinecraftHitFlickAccess::tickRestore);
                 modules.runGuarded(antiBot, "observe", () -> combatSnapshot.set(MinecraftCombatAccess.observe(friends, antiBot)));
                 modules.runGuarded(targetHud, "tick", () -> MinecraftCombatAccess.observeTarget(targetHud,
@@ -772,6 +774,7 @@ public final class HelikonClient implements ClientModInitializer {
                 LOGGER.log(Level.WARNING, "Unable to save local chat history while disconnecting", exception);
             }
             events.post(new WorldEvent(WorldEvent.Phase.LEAVE, serverAddress(lastConnectedServer)));
+            MinecraftHitFlickAccess.reset();
             MinecraftHitFlickAccess.reset();
             playerStateEvents.reset();
             modules.runGuarded(autoReconnect, "disconnect", () -> observeAutoReconnectDisconnect(autoReconnect, client));

@@ -51,7 +51,7 @@ public final class MinecraftCombatAccess {
     }
 
     /** Reads current local entities once; no decision or state change occurs here. */
-    public static Snapshot observe(FriendManager friends, AntiBot antiBot) {
+    public static Snapshot observe(FriendManager friends, AntiBot antiBot, TargetFilter targetFilter) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null) {
             return Snapshot.unavailable();
@@ -59,7 +59,7 @@ public final class MinecraftCombatAccess {
         LocalPlayer player = client.player;
         Map<String, Integer> nameCounts = playerNameCounts(client);
         Map<String, LivingEntity> entities = new LinkedHashMap<>();
-        List<CombatTarget> targets = observedTargets(client, player, friends, antiBot, nameCounts, entities);
+        List<CombatTarget> targets = observedTargets(client, player, friends, antiBot, targetFilter, nameCounts, entities);
         CombatTarget crosshairTarget = crosshairTarget(client, targets);
         return new Snapshot(true, targets, entities, crosshairTarget);
     }
@@ -194,7 +194,8 @@ public final class MinecraftCombatAccess {
     }
 
     private static List<CombatTarget> observedTargets(Minecraft client, LocalPlayer localPlayer, FriendManager friends,
-                                                       AntiBot antiBot, Map<String, Integer> nameCounts,
+                                                       AntiBot antiBot, TargetFilter targetFilter,
+                                                       Map<String, Integer> nameCounts,
                                                        Map<String, LivingEntity> entities) {
         List<CombatTarget> targets = new ArrayList<>();
         for (Entity entity : client.level.entitiesForRendering()) {
@@ -217,6 +218,10 @@ public final class MinecraftCombatAccess {
                     living.isInvisible(), hasProfile
             ));
             boolean friend = isPlayer && hasProfile && friends.contains(profileName);
+            // The shared TargetFilter removes disallowed players before any combat module sees them.
+            if (isPlayer && !targetFilter.allowsPlayer(name, friend)) {
+                continue;
+            }
             CombatTarget target = toTarget(localPlayer, living, name, type, friend, suspectedBot);
             targets.add(target);
             entities.put(target.id(), living);

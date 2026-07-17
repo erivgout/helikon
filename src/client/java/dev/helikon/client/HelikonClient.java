@@ -81,6 +81,7 @@ import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
 import dev.helikon.client.module.combat.ReachDisplay;
+import dev.helikon.client.module.combat.TargetFilter;
 import dev.helikon.client.module.combat.TriggerBot;
 import dev.helikon.client.module.movement.AutoSprint;
 import dev.helikon.client.module.movement.AutoSneak;
@@ -447,6 +448,7 @@ public final class HelikonClient implements ClientModInitializer {
                 () -> chatHistory.updateSettings(chatHistoryModule)
         );
         AntiBot antiBot = new AntiBot();
+        TargetFilter targetFilter = new TargetFilter();
         TriggerBot triggerBot = new TriggerBot();
         BowAimAssist bowAimAssist = new BowAimAssist();
         CriticalAssist criticalAssist = new CriticalAssist();
@@ -519,6 +521,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(localTranslator);
         modules.register(chatHistoryModule);
         modules.register(antiBot);
+        modules.register(targetFilter);
         modules.register(triggerBot);
         modules.register(bowAimAssist);
         modules.register(criticalAssist);
@@ -602,7 +605,7 @@ public final class HelikonClient implements ClientModInitializer {
                         minecraft.gui.screen() != null));
                 combatAttackStarted.set(false);
                 combatSnapshot.set(MinecraftCombatAccess.Snapshot.unavailable());
-                modules.runGuarded(antiBot, "observe", () -> combatSnapshot.set(MinecraftCombatAccess.observe(friends, antiBot)));
+                modules.runGuarded(antiBot, "observe", () -> combatSnapshot.set(MinecraftCombatAccess.observe(friends, antiBot, targetFilter)));
                 modules.runGuarded(targetHud, "tick", () -> MinecraftCombatAccess.observeTarget(targetHud,
                         combatSnapshot.get(), combatTracker));
                 modules.runGuarded(autoPotion, "tick", () -> MinecraftCombatAccess.tickAutoPotion(clientTick, autoPotion));

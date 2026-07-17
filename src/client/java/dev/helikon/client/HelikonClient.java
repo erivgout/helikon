@@ -84,6 +84,8 @@ import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.HitFlick;
 import dev.helikon.client.module.combat.HitSelect;
+import dev.helikon.client.module.combat.JumpReset;
+import dev.helikon.client.module.combat.JumpResetAccess;
 import dev.helikon.client.module.combat.KillAura;
 import dev.helikon.client.module.combat.MinecraftBlockHitUseKey;
 import dev.helikon.client.module.combat.MinecraftCombatAccess;
@@ -467,6 +469,7 @@ public final class HelikonClient implements ClientModInitializer {
         BowAimAssist bowAimAssist = new BowAimAssist();
         AimAssist aimAssist = new AimAssist();
         CriticalAssist criticalAssist = new CriticalAssist();
+        JumpReset jumpReset = new JumpReset();
         AutoPotion autoPotion = new AutoPotion();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
@@ -549,6 +552,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(bowAimAssist);
         modules.register(aimAssist);
         modules.register(criticalAssist);
+        modules.register(jumpReset);
         modules.register(autoPotion);
         modules.register(targetHud);
         modules.register(killAura);
@@ -586,6 +590,7 @@ public final class HelikonClient implements ClientModInitializer {
         StepAccess.install(step);
         AntiCactusAccess.install(antiCactus);
         WaterJumpAccess.install(waterJump);
+        JumpResetAccess.install(jumpReset);
         TimerModuleAccess.install(timer);
         LocalCapeRenderer.install(modules, localCape);
         MinecraftWorldVisualizationRenderer worldVisuals = new MinecraftWorldVisualizationRenderer(

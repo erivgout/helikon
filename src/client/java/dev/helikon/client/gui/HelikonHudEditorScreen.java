@@ -39,7 +39,7 @@ public final class HelikonHudEditorScreen extends Screen {
             HudElementId.WAYPOINTS, HudElementId.COORDINATES, HudElementId.SATURATION,
             HudElementId.ELYTRA, HudElementId.TARGET, HudElementId.REACH, HudElementId.INVENTORY_PREVIEW,
             HudElementId.DURABILITY_WARNINGS, HudElementId.RADAR, HudElementId.MINI_PLAYER,
-            HudElementId.DEBUG_OVERLAY, HudElementId.BETTER_CROSSHAIR, HudElementId.DIRECTION, HudElementId.FPS,
+            HudElementId.DEBUG_OVERLAY, HudElementId.BETTER_CROSSHAIR, HudElementId.HEALTH, HudElementId.DIRECTION, HudElementId.FPS,
             HudElementId.PING, HudElementId.TPS, HudElementId.SPEED, HudElementId.ARMOR_DURABILITY,
             HudElementId.HELD_ITEM_DURABILITY, HudElementId.POTION_EFFECTS, HudElementId.CLOCK,
             HudElementId.BIOME, HudElementId.SERVER_ADDRESS, HudElementId.TOTEM_COUNT
@@ -397,6 +397,7 @@ public final class HelikonHudEditorScreen extends Screen {
             case MINI_PLAYER -> "Mini Player";
             case DEBUG_OVERLAY -> "Debug Overlay";
             case BETTER_CROSSHAIR -> "Better Crosshair";
+            case HEALTH -> "Health";
             case DIRECTION -> "Direction";
             case FPS -> "FPS";
             case PING -> "Ping";

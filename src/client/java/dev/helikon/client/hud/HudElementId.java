@@ -14,6 +14,7 @@ public enum HudElementId {
     MINI_PLAYER(Anchor.TOP_LEFT, 5, 210),
     DEBUG_OVERLAY(Anchor.TOP_LEFT, 5, 5),
     BETTER_CROSSHAIR(Anchor.CENTER, 0, 0),
+    HEALTH(Anchor.CENTER, 0, 14),
     DIRECTION(Anchor.TOP_RIGHT, 5, 5, false),
     FPS(Anchor.TOP_RIGHT, 5, 18, false),
     PING(Anchor.TOP_RIGHT, 5, 31, false),

@@ -89,6 +89,7 @@ import dev.helikon.client.module.combat.BackTrack;
 import dev.helikon.client.module.combat.MinecraftBackTrackAccess;
 import dev.helikon.client.module.combat.AutoLeave;
 import dev.helikon.client.module.combat.MinecraftAutoLeaveAccess;
+import dev.helikon.client.module.combat.AutoSoup;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.combat.CriticalAssist;
 import dev.helikon.client.module.combat.HitFlick;
@@ -551,6 +552,7 @@ public final class HelikonClient implements ClientModInitializer {
         AutoPotion autoPotion = new AutoPotion();
         AutoPearl autoPearl = new AutoPearl();
         AutoLeave autoLeave = new AutoLeave();
+        AutoSoup autoSoup = new AutoSoup();
         dev.helikon.client.module.combat.TargetHud targetHud = new dev.helikon.client.module.combat.TargetHud();
         KillAura killAura = new KillAura();
         Reach reach = new Reach();
@@ -656,6 +658,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(autoPotion);
         modules.register(autoPearl);
         modules.register(autoLeave);
+        modules.register(autoSoup);
         modules.register(targetHud);
         modules.register(killAura);
         modules.register(reach);
@@ -778,6 +781,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(autoPotion, "tick", () -> MinecraftCombatAccess.tickAutoPotion(clientTick, autoPotion));
                 modules.runGuarded(autoPearl, "tick", () -> MinecraftCombatAccess.tickAutoPearl(clientTick, autoPearl,
                         combatSnapshot.get()));
+                modules.runGuarded(autoSoup, "tick", () -> MinecraftCombatAccess.tickAutoSoup(clientTick, autoSoup));
                 modules.runGuarded(bowAimAssist, "tick", () -> MinecraftCombatAccess.tickBowAim(bowAimAssist,
                         combatSnapshot.get()));
                 modules.runGuarded(aimAssist, "tick", () -> MinecraftCombatAccess.tickAimAssist(aimAssist,

@@ -287,6 +287,7 @@ class CombatPolicyTest {
         return new RightClicker.Context(true, false, true, false, hasHeldItem, kind, friend);
     }
 
+    @Test
     void autoPearlThrowsAtFleeingTargetThenRestoresOwnedSlot() {
         AutoPearl pearl = enabled(new AutoPearl());
         CombatTarget fleeing = fleeing("run", 20.0D, 0.5D);
@@ -326,6 +327,17 @@ class CombatPolicyTest {
     private static CombatTarget fleeing(String id, double distance, double awayVelocityZ) {
         return new CombatTarget(id, id, CombatEntityType.PLAYER, false, false, true, true, false, distance, 0.0D,
                 0.0D, 0.0D, distance, 0.0D, 0.0D, awayVelocityZ, 20.0D, 0, "minecraft:air", List.of());
+    }
+
+    @Test
+    void autoSoupUsesAnOwnedHotbarStewAndRestoresThePriorSlot() {
+        AutoSoup autoSoup = enabled(new AutoSoup());
+        AutoSoup.Action use = autoSoup.update(0L, new AutoSoup.Context(1, 5.0D, false, false, List.of(4, 3)));
+        assertEquals(AutoSoup.ActionType.SELECT_AND_USE, use.type());
+        assertEquals(3, use.slot());
+        AutoSoup.Action restore = autoSoup.update(1L, new AutoSoup.Context(3, 5.0D, false, false, List.of()));
+        assertEquals(AutoSoup.ActionType.RESTORE_SLOT, restore.type());
+        assertEquals(1, restore.slot());
     }
 
     @Test

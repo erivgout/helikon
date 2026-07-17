@@ -24,17 +24,33 @@ public final class Flight extends Module {
         }
     }
 
+    /** One computed local flight velocity in blocks per tick. */
+    public record FlightVelocity(double x, double y, double z) {
+    }
+
     private final NumberSetting flyingSpeed;
+    private final BooleanSetting survivalVelocity;
+    private final NumberSetting velocitySpeed;
+    private final BooleanSetting boatFlight;
+    private final NumberSetting boatSpeed;
     private final BooleanSetting freecamView;
     private final NumberSetting freecamSpeed;
     private boolean ownedFlying;
     private float previousSpeed = -1.0F;
 
     public Flight() {
-        super("flight", "Flight", "Enables only Minecraft-permitted creative, spectator, or allowed flight.",
+        super("flight", "Flight", "Ability flight where Minecraft permits it, plus local velocity and boat flight.",
                 ModuleCategory.MOVEMENT, false, Keybind.unbound());
         flyingSpeed = addSetting(new NumberSetting("flying_speed", "Flying speed",
                 "Requested normal ability flight speed when Minecraft permits flight.", 0.05D, 0.01D, 0.20D));
+        survivalVelocity = addSetting(new BooleanSetting("survival_velocity", "Survival velocity",
+                "Apply local velocity flight when no flight ability is granted; servers may reject or kick.", true));
+        velocitySpeed = addSetting(new NumberSetting("velocity_speed", "Velocity speed",
+                "Local velocity-flight speed in blocks per tick.", 0.5D, 0.1D, 1.5D));
+        boatFlight = addSetting(new BooleanSetting("boat_flight", "Boat flight",
+                "Steer a ridden boat with local velocity including upward jump input; servers may reject.", true));
+        boatSpeed = addSetting(new NumberSetting("boat_speed", "Boat speed",
+                "Local boat-flight speed in blocks per tick.", 0.6D, 0.1D, 2.0D));
         freecamView = addSetting(new BooleanSetting("freecam_view", "Freecam view",
                 "Detach a local-only camera view without moving or sending input for the player.", false));
         freecamSpeed = addSetting(new NumberSetting("freecam_speed", "Freecam speed",
@@ -62,6 +78,29 @@ public final class Flight extends Module {
         }
         clearOwnedState();
         return Action.none();
+    }
+
+    /** True when survival velocity flight should drive the player this tick. */
+    public boolean usesVelocityFlight(boolean mayFly) {
+        return isEnabled() && !freecamView.value() && survivalVelocity.value() && !mayFly;
+    }
+
+    /** True when a locally ridden, locally driven boat should be velocity-steered. */
+    public boolean usesBoatFlight() {
+        return isEnabled() && !freecamView.value() && boatFlight.value();
+    }
+
+    /** Computes one bounded local velocity from already-observed ordinary inputs. */
+    public FlightVelocity flightVelocity(HorizontalVelocity desiredDirection, boolean jump, boolean sneak,
+                                         boolean boat) {
+        if (desiredDirection == null) {
+            throw new IllegalArgumentException("desiredDirection must not be null");
+        }
+        double speed = boat ? boatSpeed.value() : velocitySpeed.value();
+        HorizontalVelocity direction = desiredDirection.speed() == 0.0D ? desiredDirection
+                : desiredDirection.scale(1.0D / desiredDirection.speed());
+        double vertical = (jump ? 1.0D : 0.0D) - (sneak ? 1.0D : 0.0D);
+        return new FlightVelocity(direction.x() * speed, vertical * speed, direction.z() * speed);
     }
 
     public boolean isFreecamView() {

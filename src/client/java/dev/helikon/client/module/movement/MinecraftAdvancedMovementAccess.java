@@ -10,6 +10,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Abilities;
+import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
@@ -74,23 +75,51 @@ public final class MinecraftAdvancedMovementAccess {
             module.onContextLost();
             return;
         }
-        if (client.gui.screen() != null && module.isEnabled()) {
+        LocalPlayer player = client.player;
+        boolean screenOpen = client.gui.screen() != null;
+        if (screenOpen && module.isEnabled()) {
+            // Hold a stable hover so opening a screen does not drop the player or boat.
+            if (rideableFlightBoat(module, player) instanceof AbstractBoat boat) {
+                boat.setDeltaMovement(0.0D, 0.0D, 0.0D);
+            } else if (module.usesVelocityFlight(player.getAbilities().mayfly)) {
+                player.setDeltaMovement(0.0D, 0.0D, 0.0D);
+            }
             return;
         }
         FreecamAccess.tick(client);
-        LocalPlayer player = client.player;
-        Abilities abilities = player.getAbilities();
-        Flight.Action action = module.update(new Flight.Abilities(abilities.mayfly, abilities.flying, abilities.getFlyingSpeed()));
-        if (!action.setFlying() && !action.setSpeed()) {
+        if (rideableFlightBoat(module, player) instanceof AbstractBoat boat) {
+            Vec2 input = player.input.getMoveVector();
+            Flight.FlightVelocity velocity = module.flightVelocity(desiredDirection(player, input),
+                    player.input.keyPresses.jump(), player.input.keyPresses.shift(), true);
+            boat.setDeltaMovement(velocity.x(), velocity.y(), velocity.z());
             return;
         }
+        Abilities abilities = player.getAbilities();
+        Flight.Action action = module.update(new Flight.Abilities(abilities.mayfly, abilities.flying, abilities.getFlyingSpeed()));
         if (action.setFlying()) {
             abilities.flying = action.flying();
         }
         if (action.setSpeed()) {
             abilities.setFlyingSpeed(action.flyingSpeed());
         }
-        player.onUpdateAbilities();
+        if (action.setFlying() || action.setSpeed()) {
+            player.onUpdateAbilities();
+        }
+        if (module.usesVelocityFlight(abilities.mayfly)) {
+            Vec2 input = player.input.getMoveVector();
+            Flight.FlightVelocity velocity = module.flightVelocity(desiredDirection(player, input),
+                    player.input.keyPresses.jump(), player.input.keyPresses.shift(), false);
+            player.setDeltaMovement(velocity.x(), velocity.y(), velocity.z());
+        }
+    }
+
+    /** The ridden boat only when Flight's boat mode applies and the local player is its driver. */
+    private static AbstractBoat rideableFlightBoat(Flight module, LocalPlayer player) {
+        if (module.usesBoatFlight() && player.getVehicle() instanceof AbstractBoat boat
+                && boat.getControllingPassenger() == player) {
+            return boat;
+        }
+        return null;
     }
 
     public static void tickNoFall(NoFall module) {

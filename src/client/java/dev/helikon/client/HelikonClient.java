@@ -271,6 +271,19 @@ import dev.helikon.client.module.world.MinecraftMiningAccess;
 import dev.helikon.client.mixin.FishingHookAccessor;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.world.Nuker;
+import dev.helikon.client.module.world.AutoFarm;
+import dev.helikon.client.module.world.BonemealAura;
+import dev.helikon.client.module.world.BuildRandom;
+import dev.helikon.client.module.world.Excavator;
+import dev.helikon.client.module.world.FeedAura;
+import dev.helikon.client.module.world.GhostHand;
+import dev.helikon.client.module.world.Kaboom;
+import dev.helikon.client.module.world.Liquids;
+import dev.helikon.client.module.world.MinecraftLegacyWorldAccess;
+import dev.helikon.client.module.world.TillAura;
+import dev.helikon.client.module.world.TreeBot;
+import dev.helikon.client.module.world.Tunneller;
+import dev.helikon.client.module.world.VeinMiner;
 import dev.helikon.client.module.render.Fullbright;
 import dev.helikon.client.module.render.AntiBlind;
 import dev.helikon.client.module.render.AntiDebuff;
@@ -621,6 +634,18 @@ public final class HelikonClient implements ClientModInitializer {
         AntiCactus antiCactus = new AntiCactus();
         BlockSelection blockSelection = new BlockSelection();
         BlockIn blockIn = new BlockIn();
+        AutoFarm autoFarm = new AutoFarm();
+        BonemealAura bonemealAura = new BonemealAura();
+        BuildRandom buildRandom = new BuildRandom();
+        Excavator excavator = new Excavator();
+        FeedAura feedAura = new FeedAura();
+        GhostHand ghostHand = new GhostHand();
+        Kaboom kaboom = new Kaboom();
+        Liquids liquids = new Liquids();
+        TillAura tillAura = new TillAura();
+        TreeBot treeBot = new TreeBot();
+        Tunneller tunneller = new Tunneller();
+        VeinMiner veinMiner = new VeinMiner();
         ChatPrefix chatPrefix = new ChatPrefix();
         FancyChat fancyChat = new FancyChat();
         InfiniChat infiniChat = new InfiniChat();
@@ -759,6 +784,18 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(antiCactus);
         modules.register(blockSelection);
         modules.register(blockIn);
+        modules.register(autoFarm);
+        modules.register(bonemealAura);
+        modules.register(buildRandom);
+        modules.register(excavator);
+        modules.register(feedAura);
+        modules.register(ghostHand);
+        modules.register(kaboom);
+        modules.register(liquids);
+        modules.register(tillAura);
+        modules.register(treeBot);
+        modules.register(tunneller);
+        modules.register(veinMiner);
         modules.register(chatPrefix);
         modules.register(fancyChat);
         modules.register(infiniChat);
@@ -932,6 +969,30 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(builderAssist, "tick", () -> MinecraftBuilderAssistAccess.tick(builderAssist, clientTick));
                 modules.runGuarded(blockIn, "tick", () -> MinecraftBlockInAccess.tick(blockIn, clientTick));
                 modules.runGuarded(airPlace, "tick", () -> MinecraftAirPlaceAccess.tick(airPlace, clientTick));
+                modules.runGuarded(autoFarm, "tick",
+                        () -> MinecraftLegacyWorldAccess.tickAutoFarm(clientTick, autoFarm));
+                modules.runGuarded(bonemealAura, "tick",
+                        () -> MinecraftLegacyWorldAccess.tickBonemeal(clientTick, bonemealAura));
+                modules.runGuarded(buildRandom, "tick",
+                        () -> MinecraftLegacyWorldAccess.tickBuildRandom(clientTick, buildRandom));
+                modules.runGuarded(excavator, "tick",
+                        () -> MinecraftLegacyWorldAccess.tickExcavator(clientTick, excavator));
+                modules.runGuarded(feedAura, "tick",
+                        () -> MinecraftLegacyWorldAccess.tickFeedAura(clientTick, feedAura));
+                modules.runGuarded(ghostHand, "tick",
+                        () -> MinecraftLegacyWorldAccess.tickGhostHand(clientTick, ghostHand));
+                modules.runGuarded(kaboom, "tick",
+                        () -> MinecraftLegacyWorldAccess.tickKaboom(clientTick, kaboom));
+                modules.runGuarded(liquids, "tick",
+                        () -> MinecraftLegacyWorldAccess.tickLiquids(clientTick, liquids));
+                modules.runGuarded(tillAura, "tick",
+                        () -> MinecraftLegacyWorldAccess.tickTillAura(clientTick, tillAura));
+                modules.runGuarded(treeBot, "tick",
+                        () -> MinecraftLegacyWorldAccess.tickTreeBot(clientTick, treeBot));
+                modules.runGuarded(tunneller, "tick",
+                        () -> MinecraftLegacyWorldAccess.tickTunneller(clientTick, tunneller));
+                modules.runGuarded(veinMiner, "tick",
+                        () -> MinecraftLegacyWorldAccess.tickVeinMiner(clientTick, veinMiner));
                 modules.runGuarded(chatSpammer, "tick", () -> tickChatSpammer(chatSpammer));
                 modules.runGuarded(massTpa, "tick", () -> MinecraftMassTpaAccess.tick(clientTick, massTpa, friends));
                 modules.runGuarded(announcer, "tick", HelikonClient::tickAnnouncer);

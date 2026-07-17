@@ -8,6 +8,7 @@
     "ChatScreenMixin",
     "ChatComponentMixin",
     "ChatComponentAccessor",
+    "CameraNoClipMixin",
     "ClientChunkCacheEventMixin",
     "AnnouncerAdvancementMixin",
     "AnnouncerGameModeMixin",

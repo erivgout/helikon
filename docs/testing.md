@@ -22,6 +22,9 @@ command wiring are covered by `ProfileManagerTest` and `ProfileCommandTest`.
 isolation, event-catalog coverage, and malformed event-payload rejection.
 `PlayerStateEventTrackerTest` covers lifecycle, movement, rotation, inventory
 revision, and world-absence baseline transitions without Minecraft classes.
+`SaturationHudTest` covers finite saturation formatting and invalid-fact
+masking; its in-client visibility and panic behavior are covered by the HUD
+smoke checklist.
 Fullbright's gamma restoration, setting-driven Night Vision lifecycle, and
 identity-safe effect restoration are covered by `FullbrightGammaControllerTest`,
 `FullbrightTest`, and `ClientEffectOverrideStateTest`.
@@ -107,6 +110,18 @@ key (`ConfigurationManagerTest`).
 5. Replace `hud.json` with invalid JSON, relaunch, and verify Helikon creates
    `hud.corrupt-<timestamp>.json` and returns the element to its default
    position.
+
+## Manual Saturation Display smoke test
+
+1. Run `./gradlew.bat runClient`, join a local/test world, and enable
+   **Saturation Display**. Verify a `Saturation <value>` readout appears above
+   the bottom-left edge at both the normal GUI scale and a scaled height of 240
+   or less; it must remain fully on screen.
+2. Eat ordinary food in the test world and verify the displayed local value
+   changes after Minecraft updates hunger. Confirm that it does not alter food,
+   saturation, packets, or server-visible state.
+3. Run `.panic` and verify the readout hides with the other custom HUD; run
+   `.panic restorehud` and verify it returns while the module remains enabled.
 
 ## Manual ClickGUI smoke test
 

@@ -448,6 +448,11 @@ in the ClickGUI header, saves once when it closes, and returns to the ClickGUI.
 The initial editor intentionally has one draggable element. Alignment, scale,
 background options, snapping, and other HUD elements remain future work.
 
+`SaturationHud` is a separate fixed local HUD element. It reads the current
+local player's `FoodData.getSaturationLevel()` through the narrow 26.2 adapter
+layer and formats only a bounded display string. It neither modifies hunger nor
+requests any server information; panic hides it with the other custom HUD.
+
 ## Stabilization and release boundaries
 
 The release candidate keeps runtime decision paths Minecraft-free wherever

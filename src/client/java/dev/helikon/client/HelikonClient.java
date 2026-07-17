@@ -43,6 +43,7 @@ import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.hud.MiniPlayerHud;
 import dev.helikon.client.hud.RadarHud;
 import dev.helikon.client.hud.ReachDisplayHud;
+import dev.helikon.client.hud.SaturationHud;
 import dev.helikon.client.hud.TargetHud;
 import dev.helikon.client.hud.WaypointHud;
 import dev.helikon.client.input.HelikonKeybinds;
@@ -130,6 +131,7 @@ import dev.helikon.client.module.render.MinecraftNightVisionAccess;
 import dev.helikon.client.module.render.MiniPlayer;
 import dev.helikon.client.module.render.RenderModuleAccess;
 import dev.helikon.client.module.render.Radar;
+import dev.helikon.client.module.render.SaturationDisplay;
 import dev.helikon.client.module.render.StorageEsp;
 import dev.helikon.client.module.render.Trajectories;
 import dev.helikon.client.module.render.Tracers;
@@ -264,6 +266,7 @@ public final class HelikonClient implements ClientModInitializer {
         Trajectories trajectories = new Trajectories();
         TrueSight trueSight = new TrueSight();
         Radar radar = new Radar();
+        SaturationDisplay saturationDisplay = new SaturationDisplay();
         StorageEsp storageEsp = new StorageEsp();
         XRay xray = new XRay(new MinecraftXRayRendererInvalidator());
         MiniPlayer miniPlayer = new MiniPlayer();
@@ -277,6 +280,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(trajectories);
         modules.register(trueSight);
         modules.register(radar);
+        modules.register(saturationDisplay);
         modules.register(storageEsp);
         modules.register(xray);
         modules.register(miniPlayer);
@@ -523,6 +527,8 @@ public final class HelikonClient implements ClientModInitializer {
                 new BetterCrosshairHud(betterCrosshair, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "radar"),
                 new RadarHud(radar, friends, panicState));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "saturation"),
+                new SaturationHud(saturationDisplay, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "mini_player"),
                 new MiniPlayerHud(miniPlayer, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "elytra"),

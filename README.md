@@ -7,6 +7,9 @@ an internal event bus, a functional Right Shift ClickGUI, local chat commands,
 module keybinds, an Active Modules HUD, local profiles, local friends, local
 waypoints, local macros, and tests.
 
+Saturation Display is a fixed local HUD readout of the player's current hunger
+saturation. It changes no food state and sends no packet or request.
+
 The internal event bus uses typed, Minecraft-free event models. Its currently
 wired lifecycle bridge covers ticks, local world connections, identity-aware
 screen changes, accepted ordinary chat, world rendering, and local player-state
@@ -23,7 +26,7 @@ branding, or configuration formats from that project.
 
 ## Status
 
-Helikon currently includes fourteen client-only render modules: Fullbright restores
+Helikon currently includes sixteen client-only render modules: Fullbright restores
 the previous gamma and Night Vision state when disabled; AntiBlind selectively
 hides local impairment visuals; and BetterCrosshair draws a local configurable
 HUD crosshair. EntityESP, BlockESP, Tracers, and Breadcrumbs use Minecraft's

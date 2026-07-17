@@ -49,6 +49,8 @@ import dev.helikon.client.module.chat.ChatPrefix;
 import dev.helikon.client.module.chat.ChatSuffix;
 import dev.helikon.client.module.chat.ChatMute;
 import dev.helikon.client.module.chat.ChatFilter;
+import dev.helikon.client.module.chat.ChatSpammer;
+import dev.helikon.client.module.chat.MinecraftChatSender;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
 import dev.helikon.client.module.render.Fullbright;
@@ -157,6 +159,8 @@ public final class HelikonClient implements ClientModInitializer {
         ChatSuffix chatSuffix = new ChatSuffix();
         ChatMute chatMute = new ChatMute();
         ChatFilter chatFilter = new ChatFilter();
+        ChatSpammer chatSpammer = new ChatSpammer(new MinecraftChatSender(),
+                () -> ThreadLocalRandom.current().nextInt());
         modules.register(autoSprint);
         modules.register(autoWalk);
         modules.register(autoSneak);
@@ -167,6 +171,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(chatSuffix);
         modules.register(chatMute);
         modules.register(chatFilter);
+        modules.register(chatSpammer);
         MovementModuleAccess.install(autoWalk, autoSneak);
         events.subscribe(ClientTickEvent.class, event -> {
             if (event.phase() == ClientTickEvent.Phase.POST) {
@@ -175,6 +180,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(autoEat, "tick", () -> tickAutoEat(autoEat));
                 modules.runGuarded(autoTool, "tick", () -> tickAutoTool(autoTool));
                 modules.runGuarded(fastPlace, "tick", () -> tickFastPlace(fastPlace));
+                modules.runGuarded(chatSpammer, "tick", () -> tickChatSpammer(chatSpammer));
             }
         });
 
@@ -213,6 +219,7 @@ public final class HelikonClient implements ClientModInitializer {
                 () -> macroServerContext.currentServerAddress().orElse(null),
                 () -> ThreadLocalRandom.current().nextInt());
         ClientSendMessageEvents.MODIFY_CHAT.register(outgoingChat::format);
+        ClientSendMessageEvents.CHAT_CANCELED.register(chatSpammer::reportRejected);
         ClientReceiveMessageEvents.ALLOW_CHAT.register((message, signedMessage, sender, chatType, receivedAt) ->
                 allowIncomingMessage(chatMute, chatFilter,
                         IncomingMessageAdapter.chat(message, sender, receivedAt.toEpochMilli()))
@@ -465,6 +472,12 @@ public final class HelikonClient implements ClientModInitializer {
             return;
         }
         fastPlace.tick(client.options.keyUse.isDown(), heldItem.getItem() instanceof BlockItem);
+    }
+
+    /** Sends only through ChatSpammer's constrained, ordinary local chat policy. */
+    private static void tickChatSpammer(ChatSpammer chatSpammer) {
+        Minecraft client = Minecraft.getInstance();
+        chatSpammer.tick(client.player != null, client.gui.screen() != null);
     }
 
     private void reportMacroResult(MacroRunner.TickResult result) {

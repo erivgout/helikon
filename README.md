@@ -34,6 +34,11 @@ hide structured vanilla message categories or bounded keyword/player/regex
 matches from the local HUD without affecting what a server sends to anyone
 else.
 
+ChatSpammer is deliberately constrained: it accepts ordinary local text only,
+waits at least two seconds between sends, pauses in screens by default, stops
+after disconnect, and has a small per-session cap. Servers may still punish
+spam, so it is off by default.
+
 The ClickGUI currently provides:
 
 - a category sidebar driven by `ModuleCategory`

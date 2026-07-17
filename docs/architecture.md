@@ -87,6 +87,14 @@ Fabric allow callbacks are guarded through `ModuleRegistry`, so a failed filter
 is disabled while the incoming message remains visible rather than disrupting
 the client chat stream.
 
+ChatSpammer parses bounded local text into ordinary messages, rejects command
+forms, and makes its sequential/random timing decision without Minecraft
+types. Its only platform port calls Minecraft's existing normal chat sender;
+it does not construct packets, retry rejected messages, or circumvent a
+server's own limits. A normal-chat cancellation for the active generated
+message is reported back through the Fabric callback; after three observed
+cancellations the module stops for the session.
+
 ## Events
 
 `EventBus` uses explicit subscriptions by event type. It performs no reflection

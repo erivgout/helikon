@@ -45,6 +45,11 @@ ChatMute and ChatFilter only decide whether an incoming message is shown in
 this client. They do not acknowledge, alter, suppress at the protocol layer,
 or forward messages, and never affect another player or the server.
 
+ChatSpammer sends only configured ordinary text through Minecraft's normal
+player chat connection. It rejects command-like entries and applies a local
+minimum delay and session cap; it neither creates packets nor bypasses server
+rate limits, rejections, moderation, or punishments.
+
 ## Future policy
 
 Optional external integrations must be isolated under

@@ -28,8 +28,11 @@ When porting:
 8. Revalidate Fabric's incoming chat/game allow callbacks and the 26.2
    `Component`/`TranslatableContents` APIs. If category extraction breaks,
    prefer showing messages over hiding them.
-9. Run the manual smoke test in an empty profile and with no internet access.
-10. Document compatibility changes and retained limitations before release.
+9. Revalidate `ClientPacketListener.sendChat` and its 256-character ordinary
+   chat limit. Keep ChatSpammer on that normal send path and retain its local
+   delay/cap safeguards.
+10. Run the manual smoke test in an empty profile and with no internet access.
+11. Document compatibility changes and retained limitations before release.
 
 Do not add mapping-specific logic to module classes. Keep version-sensitive code
 at Fabric/event/render integration boundaries.

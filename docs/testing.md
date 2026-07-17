@@ -44,6 +44,10 @@ selection, and protected-command preservation are covered by
 `OutgoingChatFormatterTest`, including the vanilla 256-character send limit.
 Incoming category recognition, duplicate hiding, custom text rules, player
 rules, and safe-regex rejection are covered by `IncomingChatPolicyTest`.
+ChatSpammer's command rejection, sequential/random selection, minimum-delay
+countdown (including toggles), screen pause, session cap, cancellation stop,
+and disconnect stop are covered by
+`ChatSpammerTest`.
 
 ## Manual Active Modules HUD smoke test
 
@@ -172,6 +176,12 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     keyword, player name, and safe regex; verify matching incoming messages are
     hidden locally. Enter a malformed or nested-quantifier regex and verify it
     does not freeze the client or hide unrelated messages.
+25. With a server or test environment where you are permitted to send chat,
+    configure **ChatSpammer** with a harmless ordinary message and verify it
+    sends no more frequently than its stated delay, pauses while chat or any
+    GUI is open, and stops after the configured session cap or disconnect.
+    Verify slash commands and Helikon local-command prefixes in its message
+    list are ignored. Do not use it where server rules prohibit repetitive chat.
 
 ## Manual command and keybind smoke test
 

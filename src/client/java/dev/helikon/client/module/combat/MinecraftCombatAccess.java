@@ -6,10 +6,13 @@ import dev.helikon.client.combat.CombatTarget;
 import dev.helikon.client.combat.CombatTargetTracker;
 import dev.helikon.client.combat.PotionCandidate;
 import dev.helikon.client.friend.FriendManager;
+import dev.helikon.client.mixin.MinecraftAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -22,7 +25,9 @@ import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.SplashPotionItem;
 import net.minecraft.world.item.ThrowablePotionItem;
 import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -139,6 +144,98 @@ public final class MinecraftCombatAccess {
             attacked |= attack(client, snapshot.entities().get(target.id()), target, tracker);
         }
         return attacked;
+    }
+
+    /**
+     * Performs at most one ordinary right-click interaction after RightClicker's pure
+     * rate-limit and target policy permits it, mirroring vanilla's own use handling
+     * through the public {@code gameMode} interaction methods. It creates no packet of
+     * its own; the connected server may reject, ignore, or rate-limit the interaction.
+     */
+    public static void tickRightClicker(long clientTick, RightClicker module, FriendManager friends) {
+        Minecraft client = Minecraft.getInstance();
+        LocalPlayer player = client.player;
+        if (player == null || client.level == null || client.gameMode == null) {
+            return;
+        }
+        HitResult hitResult = client.hitResult;
+        RightClicker.HitKind hitKind = hitKind(hitResult);
+        boolean hitIsFriend = hitKind == RightClicker.HitKind.ENTITY
+                && isFriendEntity(friends, ((EntityHitResult) hitResult).getEntity());
+        boolean hasHeldItem = !player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()
+                || !player.getItemInHand(InteractionHand.OFF_HAND).isEmpty();
+        RightClicker.Context context = new RightClicker.Context(true, client.gui.screen() != null,
+                client.options.keyUse.isDown(), player.isUsingItem(), hasHeldItem, hitKind, hitIsFriend);
+        RightClicker.Decision decision = module.decide(clientTick, context);
+        boolean acted = switch (decision) {
+            case USE_ON_BLOCK -> useOnBlock(client, player, (BlockHitResult) hitResult);
+            case INTERACT_ENTITY -> interactEntity(client, player, (EntityHitResult) hitResult);
+            case USE_ITEM -> useHeldItem(client, player);
+            case NONE -> false;
+        };
+        if (acted) {
+            long interval = module.intervalTicks();
+            ((MinecraftAccessor) client).helikon$setRightClickDelay((int) Math.min(Integer.MAX_VALUE, interval));
+        }
+    }
+
+    private static RightClicker.HitKind hitKind(HitResult hitResult) {
+        if (hitResult == null) {
+            return RightClicker.HitKind.MISS;
+        }
+        return switch (hitResult.getType()) {
+            case BLOCK -> RightClicker.HitKind.BLOCK;
+            case ENTITY -> RightClicker.HitKind.ENTITY;
+            case MISS -> RightClicker.HitKind.MISS;
+        };
+    }
+
+    private static boolean isFriendEntity(FriendManager friends, Entity entity) {
+        if (entity instanceof Player player) {
+            String name = player.getGameProfile().name();
+            return name != null && !name.isBlank() && friends.contains(name.trim());
+        }
+        return false;
+    }
+
+    private static boolean useOnBlock(Minecraft client, LocalPlayer player, BlockHitResult hit) {
+        for (InteractionHand hand : InteractionHand.values()) {
+            InteractionResult result = client.gameMode.useItemOn(player, hand, hit);
+            if (result.consumesAction()) {
+                player.swing(hand);
+                return true;
+            }
+            if (result instanceof InteractionResult.Fail) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private static boolean interactEntity(Minecraft client, LocalPlayer player, EntityHitResult hit) {
+        Entity entity = hit.getEntity();
+        for (InteractionHand hand : InteractionHand.values()) {
+            InteractionResult result = client.gameMode.interact(player, entity, hit, hand);
+            if (result.consumesAction()) {
+                player.swing(hand);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean useHeldItem(Minecraft client, LocalPlayer player) {
+        for (InteractionHand hand : InteractionHand.values()) {
+            if (player.getItemInHand(hand).isEmpty()) {
+                continue;
+            }
+            InteractionResult result = client.gameMode.useItem(player, hand);
+            if (result.consumesAction()) {
+                player.swing(hand);
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean readyForAttack(Minecraft client, Snapshot snapshot) {

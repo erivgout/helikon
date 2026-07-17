@@ -8,6 +8,7 @@ import dev.helikon.client.combat.CombatTargetTracker;
 import dev.helikon.client.combat.PotionCandidate;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.EnumSetting;
 import dev.helikon.client.setting.NumberSetting;
 import org.junit.jupiter.api.Test;
@@ -110,6 +111,57 @@ class CombatPolicyTest {
     }
 
     @Test
+    void rightClickerRespectsRateTargetFiltersFriendsAndGates() {
+        RightClicker rightClicker = enabled(new RightClicker());
+        booleanSetting(rightClicker, "require_use_key_held").set(false);
+        // At the default 8 clicks per second the interval is round(20/8) = 3 ticks.
+        RightClicker.Context block = context(RightClicker.HitKind.BLOCK, false, true);
+        assertEquals(RightClicker.Decision.USE_ON_BLOCK, rightClicker.decide(0L, block));
+        assertEquals(RightClicker.Decision.NONE, rightClicker.decide(2L, block));
+        assertEquals(RightClicker.Decision.USE_ON_BLOCK, rightClicker.decide(3L, block));
+
+        // A blank target for the current settings does not consume the cooldown.
+        booleanSetting(rightClicker, "blocks").set(false);
+        assertEquals(RightClicker.Decision.NONE, rightClicker.decide(6L, block));
+        booleanSetting(rightClicker, "blocks").set(true);
+        assertEquals(RightClicker.Decision.USE_ON_BLOCK, rightClicker.decide(6L, block));
+
+        // Friends are excluded by default while entity interaction is allowed.
+        assertEquals(RightClicker.Decision.INTERACT_ENTITY,
+                rightClicker.decide(9L, context(RightClicker.HitKind.ENTITY, false, false)));
+        assertEquals(RightClicker.Decision.NONE,
+                rightClicker.decide(12L, context(RightClicker.HitKind.ENTITY, true, false)));
+
+        // Air use requires a held item; screens and in-progress use always block.
+        assertEquals(RightClicker.Decision.USE_ITEM,
+                rightClicker.decide(15L, context(RightClicker.HitKind.MISS, false, true)));
+        assertEquals(RightClicker.Decision.NONE,
+                rightClicker.decide(18L, context(RightClicker.HitKind.MISS, false, false)));
+        assertEquals(RightClicker.Decision.NONE,
+                rightClicker.decide(21L, new RightClicker.Context(true, true, false, false, true,
+                        RightClicker.HitKind.BLOCK, false)));
+        assertEquals(RightClicker.Decision.NONE,
+                rightClicker.decide(24L, new RightClicker.Context(true, false, false, true, true,
+                        RightClicker.HitKind.BLOCK, false)));
+
+        // The require-use-key gate rejects clicks while the physical button is up.
+        booleanSetting(rightClicker, "require_use_key_held").set(true);
+        assertEquals(RightClicker.Decision.NONE,
+                rightClicker.decide(27L, new RightClicker.Context(true, false, false, false, true,
+                        RightClicker.HitKind.BLOCK, false)));
+
+        // The configured click rate maps to a bounded per-tick interval (default 8 CPS -> 3 ticks).
+        RightClicker fresh = new RightClicker();
+        assertEquals(3L, fresh.intervalTicks());
+        numberSetting(fresh, "clicks_per_second").set(20.0D);
+        assertEquals(1L, fresh.intervalTicks());
+    }
+
+    private static RightClicker.Context context(RightClicker.HitKind kind, boolean friend, boolean hasHeldItem) {
+        return new RightClicker.Context(true, false, true, false, hasHeldItem, kind, friend);
+    }
+
+    @Test
     void antiBotAndHudTrackerRemainLocalAndBounded() {
         AntiBot antiBot = enabled(new AntiBot());
         assertTrue(antiBot.isSuspected(new AntiBot.Facts(false, false, 20, false, false, true)));
@@ -149,5 +201,9 @@ class CombatPolicyTest {
 
     private static NumberSetting numberSetting(Module module, String id) {
         return (NumberSetting) module.settings().stream().filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
+    }
+
+    private static BooleanSetting booleanSetting(Module module, String id) {
+        return (BooleanSetting) module.settings().stream().filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
     }
 }

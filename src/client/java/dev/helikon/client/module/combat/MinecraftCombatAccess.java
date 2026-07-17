@@ -94,6 +94,23 @@ public final class MinecraftCombatAccess {
         tickBowAim(client, bowAim, snapshot.targets(), client.gui.screen() != null);
     }
 
+    public static void tickAimAssist(AimAssist aimAssist, Snapshot snapshot) {
+        Minecraft client = Minecraft.getInstance();
+        if (!snapshot.available() || client.player == null) {
+            aimAssist.onContextLost();
+            return;
+        }
+        boolean screenOpen = client.gui.screen() != null;
+        boolean weaponGate = !aimAssist.requireWeapon() || isMeleeWeapon(client.player.getMainHandItem());
+        boolean attackKeyGate = !aimAssist.requireAttackKey() || client.options.keyAttack.isDown();
+        List<CombatTarget> targets = screenOpen || !weaponGate || !attackKeyGate ? List.of() : snapshot.targets();
+        aimAssist.nextRotation(targets, new CombatAim.Rotation(client.player.getYRot(), client.player.getXRot()))
+                .ifPresent(rotation -> {
+                    client.player.setYRot(rotation.yaw());
+                    client.player.setXRot(rotation.pitch());
+                });
+    }
+
     public static boolean tickTriggerBot(long tick, TriggerBot triggerBot, Snapshot snapshot, CombatTargetTracker tracker) {
         Minecraft client = Minecraft.getInstance();
         if (!readyForAttack(client, snapshot) || snapshot.crosshairTarget() == null) {

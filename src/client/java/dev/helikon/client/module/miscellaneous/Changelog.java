@@ -35,7 +35,14 @@ public final class Changelog extends Module {
 
     public List<String> notes() {
         return List.of(
-                "Helikon 1.1.4",
+                "Helikon 1.1.5",
+                "StorageESP now detects nearby placed and removed storage on the next tick.",
+                "Scaffold places automatically without locking the selected hotbar slot.",
+                "Speed now supports a 10x multiplier with a configurable 3.0-block/tick cap.",
+                "Formatted server player names no longer crash friend-aware combat modules.",
+                "Air Place now responds correctly while Use is held.",
+                "Better Crosshair is locked to the exact viewport center.",
+                "Empty ClickGUI settings instructions now wrap inside their panel.",
                 "Speed now follows held WASD direction in midair, including with Jetpack and Air Jump.",
                 "AutoFarm now supports wart, berries, cocoa, stacked plants, melons, and pumpkins.",
                 "Infinity now repels nearby threats with ordinary client-side attacks.",

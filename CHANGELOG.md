@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.1.5 - 2026-07-18
+
 - Makes StorageESP rebuild from loaded block entities every tick, so nearby
   storage appears and disappears immediately instead of waiting on a cube scan.
 - Treats invalid or formatted server-supplied player names as non-friends during

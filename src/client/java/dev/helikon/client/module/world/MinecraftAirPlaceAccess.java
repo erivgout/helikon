@@ -1,6 +1,5 @@
 package dev.helikon.client.module.world;
 
-import dev.helikon.client.mixin.MinecraftAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -21,12 +20,11 @@ public final class MinecraftAirPlaceAccess {
     private MinecraftAirPlaceAccess() {
     }
 
-    /** Executes at most one air-placement use when Use is held, a block is held, and the vanilla cooldown is clear. */
+    /** Executes at most one air-placement use when Use is held and a block is selected. */
     public static void tick(AirPlace airPlace, long tick) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null || client.gameMode == null || client.gui.screen() != null
                 || !client.options.keyUse.isDown()
-                || ((MinecraftAccessor) client).helikon$getRightClickDelay() != 0
                 || !(client.player.getInventory().getSelectedItem().getItem() instanceof BlockItem)) {
             return;
         }

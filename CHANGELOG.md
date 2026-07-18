@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fixes Air Place remaining idle while Use is held by relying on its own bounded
+  placement delay instead of Minecraft's continually refreshed right-click cooldown.
+
 ## 1.1.4 - 2026-07-18
 
 - Fixes Speed's default Multiplier mode so held movement input can redirect

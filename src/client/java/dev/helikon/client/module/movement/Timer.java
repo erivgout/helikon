@@ -16,7 +16,7 @@ public final class Timer extends Module {
         super("timer", "Timer", "Applies a bounded local client tick multiplier with a multiplayer warning.",
                 ModuleCategory.MOVEMENT, false, Keybind.unbound());
         tickMultiplier = addSetting(new NumberSetting("tick_multiplier", "Tick multiplier",
-                "Local client rate multiplier; servers remain authoritative.", 1.0D, 0.50D, 5.0D));
+                "Local client rate multiplier; servers remain authoritative.", 1.0D, 0.50D, 10.0D));
         diggingOnly = addSetting(new BooleanSetting("digging_only", "Digging only",
                 "Apply acceleration only while holding Attack on an active block break.", false));
     }

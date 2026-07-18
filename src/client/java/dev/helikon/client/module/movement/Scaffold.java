@@ -42,7 +42,7 @@ public final class Scaffold extends Module {
         placement = addSetting(new EnumSetting<>("placement", "Placement", "Choose below or ahead target selection.",
                 Placement.class, Placement.BELOW));
         selectHotbarBlock = addSetting(new BooleanSetting("select_hotbar_block", "Select hotbar block",
-                "Select the fullest available hotbar block only when no selected block is available.", true));
+                "Temporarily use the fullest hotbar block for a placement, then restore the held slot.", true));
         rotateToTarget = addSetting(new BooleanSetting("rotate_to_target", "Rotate to target",
                 "Locally face the target support before requesting a normal placement.", true));
         tower = addSetting(new BooleanSetting("tower", "Tower", "Request normal jump input while placing below.", false));

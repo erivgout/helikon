@@ -30,7 +30,7 @@ They do not request additional chunks, send coordinates, or modify packets,
 entity state, projectile movement, or normal server interactions.
 
 XRay filters and rebuilds only already-loaded local chunk geometry. StorageESP
-reads only already-loaded block states while advancing its bounded local scan.
+snapshots block entities already present in nearby loaded chunks each tick.
 Neither requests chunks, opens inventories, reads server storage contents,
 changes blocks, or sends custom/modified packets.
 
@@ -125,8 +125,10 @@ suppresses player movement keys, never moves the player, and never sends a
 position, rotation, or camera packet.
 While enabled, Scaffold automatically routes one selected player-provided block
 through Minecraft's normal `useItemOn` path after loaded-target/support and
-bounded-delay checks. It does not choose blocks outside the hotbar or construct
-placement packets.
+bounded-delay checks. Automatic selection temporarily synchronizes the chosen
+block slot for that interaction and immediately synchronizes the player's
+original held slot afterward. It does not choose blocks outside the hotbar or
+construct placement packets.
 
 Combat modules do not construct, modify, replay, or spoof packets. TriggerBot,
 CriticalAssist, and KillAura may ask Minecraft to perform ordinary local

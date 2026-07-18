@@ -163,7 +163,8 @@ the player receives no movement input, then the normal camera is restored.
 Scaffold is similarly constrained to a selected player-provided hotbar block,
 a loaded replaceable target with local support, an existing vanilla use
 interaction, and its own bounded placement delay. It runs automatically while
-enabled without synthesizing Use input. Clutch keeps its
+enabled without synthesizing Use input; automatic block selection borrows and
+restores a hotbar slot only around an actual interaction. Clutch keeps its
 falling/ground-proximity/mode/cooldown decision in the Minecraft-free `Clutch`
 policy; the shared advanced-movement adapter only samples the local descent,
 available space below, and hotbar block/water-bucket facts, then requests one

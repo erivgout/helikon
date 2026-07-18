@@ -40,7 +40,7 @@ public final class FriendManager {
     }
 
     public synchronized Optional<Friend> find(String name) {
-        return Optional.ofNullable(friends.get(normalizeName(name)));
+        return normalizeLookupName(name).map(friends::get);
     }
 
     public synchronized boolean contains(String name) { return find(name).isPresent(); }
@@ -126,10 +126,17 @@ public final class FriendManager {
     }
 
     private Path backupPath() { return friendsPath.resolveSibling("friends.json.bak"); }
-    private static String normalizeName(String name) {
+    /** External server names are untrusted lookup facts; invalid names simply cannot be local friends. */
+    private static Optional<String> normalizeLookupName(String name) {
         String display = name == null ? "" : name.trim();
-        if (!display.matches("[A-Za-z0-9_]{3,16}")) throw new IllegalArgumentException("Friend names must be valid Minecraft player names");
-        return display.toLowerCase(Locale.ROOT);
+        if (!display.matches("[A-Za-z0-9_]{3,16}")) {
+            return Optional.empty();
+        }
+        return Optional.of(display.toLowerCase(Locale.ROOT));
+    }
+    private static String normalizeName(String name) {
+        return normalizeLookupName(name)
+                .orElseThrow(() -> new IllegalArgumentException("Friend names must be valid Minecraft player names"));
     }
     private static int requiredInt(JsonObject object, String property) {
         JsonElement value = object.get(property);

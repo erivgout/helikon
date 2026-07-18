@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Makes StorageESP rebuild from loaded block entities every tick, so nearby
+  storage appears and disappears immediately instead of waiting on a cube scan.
+- Treats invalid or formatted server-supplied player names as non-friends during
+  lookups, preventing WTap and other friend-aware features from crashing.
+- Raises Timer's configurable maximum from 5× to 10×.
+- Stops Scaffold from locking the selected hotbar slot: automatic block
+  selection now borrows a slot only for placement and immediately restores it.
 - Makes Scaffold place automatically while enabled instead of requiring Use to
   be held; its existing bounded placement delay still controls interaction rate.
 - Fixes Scaffold remaining idle while Use is held by relying on its own bounded

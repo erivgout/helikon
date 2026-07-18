@@ -71,8 +71,11 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -133,8 +136,6 @@ public final class MinecraftWorldVisualizationRenderer {
     private final BlockEspScanCursor blockCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor blockAnchor = new BlockEspScanAnchor();
     private final BlockEspCache blockCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
-    private final BlockEspScanCursor storageCursor = new BlockEspScanCursor();
-    private final BlockEspScanAnchor storageAnchor = new BlockEspScanAnchor();
     private final BlockEspCache storageCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
     private final LinkedHashMap<OpenWaterColumn, BlockPos> openWaterSites = new LinkedHashMap<>();
     private final BlockEspScanCursor baseFinderCursor = new BlockEspScanCursor();
@@ -152,7 +153,6 @@ public final class MinecraftWorldVisualizationRenderer {
     private final BlockEspCache mobSpawnCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
     private ClientLevel observedLevel;
     private long observedBlockScanRevision = Long.MIN_VALUE;
-    private long observedStorageScanRevision = Long.MIN_VALUE;
     private long observedOpenWaterScanRevision = Long.MIN_VALUE;
     private long observedMobSpawnScanRevision = Long.MIN_VALUE;
     private int openWaterAnchorX;
@@ -441,26 +441,33 @@ public final class MinecraftWorldVisualizationRenderer {
     }
 
     private void scanStorage(ClientLevel level, Player player) {
-        if (storageEsp.scanRevision() != observedStorageScanRevision) {
-            observedStorageScanRevision = storageEsp.scanRevision();
-            resetStorageScanner();
-        }
-        BlockEspScanAnchor.Update anchor = storageAnchor.update(player.getBlockX(), player.getBlockY(), player.getBlockZ(),
-                storageEsp.horizontalRange(), storageEsp.verticalRange(), storageCursor.isAtPassBoundary());
-        if (anchor.changed()) {
-            clearStorageResults();
-        }
-        BlockEspScanCursor.Region region = anchor.region();
-        for (int index = 0; index < storageEsp.scanBudget(); index++) {
-            BlockEspScanCursor.Position position = storageCursor.next(region);
-            if (!level.isInsideBuildHeight(position.y()) || !level.hasChunk(position.x() >> 4, position.z() >> 4)) {
-                storageCache.observe(position, false);
-                continue;
+        storageCache.clear();
+        int range = storageEsp.horizontalRange();
+        int minimumChunkX = Math.floorDiv(player.getBlockX() - range, 16);
+        int maximumChunkX = Math.floorDiv(player.getBlockX() + range, 16);
+        int minimumChunkZ = Math.floorDiv(player.getBlockZ() - range, 16);
+        int maximumChunkZ = Math.floorDiv(player.getBlockZ() + range, 16);
+        int checked = 0;
+        for (int chunkX = minimumChunkX; chunkX <= maximumChunkX; chunkX++) {
+            for (int chunkZ = minimumChunkZ; chunkZ <= maximumChunkZ; chunkZ++) {
+                LevelChunk chunk = level.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.FULL, false);
+                if (chunk == null) {
+                    continue;
+                }
+                for (BlockEntity blockEntity : chunk.getBlockEntities().values()) {
+                    if (checked++ >= storageEsp.scanBudget()) {
+                        return;
+                    }
+                    BlockPos blockPosition = blockEntity.getBlockPos();
+                    BlockEspScanCursor.Position position = new BlockEspScanCursor.Position(
+                            blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
+                    if (!isWithinCurrentStorageRange(position, player)) {
+                        continue;
+                    }
+                    String blockId = BuiltInRegistries.BLOCK.getKey(blockEntity.getBlockState().getBlock()).toString();
+                    storageCache.observe(position, storageEsp.shouldHighlight(blockId, !blockEntity.isRemoved()));
+                }
             }
-            BlockPos blockPosition = new BlockPos(position.x(), position.y(), position.z());
-            BlockState state = level.getBlockState(blockPosition);
-            String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-            storageCache.observe(position, state.hasBlockEntity() && storageEsp.targetBlocks().contains(blockId));
         }
     }
 
@@ -1438,7 +1445,6 @@ public final class MinecraftWorldVisualizationRenderer {
     }
 
     private void resetStorageScanner() {
-        storageAnchor.clear();
         clearStorageResults();
     }
 
@@ -1486,7 +1492,6 @@ public final class MinecraftWorldVisualizationRenderer {
     }
 
     private void clearStorageResults() {
-        storageCursor.clear();
         storageCache.clear();
     }
 

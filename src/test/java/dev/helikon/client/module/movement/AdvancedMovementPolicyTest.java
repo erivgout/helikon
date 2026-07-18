@@ -127,6 +127,8 @@ class AdvancedMovementPolicyTest {
                 false, true).orElseThrow());
         assertEquals(4, scaffold.selectBlockSlot(0, false,
                 List.of(new Scaffold.HotbarBlock(1, 16), new Scaffold.HotbarBlock(4, 32))).orElseThrow());
+        assertTrue(scaffold.selectBlockSlot(2, true,
+                List.of(new Scaffold.HotbarBlock(4, 32))).isEmpty());
         assertTrue(scaffold.shouldRequestEdgeSafety(true));
 
         booleanSetting(scaffold, "tower").set(true);
@@ -143,8 +145,8 @@ class AdvancedMovementPolicyTest {
         Timer timer = enabled(new Timer());
         numberSetting(timer, "tick_multiplier").set(1.20D);
         assertEquals(1.20F, timer.multiplier(), 0.0001F);
-        numberSetting(timer, "tick_multiplier").set(5.0D);
-        assertEquals(5.0F, timer.multiplier(), 0.0001F);
+        numberSetting(timer, "tick_multiplier").set(10.0D);
+        assertEquals(10.0F, timer.multiplier(), 0.0001F);
 
         booleanSetting(timer, "digging_only").set(true);
         assertEquals(1.0F, timer.multiplier(), 0.0001F);

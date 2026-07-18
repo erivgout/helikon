@@ -1,6 +1,7 @@
 package dev.helikon.client.module.movement;
 
 import dev.helikon.client.mixin.MinecraftAccessor;
+import dev.helikon.client.mixin.MultiPlayerGameModeAccessor;
 import dev.helikon.client.module.world.BuildPoint;
 import dev.helikon.client.module.world.BuildVector;
 import net.minecraft.client.Minecraft;
@@ -303,10 +304,6 @@ public final class MinecraftAdvancedMovementAccess {
             return;
         }
         LocalPlayer player = client.player;
-        if (!(player.getInventory().getSelectedItem().getItem() instanceof BlockItem)) {
-            selectHotbarBlock(module, player);
-            return;
-        }
         Vec2 input = player.input.getMoveVector();
         boolean moving = input.x != 0.0F || input.y != 0.0F;
         Direction forwardDirection = Direction.fromYRot(player.getYRot());
@@ -321,10 +318,28 @@ public final class MinecraftAdvancedMovementAccess {
         if (hit.isEmpty() || module.nextTarget(tick, playerBlock, forward, moving, true).isEmpty()) {
             return;
         }
+        int previousSlot = player.getInventory().getSelectedSlot();
+        boolean selectedIsBlock = player.getInventory().getSelectedItem().getItem() instanceof BlockItem;
+        int placementSlot = selectedIsBlock
+                ? previousSlot
+                : hotbarBlockSlot(module, player).orElse(-1);
+        if (placementSlot < 0) {
+            return;
+        }
         if (module.rotateToTarget()) {
             player.setYRot(Direction.getYRot(hit.get().getDirection()));
         }
-        client.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit.get());
+        if (placementSlot != previousSlot) {
+            player.getInventory().setSelectedSlot(placementSlot);
+        }
+        try {
+            client.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit.get());
+        } finally {
+            if (placementSlot != previousSlot && player.getInventory().getSelectedSlot() == placementSlot) {
+                player.getInventory().setSelectedSlot(previousSlot);
+                ((MultiPlayerGameModeAccessor) client.gameMode).helikon$ensureHasSentCarriedItem();
+            }
+        }
     }
 
     /**
@@ -416,7 +431,7 @@ public final class MinecraftAdvancedMovementAccess {
                 remainingDurability(player.getItemBySlot(EquipmentSlot.CHEST)));
     }
 
-    private static void selectHotbarBlock(Scaffold module, LocalPlayer player) {
+    private static Optional<Integer> hotbarBlockSlot(Scaffold module, LocalPlayer player) {
         List<Scaffold.HotbarBlock> candidates = new ArrayList<>();
         for (int slot = 0; slot < 9; slot++) {
             ItemStack stack = player.getInventory().getItem(slot);
@@ -424,8 +439,7 @@ public final class MinecraftAdvancedMovementAccess {
                 candidates.add(new Scaffold.HotbarBlock(slot, stack.getCount()));
             }
         }
-        module.selectBlockSlot(player.getInventory().getSelectedSlot(), false, candidates)
-                .ifPresent(player.getInventory()::setSelectedSlot);
+        return module.selectBlockSlot(player.getInventory().getSelectedSlot(), false, candidates);
     }
 
     private static HorizontalVelocity desiredDirection(LocalPlayer player, Vec2 input) {

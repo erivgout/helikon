@@ -48,7 +48,7 @@ public final class StorageEsp extends Module {
         verticalRange = addSetting(new NumberSetting("vertical_range", "Vertical range",
                 "Vertical local scan radius around the player in blocks.", 24.0D, 8.0D, 64.0D));
         scanBudget = addSetting(new NumberSetting("scan_budget", "Scan budget",
-                "Maximum local blocks checked per client tick.", 512.0D, 64.0D, 2_048.0D));
+                "Maximum loaded block entities checked per client tick.", 512.0D, 64.0D, 2_048.0D));
         lineWidth = addSetting(new NumberSetting("line_width", "Line width", "Local box line width.",
                 1.0D, 0.5D, 4.0D));
         color = addSetting(new ColorSetting("color", "Color", "ARGB local storage-box outline color.", 0xFFCE93D8));
@@ -80,6 +80,14 @@ public final class StorageEsp extends Module {
     public int fillColor() { return fillColor.value(); }
 
     public long scanRevision() { return scanRevision; }
+
+    /** Pure target decision used by the loaded-block-entity adapter. */
+    public boolean shouldHighlight(String blockId, boolean hasBlockEntity) {
+        if (blockId == null || blockId.isBlank()) {
+            throw new IllegalArgumentException("storage block ID must not be blank");
+        }
+        return isEnabled() && hasBlockEntity && targetBlocks.contains(blockId);
+    }
 
     /** Installs the thin local render-cache cleanup hook without Minecraft types. */
     public void setCacheClearer(Runnable cacheClearer) {

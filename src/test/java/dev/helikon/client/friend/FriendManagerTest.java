@@ -38,6 +38,8 @@ class FriendManagerTest {
     void rejectsUnsafeNamesAndRecoversMalformedFiles() throws IOException {
         FriendManager manager = new FriendManager(temporaryDirectory.resolve("helikon"));
         assertThrows(IllegalArgumentException.class, () -> manager.add("bad name"));
+        assertFalse(manager.contains("§r§7§4§4§7§m§a§f"));
+        assertTrue(manager.find(".SweatyLeaf02241").isEmpty());
         Path directory = temporaryDirectory.resolve("helikon");
         Files.createDirectories(directory);
         Files.writeString(directory.resolve("friends.json"), "{\"schemaVersion\":1,\"friends\":[{\"name\":\"bad name\",\"color\":0}]}" );

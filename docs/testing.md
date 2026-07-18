@@ -150,8 +150,9 @@ Trajectory drag/gravity ordering, collision stopping, radar projection/clipping,
 and ARGB transparency are covered by `TrajectorySimulatorTest`,
 `RadarProjectionTest`, and `RenderColorTest`.
 XRay target filtering, opacity validation, reversible renderer-invalidation
-decisions, and StorageESP target-family parsing are covered by
-`XRayRenderStateTest`, `XRayTest`, and `StorageEspTargetsTest`.
+decisions, and StorageESP target-family/enabled-state decisions are covered by
+`XRayRenderStateTest`, `XRayTest`, `StorageEspTargetsTest`, and
+`StorageEspTest`.
 MiniPlayer's fixed geometry and DamageIndicators' confirmed health-loss,
 bounded-label, fade, and rise decisions are covered by `MiniPlayerLayoutTest`
 and `DamageIndicatorTrackerTest`.
@@ -571,8 +572,9 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     rebuild; change the block list and opacity, wait for the local rebuild, and
     verify the display follows it. Disable XRay and verify normal world geometry
     fully returns. Enable **StorageESP** near known selected storage, then
-    verify its box appears after a bounded scan pass, is culled when offscreen,
-    honors category/custom-ID settings, and never opens or changes a container.
+    verify its box appears on the next tick, disappears on the next tick after
+    the storage is removed, is culled when offscreen, honors category/custom-ID
+    settings, and never opens or changes a container.
     For **BlockESP**, set two configured IDs to distinct `block_colors` entries
     and verify each retained local box/tracer uses its own color; malformed
     entries must safely retain the shared fallback color.
@@ -652,9 +654,10 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     verify **ExtraElytra**'s gradual pitch/near-ground adjustment, speed HUD,
     durability warning, and panic hide. With player-provided hotbar blocks,
     enable **Scaffold** without holding Use and verify one normal supported
-    placement per delay, hotbar selection, below/ahead mode, optional local rotation/tower/
-    edge-safety requests, and no action for unloaded/occupied targets or open
-    screens. Finally set **Timer** within its safe range, verify it disables on
+    placement per delay, temporary hotbar selection with immediate held-slot
+    restoration, below/ahead mode, optional local rotation/tower/edge-safety
+    requests, and no action for unloaded/occupied targets or open screens.
+    Finally set **Timer** within its safe range, verify it disables on
     disconnect/world leave, and confirm no module claims server-side movement
     or tick-rate changes.
 45. In a disposable local/test world, enable each **Combat** module separately.

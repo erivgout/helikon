@@ -42,6 +42,10 @@ class AdvancedMovementPolicyTest {
         Speed speed = enabled(new Speed());
         assertEquals(0.90D, speed.adjust(new HorizontalVelocity(0.30D, 0.0D),
                 new HorizontalVelocity(1.0D, 0.0D), true).x(), 0.0001D);
+        HorizontalVelocity airborneTurn = speed.adjust(new HorizontalVelocity(0.0D, 0.30D),
+                new HorizontalVelocity(-1.0D, 0.0D), true);
+        assertEquals(-0.90D, airborneTurn.x(), 0.0001D);
+        assertEquals(0.0D, airborneTurn.z(), 0.0001D);
         assertEquals(3.0D, numberSetting(speed, "multiplier").value());
         assertEquals(0.08D, numberSetting(speed, "acceleration").value());
         assertEquals(0.90D, numberSetting(speed, "maximum_speed").value());

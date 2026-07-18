@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fixes Speed's default Multiplier mode so held movement input can redirect
+  horizontal velocity in midair, including while Jetpack supplies vertical thrust.
+
 ## 1.1.3 - 2026-07-18
 
 - Replaces Gojo's Infinity local movement constraint with a strictly client-side

@@ -46,7 +46,7 @@ public final class Speed extends Module {
             case STRAFE_ASSIST -> new HorizontalVelocity(
                     current.x() * 0.80D + direction.x() * acceleration.value() * 1.20D,
                     current.z() * 0.80D + direction.z() * acceleration.value() * 1.20D);
-            case MULTIPLIER -> current.scale(multiplier.value());
+            case MULTIPLIER -> direction.scale(current.speed() * multiplier.value());
         };
         return result.capped(maximumSpeed.value());
     }

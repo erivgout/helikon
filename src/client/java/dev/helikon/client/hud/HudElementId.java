@@ -13,7 +13,7 @@ public enum HudElementId {
     RADAR(Anchor.TOP_LEFT, 5, 120),
     MINI_PLAYER(Anchor.TOP_LEFT, 5, 210),
     DEBUG_OVERLAY(Anchor.TOP_LEFT, 5, 5),
-    BETTER_CROSSHAIR(Anchor.CENTER, 0, 0),
+    BETTER_CROSSHAIR(Anchor.CENTER, 0, 0, true, true),
     HEALTH(Anchor.CENTER, 0, 14),
     DIRECTION(Anchor.TOP_RIGHT, 5, 5, false),
     FPS(Anchor.TOP_RIGHT, 5, 18, false),
@@ -32,22 +32,30 @@ public enum HudElementId {
     private final int defaultOffsetX;
     private final int defaultOffsetY;
     private final boolean defaultEnabled;
+    private final boolean positionLocked;
 
     HudElementId(Anchor defaultAnchor, int defaultOffsetX, int defaultOffsetY) {
-        this(defaultAnchor, defaultOffsetX, defaultOffsetY, true);
+        this(defaultAnchor, defaultOffsetX, defaultOffsetY, true, false);
     }
 
     HudElementId(Anchor defaultAnchor, int defaultOffsetX, int defaultOffsetY, boolean defaultEnabled) {
+        this(defaultAnchor, defaultOffsetX, defaultOffsetY, defaultEnabled, false);
+    }
+
+    HudElementId(Anchor defaultAnchor, int defaultOffsetX, int defaultOffsetY, boolean defaultEnabled,
+                 boolean positionLocked) {
         this.defaultAnchor = defaultAnchor;
         this.defaultOffsetX = defaultOffsetX;
         this.defaultOffsetY = defaultOffsetY;
         this.defaultEnabled = defaultEnabled;
+        this.positionLocked = positionLocked;
     }
 
     public Anchor defaultAnchor() { return defaultAnchor; }
     public int defaultOffsetX() { return defaultOffsetX; }
     public int defaultOffsetY() { return defaultOffsetY; }
     public boolean defaultEnabled() { return defaultEnabled; }
+    public boolean positionLocked() { return positionLocked; }
 
     public enum Anchor {
         TOP_LEFT,

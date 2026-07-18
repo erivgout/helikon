@@ -6,6 +6,8 @@
   placement delay instead of Minecraft's continually refreshed right-click cooldown.
 - Wraps the ClickGUI's empty settings-panel instruction within the panel instead
   of clipping the single line at narrow window widths.
+- Locks Better Crosshair to the exact viewport center, ignoring old saved drag
+  offsets and generic HUD alignment offsets while keeping its style settings.
 
 ## 1.1.4 - 2026-07-18
 

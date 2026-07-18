@@ -21,6 +21,13 @@ class HudElementPlacementTest {
         HudElementPlacement crosshair = new HudElementPlacement(HudElementId.BETTER_CROSSHAIR);
 
         assertEquals(new HudBounds(41, 31, 17, 17), crosshair.bounds(100, 80, 17, 17));
+        assertTrue(crosshair.positionLocked());
+        assertFalse(crosshair.setAbsolutePosition(5, 7));
+        assertTrue(crosshair.set(HudElementId.Anchor.TOP_LEFT, 20, 30));
+        assertEquals(HudElementId.Anchor.CENTER, crosshair.anchor());
+        assertEquals(0, crosshair.offsetX());
+        assertEquals(0, crosshair.offsetY());
+        assertEquals(new HudBounds(41, 31, 17, 17), crosshair.bounds(100, 80, 17, 17));
     }
 
     @Test

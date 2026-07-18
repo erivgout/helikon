@@ -14,7 +14,7 @@
   "screen.helikon.theme_editor.title": "ClickGUI Theme",
   "screen.helikon.theme_editor.instructions": "Choose a local palette. Escape returns to the ClickGUI.",
   "screen.helikon.hud_editor.title": "Helikon HUD Editor",
-  "screen.helikon.hud_editor.instructions": "Drag any preview to move it. Escape returns to the ClickGUI.",
+  "screen.helikon.hud_editor.instructions": "Drag any movable preview. Better Crosshair stays centered. Escape returns to the ClickGUI.",
   "screen.helikon.hud_editor.active_modules": "Active modules",
   "screen.helikon.hud_editor.settings_button": "HUD settings",
   "screen.helikon.hud_settings.title": "Helikon HUD Settings",

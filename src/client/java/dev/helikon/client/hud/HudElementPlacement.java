@@ -17,6 +17,7 @@ public final class HudElementPlacement {
     }
 
     private boolean enabled;
+    private final HudElementId element;
     private HudElementId.Anchor anchor;
     private int offsetX;
     private int offsetY;
@@ -29,8 +30,8 @@ public final class HudElementPlacement {
     private boolean rainbow;
 
     public HudElementPlacement(HudElementId element) {
-        Objects.requireNonNull(element, "element");
-        reset(element);
+        this.element = Objects.requireNonNull(element, "element");
+        reset(this.element);
     }
 
     public boolean enabled() { return enabled; }
@@ -44,6 +45,7 @@ public final class HudElementPlacement {
     public boolean textShadow() { return textShadow; }
     public int color() { return color; }
     public boolean rainbow() { return rainbow; }
+    public boolean positionLocked() { return element.positionLocked(); }
 
     public void setEnabled(boolean value) { enabled = value; }
 
@@ -77,6 +79,12 @@ public final class HudElementPlacement {
         if (!HudLayout.isValidCoordinate(nextOffsetX) || !HudLayout.isValidCoordinate(nextOffsetY)) {
             return false;
         }
+        if (positionLocked()) {
+            anchor = element.defaultAnchor();
+            offsetX = element.defaultOffsetX();
+            offsetY = element.defaultOffsetY();
+            return true;
+        }
         anchor = Objects.requireNonNull(nextAnchor, "nextAnchor");
         offsetX = nextOffsetX;
         offsetY = nextOffsetY;
@@ -85,6 +93,9 @@ public final class HudElementPlacement {
 
     /** Converts a dragged screen position to a stable top-left placement. */
     public boolean setAbsolutePosition(int x, int y) {
+        if (positionLocked()) {
+            return false;
+        }
         return set(HudElementId.Anchor.TOP_LEFT, x, y);
     }
 

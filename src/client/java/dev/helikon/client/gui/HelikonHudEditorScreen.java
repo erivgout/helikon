@@ -107,9 +107,11 @@ public final class HelikonHudEditorScreen extends Screen {
             HudBounds bounds = previews.elementBounds(element, width, height);
             if (bounds.contains(mouseX, mouseY)) {
                 selectedElement = element;
-                draggedElement = element;
-                elementDragOffsetX = mouseX - bounds.x();
-                elementDragOffsetY = mouseY - bounds.y();
+                if (!element.positionLocked()) {
+                    draggedElement = element;
+                    elementDragOffsetX = mouseX - bounds.x();
+                    elementDragOffsetY = mouseY - bounds.y();
+                }
                 return true;
             }
         }

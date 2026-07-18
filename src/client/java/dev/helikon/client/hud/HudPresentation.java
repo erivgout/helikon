@@ -96,7 +96,7 @@ public final class HudPresentation {
         if (decorate && placement.textShadow()) {
             graphics.outline(0, 0, outerWidth, outerHeight, color(placement));
         }
-        int horizontalOffset = switch (placement.alignment()) {
+        int horizontalOffset = placement.positionLocked() ? 0 : switch (placement.alignment()) {
             case LEFT -> 0;
             case CENTER -> placement.padding() / 2;
             case RIGHT -> placement.padding();

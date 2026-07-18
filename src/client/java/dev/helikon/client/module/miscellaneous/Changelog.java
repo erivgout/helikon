@@ -35,7 +35,9 @@ public final class Changelog extends Module {
 
     public List<String> notes() {
         return List.of(
-                "Helikon 1.1.3",
+                "Helikon 1.1.4",
+                "Speed now follows held WASD direction in midair, including with Jetpack and Air Jump.",
+                "AutoFarm now supports wart, berries, cocoa, stacked plants, melons, and pumpkins.",
                 "Infinity now repels nearby threats with ordinary client-side attacks.",
                 "Enderman Aura uses gravity-aware arrow prediction and wider side escapes.",
                 "Air Jump now supports bounded repeat jumps while Space is held.",

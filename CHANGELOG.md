@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.1.4 - 2026-07-18
+
 - Fixes Speed's default Multiplier mode so held movement input can redirect
   horizontal velocity in midair, including while Jetpack supplies vertical thrust.
 - Expands AutoFarm to handle nether wart, sweet berries, cocoa, sugar cane,

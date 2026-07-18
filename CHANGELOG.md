@@ -4,6 +4,8 @@
 
 - Fixes Speed's default Multiplier mode so held movement input can redirect
   horizontal velocity in midair, including while Jetpack supplies vertical thrust.
+- Expands AutoFarm to handle nether wart, sweet berries, cocoa, sugar cane,
+  bamboo, cactus, melons, and pumpkins with plant-specific harvest behavior.
 
 ## 1.1.3 - 2026-07-18
 

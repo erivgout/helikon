@@ -15,7 +15,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CocoaBlock;
 import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.NetherWartBlock;
+import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -135,7 +138,7 @@ public final class MinecraftLegacyWorldAccess {
                 : scan(client, player, module.scanRadius(), action, origin, originId);
         module.select(tick, false, candidates).ifPresent(candidate -> {
             BlockPos position = new BlockPos(candidate.x(), candidate.y(), candidate.z());
-            perform(client, action, position);
+            perform(client, module, action, position, candidate);
             module.markActed(tick);
         });
     }
@@ -198,7 +201,7 @@ public final class MinecraftLegacyWorldAccess {
                                                        Action action, BlockPos origin, String originId) {
         BlockState state = client.level.getBlockState(position);
         String id = blockId(state);
-        boolean mature = state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state);
+        boolean mature = isHarvestablePlant(client, position, state);
         boolean growable = state.getBlock() instanceof BonemealableBlock;
         boolean tillable = state.is(Blocks.DIRT) || state.is(Blocks.GRASS_BLOCK)
                 || state.is(Blocks.COARSE_DIRT) || state.is(Blocks.ROOTED_DIRT);
@@ -234,12 +237,10 @@ public final class MinecraftLegacyWorldAccess {
         };
     }
 
-    private static void perform(Minecraft client, Action action, BlockPos position) {
+    private static void perform(Minecraft client, BoundedWorldAction module, Action action, BlockPos position,
+                                BoundedWorldAction.Candidate candidate) {
         switch (action) {
-            case HARVEST -> {
-                destroy(client, position);
-                use(client, position.below());
-            }
+            case HARVEST -> harvest(client, (AutoFarm) module, position, candidate.blockId());
             case BONEMEAL -> {
                 if (client.player.getMainHandItem().is(Items.BONE_MEAL)) {
                     use(client, position);
@@ -272,6 +273,25 @@ public final class MinecraftLegacyWorldAccess {
         }
     }
 
+    private static void harvest(Minecraft client, AutoFarm module, BlockPos position, String blockId) {
+        switch (module.harvestMode(blockId)) {
+            case PICK_IN_PLACE -> use(client, position);
+            case BREAK_ABOVE_BASE, BREAK_FRUIT -> destroy(client, position);
+            case BREAK_AND_REPLANT_BELOW -> {
+                destroy(client, position);
+                use(client, position.below());
+            }
+            case BREAK_AND_REPLANT_COCOA -> {
+                BlockState state = client.level.getBlockState(position);
+                Direction facing = state.getBlock() instanceof CocoaBlock
+                        ? state.getValue(CocoaBlock.FACING)
+                        : Direction.NORTH;
+                destroy(client, position);
+                use(client, position.relative(facing), facing.getOpposite());
+            }
+        }
+    }
+
     private static void destroy(Minecraft client, BlockPos position) {
         Direction face = Direction.UP;
         if (client.gameMode.isDestroying()) {
@@ -283,9 +303,39 @@ public final class MinecraftLegacyWorldAccess {
     }
 
     private static void use(Minecraft client, BlockPos position) {
-        BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(position), Direction.UP, position, false);
+        use(client, position, Direction.UP);
+    }
+
+    private static void use(Minecraft client, BlockPos position, Direction face) {
+        BlockHitResult hit = new BlockHitResult(
+                Vec3.atCenterOf(position).add(face.getUnitVec3().scale(0.5D)),
+                face, position, false);
         client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, hit);
         client.player.swing(InteractionHand.MAIN_HAND);
+    }
+
+    private static boolean isHarvestablePlant(Minecraft client, BlockPos position, BlockState state) {
+        if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state)) {
+            return true;
+        }
+        if (state.is(Blocks.NETHER_WART)) {
+            return state.getValue(NetherWartBlock.AGE) == NetherWartBlock.MAX_AGE;
+        }
+        if (state.is(Blocks.SWEET_BERRY_BUSH)) {
+            return state.getValue(SweetBerryBushBlock.AGE) == SweetBerryBushBlock.MAX_AGE;
+        }
+        if (state.is(Blocks.COCOA)) {
+            return state.getValue(CocoaBlock.AGE) == CocoaBlock.MAX_AGE;
+        }
+        if (state.is(Blocks.MELON) || state.is(Blocks.PUMPKIN)) {
+            return true;
+        }
+        if (!state.is(Blocks.SUGAR_CANE) && !state.is(Blocks.BAMBOO) && !state.is(Blocks.CACTUS)) {
+            return false;
+        }
+        BlockState below = client.level.getBlockState(position.below());
+        BlockState twoBelow = client.level.getBlockState(position.below(2));
+        return below.is(state.getBlock()) && !twoBelow.is(state.getBlock());
     }
 
     private static BlockPos secondSolidAlongView(Minecraft client, LocalPlayer player, int range) {

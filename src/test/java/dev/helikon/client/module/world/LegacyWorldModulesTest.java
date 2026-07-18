@@ -45,6 +45,30 @@ class LegacyWorldModulesTest {
     }
 
     @Test
+    void autoFarmUsesPlantSpecificHarvestPaths() {
+        AutoFarm module = new AutoFarm();
+
+        assertEquals(AutoFarm.HarvestMode.BREAK_AND_REPLANT_BELOW,
+                module.harvestMode("minecraft:wheat"));
+        assertEquals(AutoFarm.HarvestMode.BREAK_AND_REPLANT_BELOW,
+                module.harvestMode("minecraft:nether_wart"));
+        assertEquals(AutoFarm.HarvestMode.PICK_IN_PLACE,
+                module.harvestMode("minecraft:sweet_berry_bush"));
+        assertEquals(AutoFarm.HarvestMode.BREAK_AND_REPLANT_COCOA,
+                module.harvestMode("minecraft:cocoa"));
+        assertEquals(AutoFarm.HarvestMode.BREAK_ABOVE_BASE,
+                module.harvestMode("minecraft:sugar_cane"));
+        assertEquals(AutoFarm.HarvestMode.BREAK_ABOVE_BASE,
+                module.harvestMode("minecraft:bamboo"));
+        assertEquals(AutoFarm.HarvestMode.BREAK_ABOVE_BASE,
+                module.harvestMode("minecraft:cactus"));
+        assertEquals(AutoFarm.HarvestMode.BREAK_FRUIT,
+                module.harvestMode("minecraft:melon"));
+        assertEquals(AutoFarm.HarvestMode.BREAK_FRUIT,
+                module.harvestMode("minecraft:pumpkin"));
+    }
+
+    @Test
     void feedAuraSelectsNearestAcceptingAnimalAtCadence() {
         FeedAura module = enabled(new FeedAura());
         assertEquals(2, module.select(0L, false, true, List.of(

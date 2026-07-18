@@ -4,6 +4,8 @@
 
 - Fixes Air Place remaining idle while Use is held by relying on its own bounded
   placement delay instead of Minecraft's continually refreshed right-click cooldown.
+- Wraps the ClickGUI's empty settings-panel instruction within the panel instead
+  of clipping the single line at narrow window widths.
 
 ## 1.1.4 - 2026-07-18
 

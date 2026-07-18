@@ -502,8 +502,8 @@ public final class HelikonClickGuiScreen extends Screen {
         graphics.enableScissor(settingsX, contentTop, panelX + panelWidth, contentBottom);
         Module module = state.selectedModule().orElse(null);
         if (module == null) {
-            graphics.text(font, Component.translatable("screen.helikon.no_selection"),
-                    settingsX + 6, contentTop + 6, COLOR_TEXT_DIM, false);
+            graphics.textWithWordWrap(font, Component.translatable("screen.helikon.no_selection"),
+                    settingsX + 6, contentTop + 6, SETTINGS_WIDTH - 12, COLOR_TEXT_DIM);
             graphics.disableScissor();
             return;
         }

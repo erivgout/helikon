@@ -15,7 +15,7 @@ abstract class CameraDistanceMixin {
         throw new AssertionError();
     }
 
-    @Redirect(method = "update", at = @At(value = "INVOKE",
+    @Redirect(method = "alignWithEntity", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/Camera;getMaxZoom(F)F"))
     private float helikon$cameraDistance(Camera camera, float vanillaDistance) {
         return getMaxZoom(CameraModuleAccess.desiredDistance(vanillaDistance));

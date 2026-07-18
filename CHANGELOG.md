@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.1.1
+
+- Fixes the Camera Distance mixin target for Minecraft 26.2 so the client can
+  finish startup instead of crashing while transforming the camera class.
+
+## 1.1.0
+
 - Adds an **All blocks** checkbox to Nuker that targets every non-air block
   regardless of the whitelist (the blacklist still applies); the whitelist row
   is hidden while it is on.

@@ -6,7 +6,8 @@
   storage appears and disappears immediately instead of waiting on a cube scan.
 - Treats invalid or formatted server-supplied player names as non-friends during
   lookups, preventing WTap and other friend-aware features from crashing.
-- Raises Timer's configurable maximum from 5× to 10×.
+- Raises Speed's configurable multiplier ceiling from 3× to 10× and its
+  horizontal velocity-cap ceiling from 0.90 to 3.0 blocks per tick.
 - Stops Scaffold from locking the selected hotbar slot: automatic block
   selection now borrows a slot only for placement and immediately restores it.
 - Makes Scaffold place automatically while enabled instead of requiring Use to

@@ -47,7 +47,7 @@ public final class Changelog extends Module {
                 "Fixed detached Freecam horizontal look and mouse rotation shaking.",
                 "Clipped empty ClickGUI settings text inside its panel.",
                 "TpClick now coordinates its fall reset with NoFall before teleporting.",
-                "Raised Timer to 10x and made FastBreak accelerate active mining.",
+                "Raised Timer to 5x and made FastBreak accelerate active mining.",
                 "Added the missing bounded Regen fast-heal attempt.",
                 "KillAura now attacks without moving your camera or head.",
                 "Fixed selected ClickGUI labels and favorite controls blending into their rows.",

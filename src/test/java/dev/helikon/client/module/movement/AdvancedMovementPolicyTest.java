@@ -49,6 +49,10 @@ class AdvancedMovementPolicyTest {
         assertEquals(3.0D, numberSetting(speed, "multiplier").value());
         assertEquals(0.08D, numberSetting(speed, "acceleration").value());
         assertEquals(0.90D, numberSetting(speed, "maximum_speed").value());
+        numberSetting(speed, "multiplier").set(10.0D);
+        numberSetting(speed, "maximum_speed").set(3.0D);
+        assertEquals(3.0D, speed.adjust(new HorizontalVelocity(0.30D, 0.0D),
+                new HorizontalVelocity(1.0D, 0.0D), true).x(), 0.0001D);
         BunnyHop hop = enabled(new BunnyHop());
         assertTrue(hop.shouldJump(true, true, false));
         assertFalse(hop.shouldJump(false, true, false));
@@ -145,8 +149,8 @@ class AdvancedMovementPolicyTest {
         Timer timer = enabled(new Timer());
         numberSetting(timer, "tick_multiplier").set(1.20D);
         assertEquals(1.20F, timer.multiplier(), 0.0001F);
-        numberSetting(timer, "tick_multiplier").set(10.0D);
-        assertEquals(10.0F, timer.multiplier(), 0.0001F);
+        numberSetting(timer, "tick_multiplier").set(5.0D);
+        assertEquals(5.0F, timer.multiplier(), 0.0001F);
 
         booleanSetting(timer, "digging_only").set(true);
         assertEquals(1.0F, timer.multiplier(), 0.0001F);

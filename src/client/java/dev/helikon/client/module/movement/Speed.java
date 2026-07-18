@@ -25,11 +25,11 @@ public final class Speed extends Module {
         mode = addSetting(new EnumSetting<>("mode", "Mode", "Choose a conservative local motion policy.",
                 Mode.class, Mode.MULTIPLIER));
         multiplier = addSetting(new NumberSetting("multiplier", "Multiplier", "Capped horizontal multiplier.",
-                3.0D, 1.0D, 3.0D));
+                3.0D, 1.0D, 10.0D));
         acceleration = addSetting(new NumberSetting("acceleration", "Acceleration", "Local directional acceleration.",
                 0.08D, 0.0D, 0.08D));
         maximumSpeed = addSetting(new NumberSetting("maximum_speed", "Maximum speed", "Hard local horizontal speed cap.",
-                0.90D, 0.05D, 0.90D));
+                0.90D, 0.05D, 3.0D));
     }
 
     public HorizontalVelocity adjust(HorizontalVelocity current, HorizontalVelocity desiredDirection, boolean moving) {

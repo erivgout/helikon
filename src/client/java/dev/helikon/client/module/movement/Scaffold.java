@@ -37,7 +37,7 @@ public final class Scaffold extends Module {
     private long nextPlacementTick;
 
     public Scaffold() {
-        super("scaffold", "Scaffold", "Places player-provided hotbar blocks with normal local use interactions.",
+        super("scaffold", "Scaffold", "Automatically places player-provided hotbar blocks with normal interactions.",
                 ModuleCategory.MOVEMENT, false, Keybind.unbound());
         placement = addSetting(new EnumSetting<>("placement", "Placement", "Choose below or ahead target selection.",
                 Placement.class, Placement.BELOW));
@@ -48,7 +48,7 @@ public final class Scaffold extends Module {
         tower = addSetting(new BooleanSetting("tower", "Tower", "Request normal jump input while placing below.", false));
         edgeSafety = addSetting(new BooleanSetting("edge_safety", "Edge safety", "Request local sneak near an open target.", true));
         placementDelayTicks = addSetting(new NumberSetting("placement_delay_ticks", "Placement delay",
-                "Minimum ticks between ordinary held-block placement requests.", 4.0D, 1.0D, 40.0D));
+                "Minimum ticks between automatic ordinary block-placement requests.", 4.0D, 1.0D, 40.0D));
     }
 
     public Optional<BuildPoint> nextTarget(long tick, BuildPoint playerBlock, BuildVector forward,

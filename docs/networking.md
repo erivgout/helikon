@@ -123,10 +123,10 @@ resulting position, so it may reject, correct, rubber-band, or kick.
 Freecam is entirely local: its camera entity is not added to the client level,
 suppresses player movement keys, never moves the player, and never sends a
 position, rotation, or camera packet.
-Scaffold requires the user to hold Use and routes one selected player-provided
-block through Minecraft's normal `useItemOn` path after loaded-target/support
-checks. It does not choose blocks outside the hotbar or construct placement
-packets.
+While enabled, Scaffold automatically routes one selected player-provided block
+through Minecraft's normal `useItemOn` path after loaded-target/support and
+bounded-delay checks. It does not choose blocks outside the hotbar or construct
+placement packets.
 
 Combat modules do not construct, modify, replay, or spoof packets. TriggerBot,
 CriticalAssist, and KillAura may ask Minecraft to perform ordinary local

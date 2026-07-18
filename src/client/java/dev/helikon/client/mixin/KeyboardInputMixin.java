@@ -74,7 +74,7 @@ abstract class KeyboardInputMixin {
                 && client.player.level().getBlockState(client.player.blockPosition().below()).canBeReplaced();
         input.keyPresses = AdvancedMovementInputAccess.apply(input.keyPresses, screenOpen,
                 client.player != null && client.player.onGround(), initialVector.x() != 0.0F || initialVector.y() != 0.0F,
-                openBelow, client.options.keyUse.isDown());
+                openBelow);
         if (ParkourAccess.shouldJump(parkourContext(client, input.keyPresses, screenOpen))) {
             input.keyPresses = withJump(input.keyPresses);
         }

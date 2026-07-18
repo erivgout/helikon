@@ -132,10 +132,10 @@ class AdvancedMovementPolicyTest {
         booleanSetting(scaffold, "tower").set(true);
         AdvancedMovementInputAccess.install(new BunnyHop(), scaffold);
         Input input = new Input(false, false, false, false, false, false, false);
-        assertFalse(AdvancedMovementInputAccess.apply(input, false, true, false, true, false).jump());
-        assertFalse(AdvancedMovementInputAccess.apply(input, false, true, false, true, false).shift());
-        assertTrue(AdvancedMovementInputAccess.apply(input, false, true, false, true, true).jump());
-        assertTrue(AdvancedMovementInputAccess.apply(input, false, true, false, true, true).shift());
+        assertTrue(AdvancedMovementInputAccess.apply(input, false, true, false, true).jump());
+        assertTrue(AdvancedMovementInputAccess.apply(input, false, true, false, true).shift());
+        assertFalse(AdvancedMovementInputAccess.apply(input, true, true, false, true).jump());
+        assertFalse(AdvancedMovementInputAccess.apply(input, true, true, false, true).shift());
     }
 
     @Test

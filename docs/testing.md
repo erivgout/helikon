@@ -651,8 +651,8 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     screens retain vanilla behavior. While gliding with Elytra,
     verify **ExtraElytra**'s gradual pitch/near-ground adjustment, speed HUD,
     durability warning, and panic hide. With player-provided hotbar blocks,
-    hold Use for **Scaffold** and verify one normal supported placement per
-    delay, hotbar selection, below/ahead mode, optional local rotation/tower/
+    enable **Scaffold** without holding Use and verify one normal supported
+    placement per delay, hotbar selection, below/ahead mode, optional local rotation/tower/
     edge-safety requests, and no action for unloaded/occupied targets or open
     screens. Finally set **Timer** within its safe range, verify it disables on
     disconnect/world leave, and confirm no module claims server-side movement

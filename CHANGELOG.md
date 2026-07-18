@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Makes Scaffold place automatically while enabled instead of requiring Use to
+  be held; its existing bounded placement delay still controls interaction rate.
 - Fixes Scaffold remaining idle while Use is held by relying on its own bounded
   placement delay and clicking the actual support-block face.
 - Fixes Air Place remaining idle while Use is held by relying on its own bounded

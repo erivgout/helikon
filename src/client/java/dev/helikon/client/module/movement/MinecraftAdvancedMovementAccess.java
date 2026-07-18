@@ -296,10 +296,10 @@ public final class MinecraftAdvancedMovementAccess {
         }
     }
 
-    /** Requests one normal held-block placement while Use is held, paced by Scaffold's own bounded delay. */
+    /** Automatically requests normal held-block placements, paced by Scaffold's own bounded delay. */
     public static void tickScaffold(Scaffold module, long tick) {
         Minecraft client = Minecraft.getInstance();
-        if (!isInteractive(client) || client.gameMode == null || !client.options.keyUse.isDown()) {
+        if (!module.isEnabled() || !isInteractive(client) || client.gameMode == null) {
             return;
         }
         LocalPlayer player = client.player;

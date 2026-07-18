@@ -162,7 +162,8 @@ client-side camera entity; input and mouse turn are redirected locally while
 the player receives no movement input, then the normal camera is restored.
 Scaffold is similarly constrained to a selected player-provided hotbar block,
 a loaded replaceable target with local support, an existing vanilla use
-cooldown, and one normal held-block interaction. Clutch keeps its
+interaction, and its own bounded placement delay. It runs automatically while
+enabled without synthesizing Use input. Clutch keeps its
 falling/ground-proximity/mode/cooldown decision in the Minecraft-free `Clutch`
 policy; the shared advanced-movement adapter only samples the local descent,
 available space below, and hotbar block/water-bucket facts, then requests one

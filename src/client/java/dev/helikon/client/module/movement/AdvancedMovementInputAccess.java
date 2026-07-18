@@ -18,12 +18,11 @@ public final class AdvancedMovementInputAccess {
     }
 
     /** Applies only tested local input requests; callers retain Minecraft's physical input fields otherwise. */
-    public static Input apply(Input input, boolean screenOpen, boolean onGround, boolean moving, boolean openBelow,
-                              boolean useHeld) {
+    public static Input apply(Input input, boolean screenOpen, boolean onGround, boolean moving, boolean openBelow) {
         Input current = Objects.requireNonNull(input, "input");
         BunnyHop hop = bunnyHop;
         Scaffold scaffoldModule = scaffold;
-        boolean scaffoldInputAllowed = !screenOpen && useHeld && scaffoldModule != null;
+        boolean scaffoldInputAllowed = !screenOpen && scaffoldModule != null;
         boolean jump = current.jump() || (hop != null && hop.shouldJump(onGround, moving, screenOpen))
                 || (scaffoldInputAllowed && scaffoldModule.shouldRequestTowerJump(onGround, openBelow));
         boolean shift = current.shift() || (scaffoldInputAllowed && scaffoldModule.shouldRequestEdgeSafety(openBelow));

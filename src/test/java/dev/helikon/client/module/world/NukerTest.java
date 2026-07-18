@@ -19,7 +19,7 @@ class NukerTest {
     private static final Nuker.Target DIRT_NEAR = new Nuker.Target(0, 64, 1, "minecraft:dirt", 1.0D, true);
 
     @Test
-    void requiresEnabledHeldAttackAndTreatsBlankWhitelistAsAllBlocks() {
+    void requiresEnabledNoScreenAndTreatsBlankWhitelistAsAllBlocks() {
         Nuker module = new Nuker();
         List<Nuker.Target> candidates = List.of(STONE_NEAR, DIRT_NEAR);
         assertTrue(module.selectTargets(new Nuker.Context(false, true), candidates).isEmpty());
@@ -27,14 +27,27 @@ class NukerTest {
 
         enable(module);
         assertTrue(module.shouldScan(new Nuker.Context(false, true)));
+        assertFalse(module.shouldScan(new Nuker.Context(false, false)));
         assertEquals(List.of(DIRT_NEAR), module.selectTargets(new Nuker.Context(false, true), candidates));
         stringSetting(module, "whitelist").set("minecraft:stone");
         assertTrue(module.shouldScan(new Nuker.Context(false, true)));
         assertFalse(module.shouldScan(new Nuker.Context(true, true)));
-        assertFalse(module.shouldScan(new Nuker.Context(false, false)));
         assertEquals(List.of(STONE_NEAR), module.selectTargets(new Nuker.Context(false, true), candidates));
         assertTrue(module.selectTargets(new Nuker.Context(true, true), candidates).isEmpty());
-        assertTrue(module.selectTargets(new Nuker.Context(false, false), candidates).isEmpty());
+
+        booleanSetting(module, "require_attack_held").set(false);
+        assertTrue(module.shouldScan(new Nuker.Context(false, false)));
+        booleanSetting(module, "require_attack_held").set(true);
+        assertFalse(module.shouldScan(new Nuker.Context(false, false)));
+        assertTrue(module.shouldScan(new Nuker.Context(false, true)));
+    }
+
+    @Test
+    void radiusIsMeasuredFromPlayerFeetSoNearbyFloorBlocksAreIncluded() {
+        assertEquals(0.75D, Nuker.squaredDistanceFromPlayer(0.0D, 64.0D, 0.0D,
+                0, 63, 0), 0.0001D);
+        assertTrue(Nuker.squaredDistanceFromPlayer(0.0D, 64.0D, 0.0D,
+                0, 63, 0) <= 2.0D * 2.0D);
     }
 
     @Test
@@ -51,6 +64,10 @@ class NukerTest {
         assertEquals(List.of(DIRT_NEAR, STONE_NEAR), module.selectTargets(new Nuker.Context(false, true), candidates));
         stringSetting(module, "blacklist").set("minecraft:dirt");
         assertEquals(List.of(STONE_NEAR), module.selectTargets(new Nuker.Context(false, true), candidates));
+
+        Nuker.Target bedrock = new Nuker.Target(0, 63, 0, "minecraft:bedrock", 0.75D, true, false);
+        assertEquals(List.of(STONE_NEAR),
+                module.selectTargets(new Nuker.Context(false, true), List.of(bedrock, STONE_NEAR)));
     }
 
     @Test

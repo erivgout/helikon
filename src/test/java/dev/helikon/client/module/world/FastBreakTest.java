@@ -13,13 +13,17 @@ class FastBreakTest {
     void lowersOnlyAnExistingHeldTargetCooldownAndHonorsTheBlockFilter() {
         FastBreak fastBreak = enabled(new FakeCooldown(5));
         assertEquals(new FastBreak.Action(true, 0), fastBreak.update(true, true, "minecraft:stone", 5));
+        assertEquals(1, fastBreak.extraDestroySteps(true, true, "minecraft:stone"));
         assertEquals(FastBreak.Action.none(), fastBreak.update(false, true, "minecraft:stone", 5));
+        assertEquals(0, fastBreak.extraDestroySteps(false, true, "minecraft:stone"));
         assertEquals(FastBreak.Action.none(), fastBreak.update(true, false, "minecraft:stone", 5));
 
         stringSetting(fastBreak, "blocks").set("minecraft:stone;minecraft:deepslate");
         numberSetting(fastBreak, "break_delay").set(2.0D);
+        numberSetting(fastBreak, "speed_multiplier").set(5.0D);
         assertEquals(FastBreak.Action.none(), fastBreak.update(true, true, "minecraft:dirt", 5));
         assertEquals(new FastBreak.Action(true, 2), fastBreak.update(true, true, "minecraft:stone", 5));
+        assertEquals(4, fastBreak.extraDestroySteps(true, true, "minecraft:stone"));
     }
 
     @Test

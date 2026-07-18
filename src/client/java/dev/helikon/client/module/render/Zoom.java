@@ -19,4 +19,12 @@ public final class Zoom extends Module {
     public int fieldOfView() {
         return fieldOfView.value();
     }
+
+    /** Applies the configured render FOV only while this module is enabled. */
+    public float applyTo(float vanillaFov) {
+        if (!Float.isFinite(vanillaFov) || vanillaFov <= 0.0F) {
+            return vanillaFov;
+        }
+        return isEnabled() ? fieldOfView() : vanillaFov;
+    }
 }

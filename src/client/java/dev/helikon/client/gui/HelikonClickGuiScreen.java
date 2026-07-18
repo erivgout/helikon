@@ -69,6 +69,8 @@ public final class HelikonClickGuiScreen extends Screen {
     private static final int RESET_BUTTON_SIZE = 10;
     private static final int HUD_BUTTON_WIDTH = 30;
     private static final int THEME_BUTTON_WIDTH = 42;
+    private static final int SCROLLBAR_WIDTH = 3;
+    private static final int SCROLLBAR_HIT_WIDTH = 8;
 
     private int COLOR_PANEL;
     private int COLOR_HEADER;
@@ -95,6 +97,8 @@ public final class HelikonClickGuiScreen extends Screen {
     private final KeybindAssignment keybindAssignment;
     private final KeyCaptureSuppression keyCaptureSuppression = new KeyCaptureSuppression();
     private final Map<Setting<?>, EditBox> textFields = new LinkedHashMap<>();
+    private final ClickGuiScrollbarState listScrollbar = new ClickGuiScrollbarState();
+    private final ClickGuiScrollbarState settingsScrollbar = new ClickGuiScrollbarState();
 
     private EditBox searchField;
     private double listScroll;
@@ -245,7 +249,8 @@ public final class HelikonClickGuiScreen extends Screen {
 
         int mouseX = (int) event.x();
         int mouseY = (int) event.y();
-        return handleHudEditorClick(mouseX, mouseY)
+        return handleScrollbarDragStart(mouseX, mouseY)
+                || handleHudEditorClick(mouseX, mouseY)
                 || handleThemeEditorClick(mouseX, mouseY)
                 || handleCategoryClick(mouseX, mouseY)
                 || handleModuleListClick(mouseX, mouseY)
@@ -258,6 +263,9 @@ public final class HelikonClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (event.button() == 0 && dragScrollbarTo((int) event.y())) {
+            return true;
+        }
         if (event.button() == 0 && updateColorPicker((int) event.x(), (int) event.y())) {
             return true;
         }
@@ -284,6 +292,11 @@ public final class HelikonClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        if (event.button() == 0 && (listScrollbar.isDragging() || settingsScrollbar.isDragging())) {
+            listScrollbar.endDrag();
+            settingsScrollbar.endDrag();
+            return true;
+        }
         if (event.button() == 0 && windowResize.isResizing()) {
             windowResize.endResize();
             return true;
@@ -471,31 +484,31 @@ public final class HelikonClickGuiScreen extends Screen {
     }
 
     private void drawListScrollbar(GuiGraphicsExtractor graphics, int rowCount) {
-        int viewHeight = contentBottom - contentTop;
         int contentHeight = rowCount * ROW_HEIGHT;
-        if (contentHeight <= viewHeight) {
+        java.util.Optional<ClickGuiScrollbarState.Thumb> optionalThumb =
+                ClickGuiScrollbarState.thumb(contentTop, contentBottom, contentHeight, listScroll);
+        if (optionalThumb.isEmpty()) {
             return;
         }
-
-        int barX = listX + listWidth - 2;
-        int barHeight = Math.max(8, viewHeight * viewHeight / contentHeight);
-        int barY = contentTop + (int) ((viewHeight - barHeight) * listScroll / (contentHeight - viewHeight));
-        graphics.fill(barX, contentTop, barX + 2, contentBottom, COLOR_OUTLINE);
-        graphics.fill(barX, barY, barX + 2, barY + barHeight, COLOR_SCROLLBAR);
+        ClickGuiScrollbarState.Thumb thumb = optionalThumb.orElseThrow();
+        int barX = listScrollbarX();
+        graphics.fill(barX, contentTop, barX + SCROLLBAR_WIDTH, contentBottom, COLOR_OUTLINE);
+        graphics.fill(barX, thumb.y(), barX + SCROLLBAR_WIDTH, thumb.y() + thumb.height(), COLOR_SCROLLBAR);
     }
 
     private void drawSettingsPanel(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         graphics.fill(settingsX, contentTop, panelX + panelWidth, panelY + panelHeight, COLOR_SETTINGS);
 
+        graphics.enableScissor(settingsX, contentTop, panelX + panelWidth, contentBottom);
         Module module = state.selectedModule().orElse(null);
         if (module == null) {
             graphics.text(font, Component.translatable("screen.helikon.no_selection"),
                     settingsX + 6, contentTop + 6, COLOR_TEXT_DIM, false);
+            graphics.disableScissor();
             return;
         }
 
         settingsScroll = clampSettingsScroll(settingsScroll);
-        graphics.enableScissor(settingsX, contentTop, panelX + panelWidth, contentBottom);
         int textX = settingsX + 6;
         int y = settingsY(contentTop + 4);
         graphics.text(font, font.plainSubstrByWidth(module.name(), SETTINGS_WIDTH - 12), textX, y, COLOR_ACCENT, false);
@@ -1023,15 +1036,72 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private void drawSettingsScrollbar(GuiGraphicsExtractor graphics, Module module) {
         int contentHeight = settingsContentBottom(module) - contentTop;
-        int viewHeight = contentBottom - contentTop;
-        if (contentHeight <= viewHeight) {
+        java.util.Optional<ClickGuiScrollbarState.Thumb> optionalThumb =
+                ClickGuiScrollbarState.thumb(contentTop, contentBottom, contentHeight, settingsScroll);
+        if (optionalThumb.isEmpty()) {
             return;
         }
-        int barHeight = Math.max(8, viewHeight * viewHeight / contentHeight);
-        int barY = contentTop + (int) ((viewHeight - barHeight) * settingsScroll / (contentHeight - viewHeight));
-        int barX = panelX + panelWidth - 2;
-        graphics.fill(barX, contentTop, barX + 2, contentBottom, COLOR_OUTLINE);
-        graphics.fill(barX, barY, barX + 2, barY + barHeight, COLOR_SCROLLBAR);
+        ClickGuiScrollbarState.Thumb thumb = optionalThumb.orElseThrow();
+        int barX = settingsScrollbarX();
+        graphics.fill(barX, contentTop, barX + SCROLLBAR_WIDTH, contentBottom, COLOR_OUTLINE);
+        graphics.fill(barX, thumb.y(), barX + SCROLLBAR_WIDTH, thumb.y() + thumb.height(), COLOR_SCROLLBAR);
+    }
+
+    private boolean handleScrollbarDragStart(int mouseX, int mouseY) {
+        if (mouseY < contentTop || mouseY >= contentBottom) {
+            return false;
+        }
+        if (mouseX >= listScrollbarX() - (SCROLLBAR_HIT_WIDTH - SCROLLBAR_WIDTH)
+                && mouseX < listScrollbarX() + SCROLLBAR_WIDTH) {
+            java.util.OptionalDouble scroll = listScrollbar.beginDrag(mouseY, contentTop, contentBottom,
+                    state.visibleModules().size() * ROW_HEIGHT, listScroll);
+            if (scroll.isPresent()) {
+                listScroll = clampScroll(scroll.getAsDouble());
+                return true;
+            }
+        }
+        Module module = state.selectedModule().orElse(null);
+        if (module != null && mouseX >= settingsScrollbarX() - (SCROLLBAR_HIT_WIDTH - SCROLLBAR_WIDTH)
+                && mouseX < settingsScrollbarX() + SCROLLBAR_WIDTH) {
+            java.util.OptionalDouble scroll = settingsScrollbar.beginDrag(mouseY, contentTop, contentBottom,
+                    settingsContentBottom(module) - contentTop, settingsScroll);
+            if (scroll.isPresent()) {
+                settingsScroll = clampSettingsScroll(scroll.getAsDouble());
+                syncSettingWidgetPositions();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean dragScrollbarTo(int mouseY) {
+        java.util.OptionalDouble listValue = listScrollbar.dragTo(mouseY, contentTop, contentBottom,
+                state.visibleModules().size() * ROW_HEIGHT);
+        if (listValue.isPresent()) {
+            listScroll = clampScroll(listValue.getAsDouble());
+            return true;
+        }
+        Module module = state.selectedModule().orElse(null);
+        if (module == null) {
+            settingsScrollbar.endDrag();
+            return false;
+        }
+        java.util.OptionalDouble settingsValue = settingsScrollbar.dragTo(mouseY, contentTop, contentBottom,
+                settingsContentBottom(module) - contentTop);
+        if (settingsValue.isPresent()) {
+            settingsScroll = clampSettingsScroll(settingsValue.getAsDouble());
+            syncSettingWidgetPositions();
+            return true;
+        }
+        return false;
+    }
+
+    private int listScrollbarX() {
+        return listX + listWidth - SCROLLBAR_WIDTH;
+    }
+
+    private int settingsScrollbarX() {
+        return panelX + panelWidth - SCROLLBAR_WIDTH;
     }
 
     private double clampScroll(double scroll) {

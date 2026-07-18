@@ -18,4 +18,9 @@ public final class NoFall extends Module {
         }
         return isEnabled() && fallDistance > 0.0D && !onGround && !passenger && !flying && !fallFlying;
     }
+
+    /** Covers a teleport that occurs after the ordinary per-tick fall check. */
+    public boolean protectsTeleport(boolean passenger, boolean flying, boolean fallFlying) {
+        return isEnabled() && !passenger && !flying && !fallFlying;
+    }
 }

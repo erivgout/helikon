@@ -16,9 +16,15 @@ class LegacyFunAndZoomTest {
         Zoom zoom = new Zoom();
         assertFalse(zoom.isEnabled());
         assertEquals(25, zoom.fieldOfView());
+        assertEquals(90.0F, zoom.applyTo(90.0F));
         IntegerSetting fov = (IntegerSetting) zoom.settings().getFirst();
         fov.set(10);
         assertEquals(10, zoom.fieldOfView());
+        ModuleRegistry zoomRegistry = new ModuleRegistry();
+        zoomRegistry.register(zoom);
+        zoomRegistry.setEnabled(zoom, true);
+        assertEquals(10.0F, zoom.applyTo(90.0F));
+        assertEquals(0.0F, zoom.applyTo(0.0F));
 
         LegacyFunModules.Derp derp = new LegacyFunModules.Derp();
         ModuleRegistry registry = new ModuleRegistry();

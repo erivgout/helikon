@@ -5,6 +5,7 @@ import dev.helikon.client.combat.CombatTarget;
 import dev.helikon.client.input.Keybind;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
+import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.IntegerSetting;
 import dev.helikon.client.setting.NumberSetting;
 
@@ -21,6 +22,9 @@ public final class AnimeAura extends Module {
     private final NumberSetting safetyHeight;
     private final IntegerSetting attackDelay;
     private final IntegerSetting comboLength;
+    private final BooleanSetting players;
+    private final BooleanSetting hostileMobs;
+    private final BooleanSetting passiveMobs;
     private Stage stage = Stage.IDLE;
     private String targetId;
     private int comboHits;
@@ -39,6 +43,12 @@ public final class AnimeAura extends Module {
                 "Ticks between ordinary attack attempts.", 5, 2, 20));
         comboLength = addSetting(new IntegerSetting("combo_length", "Combo length",
                 "Ordinary combo hits before the finisher.", 4, 1, 12));
+        players = addSetting(new BooleanSetting("players", "Players",
+                "Target loaded non-friend players.", true));
+        hostileMobs = addSetting(new BooleanSetting("hostile_mobs", "Hostile mobs",
+                "Target loaded hostile mobs.", true));
+        passiveMobs = addSetting(new BooleanSetting("passive_mobs", "Passive mobs",
+                "Target loaded passive mobs and animals.", true));
     }
 
     public Optional<Action> next(long tick, boolean attackReady, List<CombatTarget> candidates) {
@@ -119,8 +129,16 @@ public final class AnimeAura extends Module {
     }
 
     private boolean eligible(CombatTarget target) {
-        return target.type() == CombatEntityType.PLAYER && target.alive() && !target.friend()
-                && !target.suspectedBot() && target.lineOfSight() && target.distance() <= targetRange.value();
+        return target.alive() && !target.friend() && !target.suspectedBot() && target.lineOfSight()
+                && target.distance() <= targetRange.value() && typeEnabled(target.type());
+    }
+
+    private boolean typeEnabled(CombatEntityType type) {
+        return switch (type) {
+            case PLAYER -> players.value();
+            case HOSTILE -> hostileMobs.value();
+            case PASSIVE -> passiveMobs.value();
+        };
     }
 
     public record Action(Stage stage, CombatTarget target, int comboIndex, boolean attack,

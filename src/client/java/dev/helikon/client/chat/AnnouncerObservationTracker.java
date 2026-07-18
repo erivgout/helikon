@@ -12,7 +12,7 @@ public final class AnnouncerObservationTracker {
     public record Fact(double x, double y, double z, float health, String dimension) {
         public Fact {
             if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)
-                    || !Float.isFinite(health) || health < 0.0F || health > 20.0F) {
+                    || !Float.isFinite(health) || health < 0.0F) {
                 throw new IllegalArgumentException("Announcer observations must be finite local player facts");
             }
             dimension = Objects.requireNonNull(dimension, "dimension").trim();

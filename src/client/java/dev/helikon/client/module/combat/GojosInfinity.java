@@ -1,125 +1,178 @@
 package dev.helikon.client.module.combat;
 
-import dev.helikon.client.combat.CombatEntityType;
 import dev.helikon.client.input.Keybind;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.setting.BooleanSetting;
+import dev.helikon.client.setting.EnumSetting;
 import dev.helikon.client.setting.IntegerSetting;
 import dev.helikon.client.setting.NumberSetting;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
-/**
- * Minecraft-free defensive target selection for a bounded teleport-attack loop. The normal attack
- * can apply server-authorized knockback; it does not claim to make the player invulnerable.
- */
+/** Minecraft-free scheduler for legitimate vanilla melee repel attacks. */
 public final class GojosInfinity extends Module {
-    public record Threat(String id, CombatEntityType type, boolean friend, boolean suspectedBot,
-                         boolean alive, boolean lineOfSight, double distance, double closingSpeed) {
+    public enum RepelMode {
+        STRONGEST_THREAT,
+        CROWD_EMERGENCY
+    }
+
+    public enum TargetKind {
+        PLAYER,
+        HOSTILE,
+        ANIMAL
+    }
+
+    public record Threat(
+            String id,
+            TargetKind kind,
+            boolean friend,
+            boolean ownerPet,
+            boolean armorStand,
+            boolean suspectedBot,
+            boolean alive,
+            boolean lineOfSight,
+            boolean legalAttackRange,
+            double distance,
+            double closingSpeed,
+            double predictedImpactTicks
+    ) {
         public Threat {
-            if (id == null || id.isBlank() || type == null || !Double.isFinite(distance) || distance < 0.0D
-                    || !Double.isFinite(closingSpeed)) {
+            if (id == null || id.isBlank() || kind == null
+                    || !Double.isFinite(distance) || distance < 0.0D
+                    || !Double.isFinite(closingSpeed)
+                    || !Double.isFinite(predictedImpactTicks) || predictedImpactTicks < 0.0D) {
                 throw new IllegalArgumentException("Infinity threat facts are invalid");
             }
         }
     }
 
+    public record AttackPlan(List<String> targetIds, boolean sprintReset, boolean silentRotation) {
+        public AttackPlan {
+            targetIds = List.copyOf(Objects.requireNonNull(targetIds, "targetIds"));
+            if (targetIds.isEmpty() || targetIds.stream().anyMatch(id -> id == null || id.isBlank())) {
+                throw new IllegalArgumentException("Infinity attack plan is invalid");
+            }
+        }
+    }
+
+    private final NumberSetting detectionRadius;
+    private final NumberSetting repelDistance;
+    private final IntegerSetting attackInterval;
+    private final NumberSetting minimumAttackCharge;
+    private final IntegerSetting targetsPerTick;
+    private final EnumSetting<RepelMode> repelMode;
+    private final BooleanSetting sprintReset;
+    private final BooleanSetting silentRotation;
     private final BooleanSetting players;
     private final BooleanSetting hostiles;
-    private final BooleanSetting passive;
+    private final BooleanSetting animals;
     private final BooleanSetting excludeFriends;
-    private final BooleanSetting requireApproaching;
-    private final BooleanSetting requireAttackReady;
-    private final NumberSetting barrierRadius;
-    private final NumberSetting minimumClosingSpeed;
-    private final NumberSetting attackDistance;
-    private final IntegerSetting delayTicks;
-    private long lastAttackTick = -1L;
+    private final BooleanSetting excludeOwnerPets;
+    private long lastAttackTick = Long.MIN_VALUE;
 
     public GojosInfinity() {
         super("gojo_infinity", "Gojo's Infinity",
-                "Defensively teleport-attacks closing threats so accepted hits can knock them away.",
+                "Repels approaching living threats with legitimate, server-authoritative vanilla attacks.",
                 ModuleCategory.COMBAT, false, Keybind.unbound());
-        players = addSetting(new BooleanSetting("players", "Players", "Defend against non-friend players.", true));
-        hostiles = addSetting(new BooleanSetting("hostiles", "Hostiles", "Defend against hostile mobs.", true));
-        passive = addSetting(new BooleanSetting("passive", "Passive", "Defend against passive mobs.", false));
+        detectionRadius = addSetting(new NumberSetting("detection_radius", "Detection radius",
+                "Maximum local distance for scanning already-loaded living threats.",
+                6.0D, 3.0D, 12.0D));
+        repelDistance = addSetting(new NumberSetting("repel_distance", "Repel distance",
+                "Desired maximum distance at which an approaching target may be attacked.",
+                3.0D, 1.0D, 6.0D));
+        attackInterval = addSetting(new IntegerSetting("attack_interval", "Attack interval",
+                "Minimum client ticks between repel pulses.", 10, 1, 40));
+        minimumAttackCharge = addSetting(new NumberSetting("minimum_attack_charge", "Minimum attack charge",
+                "Required vanilla attack-cooldown progress before a repel pulse.",
+                0.90D, 0.0D, 1.0D));
+        targetsPerTick = addSetting(new IntegerSetting("targets_per_tick", "Targets per tick",
+                "Maximum living targets attempted during one pulse.", 1, 1, 4));
+        repelMode = addSetting(new EnumSetting<>("repel_mode", "Repel mode",
+                "Strongest Threat waits for the earliest impact; Crowd Emergency attacks several sequentially.",
+                RepelMode.class, RepelMode.STRONGEST_THREAT));
+        sprintReset = addSetting(new BooleanSetting("sprint_reset", "Sprint reset",
+                "Send ordinary stop/start sprint commands before each attack to attempt vanilla sprint-hit knockback.",
+                true));
+        silentRotation = addSetting(new BooleanSetting("silent_rotation", "Silent rotation",
+                "Face each target in server movement updates without moving the visible camera.",
+                true));
+        players = addSetting(new BooleanSetting("players", "Players",
+                "Repel approaching non-friend players.", true));
+        hostiles = addSetting(new BooleanSetting("hostiles", "Hostiles",
+                "Repel approaching hostile and neutral mobs.", true));
+        animals = addSetting(new BooleanSetting("animals", "Animals",
+                "Repel approaching animals and other passive living entities.", false));
         excludeFriends = addSetting(new BooleanSetting("exclude_friends", "Exclude friends",
-                "Never select a locally listed friend.", true));
-        requireApproaching = addSetting(new BooleanSetting("require_approaching", "Approaching only",
-                "Only react when relative motion is closing the distance.", true));
-        requireAttackReady = addSetting(new BooleanSetting("require_attack_ready", "Require attack ready",
-                "Wait for ordinary attack strength before reacting.", true));
-        barrierRadius = addSetting(new NumberSetting("barrier_radius", "Barrier radius",
-                "Maximum local distance at which a closing threat can trigger the loop.",
-                4.5D, 2.0D, 8.0D));
-        minimumClosingSpeed = addSetting(new NumberSetting("minimum_closing_speed", "Minimum closing speed",
-                "Minimum relative horizontal approach speed in blocks per tick.",
-                0.03D, 0.0D, 1.0D));
-        attackDistance = addSetting(new NumberSetting("attack_distance", "Attack distance",
-                "Desired distance from the target for the temporary attack position.",
-                2.5D, 1.0D, 3.0D));
-        delayTicks = addSetting(new IntegerSetting("delay_ticks", "Attack delay",
-                "Minimum client ticks between defensive attack loops.", 10, 1, 40));
+                "Never attack a locally listed friend.", true));
+        excludeOwnerPets = addSetting(new BooleanSetting("exclude_owner_pets", "Exclude owner pets",
+                "Never attack a tame entity owned by the local player.", true));
     }
 
-    /** Selects at most the nearest eligible threat and consumes cadence only on selection. */
-    public Optional<String> selectThreat(long tick, boolean attackReady, List<Threat> threats) {
-        if (tick < 0L || threats == null) {
-            throw new IllegalArgumentException("Infinity inputs are invalid");
+    /** Chooses one strongest target or a bounded crowd pulse without Minecraft dependencies. */
+    public java.util.Optional<AttackPlan> plan(long tick, double attackCharge, List<Threat> threats) {
+        if (tick < 0L || !Double.isFinite(attackCharge) || attackCharge < 0.0D || attackCharge > 1.0D
+                || threats == null) {
+            throw new IllegalArgumentException("Infinity planning inputs are invalid");
         }
-        if (!isEnabled() || (requireAttackReady.value() && !attackReady)
-                || (lastAttackTick >= 0L && tick - lastAttackTick < delayTicks.value())) {
-            return Optional.empty();
+        if (!isEnabled() || attackCharge < minimumAttackCharge.value()
+                || (lastAttackTick != Long.MIN_VALUE && tick - lastAttackTick < attackInterval.value())) {
+            return java.util.Optional.empty();
         }
+        List<Threat> eligible = threats.stream()
+                .filter(this::eligible)
+                .sorted(Comparator.comparingDouble(Threat::predictedImpactTicks)
+                        .thenComparingDouble(Threat::distance)
+                        .thenComparing(Threat::id))
+                .toList();
+        if (eligible.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        int limit = repelMode.value() == RepelMode.STRONGEST_THREAT
+                ? 1 : Math.min(targetsPerTick.value(), eligible.size());
+        return java.util.Optional.of(new AttackPlan(
+                eligible.stream().limit(limit).map(Threat::id).toList(),
+                sprintReset.value(), silentRotation.value()));
+    }
 
-        Threat best = null;
-        for (Threat threat : threats) {
-            if (!threat.alive() || !threat.lineOfSight() || threat.suspectedBot()
-                    || threat.distance() > barrierRadius.value()
-                    || (threat.friend() && excludeFriends.value())
-                    || !typeEnabled(threat.type())
-                    || (requireApproaching.value() && threat.closingSpeed() < minimumClosingSpeed.value())) {
-                continue;
-            }
-            if (best == null || threat.distance() < best.distance()) {
-                best = threat;
-            }
-        }
-        if (best == null) {
-            return Optional.empty();
+    public void markExecuted(long tick) {
+        if (tick < 0L) {
+            throw new IllegalArgumentException("Infinity execution tick is invalid");
         }
         lastAttackTick = tick;
-        return Optional.of(best.id());
     }
 
-    private boolean typeEnabled(CombatEntityType type) {
-        return switch (type) {
-            case PLAYER -> players.value();
-            case HOSTILE -> hostiles.value();
-            case PASSIVE -> passive.value();
-        };
+    public double detectionRadius() {
+        return detectionRadius.value();
     }
 
-    public double barrierRadius() {
-        return barrierRadius.value();
+    public double repelDistance() {
+        return repelDistance.value();
     }
 
-    public double attackDistance() {
-        return attackDistance.value();
+    public void onContextLost() {
+        lastAttackTick = Long.MIN_VALUE;
     }
 
-    public boolean excludeFriends() {
-        return excludeFriends.value();
-    }
-
-    public void resetTransientState() {
-        lastAttackTick = -1L;
+    private boolean eligible(Threat threat) {
+        return threat != null && threat.alive() && threat.lineOfSight() && threat.legalAttackRange()
+                && !threat.armorStand() && !threat.suspectedBot()
+                && threat.distance() <= detectionRadius.value()
+                && threat.distance() <= repelDistance.value()
+                && threat.closingSpeed() >= -1.0E-4D
+                && (!threat.friend() || !excludeFriends.value())
+                && (!threat.ownerPet() || !excludeOwnerPets.value())
+                && switch (threat.kind()) {
+                    case PLAYER -> players.value();
+                    case HOSTILE -> hostiles.value();
+                    case ANIMAL -> animals.value();
+                };
     }
 
     @Override
     protected void onDisable() {
-        resetTransientState();
+        onContextLost();
     }
 }

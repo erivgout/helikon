@@ -35,7 +35,18 @@ public final class Changelog extends Module {
 
     public List<String> notes() {
         return List.of(
-                "Helikon 1.1.2",
+                "Helikon 1.1.3",
+                "Infinity now repels nearby threats with ordinary client-side attacks.",
+                "Enderman Aura uses gravity-aware arrow prediction and wider side escapes.",
+                "Air Jump now supports bounded repeat jumps while Space is held.",
+                "TP-Aura now orbits targets and returns only when explicitly configured.",
+                "Zoom now applies its configured camera FOV and guards zero-FOV frames.",
+                "Fixed Nuker All Blocks selection; held Attack remains the default.",
+                "Fixed detached Freecam horizontal look and mouse rotation shaking.",
+                "Clipped empty ClickGUI settings text inside its panel.",
+                "TpClick now coordinates its fall reset with NoFall before teleporting.",
+                "Raised Timer to 5x and made FastBreak accelerate active mining.",
+                "Added the missing bounded Regen fast-heal attempt.",
                 "KillAura now attacks without moving your camera or head.",
                 "Fixed selected ClickGUI labels and favorite controls blending into their rows.",
                 "Extended Reach to 9 blocks for attacks, mining, and placement.",

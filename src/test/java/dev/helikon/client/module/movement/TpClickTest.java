@@ -28,6 +28,7 @@ class TpClickTest {
         assertFalse(module.defaultEnabled());
         assertFalse(module.keybind().isBound());
         assertTrue(module.consumesKeybindInput());
+        assertTrue(module.cancelVelocity());
     }
 
     @Test

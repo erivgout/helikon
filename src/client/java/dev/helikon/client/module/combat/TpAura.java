@@ -11,6 +11,7 @@ import dev.helikon.client.setting.NumberSetting;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /** Chooses one TP-Aura target and builds bounded straight-line movement paths without Minecraft dependencies. */
@@ -24,16 +25,20 @@ public final class TpAura extends Module {
     private final NumberSetting attackDistance;
     private final NumberSetting maximumStepDistance;
     private final IntegerSetting maximumSteps;
+    private final BooleanSetting returnToOrigin;
+    private final IntegerSetting returnDelayTicks;
     private final IntegerSetting delayTicks;
     private long lastAttackTick = -1L;
+    private Runnable teleportRestorer = () -> {
+    };
 
     public TpAura() {
         super("tp_aura", "TP-Aura",
-                "Packet-moves toward one validated target, requests one ordinary attack, and returns.",
+                "Packet-moves around one validated target and requests one ordinary attack.",
                 ModuleCategory.COMBAT, false, Keybind.unbound());
         players = addSetting(new BooleanSetting("players", "Players", "Allow non-friend players.", true));
         hostiles = addSetting(new BooleanSetting("hostiles", "Hostiles", "Allow hostile mobs.", true));
-        passive = addSetting(new BooleanSetting("passive", "Passive", "Allow passive mobs.", false));
+        passive = addSetting(new BooleanSetting("passive", "Passive", "Allow passive mobs.", true));
         excludeFriends = addSetting(new BooleanSetting("exclude_friends", "Exclude friends",
                 "Never select a locally listed friend.", true));
         range = addSetting(new NumberSetting("range", "Range", "Maximum locally considered target distance.",
@@ -48,8 +53,13 @@ public final class TpAura extends Module {
                 3.0D, 0.25D, 4.0D));
         maximumSteps = addSetting(new IntegerSetting("maximum_steps", "Maximum steps",
                 "Maximum movement updates allowed in each direction.", 6, 1, 12));
+        returnToOrigin = addSetting(new BooleanSetting("return_to_origin", "Return to origin",
+                "Return to the pre-attack position instead of staying and circling around the target.", false));
+        returnDelayTicks = addSetting(new IntegerSetting("return_delay_ticks", "Return delay",
+                "Ticks to remain visibly beside a target before returning.", 3, 1, 10,
+                returnToOrigin::value));
         delayTicks = addSetting(new IntegerSetting("delay_ticks", "Delay ticks",
-                "Minimum ticks between completed teleport-attack-return attempts.", 10, 1, 40));
+                "Minimum ticks between completed teleport-attack attempts.", 10, 1, 40));
     }
 
     public Optional<AttackPlan> nextPlan(long tick, boolean attackReady, List<CombatTarget> candidates) {
@@ -61,8 +71,7 @@ public final class TpAura extends Module {
             return Optional.empty();
         }
         return CombatTargetFilter.ordered(candidates, targetOptions(), CombatTargetFilter.Priority.DISTANCE).stream()
-                .filter(target -> target.distance() > attackDistance.value())
-                .filter(target -> target.distance() - attackDistance.value()
+                .filter(target -> Math.max(0.0D, target.distance() - attackDistance.value())
                         <= maximumStepDistance.value() * maximumSteps.value())
                 .findFirst()
                 .map(target -> new AttackPlan(target, attackDistance.value(),
@@ -92,6 +101,28 @@ public final class TpAura extends Module {
         return List.copyOf(path);
     }
 
+    /**
+     * Chooses the next quarter-turn position around the target from the
+     * current horizontal radial direction.
+     */
+    public Point orbitDestination(Point origin, Point target, double radius) {
+        if (origin == null || target == null || !Double.isFinite(radius) || radius <= 0.0D) {
+            throw new IllegalArgumentException("TP-Aura orbit inputs are invalid");
+        }
+        double radialX = origin.x() - target.x();
+        double radialZ = origin.z() - target.z();
+        double radialLength = Math.hypot(radialX, radialZ);
+        if (radialLength < 1.0E-6D) {
+            radialX = 1.0D;
+            radialZ = 0.0D;
+            radialLength = 1.0D;
+        }
+        double normalizedX = radialX / radialLength;
+        double normalizedZ = radialZ / radialLength;
+        return new Point(target.x() - normalizedZ * radius, target.y(),
+                target.z() + normalizedX * radius);
+    }
+
     public void markExecuted(long tick) {
         if (tick < 0L) {
             throw new IllegalArgumentException("TP-Aura execution tick is invalid");
@@ -103,6 +134,19 @@ public final class TpAura extends Module {
         lastAttackTick = -1L;
     }
 
+    public int returnDelayTicks() {
+        return returnDelayTicks.value();
+    }
+
+    public boolean returnsToOrigin() {
+        return returnToOrigin.value();
+    }
+
+    /** Installs the narrow local-position cleanup hook without introducing Minecraft types. */
+    public void setTeleportRestorer(Runnable teleportRestorer) {
+        this.teleportRestorer = Objects.requireNonNull(teleportRestorer, "teleportRestorer");
+    }
+
     private CombatTargetFilter.Options targetOptions() {
         return new CombatTargetFilter.Options(players.value(), hostiles.value(), passive.value(),
                 excludeFriends.value(), true, range.value(), fieldOfView.value(), true);
@@ -110,6 +154,7 @@ public final class TpAura extends Module {
 
     @Override
     protected void onDisable() {
+        teleportRestorer.run();
         onContextLost();
     }
 

@@ -4,6 +4,7 @@ import dev.helikon.client.combat.CombatEntityType;
 import dev.helikon.client.combat.CombatTarget;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
+import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.IntegerSetting;
 import dev.helikon.client.setting.NumberSetting;
 import dev.helikon.client.setting.Setting;
@@ -45,6 +46,16 @@ class TpAuraTest {
     }
 
     @Test
+    void selectsClosePassiveTargetsForDirectAttackByDefault() {
+        TpAura aura = enabled(new TpAura());
+
+        TpAura.AttackPlan plan = aura.nextPlan(0L, true,
+                List.of(target("horse", CombatEntityType.PASSIVE, false, true, 2.0D))).orElseThrow();
+
+        assertEquals("horse", plan.target().id());
+    }
+
+    @Test
     void pathUsesBoundedStepsAndEndsExactlyAtDestination() {
         TpAura aura = enabled(new TpAura());
         TpAura.AttackPlan plan = aura.nextPlan(0L, true,
@@ -58,6 +69,23 @@ class TpAuraTest {
         assertEquals(to, path.getLast());
         assertTrue(distance(from, path.getFirst()) <= plan.maximumStepDistance());
         assertTrue(distance(path.get(0), path.get(1)) <= plan.maximumStepDistance());
+    }
+
+    @Test
+    void orbitDestinationAdvancesAroundTargetInsteadOfReturningAway() {
+        TpAura aura = enabled(new TpAura());
+        TpAura.Point target = new TpAura.Point(10.0D, 64.0D, 10.0D);
+        TpAura.Point west = new TpAura.Point(5.0D, 64.0D, 10.0D);
+
+        TpAura.Point first = aura.orbitDestination(west, target, 2.5D);
+        TpAura.Point second = aura.orbitDestination(first, target, 2.5D);
+
+        assertEquals(10.0D, first.x(), 1.0E-9D);
+        assertEquals(7.5D, first.z(), 1.0E-9D);
+        assertEquals(12.5D, second.x(), 1.0E-9D);
+        assertEquals(10.0D, second.z(), 1.0E-9D);
+        assertEquals(2.5D, distance(first, target), 1.0E-9D);
+        assertEquals(2.5D, distance(second, target), 1.0E-9D);
     }
 
     @Test
@@ -88,6 +116,14 @@ class TpAuraTest {
 
         NumberSetting range = (NumberSetting) setting(aura, "range");
         IntegerSetting maximumSteps = (IntegerSetting) setting(aura, "maximum_steps");
+        BooleanSetting returnToOrigin = (BooleanSetting) setting(aura, "return_to_origin");
+        IntegerSetting returnDelay = (IntegerSetting) setting(aura, "return_delay_ticks");
+        assertFalse(aura.returnsToOrigin());
+        returnToOrigin.set(true);
+        assertTrue(aura.returnsToOrigin());
+        assertEquals(3, aura.returnDelayTicks());
+        assertEquals(1, returnDelay.minimum());
+        assertEquals(10, returnDelay.maximum());
         assertThrows(IllegalArgumentException.class, () -> range.set(25.0D));
         assertThrows(IllegalArgumentException.class, () -> maximumSteps.set(13));
         assertThrows(IllegalArgumentException.class,

@@ -113,27 +113,27 @@ public final class HelikonHudSettingsScreen extends Screen {
             style.setTextShadow(!style.textShadow());
             return true;
         }
-        if (HudPreviewRenderer.isInside(mouseX, mouseY, 14, 113, 42, 11)) {
+        if (HudPreviewRenderer.isInside(mouseX, mouseY, 68, 113, 42, 11)) {
             style.setScale(Math.max(ActiveModulesLayout.MIN_SCALE, style.scale() - 0.25F));
             state.clampToViewport(width, height, previews.activeModulesBounds());
             return true;
         }
-        if (HudPreviewRenderer.isInside(mouseX, mouseY, 59, 113, 42, 11)) {
+        if (HudPreviewRenderer.isInside(mouseX, mouseY, 113, 113, 42, 11)) {
             style.setScale(Math.min(ActiveModulesLayout.MAX_SCALE, style.scale() + 0.25F));
             state.clampToViewport(width, height, previews.activeModulesBounds());
             return true;
         }
-        if (HudPreviewRenderer.isInside(mouseX, mouseY, 104, 113, 42, 11)) {
+        if (HudPreviewRenderer.isInside(mouseX, mouseY, 158, 113, 42, 11)) {
             style.setPadding(Math.max(ActiveModulesLayout.MIN_PADDING, style.padding() - 1));
             state.clampToViewport(width, height, previews.activeModulesBounds());
             return true;
         }
-        if (HudPreviewRenderer.isInside(mouseX, mouseY, 149, 113, 42, 11)) {
+        if (HudPreviewRenderer.isInside(mouseX, mouseY, 203, 113, 42, 11)) {
             style.setPadding(Math.min(ActiveModulesLayout.MAX_PADDING, style.padding() + 1));
             state.clampToViewport(width, height, previews.activeModulesBounds());
             return true;
         }
-        if (HudPreviewRenderer.isInside(mouseX, mouseY, 194, 113, 42, 11)) {
+        if (HudPreviewRenderer.isInside(mouseX, mouseY, 248, 113, 42, 11)) {
             style.reset();
             state.clampToViewport(width, height, previews.activeModulesBounds());
             return true;
@@ -220,7 +220,7 @@ public final class HelikonHudSettingsScreen extends Screen {
         } else {
             graphics.outline(14, 31, CHECKBOX_SIZE, CHECKBOX_SIZE, HudPreviewRenderer.COLOR_TEXT_DIM);
         }
-        graphics.text(font, Component.translatable("screen.helikon.hud_editor.active_modules"), 27, 31, HudPreviewRenderer.COLOR_TEXT, false);
+        graphics.text(font, "Show Active Modules on HUD", 27, 31, HudPreviewRenderer.COLOR_TEXT, false);
         graphics.text(font, "Sort: " + style.sort().name().toLowerCase(), 14, 48, HudPreviewRenderer.COLOR_TEXT_DIM, false);
         graphics.text(font, "Alignment: " + style.alignment().name().toLowerCase(), 14, 61, HudPreviewRenderer.COLOR_TEXT_DIM, false);
         boolean activeRainbow = style.colorMode() == ActiveModulesLayout.ColorMode.RAINBOW;
@@ -229,11 +229,13 @@ public final class HelikonHudSettingsScreen extends Screen {
         graphics.text(font, "Background: " + (style.background() ? "on" : "off"), 14, 87, HudPreviewRenderer.COLOR_TEXT_DIM, false);
         graphics.text(font, "Text shadow: " + (style.textShadow() ? "on" : "off"), 14, 100, HudPreviewRenderer.COLOR_TEXT_DIM, false);
         graphics.text(font, "Animation: " + (style.animations() ? "on" : "off"), 194, 100, HudPreviewRenderer.COLOR_TEXT_DIM, false);
-        graphics.text(font, "Scale -", 14, 113, HudPreviewRenderer.COLOR_TEXT_DIM, false);
-        graphics.text(font, "Scale +", 59, 113, HudPreviewRenderer.COLOR_TEXT_DIM, false);
-        graphics.text(font, "Pad -", 104, 113, HudPreviewRenderer.COLOR_TEXT_DIM, false);
-        graphics.text(font, "Pad +", 149, 113, HudPreviewRenderer.COLOR_TEXT_DIM, false);
-        graphics.text(font, "Reset", 194, 113, HudPreviewRenderer.COLOR_ACCENT, false);
+        graphics.text(font, String.format(java.util.Locale.ROOT, "Size %.2fx", style.scale()),
+                14, 113, HudPreviewRenderer.COLOR_TEXT_DIM, false);
+        graphics.text(font, "Smaller", 68, 113, HudPreviewRenderer.COLOR_TEXT_DIM, false);
+        graphics.text(font, "Larger", 113, 113, HudPreviewRenderer.COLOR_TEXT_DIM, false);
+        graphics.text(font, "Pad -", 158, 113, HudPreviewRenderer.COLOR_TEXT_DIM, false);
+        graphics.text(font, "Pad +", 203, 113, HudPreviewRenderer.COLOR_TEXT_DIM, false);
+        graphics.text(font, "Reset", 248, 113, HudPreviewRenderer.COLOR_ACCENT, false);
 
         HudElementId selected = editor.selectedElement();
         HudElementPlacement element = layout.element(selected);

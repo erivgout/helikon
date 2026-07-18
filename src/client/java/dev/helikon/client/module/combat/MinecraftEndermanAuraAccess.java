@@ -9,17 +9,17 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
 /** Narrow Minecraft adapter for projectile observation, collision checks, and local movement. */
 public final class MinecraftEndermanAuraAccess {
-    private static final int DESTINATION_DIRECTIONS = 16;
-
     private MinecraftEndermanAuraAccess() {
     }
 
@@ -62,14 +62,28 @@ public final class MinecraftEndermanAuraAccess {
             boolean friendOwned = owner instanceof Player ownerPlayer
                     && friends.contains(ownerPlayer.getGameProfile().name());
             Vec3 relative = projectile.position().subtract(center);
-            Vec3 velocity = projectile.getDeltaMovement().subtract(playerVelocity);
-            ProjectileThreatPolicy.assess(relative.x, relative.y, relative.z,
-                            velocity.x, velocity.y, velocity.z, module.hitRadius(),
-                            module.warningTicks(), module.detectionRange())
+            Vec3 projectileVelocity = projectile.getDeltaMovement();
+            Optional<ProjectileThreatPolicy.ProjectileThreat> assessed =
+                    projectile instanceof AbstractArrow
+                            ? ProjectileThreatPolicy.assessBallistic(
+                                    relative.x, relative.y, relative.z,
+                                    projectileVelocity.x, projectileVelocity.y, projectileVelocity.z,
+                                    playerVelocity.x, playerVelocity.y, playerVelocity.z,
+                                    module.hitRadius(), module.warningTicks(), module.detectionRange(),
+                                    0.05D, 0.99D)
+                            : ProjectileThreatPolicy.assess(relative.x, relative.y, relative.z,
+                                    projectileVelocity.x - playerVelocity.x,
+                                    projectileVelocity.y - playerVelocity.y,
+                                    projectileVelocity.z - playerVelocity.z,
+                                    module.hitRadius(), module.warningTicks(), module.detectionRange());
+            assessed
                     .ifPresent(threat -> result.add(new EndermanAura.Threat(projectile.getId(),
                             selfOwned, friendOwned, threat.timeToImpactTicks(),
                             threat.closestApproach(), threat.distance())));
         }
+        result.sort(Comparator.comparingDouble(EndermanAura.Threat::timeToImpactTicks)
+                .thenComparingDouble(EndermanAura.Threat::closestApproach)
+                .thenComparingInt(EndermanAura.Threat::entityId));
         return List.copyOf(result);
     }
 
@@ -80,22 +94,26 @@ public final class MinecraftEndermanAuraAccess {
         if (projectile == null) {
             return List.of();
         }
-        List<EndermanAura.Destination> result = new ArrayList<>(DESTINATION_DIRECTIONS);
-        double distance = module.teleportDistance();
+        Vec3 projectileVelocity = projectile.getDeltaMovement();
+        List<EndermanAura.Destination> result = new ArrayList<>(module.escapeDistances().size() * 2);
         AABB original = player.getBoundingBox();
-        for (int index = 0; index < DESTINATION_DIRECTIONS; index++) {
-            double angle = Math.PI * 2.0D * index / DESTINATION_DIRECTIONS;
-            double x = player.getX() + Math.cos(angle) * distance;
-            double z = player.getZ() + Math.sin(angle) * distance;
-            double y = player.getY();
-            boolean loaded = level.hasChunk(Mth.floor(x) >> 4, Mth.floor(z) >> 4);
-            AABB moved = original.move(x - player.getX(), 0.0D, z - player.getZ());
-            boolean collisionFree = loaded && level.noCollision(player, moved);
-            AABB floorProbe = moved.move(0.0D, -0.08D, 0.0D);
-            boolean safeFloor = collisionFree && !level.noCollision(player, floorProbe);
-            double projectileSeparation = projectile.position().distanceTo(new Vec3(x, y, z));
-            result.add(new EndermanAura.Destination(x, y, z, distance, projectileSeparation,
-                    loaded, collisionFree, safeFloor));
+        for (double distance : module.escapeDistances()) {
+            List<EndermanAura.SidewaysOffset> offsets = EndermanAura.sidewaysOffsets(
+                    projectileVelocity.x, projectileVelocity.z,
+                    projectile.getX() - player.getX(), projectile.getZ() - player.getZ(), distance);
+            for (EndermanAura.SidewaysOffset offset : offsets) {
+                double x = player.getX() + offset.x();
+                double z = player.getZ() + offset.z();
+                double y = player.getY();
+                boolean loaded = level.hasChunk(Mth.floor(x) >> 4, Mth.floor(z) >> 4);
+                AABB moved = original.move(x - player.getX(), 0.0D, z - player.getZ());
+                boolean collisionFree = loaded && level.noCollision(player, moved);
+                AABB floorProbe = moved.move(0.0D, -0.08D, 0.0D);
+                boolean safeFloor = collisionFree && !level.noCollision(player, floorProbe);
+                double projectileSeparation = projectile.position().distanceTo(new Vec3(x, y, z));
+                result.add(new EndermanAura.Destination(x, y, z, distance, projectileSeparation,
+                        loaded, collisionFree, safeFloor));
+            }
         }
         return List.copyOf(result);
     }

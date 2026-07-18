@@ -23,6 +23,7 @@ public final class RenderModuleAccess {
     private static volatile Dinnerbone dinnerbone;
     private static volatile RainbowEnchant rainbowEnchant;
     private static volatile NoWeather noWeather;
+    private static volatile Zoom zoom;
     private static volatile HudLayout hudLayout;
     private static volatile PanicState panicState;
 
@@ -139,5 +140,14 @@ public final class RenderModuleAccess {
     public static boolean hideSnowColumns() {
         NoWeather module = noWeather;
         return module != null && module.hidesSnow();
+    }
+
+    public static void installZoom(Zoom module) {
+        zoom = Objects.requireNonNull(module, "module");
+    }
+
+    public static float zoomedFov(float vanillaFov) {
+        Zoom module = zoom;
+        return module == null ? vanillaFov : module.applyTo(vanillaFov);
     }
 }

@@ -30,7 +30,7 @@ public final class MinecraftAnimeAuraAccess {
             return false;
         }
         Optional<AnimeAura.Action> next = module.next(tick,
-                player.getAttackStrengthScale(0.0F) >= 0.9F, snapshot.targets());
+                canAttack && player.getAttackStrengthScale(0.0F) >= 0.9F, snapshot.targets());
         if (next.isEmpty()) {
             return false;
         }
@@ -61,7 +61,7 @@ public final class MinecraftAnimeAuraAccess {
         }
         move(player, destination);
         boolean attacked = false;
-        if (action.attack() && canAttack) {
+        if (action.attack()) {
             client.gameMode.attack(player, target);
             player.swing(InteractionHand.MAIN_HAND);
             tracker.recordAttack(action.target());

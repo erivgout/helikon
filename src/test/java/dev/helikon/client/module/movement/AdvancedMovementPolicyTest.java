@@ -81,6 +81,8 @@ class AdvancedMovementPolicyTest {
         assertFalse(noFall.shouldResetFall(10.0D, false, true, false, false));
         assertFalse(noFall.shouldResetFall(10.0D, false, false, true, false));
         assertFalse(noFall.shouldResetFall(10.0D, false, false, false, true));
+        assertTrue(noFall.protectsTeleport(false, false, false));
+        assertFalse(noFall.protectsTeleport(true, false, false));
     }
 
     @Test
@@ -91,6 +93,11 @@ class AdvancedMovementPolicyTest {
         assertEquals(0.15D, freecam.speed(), 0.0001D);
         numberSetting(freecam, "speed").set(0.4D);
         assertEquals(0.4D, freecam.speed(), 0.0001D);
+
+        Freecam.Rotation turned = freecam.turn(30.0F, 10.0F, 20.0D, -40.0D);
+        assertEquals(33.0F, turned.yaw(), 0.0001F);
+        assertEquals(4.0F, turned.pitch(), 0.0001F);
+        assertEquals(90.0F, freecam.turn(0.0F, 89.0F, 0.0D, 100.0D).pitch(), 0.0001F);
     }
 
     @Test
@@ -127,6 +134,25 @@ class AdvancedMovementPolicyTest {
         Timer timer = enabled(new Timer());
         numberSetting(timer, "tick_multiplier").set(1.20D);
         assertEquals(1.20F, timer.multiplier(), 0.0001F);
+        numberSetting(timer, "tick_multiplier").set(5.0D);
+        assertEquals(5.0F, timer.multiplier(), 0.0001F);
+
+        booleanSetting(timer, "digging_only").set(true);
+        assertEquals(1.0F, timer.multiplier(), 0.0001F);
+        assertEquals(4, timer.extraDiggingSteps(true));
+        assertEquals(0, timer.extraDiggingSteps(false));
+    }
+
+    @Test
+    void diggingOnlyTimerAccumulatesFractionalProgressSteps() {
+        Timer timer = enabled(new Timer());
+        numberSetting(timer, "tick_multiplier").set(1.5D);
+        booleanSetting(timer, "digging_only").set(true);
+
+        assertEquals(0, timer.extraDiggingSteps(true));
+        assertEquals(1, timer.extraDiggingSteps(true));
+        assertEquals(0, timer.extraDiggingSteps(true));
+        assertEquals(1, timer.extraDiggingSteps(true));
     }
 
     private static <T extends Module> T enabled(T module) {

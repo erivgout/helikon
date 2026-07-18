@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -23,8 +24,9 @@ public final class MinecraftTpClickAccess {
     private MinecraftTpClickAccess() {
     }
 
-    public static void tick(TpClick module, KeybindManager.KeyStateReader keys) {
+    public static void tick(TpClick module, NoFall noFall, KeybindManager.KeyStateReader keys) {
         Objects.requireNonNull(module, "module");
+        Objects.requireNonNull(noFall, "noFall");
         Objects.requireNonNull(keys, "keys");
         Minecraft client = Minecraft.getInstance();
         boolean screenOpen = client.gui.screen() != null;
@@ -48,10 +50,18 @@ public final class MinecraftTpClickAccess {
         module.destination(block.getX(), block.getY(), block.getZ(),
                         face.getStepX(), face.getStepY(), face.getStepZ(), eye.distanceTo(hit.getLocation()))
                 .ifPresent(destination -> {
+                    boolean resetFallState = module.cancelVelocity() || noFall.protectsTeleport(
+                            player.isPassenger(), player.getAbilities().flying, player.isFallFlying());
+                    if (resetFallState && player.connection != null) {
+                        // This arrives before Minecraft's next ordinary position
+                        // report, covering a downward teleport that began while
+                        // the client still considered itself grounded.
+                        player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(true, false));
+                    }
                     player.setPos(destination.x(), destination.y(), destination.z());
-                    if (module.cancelVelocity()) {
+                    if (resetFallState) {
                         player.setDeltaMovement(0.0D, 0.0D, 0.0D);
-                        player.fallDistance = 0.0F;
+                        player.resetFallDistance();
                     }
                 });
     }

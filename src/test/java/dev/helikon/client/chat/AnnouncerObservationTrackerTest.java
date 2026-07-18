@@ -35,6 +35,14 @@ class AnnouncerObservationTrackerTest {
                 () -> tracker.observe(fact(0, 20.0F, "minecraft:overworld"), 0, 6.0F));
     }
 
+    @Test
+    void acceptsCommandBoostedHealthAboveVanillaTwenty() {
+        AnnouncerObservationTracker tracker = new AnnouncerObservationTracker();
+
+        assertTrue(tracker.observe(fact(0, 200.0F, "minecraft:overworld"), 100, 6.0F).isEmpty());
+        assertTrue(tracker.observe(fact(1, 199.0F, "minecraft:overworld"), 100, 6.0F).isEmpty());
+    }
+
     private static AnnouncerObservationTracker.Fact fact(double x, float health, String dimension) {
         return new AnnouncerObservationTracker.Fact(x, 64.0D, 0.0D, health, dimension);
     }

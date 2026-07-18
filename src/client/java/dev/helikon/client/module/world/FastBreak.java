@@ -21,6 +21,7 @@ public final class FastBreak extends Module {
     }
 
     private final NumberSetting breakDelay;
+    private final NumberSetting speedMultiplier;
     private final StringSetting blocks;
     private final CooldownAccess cooldown;
     private Set<String> targetBlocks;
@@ -28,11 +29,14 @@ public final class FastBreak extends Module {
     private int lastAppliedDelay = -1;
 
     public FastBreak(CooldownAccess cooldown) {
-        super("fast_break", "FastBreak", "Lowers an existing local destroy cooldown for configured blocks.",
+        super("fast_break", "FastBreak", "Accelerates active local block damage and lowers the next-break delay.",
                 ModuleCategory.WORLD, false, Keybind.unbound());
         this.cooldown = Objects.requireNonNull(cooldown, "cooldown");
         breakDelay = addSetting(new NumberSetting("break_delay", "Client break delay",
                 "Requested normal client destroy delay after an ordinary block break.", 0.0D, 0.0D, 5.0D));
+        speedMultiplier = addSetting(new NumberSetting("speed_multiplier", "Speed multiplier",
+                "Number of bounded ordinary destroy-progress steps requested per client tick.",
+                2.0D, 1.0D, 5.0D));
         blocks = addSetting(new StringSetting("blocks", "Blocks",
                 "Optional semicolon-separated block IDs; blank applies to every normal block target.", "", 1_024, true));
         targetBlocks = BlockIdList.parse(blocks.value());
@@ -64,6 +68,14 @@ public final class FastBreak extends Module {
         lastAppliedDelay = action.delay();
         cooldown.setDelay(action.delay());
         return action;
+    }
+
+    /** Additional ordinary progress calls after vanilla's first held-attack step. */
+    public int extraDestroySteps(boolean attackHeld, boolean hasBlockTarget, String blockId) {
+        if (!isEnabled() || !attackHeld || !hasBlockTarget || !matches(blockId)) {
+            return 0;
+        }
+        return Math.max(0, (int) Math.round(speedMultiplier.value()) - 1);
     }
 
     private boolean matches(String blockId) {

@@ -16,4 +16,10 @@ abstract class CameraNoClipMixin {
             callback.setReturnValue(requestedDistance);
         }
     }
+
+    /** Applies Zoom after vanilla has calculated sprint, fluid, and death FOV effects for this frame. */
+    @Inject(method = "calculateFov", at = @At("RETURN"), cancellable = true)
+    private void helikon$applyZoom(float partialTick, CallbackInfoReturnable<Float> callback) {
+        callback.setReturnValue(RenderModuleAccess.zoomedFov(callback.getReturnValueF()));
+    }
 }

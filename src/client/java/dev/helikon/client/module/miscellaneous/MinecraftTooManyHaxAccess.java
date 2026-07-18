@@ -9,8 +9,9 @@ public final class MinecraftTooManyHaxAccess {
     }
 
     public static void tick(TooManyHax module, ModuleRegistry registry) {
-        var enabledIds = registry.all().stream().filter(Module::isEnabled).map(Module::id).toList();
-        for (String id : module.conflicts(enabledIds)) {
+        var activeModules = registry.all().stream().filter(Module::isEnabled)
+                .map(active -> new TooManyHax.ActiveModule(active.id(), registry.activationOrder(active))).toList();
+        for (String id : module.conflictsByActivation(activeModules)) {
             registry.find(id).ifPresent(conflict -> registry.setEnabled(conflict, false));
         }
     }

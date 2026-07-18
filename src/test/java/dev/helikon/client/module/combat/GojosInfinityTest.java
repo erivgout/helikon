@@ -1,9 +1,7 @@
 package dev.helikon.client.module.combat;
 
-import dev.helikon.client.combat.CombatEntityType;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
-import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.IntegerSetting;
 import dev.helikon.client.setting.NumberSetting;
 import org.junit.jupiter.api.Test;
@@ -17,102 +15,105 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GojosInfinityTest {
     @Test
-    void identityAndDefaultsAreDefensiveAndFriendSafe() {
+    void defaultsOffWithHonestRepelSettings() {
         GojosInfinity module = new GojosInfinity();
 
         assertEquals("gojo_infinity", module.id());
         assertEquals("Gojo's Infinity", module.name());
         assertEquals(ModuleCategory.COMBAT, module.category());
         assertFalse(module.defaultEnabled());
-        assertTrue(module.excludeFriends());
-        assertTrue(module.selectThreat(0L, true, List.of(threat("x", 3.0D, 0.2D))).isEmpty());
+        assertTrue(module.plan(0L, 1.0D, List.of(threat("target", 2.0D, 0.2D, 10.0D))).isEmpty());
+
+        NumberSetting detection = numberSetting(module, "detection_radius");
+        NumberSetting repel = numberSetting(module, "repel_distance");
+        IntegerSetting targets = integerSetting(module, "targets_per_tick");
+        assertEquals(6.0D, detection.value());
+        assertEquals(3.0D, repel.value());
+        assertEquals(1, targets.value());
+        assertEquals(4, targets.maximum());
     }
 
     @Test
-    void selectsNearestClosingVisibleEligibleThreat() {
-        GojosInfinity module = enabledModule();
-        GojosInfinity.Threat far = threat("far", 4.0D, 0.2D);
-        GojosInfinity.Threat near = threat("near", 2.5D, 0.1D);
-        GojosInfinity.Threat retreating = threat("away", 2.0D, -0.2D);
-        GojosInfinity.Threat blocked = new GojosInfinity.Threat("blocked", CombatEntityType.PLAYER,
-                false, false, true, false, 1.5D, 0.2D);
+    void strongestModeChoosesEarliestLegalApproachingThreat() {
+        GojosInfinity module = enabled();
+        GojosInfinity.Threat fartherSooner = threat("soon", 2.8D, 0.7D, 4.0D);
+        GojosInfinity.Threat nearerLater = threat("later", 2.0D, 0.1D, 20.0D);
+        GojosInfinity.Threat outOfRange = new GojosInfinity.Threat("illegal",
+                GojosInfinity.TargetKind.HOSTILE, false, false, false, false,
+                true, true, false, 1.0D, 1.0D, 1.0D);
 
-        assertEquals("near", module.selectThreat(0L, true,
-                List.of(far, retreating, blocked, near)).orElseThrow());
+        GojosInfinity.AttackPlan plan = module.plan(0L, 1.0D,
+                List.of(nearerLater, outOfRange, fartherSooner)).orElseThrow();
+
+        assertEquals(List.of("soon"), plan.targetIds());
+        assertTrue(plan.sprintReset());
+        assertTrue(plan.silentRotation());
     }
 
     @Test
-    void excludesFriendsBotsDeadTargetsAndDisabledTypes() {
-        GojosInfinity module = enabledModule();
-        GojosInfinity.Threat friend = new GojosInfinity.Threat("friend", CombatEntityType.PLAYER,
-                true, false, true, true, 2.0D, 0.2D);
-        GojosInfinity.Threat bot = new GojosInfinity.Threat("bot", CombatEntityType.PLAYER,
-                false, true, true, true, 2.0D, 0.2D);
-        GojosInfinity.Threat dead = new GojosInfinity.Threat("dead", CombatEntityType.HOSTILE,
-                false, false, false, true, 2.0D, 0.2D);
-        GojosInfinity.Threat passive = new GojosInfinity.Threat("passive", CombatEntityType.PASSIVE,
-                false, false, true, true, 2.0D, 0.2D);
+    void filtersFriendsPetsArmorStandsAndRetreatingTargets() {
+        GojosInfinity module = enabled();
+        GojosInfinity.Threat friend = changed(threat("friend", 2.0D, 0.2D, 10.0D),
+                true, false, false, 0.2D);
+        GojosInfinity.Threat pet = changed(threat("pet", 2.0D, 0.2D, 10.0D),
+                false, true, false, 0.2D);
+        GojosInfinity.Threat armorStand = changed(threat("stand", 2.0D, 0.2D, 10.0D),
+                false, false, true, 0.2D);
+        GojosInfinity.Threat retreating = changed(threat("away", 2.0D, 0.2D, 10.0D),
+                false, false, false, -0.2D);
 
-        assertTrue(module.selectThreat(0L, true, List.of(friend, bot, dead, passive)).isEmpty());
-        booleanSetting(module, "exclude_friends").set(false);
-        assertEquals("friend", module.selectThreat(0L, true, List.of(friend)).orElseThrow());
+        assertTrue(module.plan(0L, 1.0D,
+                List.of(friend, pet, armorStand, retreating)).isEmpty());
     }
 
     @Test
-    void readinessApproachRangeAndCadenceGateActions() {
-        GojosInfinity module = enabledModule();
-        integerSetting(module, "delay_ticks").set(4);
-        GojosInfinity.Threat valid = threat("valid", 3.0D, 0.2D);
+    void crowdModeIsBoundedAndCadenceConsumesOnlyAfterExecution() {
+        GojosInfinity module = enabled();
+        enumSetting(module, "repel_mode").set(GojosInfinity.RepelMode.CROWD_EMERGENCY);
+        integerSetting(module, "targets_per_tick").set(3);
+        integerSetting(module, "attack_interval").set(4);
+        List<GojosInfinity.Threat> threats = List.of(
+                threat("a", 2.0D, 0.2D, 3.0D),
+                threat("b", 2.0D, 0.2D, 2.0D),
+                threat("c", 2.0D, 0.2D, 1.0D),
+                threat("d", 2.0D, 0.2D, 4.0D));
 
-        assertTrue(module.selectThreat(0L, false, List.of(valid)).isEmpty());
-        assertEquals("valid", module.selectThreat(0L, true, List.of(valid)).orElseThrow());
-        assertTrue(module.selectThreat(3L, true, List.of(valid)).isEmpty());
-        assertEquals("valid", module.selectThreat(4L, true, List.of(valid)).orElseThrow());
-
-        module.resetTransientState();
-        assertEquals("valid", module.selectThreat(0L, true, List.of(valid)).orElseThrow());
-
-        module.disable();
-        module.enable();
-        assertTrue(module.selectThreat(0L, true, List.of(threat("far", 5.0D, 0.2D))).isEmpty());
-        assertTrue(module.selectThreat(0L, true, List.of(threat("slow", 3.0D, 0.01D))).isEmpty());
+        assertEquals(List.of("c", "b", "a"),
+                module.plan(0L, 1.0D, threats).orElseThrow().targetIds());
+        assertTrue(module.plan(1L, 1.0D, threats).isPresent());
+        module.markExecuted(1L);
+        assertTrue(module.plan(4L, 1.0D, threats).isEmpty());
+        assertTrue(module.plan(5L, 1.0D, threats).isPresent());
     }
 
     @Test
-    void approachAndAttackReadinessRequirementsCanBeDisabled() {
-        GojosInfinity module = enabledModule();
-        booleanSetting(module, "require_approaching").set(false);
-        booleanSetting(module, "require_attack_ready").set(false);
-
-        assertEquals("still", module.selectThreat(0L, false,
-                List.of(threat("still", 3.0D, 0.0D))).orElseThrow());
-    }
-
-    @Test
-    void settingAndFactBoundsAreValidated() {
-        GojosInfinity module = new GojosInfinity();
-        NumberSetting radius = numberSetting(module, "barrier_radius");
-        NumberSetting attackDistance = numberSetting(module, "attack_distance");
-        IntegerSetting delay = integerSetting(module, "delay_ticks");
-
-        assertEquals(2.0D, radius.minimum());
-        assertEquals(8.0D, radius.maximum());
-        assertEquals(1.0D, attackDistance.minimum());
-        assertEquals(3.0D, attackDistance.maximum());
-        assertEquals(1, delay.minimum());
-        assertEquals(40, delay.maximum());
-        assertThrows(IllegalArgumentException.class, () -> radius.set(8.1D));
+    void attackChargeAndFactBoundsAreValidated() {
+        GojosInfinity module = enabled();
+        assertTrue(module.plan(0L, 0.89D, List.of(threat("target", 2.0D, 0.2D, 1.0D))).isEmpty());
         assertThrows(IllegalArgumentException.class,
-                () -> new GojosInfinity.Threat("", CombatEntityType.PLAYER,
-                        false, false, true, true, 1.0D, 0.1D));
+                () -> module.plan(0L, Double.NaN, List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> new GojosInfinity.Threat("", GojosInfinity.TargetKind.PLAYER,
+                        false, false, false, false, true, true, true,
+                        1.0D, 0.1D, 1.0D));
     }
 
-    private static GojosInfinity.Threat threat(String id, double distance, double closingSpeed) {
-        return new GojosInfinity.Threat(id, CombatEntityType.PLAYER,
-                false, false, true, true, distance, closingSpeed);
+    private static GojosInfinity.Threat threat(String id, double distance,
+                                               double closingSpeed, double impactTicks) {
+        return new GojosInfinity.Threat(id, GojosInfinity.TargetKind.HOSTILE,
+                false, false, false, false, true, true, true,
+                distance, closingSpeed, impactTicks);
     }
 
-    private static GojosInfinity enabledModule() {
+    private static GojosInfinity.Threat changed(GojosInfinity.Threat source,
+                                                boolean friend, boolean pet, boolean armorStand,
+                                                double closingSpeed) {
+        return new GojosInfinity.Threat(source.id(), source.kind(), friend, pet, armorStand,
+                source.suspectedBot(), source.alive(), source.lineOfSight(), source.legalAttackRange(),
+                source.distance(), closingSpeed, source.predictedImpactTicks());
+    }
+
+    private static GojosInfinity enabled() {
         GojosInfinity module = new GojosInfinity();
         ModuleRegistry registry = new ModuleRegistry();
         registry.register(module);
@@ -120,8 +121,10 @@ class GojosInfinityTest {
         return module;
     }
 
-    private static BooleanSetting booleanSetting(GojosInfinity module, String id) {
-        return (BooleanSetting) module.settings().stream()
+    @SuppressWarnings("unchecked")
+    private static dev.helikon.client.setting.EnumSetting<GojosInfinity.RepelMode> enumSetting(
+            GojosInfinity module, String id) {
+        return (dev.helikon.client.setting.EnumSetting<GojosInfinity.RepelMode>) module.settings().stream()
                 .filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
     }
 

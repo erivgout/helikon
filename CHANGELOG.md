@@ -2,6 +2,58 @@
 
 ## Unreleased
 
+## 1.1.3 - 2026-07-18
+
+- Replaces Gojo's Infinity local movement constraint with a strictly client-side
+  living-threat repel system using legal range checks, silent server rotation,
+  optional sprint reset, attack charge scheduling, and ordinary vanilla attacks.
+- Raises Enderman Aura's preferred sideways escape from 6 to 12 blocks and
+  checks 9- and 6-block fallbacks on both sides when terrain blocks the full jump.
+- Makes Enderman Aura use swept gravity-aware arrow prediction and consistently
+  derive its sideways direction from the earliest incoming projectile.
+- Fixes Freecam horizontal look and camera shake by synchronizing the detached
+  ArmorStand camera's head, body, entity, and previous-frame rotations.
+- Lets Air Jump repeat at a bounded interval while Space remains held and uses
+  Minecraft's normal jump action for each accepted airborne jump.
+- Prevents Zoom from crashing a render frame when Minecraft temporarily
+  reports a zero FOV while initializing or changing camera state.
+- Adds Air Jump, allowing one bounded airborne jump per fresh Jump-key press.
+- Makes TP-Aura stay beside and advance around targets by default instead of
+  teleporting away after a hit; returning to the origin is now optional.
+- Fixes Nuker's All Blocks runtime behavior by measuring radius from the
+  player's feet and skipping unbreakable targets; held Attack remains the
+  default and can be made optional.
+- Prevents Freecam mouse shake by synchronizing the detached camera's current
+  and prior look rotations after each mouse turn.
+- Clips ClickGUI's empty settings message to the settings panel.
+- Resets fall state immediately before TpClick relocation when Cancel Velocity
+  or NoFall applies, covering downward teleports after NoFall's tick check.
+- Raises Timer's configurable maximum to 5x.
+- Makes FastBreak accelerate active block-damage progress instead of changing
+  only the short delay between completed blocks.
+- Adds the missing bounded Regen module requested by issue #155.
+- Makes the Active Modules HUD enable and size controls explicit while retaining
+  its automatic empty-list hiding.
+- Makes both ClickGUI scrollbars draggable, with track-click jumping and a
+  wider mouse hit area.
+- Lets Anime Aura target players, hostile mobs, and passive mobs independently,
+  and prevents it from advancing attack stages without the shared attack slot.
+- Lets TP-Aura directly attack nearby targets and enables passive-mob targeting
+  by default.
+- Prevents Announcer from failing when commands or mods raise health above 20.
+- Makes Enderman Aura escape perpendicular to an incoming projectile's flight
+  line instead of choosing a backward destination that the projectile may
+  continue through.
+- Applies Zoom's configured FOV directly in Minecraft 26.2's per-frame camera
+  projection instead of indirectly rewriting the saved video option each tick.
+- Reports a module failure in chat and the log only once while that module
+  remains disabled; explicitly re-enabling it starts a new failure episode.
+- Adds Timer's optional `digging_only` mode, which leaves general client time
+  at 1x and applies values above 1x only to an active held block break.
+- Makes TooManyHax retain the most recently enabled module in a conflict group,
+  so enabling TP-Aura replaces an older KillAura instead of immediately
+  disabling TP-Aura again.
+
 ## 1.1.2
 
 - Keeps KillAura from moving the local camera or player head by leaving

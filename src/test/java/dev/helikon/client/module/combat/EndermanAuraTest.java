@@ -3,6 +3,7 @@ package dev.helikon.client.module.combat;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.IntegerSetting;
+import dev.helikon.client.setting.NumberSetting;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -49,6 +50,41 @@ class EndermanAuraTest {
         IntegerSetting cooldown = (IntegerSetting) aura.settings().stream()
                 .filter(setting -> setting.id().equals("cooldown_ticks")).findFirst().orElseThrow();
         assertThrows(IllegalArgumentException.class, () -> cooldown.set(201));
+    }
+
+    @Test
+    void preferredEscapeIsFartherWithBoundedFallbackDistances() {
+        EndermanAura aura = enabled();
+        NumberSetting distance = (NumberSetting) aura.settings().stream()
+                .filter(setting -> setting.id().equals("teleport_distance")).findFirst().orElseThrow();
+
+        assertEquals(12.0D, aura.teleportDistance());
+        assertEquals(4.0D, distance.minimum());
+        assertEquals(24.0D, distance.maximum());
+        assertEquals(List.of(12.0D, 9.0D, 6.0D), aura.escapeDistances());
+    }
+
+    @Test
+    void escapeOffsetsArePerpendicularToProjectileFlight() {
+        List<EndermanAura.SidewaysOffset> offsets =
+                EndermanAura.sidewaysOffsets(3.0D, 4.0D, 0.0D, 0.0D, 6.0D);
+
+        assertEquals(2, offsets.size());
+        for (EndermanAura.SidewaysOffset offset : offsets) {
+            assertEquals(0.0D, offset.x() * 3.0D + offset.z() * 4.0D, 1.0E-9D);
+            assertEquals(6.0D, Math.hypot(offset.x(), offset.z()), 1.0E-9D);
+        }
+        assertEquals(-offsets.getFirst().x(), offsets.getLast().x(), 1.0E-9D);
+        assertEquals(-offsets.getFirst().z(), offsets.getLast().z(), 1.0E-9D);
+    }
+
+    @Test
+    void stationaryProjectileUsesRelativePositionForSidewaysDirection() {
+        EndermanAura.SidewaysOffset offset =
+                EndermanAura.sidewaysOffsets(0.0D, 0.0D, 0.0D, 10.0D, 4.0D).getFirst();
+
+        assertEquals(-4.0D, offset.x(), 1.0E-9D);
+        assertEquals(0.0D, offset.z(), 1.0E-9D);
     }
 
     private static EndermanAura enabled() {

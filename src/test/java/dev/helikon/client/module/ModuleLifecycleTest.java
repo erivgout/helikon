@@ -50,6 +50,30 @@ class ModuleLifecycleTest {
         assertEquals(1, module.disableCount);
     }
 
+    @Test
+    void failureHandlersRunOnceUntilModuleIsExplicitlyReenabled() {
+        ModuleRegistry registry = new ModuleRegistry();
+        RecordingModule module = new RecordingModule();
+        registry.register(module);
+        registry.setEnabled(module, true);
+        int[] reports = {0};
+        registry.addFailureHandler((failedModule, operation, exception) -> reports[0]++);
+
+        assertFalse(registry.runGuarded(module, "tick", () -> {
+            throw new IllegalStateException("First failure");
+        }));
+        assertFalse(registry.runGuarded(module, "tick", () -> {
+            throw new IllegalStateException("Repeated disabled callback");
+        }));
+        assertEquals(1, reports[0]);
+
+        registry.setEnabled(module, true);
+        assertFalse(registry.runGuarded(module, "tick", () -> {
+            throw new IllegalStateException("New failure episode");
+        }));
+        assertEquals(2, reports[0]);
+    }
+
     private static final class RecordingModule extends Module {
         private int enableCount;
         private int disableCount;

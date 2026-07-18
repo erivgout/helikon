@@ -33,8 +33,10 @@ public final class FreecamAccess {
 
     /** Uses the verified normal mouse-turn path on the local-only camera while freecam is active. */
     public static void turn(LocalPlayer player, double deltaX, double deltaY) {
-        if (camera != null && isActive()) {
-            camera.turn(deltaX, deltaY);
+        Freecam current = freecam;
+        if (camera != null && current != null && current.isEnabled()) {
+            Freecam.Rotation rotation = current.turn(camera.getYRot(), camera.getXRot(), deltaX, deltaY);
+            synchronizeCameraRotation(rotation.yaw(), rotation.pitch());
             return;
         }
         player.turn(deltaX, deltaY);
@@ -51,8 +53,7 @@ public final class FreecamAccess {
             camera.noPhysics = true;
             camera.setNoGravity(true);
             camera.setInvisible(true);
-            camera.setYRot(client.player.getYRot());
-            camera.setXRot(client.player.getXRot());
+            synchronizeCameraRotation(client.player.getYRot(), client.player.getXRot());
         }
         // The camera entity is never added to the level, so nothing ticks it: without
         // this per-tick old-pose sync the renderer interpolates from the constructor
@@ -89,6 +90,25 @@ public final class FreecamAccess {
         if (movement.lengthSqr() > 0.0D) {
             camera.setPos(camera.position().add(movement));
         }
+    }
+
+    /**
+     * ArmorStand inherits LivingEntity.getViewYRot, which renders from head
+     * yaw rather than Entity yaw. Keep every current/previous head, body, and
+     * entity rotation aligned so frame interpolation cannot fight mouse input.
+     */
+    private static void synchronizeCameraRotation(float yaw, float pitch) {
+        if (camera == null) {
+            return;
+        }
+        camera.setYRot(yaw);
+        camera.setXRot(pitch);
+        camera.setYHeadRot(yaw);
+        camera.setYBodyRot(yaw);
+        camera.yRotO = yaw;
+        camera.xRotO = pitch;
+        camera.yHeadRotO = yaw;
+        camera.yBodyRotO = yaw;
     }
 
     /** Restores the normal camera when possible and always discards the unadded local camera entity. */

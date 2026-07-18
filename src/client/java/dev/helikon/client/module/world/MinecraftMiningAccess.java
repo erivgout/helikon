@@ -1,6 +1,7 @@
 package dev.helikon.client.module.world;
 
 import dev.helikon.client.mixin.MultiPlayerGameModeAccessor;
+import dev.helikon.client.module.movement.Timer;
 import dev.helikon.client.module.player.ToolCandidate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -35,7 +36,36 @@ public final class MinecraftMiningAccess {
             return;
         }
         BlockState state = client.level.getBlockState(hit.getBlockPos());
-        module.tick(client.options.keyAttack.isDown(), !state.isAir(), blockId(state));
+        boolean attackHeld = client.options.keyAttack.isDown();
+        String id = blockId(state);
+        module.tick(attackHeld, !state.isAir(), id);
+        int extraSteps = module.extraDestroySteps(attackHeld, !state.isAir(), id);
+        if (state.getDestroySpeed(client.level, hit.getBlockPos()) < 0.0F || !client.gameMode.isDestroying()) {
+            return;
+        }
+        for (int step = 0; step < extraSteps && !client.level.getBlockState(hit.getBlockPos()).isAir(); step++) {
+            client.gameMode.continueDestroyBlock(hit.getBlockPos(), hit.getDirection());
+        }
+    }
+
+    /** Applies Timer's optional multiplier only to Minecraft's active ordinary digging path. */
+    public static void tickTimerDigging(Timer module) {
+        Minecraft client = Minecraft.getInstance();
+        if (!module.usesDiggingOnlyMode() || client.player == null || client.level == null
+                || client.gameMode == null || client.gui.screen() != null
+                || !(client.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
+                || !client.level.isLoaded(hit.getBlockPos())) {
+            module.extraDiggingSteps(false);
+            return;
+        }
+        BlockState state = client.level.getBlockState(hit.getBlockPos());
+        boolean activeDigging = client.options.keyAttack.isDown() && !state.isAir()
+                && state.getDestroySpeed(client.level, hit.getBlockPos()) >= 0.0F
+                && client.gameMode.isDestroying();
+        int extraSteps = module.extraDiggingSteps(activeDigging);
+        for (int step = 0; step < extraSteps && !client.level.getBlockState(hit.getBlockPos()).isAir(); step++) {
+            client.gameMode.continueDestroyBlock(hit.getBlockPos(), hit.getDirection());
+        }
     }
 
     /** Selects at most two loaded, reachable targets and invokes Minecraft's ordinary destroy interaction for each. */
@@ -57,7 +87,7 @@ public final class MinecraftMiningAccess {
         List<Nuker.Target> targets = module.selectTargets(context, lineOfSightFacts(client, module, candidates));
         applyToolAction(player, module.toolAction(!targets.isEmpty(), player.getInventory().getSelectedSlot(),
                 targets.isEmpty() ? List.of() : toolCandidates(player, client.level.getBlockState(blockPos(targets.getFirst())))));
-        if (targets.isEmpty() || screenOpen || !client.options.keyAttack.isDown()) {
+        if (targets.isEmpty() || screenOpen) {
             NUKER_BREAK_SEQUENCE.reset();
             return;
         }
@@ -106,9 +136,9 @@ public final class MinecraftMiningAccess {
             if (state.isAir() || !module.isConfiguredTarget(blockId(state))) {
                 continue;
             }
-            Vec3 targetCenter = Vec3.atCenterOf(position);
             candidates.add(new Candidate(position.immutable(), blockId(state),
-                    player.getEyePosition().distanceToSqr(targetCenter)));
+                    Nuker.squaredDistanceFromPlayer(player.getX(), player.getY(), player.getZ(),
+                            position.getX(), position.getY(), position.getZ())));
         }
         candidates.sort(Comparator.comparingDouble(Candidate::squaredDistance).thenComparing(Candidate::blockId)
                 .thenComparing(candidate -> candidate.position().asLong()));
@@ -123,7 +153,8 @@ public final class MinecraftMiningAccess {
             Candidate candidate = candidates.get(index);
             BlockPos position = candidate.position();
             targets.add(new Nuker.Target(position.getX(), position.getY(), position.getZ(), candidate.blockId(),
-                    candidate.squaredDistance(), !module.lineOfSightRequired() || hasLineOfSight(client, position)));
+                    candidate.squaredDistance(), !module.lineOfSightRequired() || hasLineOfSight(client, position),
+                    client.level.getBlockState(position).getDestroySpeed(client.level, position) >= 0.0F));
         }
         return targets;
     }

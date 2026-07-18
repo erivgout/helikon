@@ -134,6 +134,7 @@ import dev.helikon.client.module.combat.WTap;
 import dev.helikon.client.module.combat.WTapAccess;
 import dev.helikon.client.module.combat.Velocity;
 import dev.helikon.client.module.movement.AutoSprint;
+import dev.helikon.client.module.movement.AirJump;
 import dev.helikon.client.module.movement.AutoSwim;
 import dev.helikon.client.module.movement.AutoSneak;
 import dev.helikon.client.module.movement.AutoWalk;
@@ -224,6 +225,8 @@ import dev.helikon.client.module.player.ItemGenerator;
 import dev.helikon.client.module.player.KillPotion;
 import dev.helikon.client.module.player.MinecraftCreativeItemAccess;
 import dev.helikon.client.module.player.MinecraftLegacyPlayerAccess;
+import dev.helikon.client.module.player.MinecraftRegenAccess;
+import dev.helikon.client.module.player.Regen;
 import dev.helikon.client.module.player.TrollPotion;
 import dev.helikon.client.module.player.MinecraftAutoSwitchAccess;
 import dev.helikon.client.module.player.AutoArmor;
@@ -527,8 +530,6 @@ public final class HelikonClient implements ClientModInitializer {
                 new dev.helikon.client.module.miscellaneous.LegacyFunModules.Headless();
         dev.helikon.client.module.miscellaneous.MinecraftLegacyFunAccess legacyFunAccess =
                 new dev.helikon.client.module.miscellaneous.MinecraftLegacyFunAccess();
-        dev.helikon.client.module.render.MinecraftZoomAccess zoomAccess =
-                new dev.helikon.client.module.render.MinecraftZoomAccess();
         EntityEsp entityEsp = new EntityEsp();
         Chams chams = new Chams();
         BaseFinder baseFinder = new BaseFinder();
@@ -611,6 +612,7 @@ public final class HelikonClient implements ClientModInitializer {
         RenderModuleAccess.installNoFog(noFog);
         RenderModuleAccess.installNoHurtcam(noHurtcam);
         RenderModuleAccess.installNoShieldOverlay(noShieldOverlay);
+        RenderModuleAccess.installZoom(zoom);
         RenderModuleAccess.install(antiBlind, noFireOverlay, betterCrosshair, antiTotemAnimation, dinnerbone,
                 rainbowEnchant, noWeather, hudLayout, panicState);
         dev.helikon.client.module.render.RainbowUiAccess.install(rainbowUi);
@@ -633,6 +635,7 @@ public final class HelikonClient implements ClientModInitializer {
         Jesus jesus = new Jesus();
         Spider spider = new Spider();
         HighJump highJump = new HighJump();
+        AirJump airJump = new AirJump();
         Step step = new Step();
         Speed speed = new Speed();
         BunnyHop bunnyHop = new BunnyHop();
@@ -663,6 +666,7 @@ public final class HelikonClient implements ClientModInitializer {
         AntiPotion antiPotion = new AntiPotion();
         CommandBlock commandBlock = new CommandBlock();
         FastEat fastEat = new FastEat();
+        Regen regen = new Regen();
         dev.helikon.client.module.player.PortalGui portalGui = new dev.helikon.client.module.player.PortalGui();
         dev.helikon.client.module.player.PotionSaver potionSaver = new dev.helikon.client.module.player.PotionSaver();
         dev.helikon.client.module.player.AutoLibrarian autoLibrarian =
@@ -765,11 +769,13 @@ public final class HelikonClient implements ClientModInitializer {
         HitSwap hitSwap = new HitSwap();
         SilentAura silentAura = new SilentAura();
         TpAura tpAura = new TpAura();
+        MinecraftTpAuraAccess.install(tpAura);
         WTap wtap = new WTap();
         AutoAnchor autoAnchor = new AutoAnchor();
         CrystalAura crystalAura = new CrystalAura();
         AntiFireball antiFireball = new AntiFireball();
         GojosInfinity gojosInfinity = new GojosInfinity();
+        MinecraftGojoInfinityAccess.install(gojosInfinity, friends);
         EndermanAura endermanAura = new EndermanAura();
         dev.helikon.client.module.combat.AnimeAura animeAura = new dev.helikon.client.module.combat.AnimeAura();
         dev.helikon.client.module.combat.MinecraftAnimeAuraAccess animeAuraAccess =
@@ -821,6 +827,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(jesus);
         modules.register(spider);
         modules.register(highJump);
+        modules.register(airJump);
         modules.register(step);
         modules.register(speed);
         modules.register(bunnyHop);
@@ -851,6 +858,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(antiPotion);
         modules.register(commandBlock);
         modules.register(fastEat);
+        modules.register(regen);
         modules.register(portalGui);
         modules.register(potionSaver);
         modules.register(autoLibrarian);
@@ -1020,7 +1028,6 @@ public final class HelikonClient implements ClientModInitializer {
                     modules.setEnabled(timer, false);
                 }
                 modules.runGuarded(fullbright, "tick", fullbright::tick);
-                modules.runGuarded(zoom, "tick", () -> zoomAccess.tick(zoom));
                 modules.runGuarded(derp, "fun-effects", () -> legacyFunAccess.tick(clientTick, derp, headRoll, lsd,
                         mileyCyrus, tired, headless));
                 modules.runGuarded(autoSprint, "tick", () -> tickAutoSprint(autoSprint));
@@ -1031,6 +1038,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(fish, "tick", () -> MinecraftAdvancedMovementAccess.tickFish(fish));
                 modules.runGuarded(spider, "tick", () -> MinecraftAdvancedMovementAccess.tickSpider(spider));
                 modules.runGuarded(highJump, "tick", () -> MinecraftAdvancedMovementAccess.tickHighJump(highJump));
+                modules.runGuarded(airJump, "tick", () -> MinecraftAdvancedMovementAccess.tickAirJump(airJump));
                 modules.runGuarded(speed, "tick", () -> MinecraftAdvancedMovementAccess.tickSpeed(speed));
                 modules.runGuarded(bunnyHop, "tick", () -> MinecraftAdvancedMovementAccess.tickBunnyHop(bunnyHop));
                 modules.runGuarded(flight, "tick", () -> MinecraftAdvancedMovementAccess.tickFlight(flight));
@@ -1052,7 +1060,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(phase, "tick", () -> MinecraftLegacyMovementAccess.tickPhase(clientTick, phase));
                 modules.runGuarded(extraElytra, "tick", () -> MinecraftAdvancedMovementAccess.tickElytra(extraElytra));
                 modules.runGuarded(scaffold, "tick", () -> MinecraftAdvancedMovementAccess.tickScaffold(scaffold, clientTick));
-                modules.runGuarded(tpClick, "tick", () -> MinecraftTpClickAccess.tick(tpClick, INPUT_READER));
+                modules.runGuarded(tpClick, "tick", () -> MinecraftTpClickAccess.tick(tpClick, noFall, INPUT_READER));
                 modules.runGuarded(clutch, "tick", () -> MinecraftAdvancedMovementAccess.tickClutch(clutch, clientTick));
                 modules.runGuarded(autoEat, "tick", () -> tickAutoEat(autoEat));
                 modules.runGuarded(autoTool, "tick", () -> tickAutoTool(autoTool));
@@ -1083,6 +1091,8 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(inventoryFill, "tick", () -> tickInventoryFill(inventoryFill, clientTick));
                 modules.runGuarded(fastPlace, "tick", () -> tickFastPlace(fastPlace));
                 modules.runGuarded(fastBreak, "tick", () -> MinecraftMiningAccess.tickFastBreak(fastBreak));
+                modules.runGuarded(timer, "digging", () -> MinecraftMiningAccess.tickTimerDigging(timer));
+                modules.runGuarded(regen, "tick", () -> MinecraftRegenAccess.tick(clientTick, regen));
                 modules.runGuarded(nuker, "tick", () -> MinecraftMiningAccess.tickNuker(nuker));
                 modules.runGuarded(chestSteal, "tick", () -> tickChestSteal(chestSteal, clientTick));
                 modules.runGuarded(builderAssist, "tick", () -> MinecraftBuilderAssistAccess.tick(builderAssist, clientTick));

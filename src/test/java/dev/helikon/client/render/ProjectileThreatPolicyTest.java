@@ -56,6 +56,38 @@ class ProjectileThreatPolicyTest {
     }
 
     @Test
+    void ballisticAssessmentDetectsAnArrowThatGravityDropsIntoThePlayer() {
+        assertTrue(ProjectileThreatPolicy.assess(
+                0.0D, 3.0D, 10.0D, 0.0D, 0.0D, -1.0D,
+                HIT_RADIUS, MAXIMUM_TICKS, DETECTION_RANGE).isEmpty());
+
+        Optional<ProjectileThreatPolicy.ProjectileThreat> threat =
+                ProjectileThreatPolicy.assessBallistic(
+                        0.0D, 3.0D, 10.0D,
+                        0.0D, 0.0D, -1.0D,
+                        0.0D, 0.0D, 0.0D,
+                        HIT_RADIUS, MAXIMUM_TICKS, DETECTION_RANGE,
+                        0.05D, 0.99D);
+
+        assertTrue(threat.isPresent());
+        assertTrue(threat.orElseThrow().timeToImpactTicks() < 12.0D);
+    }
+
+    @Test
+    void ballisticAssessmentSweepsFastPerTickSegments() {
+        Optional<ProjectileThreatPolicy.ProjectileThreat> threat =
+                ProjectileThreatPolicy.assessBallistic(
+                        0.0D, 0.0D, 5.0D,
+                        0.0D, 0.0D, -10.0D,
+                        0.0D, 0.0D, 0.0D,
+                        0.5D, 2.0D, DETECTION_RANGE,
+                        0.05D, 0.99D);
+
+        assertTrue(threat.isPresent());
+        assertEquals(0.5D, threat.orElseThrow().timeToImpactTicks(), 1.0E-9D);
+    }
+
+    @Test
     void rejectsNonFiniteAndNonPositiveArguments() {
         assertThrows(IllegalArgumentException.class, () -> ProjectileThreatPolicy.assess(
                 Double.NaN, 0.0D, 10.0D, 0.0D, 0.0D, -1.0D, HIT_RADIUS, MAXIMUM_TICKS, DETECTION_RANGE));

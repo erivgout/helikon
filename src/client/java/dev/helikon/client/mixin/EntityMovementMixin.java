@@ -26,7 +26,7 @@ abstract class EntityMovementMixin {
     @ModifyVariable(method = "move", at = @At("HEAD"), argsOnly = true, ordinal = 0)
     private Vec3 helikon$avoidCactusCollision(Vec3 movement, MoverType moverType) {
         if ((Object) this instanceof LocalPlayer player) {
-            return AntiCactusAccess.adjustMovement(player, moverType, movement);
+            movement = AntiCactusAccess.adjustMovement(player, moverType, movement);
         }
         return movement;
     }

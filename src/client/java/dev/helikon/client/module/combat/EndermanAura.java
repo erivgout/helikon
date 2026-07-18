@@ -33,7 +33,7 @@ public final class EndermanAura extends Module {
         hitRadius = addSetting(new NumberSetting("hit_radius", "Hit radius",
                 "Closest-approach distance that counts as an incoming hit.", 1.4D, 0.5D, 3.0D));
         teleportDistance = addSetting(new NumberSetting("teleport_distance", "Teleport distance",
-                "Preferred horizontal escape distance.", 6.0D, 2.0D, 12.0D));
+                "Preferred horizontal left/right escape distance.", 12.0D, 4.0D, 24.0D));
         cooldownTicks = addSetting(new IntegerSetting("cooldown_ticks", "Cooldown ticks",
                 "Minimum client ticks between escape attempts.", 20, 1, 200));
         excludeFriendProjectiles = addSetting(new BooleanSetting("exclude_friend_projectiles",
@@ -64,7 +64,7 @@ public final class EndermanAura extends Module {
                 .filter(Destination::loaded)
                 .filter(Destination::collisionFree)
                 .filter(Destination::safeFloor)
-                .filter(destination -> destination.distance() >= teleportDistance.value() * 0.65D)
+                .filter(destination -> destination.distance() >= teleportDistance.value() * 0.45D)
                 .max(Comparator.comparingDouble(Destination::projectileSeparation)
                         .thenComparingDouble(Destination::distance))
                 .map(destination -> new EscapePlan(incoming.orElseThrow(), destination));
@@ -97,12 +97,47 @@ public final class EndermanAura extends Module {
         return teleportDistance.value();
     }
 
+    /** Preferred lateral distance followed by bounded terrain-safe fallbacks. */
+    public List<Double> escapeDistances() {
+        double preferred = teleportDistance.value();
+        return List.of(preferred, preferred * 0.75D, preferred * 0.50D);
+    }
+
     public boolean excludeFriendProjectiles() {
         return excludeFriendProjectiles.value();
     }
 
     public boolean cancelVelocity() {
         return cancelVelocity.value();
+    }
+
+    /**
+     * Returns the two horizontal escape offsets perpendicular to the projectile's flight line.
+     * The relative projectile position is used only when its horizontal velocity is effectively zero.
+     */
+    public static List<SidewaysOffset> sidewaysOffsets(double velocityX, double velocityZ,
+                                                       double relativeX, double relativeZ, double distance) {
+        if (!Double.isFinite(velocityX) || !Double.isFinite(velocityZ)
+                || !Double.isFinite(relativeX) || !Double.isFinite(relativeZ)
+                || !Double.isFinite(distance) || distance <= 0.0D) {
+            throw new IllegalArgumentException("Sideways escape inputs are invalid");
+        }
+        double directionX = velocityX;
+        double directionZ = velocityZ;
+        double length = Math.hypot(directionX, directionZ);
+        if (length < 1.0E-6D) {
+            directionX = relativeX;
+            directionZ = relativeZ;
+            length = Math.hypot(directionX, directionZ);
+        }
+        if (length < 1.0E-6D) {
+            directionX = 1.0D;
+            directionZ = 0.0D;
+            length = 1.0D;
+        }
+        double sideX = -directionZ / length * distance;
+        double sideZ = directionX / length * distance;
+        return List.of(new SidewaysOffset(sideX, sideZ), new SidewaysOffset(-sideX, -sideZ));
     }
 
     @Override
@@ -136,6 +171,14 @@ public final class EndermanAura extends Module {
         public EscapePlan {
             if (threat == null || destination == null) {
                 throw new IllegalArgumentException("Escape plan is incomplete");
+            }
+        }
+    }
+
+    public record SidewaysOffset(double x, double z) {
+        public SidewaysOffset {
+            if (!Double.isFinite(x) || !Double.isFinite(z)) {
+                throw new IllegalArgumentException("Sideways escape offset is invalid");
             }
         }
     }

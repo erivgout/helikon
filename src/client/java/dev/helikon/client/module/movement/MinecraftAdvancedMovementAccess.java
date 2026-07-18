@@ -113,6 +113,26 @@ public final class MinecraftAdvancedMovementAccess {
                 .ifPresent(y -> player.setDeltaMovement(velocity.x, y, velocity.z));
     }
 
+    /** Applies one local airborne jump for each fresh Jump-key press. */
+    public static void tickAirJump(AirJump module) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null) {
+            module.onContextLost();
+            return;
+        }
+        LocalPlayer player = client.player;
+        Vec3 velocity = player.getDeltaMovement();
+        module.verticalVelocity(new AirJump.Context(client.gui.screen() != null, player.onGround(),
+                client.options.keyJump.isDown(), player.isInWater() || player.isInLava(), player.onClimbable(),
+                player.isPassenger(), player.getAbilities().flying, player.isFallFlying(), velocity.y))
+                .ifPresent(y -> {
+                    player.jumpFromGround();
+                    Vec3 jumped = player.getDeltaMovement();
+                    player.setDeltaMovement(jumped.x, Math.max(jumped.y, y), jumped.z);
+                    player.fallDistance = 0.0F;
+                });
+    }
+
     public static void tickSpeed(Speed speed) {
         Minecraft client = Minecraft.getInstance();
         if (!isInteractive(client) || client.player.isFallFlying() || client.player.onClimbable()) {

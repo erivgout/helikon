@@ -8,6 +8,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,7 +22,10 @@ public final class ModuleRegistry {
     private static final Logger LOGGER = Logger.getLogger(ModuleRegistry.class.getName());
 
     private final Map<String, Module> modules = new LinkedHashMap<>();
+    private final Map<String, Long> activationOrders = new LinkedHashMap<>();
     private final List<ModuleFailureHandler> failureHandlers = new ArrayList<>();
+    private final Set<String> activeFailureEpisodes = ConcurrentHashMap.newKeySet();
+    private long nextActivationOrder;
     private volatile ModuleTimingMetrics timingMetrics;
 
     public void register(Module module) {
@@ -49,9 +54,16 @@ public final class ModuleRegistry {
         }
 
         String operation = shouldEnable ? "enable" : "disable";
+        boolean wasEnabled = module.isEnabled();
+        if (shouldEnable && !module.isEnabled()) {
+            activeFailureEpisodes.remove(module.id());
+        }
         try {
             if (shouldEnable) {
                 module.enable();
+                if (!wasEnabled && module.isEnabled()) {
+                    activationOrders.put(module.id(), ++nextActivationOrder);
+                }
             } else {
                 module.disable();
             }
@@ -121,8 +133,21 @@ public final class ModuleRegistry {
         this.timingMetrics = Objects.requireNonNull(timingMetrics, "timingMetrics");
     }
 
+    /** Monotonic local order of the module's latest successful enable transition. */
+    public long activationOrder(Module module) {
+        Module nonNullModule = Objects.requireNonNull(module, "module");
+        if (!modules.containsValue(nonNullModule)) {
+            throw new IllegalArgumentException("Module '" + nonNullModule.id() + "' is not registered");
+        }
+        return activationOrders.getOrDefault(nonNullModule.id(), 0L);
+    }
+
     private void isolateFailure(Module module, String operation, RuntimeException exception) {
-        LOGGER.log(Level.SEVERE, "Failed to " + operation + " module '" + module.id() + "'; disabling it", exception);
+        boolean firstReport = activeFailureEpisodes.add(module.id());
+        if (firstReport) {
+            LOGGER.log(Level.SEVERE, "Failed to " + operation + " module '" + module.id() + "'; disabling it",
+                    exception);
+        }
 
         if (module.isEnabled()) {
             try {
@@ -133,11 +158,13 @@ public final class ModuleRegistry {
             }
         }
 
-        for (ModuleFailureHandler handler : List.copyOf(failureHandlers)) {
-            try {
-                handler.onModuleFailure(module, operation, exception);
-            } catch (RuntimeException handlerException) {
-                LOGGER.log(Level.WARNING, "Module failure handler threw an exception", handlerException);
+        if (firstReport) {
+            for (ModuleFailureHandler handler : List.copyOf(failureHandlers)) {
+                try {
+                    handler.onModuleFailure(module, operation, exception);
+                } catch (RuntimeException handlerException) {
+                    LOGGER.log(Level.WARNING, "Module failure handler threw an exception", handlerException);
+                }
             }
         }
     }

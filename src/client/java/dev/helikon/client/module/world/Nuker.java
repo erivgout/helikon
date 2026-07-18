@@ -22,7 +22,12 @@ public final class Nuker extends Module {
     public record Context(boolean screenOpen, boolean attackHeld) {
     }
 
-    public record Target(int x, int y, int z, String blockId, double squaredDistance, boolean lineOfSight) {
+    public record Target(int x, int y, int z, String blockId, double squaredDistance,
+                         boolean lineOfSight, boolean breakable) {
+        public Target(int x, int y, int z, String blockId, double squaredDistance, boolean lineOfSight) {
+            this(x, y, z, blockId, squaredDistance, lineOfSight, true);
+        }
+
         public Target {
             if (blockId == null || blockId.isBlank() || !Double.isFinite(squaredDistance) || squaredDistance < 0.0D) {
                 throw new IllegalArgumentException("target facts are invalid");
@@ -46,6 +51,7 @@ public final class Nuker extends Module {
 
     private final NumberSetting radius;
     private final NumberSetting blocksPerTick;
+    private final BooleanSetting requireAttackHeld;
     private final BooleanSetting allBlocks;
     private final StringSetting whitelist;
     private final StringSetting blacklist;
@@ -62,12 +68,14 @@ public final class Nuker extends Module {
     private Set<String> blockedBlocks;
 
     public Nuker() {
-        super("nuker", "Nuker", "Breaks nearby loaded blocks through Minecraft's ordinary destroy path while Attack is held.",
+        super("nuker", "Nuker", "Breaks nearby loaded blocks through Minecraft's ordinary destroy path.",
                 ModuleCategory.WORLD, false, Keybind.unbound());
         radius = addSetting(new NumberSetting("radius", "Radius", "Loaded local block radius to consider.",
                 2.0D, 1.0D, 4.0D));
         blocksPerTick = addSetting(new NumberSetting("blocks_per_tick", "Blocks per tick",
                 "Maximum ordinary destroy requests considered each tick.", 1.0D, 1.0D, HARD_MAXIMUM_ACTIONS_PER_TICK));
+        requireAttackHeld = addSetting(new BooleanSetting("require_attack_held", "Require attack held",
+                "Run only while the ordinary Attack button is held.", true));
         allBlocks = addSetting(new BooleanSetting("all_blocks", "All blocks",
                 "Target every non-air block, ignoring the whitelist. The blacklist still applies.", false));
         whitelist = addSetting(new StringSetting("whitelist", "Whitelist",
@@ -103,6 +111,7 @@ public final class Nuker extends Module {
         return candidates.stream()
                 .filter(target -> target.squaredDistance() <= maximumDistance)
                 .filter(target -> isConfiguredTarget(target.blockId()))
+                .filter(Target::breakable)
                 .filter(target -> !lineOfSight.value() || target.lineOfSight())
                 .sorted(Comparator.comparingDouble(Target::squaredDistance).thenComparing(Target::blockId)
                         .thenComparingInt(Target::x).thenComparingInt(Target::y).thenComparingInt(Target::z))
@@ -112,7 +121,23 @@ public final class Nuker extends Module {
 
     /** Avoids even local world scanning until every explicit user-activation guard is satisfied. */
     public boolean shouldScan(Context context) {
-        return context != null && isEnabled() && !context.screenOpen() && context.attackHeld();
+        return context != null && isEnabled() && !context.screenOpen()
+                && (!requireAttackHeld.value() || context.attackHeld());
+    }
+
+    /**
+     * Measures configured Nuker radius from the player's feet rather than eye
+     * height, keeping the floor and nearby ground inside the expected radius.
+     */
+    public static double squaredDistanceFromPlayer(double playerX, double playerY, double playerZ,
+                                                   int blockX, int blockY, int blockZ) {
+        if (!Double.isFinite(playerX) || !Double.isFinite(playerY) || !Double.isFinite(playerZ)) {
+            throw new IllegalArgumentException("player position is invalid");
+        }
+        double x = blockX + 0.5D - playerX;
+        double y = blockY + 0.5D - playerY;
+        double z = blockZ + 0.5D - playerZ;
+        return x * x + y * y + z * z;
     }
 
     /** Owns a temporary hotbar selection only while a safe target remains active. */

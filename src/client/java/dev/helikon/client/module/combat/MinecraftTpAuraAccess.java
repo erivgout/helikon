@@ -18,16 +18,27 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 import java.util.Optional;
 
-/** Narrow 26.2 adapter for a validated movement-out, ordinary-attack, movement-back sequence. */
+/** Narrow 26.2 adapter for validated movement around a target and one ordinary attack. */
 public final class MinecraftTpAuraAccess {
+    private static PendingReturn pendingReturn;
+
     private MinecraftTpAuraAccess() {
+    }
+
+    public static void install(TpAura module) {
+        module.setTeleportRestorer(() -> stop(Minecraft.getInstance()));
     }
 
     public static boolean tick(long tick, TpAura module, MinecraftCombatAccess.Snapshot snapshot,
                                CombatTargetTracker tracker) {
         Minecraft client = Minecraft.getInstance();
+        if (pendingReturn != null) {
+            finishPendingReturn(client, tick, false);
+            return false;
+        }
         LocalPlayer player = client.player;
         if (player == null || client.level == null || client.gameMode == null || !snapshot.available()) {
+            pendingReturn = null;
             module.onContextLost();
             return false;
         }
@@ -46,25 +57,41 @@ public final class MinecraftTpAuraAccess {
         }
 
         TpAura.Point origin = point(player);
-        TpAura.Point destination = destination(origin, point(entity), plan.attackDistance());
+        TpAura.Point destination = module.orbitDestination(origin, point(entity), plan.attackDistance());
         List<TpAura.Point> outward = module.buildPath(origin, destination, plan);
-        List<TpAura.Point> returning = module.buildPath(destination, origin, plan);
-        if (outward.isEmpty() || returning.isEmpty()
+        List<TpAura.Point> failureReturn = module.buildPath(destination, origin, plan);
+        boolean movementRequired = distance(origin, destination) >= 1.0E-6D;
+        boolean returns = module.returnsToOrigin();
+        List<TpAura.Point> returning = returns ? failureReturn : List.of();
+        if ((movementRequired && (outward.isEmpty() || failureReturn.isEmpty()))
                 || !pathIsLoaded(client.level, outward, returning, entity)
-                || !pathIsCollisionFree(client.level, player, origin, outward)
+                || (movementRequired && !pathIsCollisionFree(client.level, player, origin, outward))
                 || !hasLineOfSight(client.level, player, destination, entity)) {
             return false;
         }
 
-        sendPath(player, outward);
+        if (movementRequired) {
+            sendPath(player, outward);
+            player.setPos(destination.x(), destination.y(), destination.z());
+            if (returns) {
+                pendingReturn = new PendingReturn(player, client.level, origin, returning,
+                        tick + module.returnDelayTicks());
+            }
+        }
         boolean attacked = false;
         try {
             client.gameMode.attack(player, entity);
             tracker.recordAttack(plan.target());
             player.swing(InteractionHand.MAIN_HAND);
             attacked = true;
-        } finally {
-            sendPath(player, returning);
+        } catch (RuntimeException exception) {
+            if (pendingReturn != null) {
+                finishPendingReturn(client, tick, true);
+            } else if (movementRequired) {
+                sendPath(player, failureReturn);
+                player.setPos(origin.x(), origin.y(), origin.z());
+            }
+            throw exception;
         }
         if (attacked) {
             module.markExecuted(tick);
@@ -72,16 +99,27 @@ public final class MinecraftTpAuraAccess {
         return attacked;
     }
 
-    private static TpAura.Point destination(TpAura.Point origin, TpAura.Point target, double attackDistance) {
-        double x = target.x() - origin.x();
-        double y = target.y() - origin.y();
-        double z = target.z() - origin.z();
-        double distance = Math.sqrt(x * x + y * y + z * z);
-        if (distance < 1.0E-6D) {
-            return origin;
+    /** Immediately restores an in-progress visible teleport when the module is disabled. */
+    public static void stop(Minecraft client) {
+        finishPendingReturn(client, Long.MAX_VALUE, true);
+    }
+
+    private static void finishPendingReturn(Minecraft client, long tick, boolean force) {
+        PendingReturn pending = pendingReturn;
+        if (pending == null) {
+            return;
         }
-        double scale = Math.max(0.0D, distance - attackDistance) / distance;
-        return new TpAura.Point(origin.x() + x * scale, origin.y() + y * scale, origin.z() + z * scale);
+        if (client.player != pending.player() || client.level != pending.level()
+                || pending.player().connection == null) {
+            pendingReturn = null;
+            return;
+        }
+        if (!force && tick < pending.returnTick()) {
+            return;
+        }
+        sendPath(pending.player(), pending.path());
+        pending.player().setPos(pending.origin().x(), pending.origin().y(), pending.origin().z());
+        pendingReturn = null;
     }
 
     private static boolean pathIsLoaded(ClientLevel level, List<TpAura.Point> outward,
@@ -140,7 +178,17 @@ public final class MinecraftTpAuraAccess {
         return new Vec3(to.x() - from.x(), to.y() - from.y(), to.z() - from.z());
     }
 
+    private static double distance(TpAura.Point from, TpAura.Point to) {
+        return Math.sqrt(Math.pow(to.x() - from.x(), 2.0D)
+                + Math.pow(to.y() - from.y(), 2.0D)
+                + Math.pow(to.z() - from.z(), 2.0D));
+    }
+
     private static TpAura.Point point(Entity entity) {
         return new TpAura.Point(entity.getX(), entity.getY(), entity.getZ());
+    }
+
+    private record PendingReturn(LocalPlayer player, ClientLevel level, TpAura.Point origin,
+                                 List<TpAura.Point> path, long returnTick) {
     }
 }

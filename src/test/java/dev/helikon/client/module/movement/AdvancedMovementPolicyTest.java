@@ -120,6 +120,11 @@ class AdvancedMovementPolicyTest {
         assertEquals(new dev.helikon.client.module.world.BuildPoint(2, 63, 3), scaffold.nextTarget(0L,
                 new dev.helikon.client.module.world.BuildPoint(2, 64, 3), new dev.helikon.client.module.world.BuildVector(0, 0, 1),
                 false, true).orElseThrow());
+        assertTrue(scaffold.nextTarget(1L, new dev.helikon.client.module.world.BuildPoint(2, 64, 3),
+                new dev.helikon.client.module.world.BuildVector(0, 0, 1), false, true).isEmpty());
+        assertEquals(new dev.helikon.client.module.world.BuildPoint(2, 63, 3), scaffold.nextTarget(4L,
+                new dev.helikon.client.module.world.BuildPoint(2, 64, 3), new dev.helikon.client.module.world.BuildVector(0, 0, 1),
+                false, true).orElseThrow());
         assertEquals(4, scaffold.selectBlockSlot(0, false,
                 List.of(new Scaffold.HotbarBlock(1, 16), new Scaffold.HotbarBlock(4, 32))).orElseThrow());
         assertTrue(scaffold.shouldRequestEdgeSafety(true));

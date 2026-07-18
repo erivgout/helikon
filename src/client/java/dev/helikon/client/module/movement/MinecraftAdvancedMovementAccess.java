@@ -296,11 +296,10 @@ public final class MinecraftAdvancedMovementAccess {
         }
     }
 
-    /** Requests one normal held-block placement only while Use is held and vanilla's cooldown is clear. */
+    /** Requests one normal held-block placement while Use is held, paced by Scaffold's own bounded delay. */
     public static void tickScaffold(Scaffold module, long tick) {
         Minecraft client = Minecraft.getInstance();
-        if (!isInteractive(client) || client.gameMode == null || !client.options.keyUse.isDown()
-                || ((MinecraftAccessor) client).helikon$getRightClickDelay() != 0) {
+        if (!isInteractive(client) || client.gameMode == null || !client.options.keyUse.isDown()) {
             return;
         }
         LocalPlayer player = client.player;
@@ -438,7 +437,9 @@ public final class MinecraftAdvancedMovementAccess {
         for (Direction face : Direction.values()) {
             BlockPos support = target.relative(face.getOpposite());
             if (!isReplaceableLoaded(client, support)) {
-                return Optional.of(new BlockHitResult(Vec3.atCenterOf(support), face, support, false));
+                Vec3 hitLocation = Vec3.atCenterOf(support).add(
+                        face.getStepX() * 0.5D, face.getStepY() * 0.5D, face.getStepZ() * 0.5D);
+                return Optional.of(new BlockHitResult(hitLocation, face, support, false));
             }
         }
         return Optional.empty();

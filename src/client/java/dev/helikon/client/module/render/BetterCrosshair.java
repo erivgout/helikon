@@ -13,6 +13,7 @@ public final class BetterCrosshair extends Module {
     private final NumberSetting gap;
     private final NumberSetting thickness;
     private final BooleanSetting outline;
+    private final BooleanSetting frame;
     private final ColorSetting color;
     private final BooleanSetting dynamicMovement;
     private final BooleanSetting hideVanilla;
@@ -24,6 +25,8 @@ public final class BetterCrosshair extends Module {
         gap = addSetting(new NumberSetting("gap", "Gap", "Distance from the center in pixels.", 2.0, 0.0, 16.0));
         thickness = addSetting(new NumberSetting("thickness", "Thickness", "Crosshair arm thickness in pixels.", 1.0, 1.0, 6.0));
         outline = addSetting(new BooleanSetting("outline", "Outline", "Draw a dark outline around each arm.", true));
+        frame = addSetting(new BooleanSetting("frame", "Frame",
+                "Draw the generic HUD background and border around the crosshair.", false));
         color = addSetting(new ColorSetting("color", "Color", "ARGB color, for example #FFFFFFFF.", 0xFFFFFFFF));
         dynamicMovement = addSetting(new BooleanSetting("dynamic_movement", "Dynamic movement", "Widen the gap slightly while moving.", true));
         hideVanilla = addSetting(new BooleanSetting("hide_vanilla", "Hide vanilla crosshair", "Suppress Minecraft's normal crosshair while this module is enabled.", true));
@@ -36,6 +39,8 @@ public final class BetterCrosshair extends Module {
     public int thicknessPixels() { return (int) Math.round(thickness.value()); }
 
     public boolean outlineEnabled() { return outline.value(); }
+
+    public boolean frameEnabled() { return frame.value(); }
 
     public int color() { return color.value(); }
 

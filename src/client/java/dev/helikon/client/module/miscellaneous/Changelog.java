@@ -35,7 +35,11 @@ public final class Changelog extends Module {
 
     public List<String> notes() {
         return List.of(
-                "Helikon 1.1.1",
+                "Helikon 1.1.2",
+                "KillAura now attacks without moving your camera or head.",
+                "Fixed selected ClickGUI labels and favorite controls blending into their rows.",
+                "Extended Reach to 9 blocks for attacks, mining, and placement.",
+                "Added a BetterCrosshair frame toggle; the square border now defaults off.",
                 "Fixed the Minecraft 26.2 camera mixin startup crash.",
                 "Completed the permitted legacy issue backlog.",
                 "Added Enderman Aura and bounded anime/JJK combat.",

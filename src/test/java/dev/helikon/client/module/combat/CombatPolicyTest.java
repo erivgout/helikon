@@ -117,9 +117,7 @@ class CombatPolicyTest {
 
         enumSetting(aura, "target_mode", KillAura.TargetMode.class).set(KillAura.TargetMode.SWITCH);
         assertEquals("b", aura.nextAttack(8L, List.of(second, first, blocked), true).orElseThrow().id());
-        CombatAim.Rotation rotation = aura.rotateToward(second, new CombatAim.Rotation(0.0F, 0.0F));
-        assertTrue(Math.abs(rotation.yaw()) <= 8.0F);
-        assertTrue(Math.abs(rotation.pitch()) <= 8.0F);
+        assertFalse(aura.settings().stream().anyMatch(setting -> setting.id().equals("rotation_speed")));
     }
 
     @Test

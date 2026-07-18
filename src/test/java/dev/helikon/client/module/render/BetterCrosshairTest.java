@@ -4,6 +4,7 @@ import dev.helikon.client.hud.HudElementId;
 import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.panic.PanicState;
+import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.ColorSetting;
 import dev.helikon.client.setting.ColorSettingText;
 import org.junit.jupiter.api.Test;
@@ -50,5 +51,18 @@ class BetterCrosshairTest {
         layout.element(HudElementId.BETTER_CROSSHAIR).setEnabled(true);
         panic.hideCustomHud();
         assertFalse(RenderModuleAccess.hideVanillaCrosshair());
+    }
+
+    @Test
+    void genericFrameDefaultsOffButCanBeRestored() {
+        BetterCrosshair crosshair = new BetterCrosshair();
+        BooleanSetting frame = (BooleanSetting) crosshair.settings().stream()
+                .filter(setting -> setting.id().equals("frame"))
+                .findFirst()
+                .orElseThrow();
+
+        assertFalse(crosshair.frameEnabled());
+        frame.set(true);
+        assertTrue(crosshair.frameEnabled());
     }
 }

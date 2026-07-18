@@ -302,10 +302,6 @@ public final class MinecraftCombatAccess {
         if (targets.isEmpty()) {
             return false;
         }
-        CombatAim.Rotation rotation = killAura.rotateToward(targets.getFirst(),
-                new CombatAim.Rotation(client.player.getYRot(), client.player.getXRot()));
-        client.player.setYRot(rotation.yaw());
-        client.player.setXRot(rotation.pitch());
         boolean attacked = false;
         for (CombatTarget target : targets) {
             attacked |= attack(client, snapshot.entities().get(target.id()), target, tracker);

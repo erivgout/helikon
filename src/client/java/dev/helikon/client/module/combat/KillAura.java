@@ -1,7 +1,6 @@
 package dev.helikon.client.module.combat;
 
 import dev.helikon.client.combat.CombatTarget;
-import dev.helikon.client.combat.CombatAim;
 import dev.helikon.client.combat.CombatTargetFilter;
 import dev.helikon.client.input.Keybind;
 import dev.helikon.client.module.Module;
@@ -28,7 +27,6 @@ public final class KillAura extends Module {
     private final NumberSetting range;
     private final NumberSetting fieldOfView;
     private final NumberSetting delayTicks;
-    private final NumberSetting rotationSpeed;
     private final NumberSetting maxTargets;
     private final EnumSetting<TargetMode> targetMode;
     private final EnumSetting<CombatTargetFilter.Priority> priority;
@@ -36,7 +34,8 @@ public final class KillAura extends Module {
     private long lastAttackTick = -1L;
 
     public KillAura() {
-        super("kill_aura", "KillAura", "Uses normal client attacks against one visible, eligible local target.",
+        super("kill_aura", "KillAura",
+                "Attacks visible eligible targets without moving the local camera or head.",
                 ModuleCategory.COMBAT, false, Keybind.unbound());
         players = addSetting(new BooleanSetting("players", "Players", "Allow non-friend players.", true));
         hostiles = addSetting(new BooleanSetting("hostiles", "Hostiles", "Allow hostile mobs.", true));
@@ -48,8 +47,6 @@ public final class KillAura extends Module {
                 90.0D, 5.0D, 180.0D));
         delayTicks = addSetting(new NumberSetting("delay_ticks", "Attack delay", "Minimum ticks between normal attacks.",
                 4.0D, 2.0D, 40.0D));
-        rotationSpeed = addSetting(new NumberSetting("rotation_speed", "Rotation speed",
-                "Maximum local yaw or pitch change toward the selected target per client tick.", 8.0D, 0.25D, 30.0D));
         targetMode = addSetting(new EnumSetting<>("target_mode", "Target mode",
                 "Keep one target, rotate targets, or attack multiple eligible targets.",
                 TargetMode.class, TargetMode.SINGLE));
@@ -88,14 +85,6 @@ public final class KillAura extends Module {
         currentTargetId = selected.id();
         lastAttackTick = tick;
         return List.of(selected);
-    }
-
-    /** Returns a bounded local view adjustment for the selected target; it never creates a rotation packet. */
-    public CombatAim.Rotation rotateToward(CombatTarget target, CombatAim.Rotation current) {
-        if (target == null || current == null) {
-            throw new IllegalArgumentException("KillAura rotation inputs must not be null");
-        }
-        return CombatAim.limit(current, CombatAim.predictedRotation(target, 1.0D, 0.0D, false), rotationSpeed.value());
     }
 
     private CombatTarget select(List<CombatTarget> allowed) {

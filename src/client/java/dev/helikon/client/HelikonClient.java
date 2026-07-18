@@ -757,6 +757,7 @@ public final class HelikonClient implements ClientModInitializer {
         FightBot fightBot = new FightBot();
         Protect protect = new Protect();
         Reach reach = new Reach();
+        dev.helikon.client.module.combat.ReachAccess.install(reach);
         AutoClicker autoClicker = new AutoClicker();
         BlockHit blockHit = new BlockHit(new MinecraftBlockHitUseKey());
         HitFlick hitFlick = new HitFlick();

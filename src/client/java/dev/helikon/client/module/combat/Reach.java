@@ -12,11 +12,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Extends the player's own melee combat: while Attack is held, it requests one
- * ordinary Minecraft attack for the target being aimed at just beyond vanilla
- * melee distance. It never modifies the reach attribute and never builds a
- * packet; the request travels on Minecraft's normal attack path, so the server
- * validates reach and may reject, correct, or ignore an out-of-range attack.
+ * Extends the player's ordinary local targeting distance for melee attacks and
+ * block interactions. It never builds a packet; attacks, mining, and placement
+ * still travel through Minecraft's normal paths, so the server validates reach
+ * and may reject, correct, or ignore an out-of-range action.
  */
 public final class Reach extends Module {
     /**
@@ -36,7 +35,7 @@ public final class Reach extends Module {
     private long lastAttackTick = -1L;
 
     public Reach() {
-        super("reach", "Reach", "Requests a normal attack for a target you aim at just beyond vanilla melee range.",
+        super("reach", "Reach", "Extends ordinary attacks, mining, and block placement to the configured distance.",
                 ModuleCategory.COMBAT, false, Keybind.unbound());
         players = addSetting(new BooleanSetting("players", "Players", "Allow non-friend players.", true));
         hostiles = addSetting(new BooleanSetting("hostiles", "Hostiles", "Allow hostile mobs.", true));
@@ -44,8 +43,8 @@ public final class Reach extends Module {
         excludeFriends = addSetting(new BooleanSetting("exclude_friends", "Exclude friends",
                 "Never target locally listed friends.", true));
         reach = addSetting(new NumberSetting("reach", "Reach",
-                "Maximum local attack distance requested while Attack is held. The server still validates reach.",
-                4.0D, VANILLA_ENTITY_INTERACTION_RANGE, 6.0D));
+                "Maximum local attack and block interaction distance. The server still validates reach.",
+                4.0D, VANILLA_ENTITY_INTERACTION_RANGE, 9.0D));
         fieldOfView = addSetting(new NumberSetting("field_of_view", "Field of view",
                 "Maximum view angle to the aimed target.", 6.0D, 1.0D, 30.0D));
         delayTicks = addSetting(new NumberSetting("delay_ticks", "Attack delay",
@@ -85,6 +84,17 @@ public final class Reach extends Module {
         // Line of sight is required so the module never reaches through solid blocks.
         return new CombatTargetFilter.Options(players.value(), hostiles.value(), passive.value(), excludeFriends.value(),
                 true, reach.value(), fieldOfView.value(), true);
+    }
+
+    /**
+     * Extends the ordinary local block ray and range checks without ever
+     * shortening a larger vanilla or server-provided value.
+     */
+    public double blockInteractionRange(double vanillaRange) {
+        if (!Double.isFinite(vanillaRange) || vanillaRange < 0.0D) {
+            throw new IllegalArgumentException("Vanilla block interaction range is invalid");
+        }
+        return isEnabled() ? Math.max(vanillaRange, reach.value()) : vanillaRange;
     }
 
     @Override

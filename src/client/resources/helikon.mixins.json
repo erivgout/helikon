@@ -64,6 +64,7 @@
     "ConnectionBlinkMixin",
     "ConnectionFakeLagMixin",
     "CameraDistanceMixin",
+    "PlayerReachMixin",
     "MinecraftAccessor"
   ],
   "injectors": {

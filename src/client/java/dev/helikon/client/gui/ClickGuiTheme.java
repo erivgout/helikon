@@ -64,10 +64,36 @@ public enum ClickGuiTheme {
     public int invalid() { return invalid; }
     public int scrollbar() { return scrollbar; }
 
+    /** Returns whichever opaque neutral text color has stronger contrast with the background. */
+    public static int contrastingText(int background) {
+        return contrastRatio(background, 0xFF000000) >= contrastRatio(background, 0xFFFFFFFF)
+                ? 0xFF000000 : 0xFFFFFFFF;
+    }
+
     public static Optional<ClickGuiTheme> find(String id) {
         if (id == null) return Optional.empty();
         String normalized = id.toLowerCase(Locale.ROOT);
         for (ClickGuiTheme theme : values()) if (theme.id.equals(normalized)) return Optional.of(theme);
         return Optional.empty();
+    }
+
+    private static double contrastRatio(int first, int second) {
+        double firstLuminance = relativeLuminance(first);
+        double secondLuminance = relativeLuminance(second);
+        return (Math.max(firstLuminance, secondLuminance) + 0.05)
+                / (Math.min(firstLuminance, secondLuminance) + 0.05);
+    }
+
+    private static double relativeLuminance(int color) {
+        double red = linearChannel((color >> 16) & 0xFF);
+        double green = linearChannel((color >> 8) & 0xFF);
+        double blue = linearChannel(color & 0xFF);
+        return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+    }
+
+    private static double linearChannel(int channel) {
+        double normalized = channel / 255.0;
+        return normalized <= 0.04045 ? normalized / 12.92
+                : Math.pow((normalized + 0.055) / 1.055, 2.4);
     }
 }

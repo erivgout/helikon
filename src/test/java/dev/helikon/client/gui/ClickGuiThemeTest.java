@@ -38,6 +38,17 @@ class ClickGuiThemeTest {
         assertTrue(contrastRatio(theme.rowSelected(), theme.accent()) >= 4.5);
     }
 
+    @Test
+    void selectedContentUsesTheMostLegibleNeutralColor() {
+        assertEquals(0xFF000000, ClickGuiTheme.contrastingText(0xFF4CC9F0));
+        assertEquals(0xFFFFFFFF, ClickGuiTheme.contrastingText(0xFF102237));
+
+        for (ClickGuiTheme theme : ClickGuiTheme.values()) {
+            int selectedText = ClickGuiTheme.contrastingText(theme.accent());
+            assertTrue(contrastRatio(theme.accent(), selectedText) >= 4.5);
+        }
+    }
+
     private static double contrastRatio(int first, int second) {
         double firstLuminance = relativeLuminance(first);
         double secondLuminance = relativeLuminance(second);

@@ -40,7 +40,9 @@ public final class BetterCrosshairHud implements HudElement {
         int movementGap = movementGap(client);
         int diameter = crosshairDiameter(movementGap);
         HudElementPlacement placement = layout.element(HudElementId.BETTER_CROSSHAIR);
-        HudPresentation.Frame frame = HudPresentation.beginFrame(graphics, placement, diameter, diameter);
+        HudPresentation.Frame frame = module.frameEnabled()
+                ? HudPresentation.beginFrame(graphics, placement, diameter, diameter)
+                : HudPresentation.beginTransparentFrame(graphics, placement, diameter, diameter);
         int centerX = frame.contentX() + diameter / 2;
         int centerY = frame.contentY() + diameter / 2;
         for (CrosshairGeometry.Rect arm : CrosshairGeometry.arms(

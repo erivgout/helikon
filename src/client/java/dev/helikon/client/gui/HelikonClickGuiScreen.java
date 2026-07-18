@@ -76,6 +76,7 @@ public final class HelikonClickGuiScreen extends Screen {
     private int COLOR_SETTINGS;
     private int COLOR_ROW_HOVER;
     private int COLOR_ROW_SELECTED;
+    private int COLOR_SELECTED_TEXT;
     private int COLOR_ACCENT;
     private int COLOR_TEXT;
     private int COLOR_TEXT_DIM;
@@ -218,6 +219,7 @@ public final class HelikonClickGuiScreen extends Screen {
         int animatedAccent = dev.helikon.client.module.render.RainbowUiAccess.accent(
                 System.currentTimeMillis(), theme.accent());
         COLOR_ROW_SELECTED = animatedAccent;
+        COLOR_SELECTED_TEXT = ClickGuiTheme.contrastingText(animatedAccent);
         COLOR_ACCENT = animatedAccent;
         COLOR_TEXT = theme.text();
         COLOR_TEXT_DIM = theme.textDim();
@@ -381,7 +383,7 @@ public final class HelikonClickGuiScreen extends Screen {
             graphics.fill(panelX, contentTop, panelX + SIDEBAR_WIDTH, contentTop + ROW_HEIGHT, COLOR_ROW_HOVER);
         }
         graphics.text(font, "Active", panelX + 6, contentTop + 3,
-                activeSelected ? COLOR_ACCENT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT), false);
+                activeSelected ? COLOR_SELECTED_TEXT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT), false);
 
         int favoritesY = contentTop + ROW_HEIGHT;
         boolean favoritesSelected = state.isShowingFavoriteModules();
@@ -391,7 +393,7 @@ public final class HelikonClickGuiScreen extends Screen {
             graphics.fill(panelX, favoritesY, panelX + SIDEBAR_WIDTH, favoritesY + ROW_HEIGHT, COLOR_ROW_HOVER);
         }
         graphics.text(font, "Favorites", panelX + 6, favoritesY + 3,
-                favoritesSelected ? COLOR_ACCENT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT), false);
+                favoritesSelected ? COLOR_SELECTED_TEXT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT), false);
 
         ModuleCategory[] categories = ModuleCategory.values();
         for (int index = 0; index < categories.length; index++) {
@@ -409,7 +411,7 @@ public final class HelikonClickGuiScreen extends Screen {
                 graphics.fill(panelX, rowY, panelX + SIDEBAR_WIDTH, rowY + ROW_HEIGHT, COLOR_ROW_HOVER);
             }
 
-            int textColor = selected ? COLOR_ACCENT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT);
+            int textColor = selected ? COLOR_SELECTED_TEXT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT);
             graphics.text(font, category.displayName(), panelX + 6, rowY + 3, textColor, false);
         }
     }
@@ -450,10 +452,15 @@ public final class HelikonClickGuiScreen extends Screen {
             }
 
             String name = font.plainSubstrByWidth(module.name(), listWidth - 38);
-            graphics.text(font, name, listX + 4, rowY + 3, module.isEnabled() ? COLOR_ACCENT : COLOR_TEXT, false);
+            int nameColor = selected ? COLOR_SELECTED_TEXT
+                    : module.isEnabled() ? COLOR_ACCENT : COLOR_TEXT;
+            graphics.text(font, name, listX + 4, rowY + 3, nameColor, false);
             graphics.text(font, windowState.isFavorite(module.id()) ? "★" : "☆",
-                    favoriteBoxX(), rowY + 3, windowState.isFavorite(module.id()) ? COLOR_ACCENT : COLOR_TEXT_DIM, false);
-            drawCheckbox(graphics, toggleBoxX(), rowY + (ROW_HEIGHT - CHECKBOX_SIZE) / 2, module.isEnabled());
+                    favoriteBoxX(), rowY + 3, selected ? COLOR_SELECTED_TEXT
+                            : windowState.isFavorite(module.id()) ? COLOR_ACCENT : COLOR_TEXT_DIM, false);
+            drawCheckbox(graphics, toggleBoxX(), rowY + (ROW_HEIGHT - CHECKBOX_SIZE) / 2,
+                    module.isEnabled(), selected ? COLOR_SELECTED_TEXT : COLOR_ACCENT,
+                    selected ? COLOR_SELECTED_TEXT : COLOR_TEXT_DIM);
         }
         graphics.disableScissor();
         if (hoveredModule != null) {
@@ -566,10 +573,15 @@ public final class HelikonClickGuiScreen extends Screen {
     }
 
     private void drawCheckbox(GuiGraphicsExtractor graphics, int x, int y, boolean checked) {
+        drawCheckbox(graphics, x, y, checked, COLOR_ACCENT, COLOR_TEXT_DIM);
+    }
+
+    private void drawCheckbox(GuiGraphicsExtractor graphics, int x, int y, boolean checked,
+                              int checkedColor, int uncheckedColor) {
         if (checked) {
-            graphics.fill(x, y, x + CHECKBOX_SIZE, y + CHECKBOX_SIZE, COLOR_ACCENT);
+            graphics.fill(x, y, x + CHECKBOX_SIZE, y + CHECKBOX_SIZE, checkedColor);
         } else {
-            graphics.outline(x, y, CHECKBOX_SIZE, CHECKBOX_SIZE, COLOR_TEXT_DIM);
+            graphics.outline(x, y, CHECKBOX_SIZE, CHECKBOX_SIZE, uncheckedColor);
         }
     }
 

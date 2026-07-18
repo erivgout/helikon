@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.1.2
+
+- Keeps KillAura from moving the local camera or player head by leaving
+  rotation untouched while requesting ordinary entity attacks.
+- Keeps selected ClickGUI category labels, module names, favorite stars, and
+  toggle boxes legible by drawing them in a neutral color chosen for contrast
+  with the animated selection background.
+- Extends Reach's shared maximum to 9 blocks and applies it to the local block
+  ray used by ordinary mining and placement as well as melee requests.
+- Adds an optional BetterCrosshair frame setting, defaulting off, so the
+  crosshair arms can render without the generic square HUD border.
+
 ## 1.1.1
 
 - Fixes the Camera Distance mixin target for Minecraft 26.2 so the client can

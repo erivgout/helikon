@@ -26,7 +26,8 @@ public final class MinecraftCreativeItemAccess {
             module.onContextLost();
             return;
         }
-        module.nextRequest(client.player.isCreative(), client.gui.screen() != null).ifPresent(request -> {
+        module.nextRequest(client.player.isCreative(),
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())).ifPresent(request -> {
             ItemStack stack = create(request);
             if (stack.isEmpty()) {
                 return;

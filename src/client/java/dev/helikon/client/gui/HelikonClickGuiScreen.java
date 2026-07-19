@@ -131,6 +131,12 @@ public final class HelikonClickGuiScreen extends Screen {
         this.hudLayout = Objects.requireNonNull(hudLayout, "hudLayout");
         this.hudConfiguration = Objects.requireNonNull(hudConfiguration, "hudConfiguration");
         this.state = new ClickGuiState(modules);
+        if (windowState.hasSavedViewState()) {
+            state.restore(windowState.viewMode(), windowState.selectedCategory(), windowState.searchQuery(),
+                    windowState.selectedModuleId(), windowState.favoriteModuleIds());
+            listScroll = windowState.listScroll();
+            settingsScroll = windowState.settingsScroll();
+        }
         this.keybindAssignment = new KeybindAssignment(HelikonKeybinds::isGuiKey);
         refreshThemeColors();
     }
@@ -191,6 +197,8 @@ public final class HelikonClickGuiScreen extends Screen {
     @Override
     public void removed() {
         super.removed();
+        windowState.setViewState(state.viewMode(), state.selectedCategory(), state.searchQuery(),
+                state.selectedModule().map(Module::id).orElse(""), listScroll, settingsScroll);
         try {
             configuration.save(modules, windowState);
         } catch (ConfigurationException exception) {

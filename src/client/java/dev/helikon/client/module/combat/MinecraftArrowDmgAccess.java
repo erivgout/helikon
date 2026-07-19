@@ -34,7 +34,7 @@ public final class MinecraftArrowDmgAccess {
         ArrowDmg.ReleaseContext context = new ArrowDmg.ReleaseContext(
                 player.getUseItem().getItem() instanceof BowItem,
                 player.getTicksUsingItem(),
-                client.gui.screen() != null,
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
                 player.connection != null,
                 view.x,
                 view.z

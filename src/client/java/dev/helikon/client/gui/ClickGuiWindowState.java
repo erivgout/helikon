@@ -1,5 +1,7 @@
 package dev.helikon.client.gui;
 
+import dev.helikon.client.module.ModuleCategory;
+
 /**
  * Minecraft-free persisted ClickGUI placement. An unset position centers the
  * window; saved coordinates are always clamped to the current GUI viewport.
@@ -24,6 +26,13 @@ public final class ClickGuiWindowState {
     private float interfaceScale = 1.0F;
     private boolean reducedAnimations;
     private final java.util.LinkedHashSet<String> favoriteModuleIds = new java.util.LinkedHashSet<>();
+    private boolean viewStateSaved;
+    private ClickGuiState.ViewMode viewMode = ClickGuiState.ViewMode.CATEGORY;
+    private ModuleCategory selectedCategory = ModuleCategory.COMBAT;
+    private String searchQuery = "";
+    private String selectedModuleId = "";
+    private double listScroll;
+    private double settingsScroll;
 
     public boolean isPositioned() {
         return positioned;
@@ -54,6 +63,20 @@ public final class ClickGuiWindowState {
     public float interfaceScale() { return interfaceScale; }
 
     public boolean reducedAnimations() { return reducedAnimations; }
+
+    public boolean hasSavedViewState() { return viewStateSaved; }
+
+    public ClickGuiState.ViewMode viewMode() { return viewMode; }
+
+    public ModuleCategory selectedCategory() { return selectedCategory; }
+
+    public String searchQuery() { return searchQuery; }
+
+    public String selectedModuleId() { return selectedModuleId; }
+
+    public double listScroll() { return listScroll; }
+
+    public double settingsScroll() { return settingsScroll; }
 
     public java.util.Set<String> favoriteModuleIds() {
         return java.util.Set.copyOf(favoriteModuleIds);
@@ -101,6 +124,26 @@ public final class ClickGuiWindowState {
 
     public void setReducedAnimations(boolean value) { reducedAnimations = value; }
 
+    /** Stores the last navigated ClickGUI view so reopening resumes exactly where the user left it. */
+    public boolean setViewState(ClickGuiState.ViewMode viewMode, ModuleCategory selectedCategory,
+                                String searchQuery, String selectedModuleId,
+                                double listScroll, double settingsScroll) {
+        if (viewMode == null || selectedCategory == null || searchQuery == null || searchQuery.length() > 64
+                || selectedModuleId == null || (!selectedModuleId.isEmpty()
+                && !selectedModuleId.matches("[a-z][a-z0-9_]*"))
+                || !validScroll(listScroll) || !validScroll(settingsScroll)) {
+            return false;
+        }
+        this.viewMode = viewMode;
+        this.selectedCategory = selectedCategory;
+        this.searchQuery = searchQuery;
+        this.selectedModuleId = selectedModuleId;
+        this.listScroll = listScroll;
+        this.settingsScroll = settingsScroll;
+        viewStateSaved = true;
+        return true;
+    }
+
     /** Sets a user-selected top-left location if both persisted values are safe. */
     public boolean setPosition(int x, int y) {
         if (!isValidCoordinate(x) || !isValidCoordinate(y)) {
@@ -131,6 +174,7 @@ public final class ClickGuiWindowState {
         interfaceScale = 1.0F;
         reducedAnimations = false;
         favoriteModuleIds.clear();
+        resetViewState();
     }
 
     /** Clears only the saved position while retaining the selected dimensions. */
@@ -145,6 +189,16 @@ public final class ClickGuiWindowState {
         sized = false;
         width = DEFAULT_WIDTH;
         height = DEFAULT_HEIGHT;
+    }
+
+    public void resetViewState() {
+        viewStateSaved = false;
+        viewMode = ClickGuiState.ViewMode.CATEGORY;
+        selectedCategory = ModuleCategory.COMBAT;
+        searchQuery = "";
+        selectedModuleId = "";
+        listScroll = 0.0D;
+        settingsScroll = 0.0D;
     }
 
     /** Resolves a centered or saved placement while keeping the whole window visible. */
@@ -191,6 +245,10 @@ public final class ClickGuiWindowState {
 
     public static boolean isValidHeight(int height) {
         return height >= 1 && height <= MAX_DIMENSION;
+    }
+
+    private static boolean validScroll(double value) {
+        return Double.isFinite(value) && value >= 0.0D && value <= MAX_DIMENSION;
     }
 
     private static void validateDimensions(int viewportWidth, int viewportHeight, int windowWidth, int windowHeight) {

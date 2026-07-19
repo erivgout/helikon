@@ -28,7 +28,8 @@ public final class MinecraftFollowAccess {
             double z = entity.getZ() - player.getZ();
             targets.add(new Follow.Target(entity.getName().getString(), Math.hypot(x, z), x, z));
         }
-        follow.velocity(new Follow.Context(client.gui.screen() != null, player.isPassenger(),
+        follow.velocity(new Follow.Context(
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()), player.isPassenger(),
                 player.getAbilities().flying, player.isFallFlying(), targets)).ifPresent(velocity -> {
             Vec3 current = player.getDeltaMovement();
             player.setDeltaMovement(velocity.x(), current.y, velocity.z());

@@ -12,7 +12,7 @@ class InventoryWalkTest {
             true, true, true);
 
     @Test
-    void addsOnlyPhysicalMovementKeysInAnUnfocusedPlayerInventory() {
+    void addsOnlyPhysicalMovementKeysInAnUnfocusedLiveGameplayScreen() {
         InventoryWalk module = enabledModule();
 
         assertEquals(new MovementInput(true, false, true, false, true, true, true),
@@ -20,7 +20,7 @@ class InventoryWalkTest {
     }
 
     @Test
-    void staysInactiveOutsideInventoryAndWhileAWidgetAcceptsText() {
+    void staysInactiveOutsideLiveGameplayScreensAndWhileAWidgetAcceptsText() {
         InventoryWalk module = enabledModule();
 
         assertEquals(CURRENT, module.apply(CURRENT, PHYSICAL, false, false));

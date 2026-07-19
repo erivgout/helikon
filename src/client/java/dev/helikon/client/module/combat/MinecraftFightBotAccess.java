@@ -32,7 +32,8 @@ public final class MinecraftFightBotAccess {
         LocalPlayer player = client.player;
         boolean attackReady = ordinaryAttackAvailable && client.gameMode != null
                 && player.getAttackStrengthScale(0.0F) >= 0.9F;
-        FightBot.Context context = new FightBot.Context(client.gui.screen() != null, player.isPassenger(),
+        FightBot.Context context = new FightBot.Context(
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()), player.isPassenger(),
                 player.getAbilities().flying, player.isFallFlying(), attackReady, snapshot.targets());
         Optional<FightBot.Action> selected = module.update(tick, context);
         if (selected.isEmpty()) {

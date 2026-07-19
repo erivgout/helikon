@@ -1,9 +1,8 @@
 # Helikon
 
-Helikon is a clean-room, open-source Fabric utility client for Minecraft Java
-Edition 26.2. It provides a searchable ClickGUI, a drag-and-drop HUD editor,
-local profiles, friends, waypoints, and macros, and more than 80 toggleable
-modules — all stored locally, with no backend, no telemetry, and no account.
+Helikon is a powerful open-source Fabric utility client for Minecraft Java
+Edition 26.2, with more than 80 toggleable modules, a searchable ClickGUI, a
+customizable HUD, profiles, friends, waypoints, and macros.
 
 Helikon is not affiliated with Aristois and contains no copied code, assets,
 branding, or configuration formats from that or any other project.
@@ -82,7 +81,7 @@ checksums, and the resolved dependency report. See
 
 ## Status
 
-`1.0.1` is the current stable release. The automated test suite, style and
+`1.1.6` is the current stable release. The automated test suite, style and
 client-only architecture checks, and Fabric client game tests pass. The
 additional live-client smoke checklists in [testing.md](docs/testing.md) remain
 recommended for real-world testing on a disposable profile.
@@ -93,6 +92,11 @@ Read [contributing.md](docs/contributing.md) for the ground rules, and
 [architecture.md](docs/architecture.md), [configuration.md](docs/configuration.md),
 and [testing.md](docs/testing.md) before changing core systems. The long-term
 roadmap and policies live in [PLAN.md](PLAN.md) and [RULES.md](RULES.md).
+
+## Contributors
+
+- Eric L Wheeler — creator and maintainer.
+- OpenAI Codex — AI-assisted implementation and testing.
 
 ## License
 

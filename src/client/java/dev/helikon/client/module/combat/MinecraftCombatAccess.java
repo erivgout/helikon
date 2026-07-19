@@ -89,7 +89,8 @@ public final class MinecraftCombatAccess {
             autoPotion.onPlayerUnavailable();
             return;
         }
-        tickAutoPotion(tick, client, autoPotion, client.gui.screen() != null);
+        tickAutoPotion(tick, client, autoPotion,
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()));
     }
 
     public static void tickAutoPearl(long tick, AutoPearl autoPearl, Snapshot snapshot) {
@@ -99,7 +100,7 @@ public final class MinecraftCombatAccess {
             return;
         }
         LocalPlayer player = client.player;
-        boolean screenOpen = client.gui.screen() != null;
+        boolean screenOpen = dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen());
         int pearlSlot = firstPearlHotbarSlot(player);
         boolean onCooldown = pearlSlot >= 0 && player.getCooldowns().isOnCooldown(player.getInventory().getItem(pearlSlot));
         AutoPearl.Action action = autoPearl.update(tick, new AutoPearl.Context(player.getInventory().getSelectedSlot(),
@@ -134,16 +135,19 @@ public final class MinecraftCombatAccess {
         }
         LocalPlayer player = client.player;
         AutoSoup.Action action = autoSoup.update(tick, new AutoSoup.Context(player.getInventory().getSelectedSlot(),
-                player.getHealth(), client.gui.screen() != null, player.isUsingItem(), soupSlots(player)));
+                player.getHealth(), dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
+                player.isUsingItem(), soupSlots(player)));
         switch (action.type()) {
             case SELECT_AND_USE -> {
                 player.getInventory().setSelectedSlot(action.slot());
-                if (client.gameMode != null && client.gui.screen() == null) {
+                if (client.gameMode != null
+                        && dev.helikon.client.gui.GameplayScreenPolicy.allowsAutomation(client.gui.screen())) {
                     client.gameMode.useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
             }
             case USE_SELECTED -> {
-                if (client.gameMode != null && client.gui.screen() == null) {
+                if (client.gameMode != null
+                        && dev.helikon.client.gui.GameplayScreenPolicy.allowsAutomation(client.gui.screen())) {
                     client.gameMode.useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
             }
@@ -176,7 +180,8 @@ public final class MinecraftCombatAccess {
             bowAim.onContextLost();
             return;
         }
-        tickBowAim(client, bowAim, snapshot.targets(), client.gui.screen() != null);
+        tickBowAim(client, bowAim, snapshot.targets(),
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()));
     }
 
     public static void tickAimAssist(AimAssist aimAssist, Snapshot snapshot) {
@@ -185,7 +190,7 @@ public final class MinecraftCombatAccess {
             aimAssist.onContextLost();
             return;
         }
-        boolean screenOpen = client.gui.screen() != null;
+        boolean screenOpen = dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen());
         boolean weaponGate = !aimAssist.requireWeapon() || isMeleeWeapon(client.player.getMainHandItem());
         boolean attackKeyGate = !aimAssist.requireAttackKey() || client.options.keyAttack.isDown();
         List<CombatTarget> targets = screenOpen || !weaponGate || !attackKeyGate ? List.of() : snapshot.targets();
@@ -318,7 +323,8 @@ public final class MinecraftCombatAccess {
         }
         CombatTarget crosshair = snapshot.available() ? snapshot.crosshairTarget() : null;
         AutoClicker.Context context = new AutoClicker.Context(client.options.keyAttack.isDown(),
-                client.gui.screen() != null, crosshair != null, crosshair != null && crosshair.friend());
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
+                crosshair != null, crosshair != null && crosshair.friend());
         if (!autoClicker.shouldClick(timeMillis, context)) {
             return false;
         }
@@ -345,7 +351,7 @@ public final class MinecraftCombatAccess {
         LocalPlayer player = client.player;
         boolean shieldReady = holdsBlockingItem(player);
         boolean attackHeld = client.options.keyAttack.isDown();
-        boolean screenOpen = client.gui.screen() != null;
+        boolean screenOpen = dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen());
         List<CombatTarget> targets = snapshot.available() ? snapshot.targets() : List.of();
         blockHit.tick(tick, new BlockHit.Context(shieldReady, attackHeld, attackReady(player), screenOpen, targets));
     }
@@ -373,7 +379,8 @@ public final class MinecraftCombatAccess {
                 && isFriendEntity(friends, ((EntityHitResult) hitResult).getEntity());
         boolean hasHeldItem = !player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()
                 || !player.getItemInHand(InteractionHand.OFF_HAND).isEmpty();
-        RightClicker.Context context = new RightClicker.Context(true, client.gui.screen() != null,
+        RightClicker.Context context = new RightClicker.Context(true,
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
                 client.options.keyUse.isDown(), player.isUsingItem(), hasHeldItem, hitKind, hitIsFriend);
         RightClicker.Decision decision = module.decide(clientTick, context);
         boolean acted = switch (decision) {
@@ -487,7 +494,8 @@ public final class MinecraftCombatAccess {
     }
 
     private static boolean readyForAttack(Minecraft client, Snapshot snapshot) {
-        return snapshot.available() && client.player != null && client.gameMode != null && client.gui.screen() == null;
+        return snapshot.available() && client.player != null && client.gameMode != null
+                && dev.helikon.client.gui.GameplayScreenPolicy.allowsAutomation(client.gui.screen());
     }
 
     private static boolean attackReady(LocalPlayer player) {

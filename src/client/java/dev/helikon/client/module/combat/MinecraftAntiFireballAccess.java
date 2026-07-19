@@ -27,7 +27,7 @@ public final class MinecraftAntiFireballAccess {
     public static boolean tick(long tick, AntiFireball module) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null || client.gameMode == null
-                || client.gui.screen() != null) {
+                || dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())) {
             return false;
         }
         LocalPlayer player = client.player;

@@ -18,7 +18,7 @@ public final class MinecraftPotionSaverAccess {
         boolean beneficial = client.player.getActiveEffects().stream()
                 .anyMatch(effect -> effect.getEffect().value().isBeneficial());
         if (module.shouldPause(client.hasSingleplayerServer(), beneficial, moving,
-                client.gui.screen() != null, stationaryTicks)) {
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()), stationaryTicks)) {
             client.pauseGame(false);
             stationaryTicks = 0;
         }

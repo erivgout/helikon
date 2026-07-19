@@ -23,7 +23,8 @@ public final class MinecraftAirPlaceAccess {
     /** Executes at most one air-placement use when Use is held and a block is selected. */
     public static void tick(AirPlace airPlace, long tick) {
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.level == null || client.gameMode == null || client.gui.screen() != null
+        if (client.player == null || client.level == null || client.gameMode == null
+                || dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())
                 || !client.options.keyUse.isDown()
                 || !(client.player.getInventory().getSelectedItem().getItem() instanceof BlockItem)) {
             return;

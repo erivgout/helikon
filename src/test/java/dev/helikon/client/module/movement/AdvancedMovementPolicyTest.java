@@ -40,19 +40,30 @@ class AdvancedMovementPolicyTest {
     @Test
     void speedAndBunnyHopUseCappedLocalMotionOnlyWhileEnabled() {
         Speed speed = enabled(new Speed());
-        assertEquals(0.90D, speed.adjust(new HorizontalVelocity(0.30D, 0.0D),
-                new HorizontalVelocity(1.0D, 0.0D), true).x(), 0.0001D);
+        assertEquals(0.30D, speed.adjust(new HorizontalVelocity(0.30D, 0.0D),
+                new HorizontalVelocity(1.0D, 0.0D), 0.10D, true).x(), 0.0001D);
         HorizontalVelocity airborneTurn = speed.adjust(new HorizontalVelocity(0.0D, 0.30D),
-                new HorizontalVelocity(-1.0D, 0.0D), true);
-        assertEquals(-0.90D, airborneTurn.x(), 0.0001D);
+                new HorizontalVelocity(-1.0D, 0.0D), 0.10D, true);
+        assertEquals(-0.30D, airborneTurn.x(), 0.0001D);
         assertEquals(0.0D, airborneTurn.z(), 0.0001D);
         assertEquals(3.0D, numberSetting(speed, "multiplier").value());
         assertEquals(0.08D, numberSetting(speed, "acceleration").value());
         assertEquals(0.90D, numberSetting(speed, "maximum_speed").value());
-        numberSetting(speed, "multiplier").set(10.0D);
         numberSetting(speed, "maximum_speed").set(3.0D);
+        numberSetting(speed, "multiplier").set(4.0D);
+        assertEquals(0.40D, speed.adjust(new HorizontalVelocity(2.50D, 0.0D),
+                new HorizontalVelocity(1.0D, 0.0D), 0.10D, true).x(), 0.0001D);
+        numberSetting(speed, "multiplier").set(8.0D);
+        assertEquals(0.80D, speed.adjust(new HorizontalVelocity(0.40D, 0.0D),
+                new HorizontalVelocity(1.0D, 0.0D), 0.10D, true).x(), 0.0001D);
+        numberSetting(speed, "multiplier").set(10.0D);
         assertEquals(3.0D, speed.adjust(new HorizontalVelocity(0.30D, 0.0D),
-                new HorizontalVelocity(1.0D, 0.0D), true).x(), 0.0001D);
+                new HorizontalVelocity(1.0D, 0.0D), 0.30D, true).x(), 0.0001D);
+        numberSetting(speed, "maximum_speed").set(100.0D);
+        assertEquals(100.0D, numberSetting(speed, "maximum_speed").value(), 0.0001D);
+        numberSetting(speed, "multiplier").set(1_000.0D);
+        assertEquals(100.0D, speed.adjust(new HorizontalVelocity(0.0D, 0.0D),
+                new HorizontalVelocity(1.0D, 0.0D), 0.10D, true).x(), 0.0001D);
         BunnyHop hop = enabled(new BunnyHop());
         assertTrue(hop.shouldJump(true, true, false));
         assertFalse(hop.shouldJump(false, true, false));

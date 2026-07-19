@@ -12,6 +12,7 @@ import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.effect.MobEffects;
@@ -77,7 +78,8 @@ public final class MinecraftAdvancedMovementAccess {
         Vec2 input = player.input.getMoveVector();
         boolean moving = input.x != 0.0F || input.y != 0.0F;
         Vec3 velocity = player.getDeltaMovement();
-        module.velocity(new Fish.Context(player.isInWater(), client.gui.screen() != null, player.isPassenger(),
+        module.velocity(new Fish.Context(player.isInWater(),
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()), player.isPassenger(),
                 player.getAbilities().flying, player.isFallFlying(), moving, player.input.keyPresses.jump(),
                 player.input.keyPresses.shift(), desiredDirection(player, input),
                 new HorizontalVelocity(velocity.x, velocity.z), velocity.y)).ifPresent(adjusted ->
@@ -93,7 +95,8 @@ public final class MinecraftAdvancedMovementAccess {
         Vec2 input = player.input.getMoveVector();
         boolean moving = input.x != 0.0F || input.y != 0.0F;
         Vec3 velocity = player.getDeltaMovement();
-        module.verticalVelocity(client.gui.screen() != null, player.horizontalCollision, moving,
+        module.verticalVelocity(dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
+                player.horizontalCollision, moving,
                         player.onClimbable(), player.input.keyPresses.shift(), player.isPassenger(),
                         player.getAbilities().flying, player.isFallFlying(), velocity.y)
                 .ifPresent(y -> player.setDeltaMovement(velocity.x, y, velocity.z));
@@ -108,7 +111,8 @@ public final class MinecraftAdvancedMovementAccess {
         }
         LocalPlayer player = client.player;
         Vec3 velocity = player.getDeltaMovement();
-        module.verticalVelocity(new HighJump.Context(client.gui.screen() != null, player.onGround(),
+        module.verticalVelocity(new HighJump.Context(
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()), player.onGround(),
                 player.input.keyPresses.jump(), player.onClimbable(), player.isInWater() || player.isInLava(),
                 player.isPassenger(), player.getAbilities().flying, player.isFallFlying(), velocity.y))
                 .ifPresent(y -> player.setDeltaMovement(velocity.x, y, velocity.z));
@@ -123,7 +127,8 @@ public final class MinecraftAdvancedMovementAccess {
         }
         LocalPlayer player = client.player;
         Vec3 velocity = player.getDeltaMovement();
-        module.verticalVelocity(new AirJump.Context(client.gui.screen() != null, player.onGround(),
+        module.verticalVelocity(new AirJump.Context(
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()), player.onGround(),
                 client.options.keyJump.isDown(), player.isInWater() || player.isInLava(), player.onClimbable(),
                 player.isPassenger(), player.getAbilities().flying, player.isFallFlying(), velocity.y))
                 .ifPresent(y -> {
@@ -144,7 +149,9 @@ public final class MinecraftAdvancedMovementAccess {
         boolean moving = input.x != 0.0F || input.y != 0.0F;
         Vec3 velocity = player.getDeltaMovement();
         HorizontalVelocity current = new HorizontalVelocity(velocity.x, velocity.z);
-        HorizontalVelocity adjusted = speed.adjust(current, desiredDirection(player, input), moving);
+        double ordinaryMovementSpeed = Math.max(0.0D, player.getAttributeValue(Attributes.MOVEMENT_SPEED));
+        HorizontalVelocity adjusted = speed.adjust(
+                current, desiredDirection(player, input), ordinaryMovementSpeed, moving);
         if (!adjusted.equals(current)) {
             player.setDeltaMovement(adjusted.x(), velocity.y, adjusted.z());
         }
@@ -171,7 +178,7 @@ public final class MinecraftAdvancedMovementAccess {
             return;
         }
         LocalPlayer player = client.player;
-        boolean screenOpen = client.gui.screen() != null;
+        boolean screenOpen = dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen());
         if (screenOpen && module.isEnabled()) {
             // Hold a stable player hover so opening a screen does not drop the player.
             if (!player.isPassenger() && module.usesVelocityFlight(player.getAbilities().mayfly)) {
@@ -223,7 +230,7 @@ public final class MinecraftAdvancedMovementAccess {
         if (boat == null) {
             return;
         }
-        if (client.gui.screen() != null) {
+        if (dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())) {
             boat.setDeltaMovement(0.0D, 0.0D, 0.0D);
             return;
         }
@@ -265,7 +272,8 @@ public final class MinecraftAdvancedMovementAccess {
         }
         LocalPlayer player = client.player;
         Vec3 velocity = player.getDeltaMovement();
-        module.verticalVelocity(client.gui.screen() != null, player.onGround(), player.isInWater(), player.onClimbable(),
+        module.verticalVelocity(dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
+                player.onGround(), player.isInWater(), player.onClimbable(),
                         player.input.keyPresses.shift(), player.isPassenger(), player.getAbilities().flying,
                         player.isFallFlying(), velocity.y)
                 .ifPresent(y -> player.setDeltaMovement(velocity.x, y, velocity.z));
@@ -484,7 +492,8 @@ public final class MinecraftAdvancedMovementAccess {
     }
 
     private static boolean isInteractive(Minecraft client) {
-        return client.player != null && client.level != null && client.gui.screen() == null;
+        return client.player != null && client.level != null
+                && dev.helikon.client.gui.GameplayScreenPolicy.allowsAutomation(client.gui.screen());
     }
 
     private static int remainingDurability(ItemStack stack) {

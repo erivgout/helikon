@@ -44,7 +44,8 @@ public final class MinecraftGojoInfinityAccess {
             current.onContextLost();
             return false;
         }
-        if (client.gui.screen() != null || player.connection == null) {
+        if (dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())
+                || player.connection == null) {
             return false;
         }
 

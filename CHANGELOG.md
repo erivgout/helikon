@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 1.1.6 - 2026-07-19
+
+- Persists the ClickGUI's selected category or special section, search query,
+  selected module, module-list scroll, and settings scroll so reopening returns
+  to the same working position.
+- Keeps active utilities ticking in live-world container and Helikon screens
+  instead of treating every open GUI as paused gameplay. InventoryWalk now
+  supports crafting, furnace, chest, player-inventory, and Helikon screens while
+  still suppressing movement when a text-capable widget has focus.
+- Adds the opt-in Creative/Spectator Detector, which disables every other active
+  module when a nearby creative or spectator player is observed and excludes
+  locally saved friends by default.
+- Fixes Speed Multiplier mode compounding already-boosted velocity every tick,
+  which made different multiplier values rapidly collapse onto the same
+  `maximum_speed` cap. It now scales ordinary movement speed to a stable target.
+- Raises Speed's configurable `maximum_speed` ceiling from 3 to 100 blocks per
+  tick and the multiplier ceiling from 10× to 1000× so that cap is reachable,
+  while retaining the existing 0.90 and 3× defaults.
+
 ## 1.1.5 - 2026-07-18
 
 - Makes StorageESP rebuild from loaded block entities every tick, so nearby

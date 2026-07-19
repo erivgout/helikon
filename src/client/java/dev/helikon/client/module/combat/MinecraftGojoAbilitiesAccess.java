@@ -27,7 +27,8 @@ public final class MinecraftGojoAbilitiesAccess {
             module.reset();
             return;
         }
-        Optional<GojoAbilities.Action> next = module.next(tick, client.gui.screen() != null, snapshot.targets());
+        Optional<GojoAbilities.Action> next = module.next(tick,
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()), snapshot.targets());
         if (next.isEmpty()) {
             return;
         }

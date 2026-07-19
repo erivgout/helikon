@@ -60,7 +60,8 @@ public final class MinecraftLegacyMovementAccess {
     public static void tickMountBypass(MountBypass module) {
         Minecraft client = Minecraft.getInstance();
         LocalPlayer player = client.player;
-        if (!module.isEnabled() || player == null || client.level == null || client.gui.screen() != null) {
+        if (!module.isEnabled() || player == null || client.level == null
+                || dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())) {
             return;
         }
         Entity vehicle = player.getVehicle();
@@ -77,7 +78,9 @@ public final class MinecraftLegacyMovementAccess {
     public static void tickForcePush(ForcePush module, FriendManager friends) {
         Minecraft client = Minecraft.getInstance();
         LocalPlayer player = client.player;
-        if (player == null || client.level == null || client.gui.screen() != null || player.isPassenger()) {
+        if (player == null || client.level == null
+                || dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())
+                || player.isPassenger()) {
             return;
         }
         List<ForcePush.Candidate> candidates = new ArrayList<>();

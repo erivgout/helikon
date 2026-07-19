@@ -18,7 +18,8 @@ public final class MinecraftRegenAccess {
         }
         int count = module.packetCount(tick, new Regen.Context(
                 player.getHealth(), player.getMaxHealth(), player.getFoodData().getFoodLevel(),
-                client.gui.screen() != null, player.onGround(), player.isPassenger(),
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
+                player.onGround(), player.isPassenger(),
                 player.getAbilities().flying, player.isFallFlying()));
         for (int index = 0; index < count; index++) {
             player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(true, player.horizontalCollision));

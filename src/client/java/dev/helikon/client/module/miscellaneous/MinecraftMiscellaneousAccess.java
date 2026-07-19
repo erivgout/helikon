@@ -15,7 +15,8 @@ public final class MinecraftMiscellaneousAccess {
         Minecraft current = Objects.requireNonNull(client, "client");
         Annoy currentModule = Objects.requireNonNull(module, "module");
         if (currentModule.shouldSwing(clientTick,
-                new Annoy.Context(current.player != null, current.gui.screen() != null))) {
+                new Annoy.Context(current.player != null,
+                        dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(current.gui.screen())))) {
             current.player.swing(InteractionHand.MAIN_HAND);
         }
     }

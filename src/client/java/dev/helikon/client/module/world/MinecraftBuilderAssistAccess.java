@@ -27,7 +27,8 @@ public final class MinecraftBuilderAssistAccess {
     /** Executes at most one ordinary block-use interaction when Use is held and its vanilla cooldown is clear. */
     public static void tick(BuilderAssist builderAssist, long tick) {
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.level == null || client.gameMode == null || client.gui.screen() != null
+        if (client.player == null || client.level == null || client.gameMode == null
+                || dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())
                 || !client.options.keyUse.isDown()
                 || ((MinecraftAccessor) client).helikon$getRightClickDelay() != 0
                 || !(client.player.getInventory().getSelectedItem().getItem() instanceof BlockItem)) {

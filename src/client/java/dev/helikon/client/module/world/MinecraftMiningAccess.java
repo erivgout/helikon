@@ -29,7 +29,8 @@ public final class MinecraftMiningAccess {
     /** Lets FastBreak lower only a visible, ordinary held-attack cooldown. */
     public static void tickFastBreak(FastBreak module) {
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.level == null || client.gameMode == null || client.gui.screen() != null
+        if (client.player == null || client.level == null || client.gameMode == null
+                || dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())
                 || !(client.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
                 || !client.level.isLoaded(hit.getBlockPos())) {
             module.tick(false, false, "");
@@ -52,7 +53,8 @@ public final class MinecraftMiningAccess {
     public static void tickTimerDigging(Timer module) {
         Minecraft client = Minecraft.getInstance();
         if (!module.usesDiggingOnlyMode() || client.player == null || client.level == null
-                || client.gameMode == null || client.gui.screen() != null
+                || client.gameMode == null
+                || dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())
                 || !(client.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
                 || !client.level.isLoaded(hit.getBlockPos())) {
             module.extraDiggingSteps(false);
@@ -76,7 +78,7 @@ public final class MinecraftMiningAccess {
             return;
         }
         LocalPlayer player = client.player;
-        boolean screenOpen = client.gui.screen() != null;
+        boolean screenOpen = dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen());
         Nuker.Context context = new Nuker.Context(screenOpen, client.options.keyAttack.isDown());
         if (!module.shouldScan(context)) {
             NUKER_BREAK_SEQUENCE.reset();

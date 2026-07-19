@@ -39,7 +39,7 @@ public final class MinecraftAutoAnchorAccess {
     public static boolean tick(long tick, AutoAnchor module, MinecraftCombatAccess.Snapshot snapshot) {
         Minecraft client = Minecraft.getInstance();
         if (!snapshot.available() || client.player == null || client.level == null || client.gameMode == null
-                || client.gui.screen() != null) {
+                || dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())) {
             return false;
         }
 

@@ -16,6 +16,12 @@ import java.util.Set;
  * dependencies so filtering and selection behavior stay unit-testable.
  */
 public final class ClickGuiState {
+    public enum ViewMode {
+        CATEGORY,
+        ACTIVE,
+        FAVORITES
+    }
+
     private final ModuleRegistry registry;
 
     private ModuleCategory selectedCategory;
@@ -60,6 +66,16 @@ public final class ClickGuiState {
 
     public boolean isShowingFavoriteModules() {
         return showingFavorites && !isSearching();
+    }
+
+    public ViewMode viewMode() {
+        if (showingActiveModules) {
+            return ViewMode.ACTIVE;
+        }
+        if (showingFavorites) {
+            return ViewMode.FAVORITES;
+        }
+        return ViewMode.CATEGORY;
     }
 
     /** Selects the next or previous category, wrapping at either end. */
@@ -115,6 +131,17 @@ public final class ClickGuiState {
     /** Selects the module whose settings the GUI shows; {@code null} clears it. */
     public void selectModule(Module module) {
         this.selectedModule = module;
+    }
+
+    /** Restores a previously persisted view, ignoring modules that no longer exist or are no longer visible. */
+    public void restore(ViewMode viewMode, ModuleCategory category, String query, String selectedModuleId,
+                        Set<String> favoriteModuleIds) {
+        selectedCategory = Objects.requireNonNullElse(category, initialCategory(registry));
+        searchQuery = query == null ? "" : query;
+        this.favoriteModuleIds = Set.copyOf(Objects.requireNonNullElse(favoriteModuleIds, Set.of()));
+        showingActiveModules = viewMode == ViewMode.ACTIVE;
+        showingFavorites = viewMode == ViewMode.FAVORITES;
+        selectedModule = registry.find(selectedModuleId).filter(visibleModules()::contains).orElse(null);
     }
 
     /**

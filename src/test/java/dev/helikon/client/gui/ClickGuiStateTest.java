@@ -194,6 +194,19 @@ class ClickGuiStateTest {
         assertTrue(state.selectedModule().isEmpty());
     }
 
+    @Test
+    void persistedSearchViewAndSelectionCanBeRestored() {
+        ClickGuiState state = new ClickGuiState(registry);
+
+        state.restore(ClickGuiState.ViewMode.FAVORITES, ModuleCategory.CHAT, "sprint", sprint.id(),
+                Set.of(fullbright.id()));
+
+        assertEquals(ClickGuiState.ViewMode.FAVORITES, state.viewMode());
+        assertEquals(ModuleCategory.CHAT, state.selectedCategory());
+        assertEquals("sprint", state.searchQuery());
+        assertEquals(sprint, state.selectedModule().orElseThrow());
+    }
+
     private static final class TestModule extends Module {
         private TestModule(String id, String name, String description, ModuleCategory category) {
             super(id, name, description, category, false, Keybind.unbound());

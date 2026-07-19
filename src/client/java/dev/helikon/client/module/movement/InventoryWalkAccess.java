@@ -17,7 +17,7 @@ public final class InventoryWalkAccess {
 
     /** Applies the inventory-only physical-key policy and preserves untouched input fields. */
     public static Input apply(Input currentInput, Input physicalInput,
-                              boolean ordinaryInventoryScreen, boolean textEntryFocused) {
+                              boolean liveGameplayScreen, boolean textEntryFocused) {
         Input current = Objects.requireNonNull(currentInput, "currentInput");
         Input physical = Objects.requireNonNull(physicalInput, "physicalInput");
         InventoryWalk module = inventoryWalk;
@@ -25,7 +25,7 @@ public final class InventoryWalkAccess {
             return current;
         }
         MovementInput result = module.apply(movementInput(current), movementInput(physical),
-                ordinaryInventoryScreen, textEntryFocused);
+                liveGameplayScreen, textEntryFocused);
         if (matches(result, current)) {
             return current;
         }

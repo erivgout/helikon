@@ -92,6 +92,21 @@ public final class ModuleRegistry {
         }
     }
 
+    /** Disables every enabled module except one safety module that must remain armed. */
+    public long disableAllExcept(Module retainedModule) {
+        Module retained = Objects.requireNonNull(retainedModule, "retainedModule");
+        if (!modules.containsValue(retained)) {
+            throw new IllegalArgumentException("Module '" + retained.id() + "' is not registered");
+        }
+        long disabled = 0L;
+        for (Module module : modules.values()) {
+            if (module != retained && module.isEnabled() && setEnabled(module, false)) {
+                disabled++;
+            }
+        }
+        return disabled;
+    }
+
     /**
      * Runs periodic module work through the same failure isolation as lifecycle
      * transitions. A failed callback disables the registered module so its

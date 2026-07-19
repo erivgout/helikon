@@ -67,7 +67,8 @@ public final class MinecraftLegacyPlayerAccess {
                               long tick, boolean triggered, boolean foodUse) {
         HotbarUseModule.Action action = module.update(tick,
                 new HotbarUseModule.Context(player.getInventory().getSelectedSlot(), triggered,
-                        client.gui.screen() != null, player.isUsingItem()), candidates(player));
+                        dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
+                        player.isUsingItem()), candidates(player));
         switch (action.type()) {
             case NONE -> {
             }

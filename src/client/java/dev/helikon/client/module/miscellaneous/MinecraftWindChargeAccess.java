@@ -24,7 +24,7 @@ public final class MinecraftWindChargeAccess {
         ItemStack charge = chargeSlot < 0 ? ItemStack.EMPTY : player.getInventory().getItem(chargeSlot);
         WindCharge.Action action = module.update(clientTick, new WindCharge.Context(
                 true,
-                client.gui.screen() != null,
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
                 player.isUsingItem(),
                 !player.onGround() && player.getDeltaMovement().y < -0.01D,
                 player.input.keyPresses.jump(),

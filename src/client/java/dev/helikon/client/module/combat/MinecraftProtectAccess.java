@@ -41,7 +41,8 @@ public final class MinecraftProtectAccess {
         addFilteredFriends(client, player, friends, targets, entities);
         boolean attackReady = ordinaryAttackAvailable && client.gameMode != null
                 && player.getAttackStrengthScale(0.0F) >= 0.9F;
-        Protect.Context context = new Protect.Context(client.gui.screen() != null, player.isPassenger(),
+        Protect.Context context = new Protect.Context(
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()), player.isPassenger(),
                 player.getAbilities().flying, player.isFallFlying(), attackReady, targets);
         Optional<Protect.Action> selected = module.update(tick, context);
         if (selected.isEmpty()) {

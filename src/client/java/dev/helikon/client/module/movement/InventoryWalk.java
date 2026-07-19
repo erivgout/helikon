@@ -6,19 +6,19 @@ import dev.helikon.client.module.ModuleCategory;
 
 import java.util.Objects;
 
-/** Allows only physical movement keys to remain active in the player's ordinary inventory screen. */
+/** Allows only physical movement keys to remain active in live-world container and Helikon screens. */
 public final class InventoryWalk extends Module {
     public InventoryWalk() {
-        super("inventory_walk", "InventoryWalk", "Allows local movement in the vanilla player inventory.",
+        super("inventory_walk", "InventoryWalk", "Allows local movement in container and Helikon screens.",
                 ModuleCategory.MOVEMENT, false, Keybind.unbound());
     }
 
     /** Combines safe physical movement keys without treating Shift as movement while an inventory is open. */
     public MovementInput apply(MovementInput currentInput, MovementInput physicalInput,
-                               boolean ordinaryInventoryScreen, boolean textEntryFocused) {
+                               boolean liveGameplayScreen, boolean textEntryFocused) {
         MovementInput current = Objects.requireNonNull(currentInput, "currentInput");
         MovementInput physical = Objects.requireNonNull(physicalInput, "physicalInput");
-        if (!isEnabled() || !ordinaryInventoryScreen || textEntryFocused) {
+        if (!isEnabled() || !liveGameplayScreen || textEntryFocused) {
             return current;
         }
         return new MovementInput(

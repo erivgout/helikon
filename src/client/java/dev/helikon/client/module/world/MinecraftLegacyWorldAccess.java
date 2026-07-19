@@ -108,7 +108,8 @@ public final class MinecraftLegacyWorldAccess {
                 candidates.add(new FeedAura.Candidate(entity.getId(), entity.distanceTo(player), animal.isFood(held)));
             }
         }
-        module.select(tick, client.gui.screen() != null, !held.isEmpty(), candidates).ifPresent(entityId -> {
+        module.select(tick, dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
+                !held.isEmpty(), candidates).ifPresent(entityId -> {
             Entity entity = client.level.getEntity(entityId);
             if (entity instanceof Animal animal) {
                 client.gameMode.interact(player, animal, new EntityHitResult(animal), InteractionHand.MAIN_HAND);
@@ -148,7 +149,8 @@ public final class MinecraftLegacyWorldAccess {
             module.onContextLost();
             return false;
         }
-        return module.isEnabled() && client.gui.screen() == null;
+        return module.isEnabled()
+                && dev.helikon.client.gui.GameplayScreenPolicy.allowsAutomation(client.gui.screen());
     }
 
     private static List<BoundedWorldAction.Candidate> scan(Minecraft client, LocalPlayer player, int radius,

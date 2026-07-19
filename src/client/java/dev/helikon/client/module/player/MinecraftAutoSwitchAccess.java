@@ -31,7 +31,7 @@ public final class MinecraftAutoSwitchAccess {
         }
         AutoSwitch.Context context = new AutoSwitch.Context(
                 player.getInventory().getSelectedSlot(),
-                client.gui.screen() != null,
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
                 client.options.keyAttack.isDown(),
                 client.options.keyUse.isDown(),
                 player.isShiftKeyDown(),

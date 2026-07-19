@@ -24,7 +24,8 @@ public final class MinecraftBlockInAccess {
     /** Places up to the module's bounded plan while a held block is selected and vanilla's use cooldown is clear. */
     public static void tick(BlockIn blockIn, long tick) {
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.level == null || client.gameMode == null || client.gui.screen() != null
+        if (client.player == null || client.level == null || client.gameMode == null
+                || dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())
                 || ((MinecraftAccessor) client).helikon$getRightClickDelay() != 0
                 || !(client.player.getInventory().getSelectedItem().getItem() instanceof BlockItem)) {
             return;

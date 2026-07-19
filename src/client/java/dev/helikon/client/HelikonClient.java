@@ -45,6 +45,7 @@ import dev.helikon.client.friend.FriendToggleGesture;
 import dev.helikon.client.integration.BaritoneCompatibility;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
+import dev.helikon.client.gui.GameplayScreenPolicy;
 import dev.helikon.client.gui.HelikonHudEditorScreen;
 import dev.helikon.client.gui.HelikonHudSettingsScreen;
 import dev.helikon.client.gui.HelikonThemeEditorScreen;
@@ -197,6 +198,7 @@ import dev.helikon.client.module.movement.WaterJump;
 import dev.helikon.client.module.movement.WaterJumpAccess;
 import dev.helikon.client.module.miscellaneous.Annoy;
 import dev.helikon.client.module.miscellaneous.CoordinateTracker;
+import dev.helikon.client.module.miscellaneous.CreativeSpectatorDetector;
 import dev.helikon.client.module.miscellaneous.DeathCoordinates;
 import dev.helikon.client.module.miscellaneous.DebugOverlay;
 import dev.helikon.client.module.miscellaneous.DurabilityWarnings;
@@ -207,6 +209,7 @@ import dev.helikon.client.module.miscellaneous.LocalCape;
 import dev.helikon.client.module.miscellaneous.LocalCosmetics;
 import dev.helikon.client.module.miscellaneous.MinecraftMiscellaneousAccess;
 import dev.helikon.client.module.miscellaneous.MinecraftKnockbackDelayAccess;
+import dev.helikon.client.module.miscellaneous.MinecraftCreativeSpectatorDetectorAccess;
 import dev.helikon.client.module.miscellaneous.MinecraftSkinLayerAccess;
 import dev.helikon.client.module.miscellaneous.MinecraftWindChargeAccess;
 import dev.helikon.client.module.miscellaneous.OneClickFriends;
@@ -799,6 +802,7 @@ public final class HelikonClient implements ClientModInitializer {
         dev.helikon.client.module.miscellaneous.ServerCleanUp serverCleanUp =
                 new dev.helikon.client.module.miscellaneous.ServerCleanUp();
         OneClickFriends oneClickFriends = new OneClickFriends();
+        CreativeSpectatorDetector creativeSpectatorDetector = new CreativeSpectatorDetector();
         SkinBlinker skinBlinker = new SkinBlinker(new MinecraftSkinLayerAccess());
         DebugOverlay debugOverlay = new DebugOverlay(timingMetrics);
         LocalCape localCape = new LocalCape();
@@ -964,6 +968,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(serverCleanUp);
         dev.helikon.client.module.miscellaneous.BookHackAccess.install(bookHack);
         modules.register(oneClickFriends);
+        modules.register(creativeSpectatorDetector);
         modules.register(skinBlinker);
         modules.register(debugOverlay);
         modules.register(localCape);
@@ -1026,6 +1031,12 @@ public final class HelikonClient implements ClientModInitializer {
                 waypointLocations.currentLocation().ifPresent(coordinateTracker::observe);
                 if (Minecraft.getInstance().level == null && timer.isEnabled()) {
                     modules.setEnabled(timer, false);
+                }
+                AtomicBoolean safetyShutdown = new AtomicBoolean();
+                modules.runGuarded(creativeSpectatorDetector, "tick", () -> safetyShutdown.set(
+                        tickCreativeSpectatorDetector(creativeSpectatorDetector)));
+                if (safetyShutdown.get()) {
+                    return;
                 }
                 modules.runGuarded(fullbright, "tick", fullbright::tick);
                 modules.runGuarded(derp, "fun-effects", () -> legacyFunAccess.tick(clientTick, derp, headRoll, lsd,
@@ -1136,7 +1147,7 @@ public final class HelikonClient implements ClientModInitializer {
                         () -> dev.helikon.client.module.miscellaneous.MinecraftInterfaceActions.tickServerCleanup(
                                 serverCleanUp, modules));
                 modules.runGuarded(skinBlinker, "tick", () -> skinBlinker.tick(clientTick, minecraft.player != null,
-                        minecraft.gui.screen() != null));
+                        GameplayScreenPolicy.blocksAutomation(minecraft.gui.screen())));
                 modules.runGuarded(knockbackDelay, "tick", () -> MinecraftKnockbackDelayAccess.tick(clientTick));
                 combatAttackStarted.set(false);
                 combatSnapshot.set(MinecraftCombatAccess.Snapshot.unavailable());
@@ -1577,7 +1588,7 @@ public final class HelikonClient implements ClientModInitializer {
         }
         AnnouncerAccess.tick(new AnnouncerObservationTracker.Fact(client.player.getX(), client.player.getY(),
                         client.player.getZ(), client.player.getHealth(), client.level.dimension().identifier().toString()),
-                client.gui.screen() != null, System.currentTimeMillis());
+                GameplayScreenPolicy.blocksAutomation(client.gui.screen()), System.currentTimeMillis());
     }
 
     private String currentChatHistoryScope() {
@@ -1607,6 +1618,17 @@ public final class HelikonClient implements ClientModInitializer {
         PanicController.Result result = panic.activate();
         notifier.info("Panic: disabled " + result.disabledModules()
                 + " module(s), hid custom HUD, and preserved configuration.");
+    }
+
+    private boolean tickCreativeSpectatorDetector(CreativeSpectatorDetector detector) {
+        return MinecraftCreativeSpectatorDetectorAccess.observe(detector, friends).map(candidate -> {
+            long disabled = modules.disableAllExcept(detector);
+            String mode = candidate.mode().name().toLowerCase(java.util.Locale.ROOT);
+            notifier.error("Safety shutdown: nearby " + mode + " player '" + candidate.name()
+                    + "' detected at " + Math.round(candidate.distance()) + " blocks; disabled " + disabled
+                    + " other module(s).");
+            return true;
+        }).orElse(false);
     }
 
     private void closeHelikonScreen() {
@@ -1654,7 +1676,7 @@ public final class HelikonClient implements ClientModInitializer {
             reportMacroResult(contextResult);
             return;
         }
-        if (client.gui.screen() != null) {
+        if (GameplayScreenPolicy.blocksAutomation(client.gui.screen())) {
             return;
         }
         reportMacroResult(macroRunner.tick(macroServerContext.currentServerAddress(), macroExecutor));
@@ -1668,7 +1690,7 @@ public final class HelikonClient implements ClientModInitializer {
             return;
         }
 
-        boolean screenOpen = client.gui.screen() != null;
+        boolean screenOpen = GameplayScreenPolicy.blocksAutomation(client.gui.screen());
         net.minecraft.world.entity.player.Input input = client.player.input.keyPresses;
         boolean forward = !screenOpen && input.forward();
         boolean moving = !screenOpen && (input.forward() || input.backward() || input.left() || input.right());
@@ -1713,7 +1735,8 @@ public final class HelikonClient implements ClientModInitializer {
     /** Reels/recasts only an already selected fishing rod through Minecraft's normal interaction method. */
     private static void tickAutoFish(AutoFish autoFish, long tick) {
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.gameMode == null || client.gui.screen() != null) {
+        if (client.player == null || client.gameMode == null
+                || GameplayScreenPolicy.blocksAutomation(client.gui.screen())) {
             return;
         }
         ItemStack held = client.player.getInventory().getSelectedItem();
@@ -1854,7 +1877,7 @@ public final class HelikonClient implements ClientModInitializer {
             return;
         }
 
-        boolean mining = client.gui.screen() == null
+        boolean mining = GameplayScreenPolicy.allowsAutomation(client.gui.screen())
                 && client.level != null
                 && client.gameMode != null
                 && client.gameMode.isDestroying()
@@ -1875,7 +1898,7 @@ public final class HelikonClient implements ClientModInitializer {
             return;
         }
 
-        boolean screenOpen = client.gui.screen() != null;
+        boolean screenOpen = GameplayScreenPolicy.blocksAutomation(client.gui.screen());
         List<FoodCandidate> candidates = screenOpen ? List.of() : foodCandidates(client);
         AutoEat.Action action = autoEat.tick(new AutoEat.Context(
                 client.player.getInventory().getSelectedSlot(),
@@ -2121,7 +2144,7 @@ public final class HelikonClient implements ClientModInitializer {
                 message,
                 localPlayerName,
                 macroServerContext.currentServerAddress().orElse(""),
-                client.gui.screen() != null
+                GameplayScreenPolicy.blocksAutomation(client.gui.screen())
         ).ifPresent(normalChatSender::send));
     }
 
@@ -2167,7 +2190,7 @@ public final class HelikonClient implements ClientModInitializer {
     /** Applies a FastPlace cooldown reduction after Minecraft has handled this tick's normal use input. */
     private static void tickFastPlace(FastPlace fastPlace) {
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.gui.screen() != null) {
+        if (client.player == null || GameplayScreenPolicy.blocksAutomation(client.gui.screen())) {
             return;
         }
 
@@ -2181,7 +2204,7 @@ public final class HelikonClient implements ClientModInitializer {
     /** Sends only through ChatSpammer's constrained, ordinary local chat policy. */
     private static void tickChatSpammer(ChatSpammer chatSpammer) {
         Minecraft client = Minecraft.getInstance();
-        chatSpammer.tick(client.player != null, client.gui.screen() != null);
+        chatSpammer.tick(client.player != null, GameplayScreenPolicy.blocksAutomation(client.gui.screen()));
     }
 
     private void reportMacroResult(MacroRunner.TickResult result) {

@@ -231,6 +231,29 @@ class ConfigurationManagerTest {
     }
 
     @Test
+    void clickGuiNavigationAndScrollRoundTripThroughGlobalConfiguration() {
+        ModuleRegistry sourceRegistry = new ModuleRegistry();
+        ConfigurableModule sourceModule = new ConfigurableModule();
+        sourceRegistry.register(sourceModule);
+        ClickGuiWindowState sourceWindow = new ClickGuiWindowState();
+        assertTrue(sourceWindow.setViewState(dev.helikon.client.gui.ClickGuiState.ViewMode.FAVORITES,
+                ModuleCategory.MISCELLANEOUS, "config", sourceModule.id(), 84.0D, 126.0D));
+
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        manager.save(sourceRegistry, sourceWindow);
+
+        ClickGuiWindowState targetWindow = new ClickGuiWindowState();
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(sourceRegistry, targetWindow));
+        assertTrue(targetWindow.hasSavedViewState());
+        assertEquals(dev.helikon.client.gui.ClickGuiState.ViewMode.FAVORITES, targetWindow.viewMode());
+        assertEquals(ModuleCategory.MISCELLANEOUS, targetWindow.selectedCategory());
+        assertEquals("config", targetWindow.searchQuery());
+        assertEquals(sourceModule.id(), targetWindow.selectedModuleId());
+        assertEquals(84.0D, targetWindow.listScroll());
+        assertEquals(126.0D, targetWindow.settingsScroll());
+    }
+
+    @Test
     void invalidStoredClickGuiPositionResetsToCentering() throws IOException {
         ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
         Files.createDirectories(manager.configurationDirectory());

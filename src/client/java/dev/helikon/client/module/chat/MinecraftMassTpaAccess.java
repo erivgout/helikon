@@ -20,7 +20,7 @@ public final class MinecraftMassTpaAccess {
             module.onContextLost();
             return;
         }
-        if (client.gui.screen() != null) {
+        if (dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())) {
             return;
         }
         List<MassTpa.Candidate> candidates = new ArrayList<>();

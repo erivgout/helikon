@@ -20,7 +20,8 @@ public final class MinecraftAnimeAuraAccess {
         Minecraft client = Minecraft.getInstance();
         LocalPlayer player = client.player;
         if (player == null || client.level == null || client.gameMode == null || !snapshot.available()
-                || client.gui.screen() != null || player.connection == null) {
+                || dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())
+                || player.connection == null) {
             recover(player);
             module.reset();
             return false;

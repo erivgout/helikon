@@ -74,6 +74,21 @@ class ModuleLifecycleTest {
         assertEquals(2, reports[0]);
     }
 
+    @Test
+    void safetyShutdownDisablesEverythingExceptTheRetainedModule() {
+        ModuleRegistry registry = new ModuleRegistry();
+        RecordingModule retained = new RecordingModule();
+        OtherModule other = new OtherModule();
+        registry.register(retained);
+        registry.register(other);
+        registry.setEnabled(retained, true);
+        registry.setEnabled(other, true);
+
+        assertEquals(1L, registry.disableAllExcept(retained));
+        assertTrue(retained.isEnabled());
+        assertFalse(other.isEnabled());
+    }
+
     private static final class RecordingModule extends Module {
         private int enableCount;
         private int disableCount;
@@ -108,6 +123,13 @@ class ModuleLifecycleTest {
         @Override
         protected void onDisable() {
             disableCount++;
+        }
+    }
+
+    private static final class OtherModule extends Module {
+        private OtherModule() {
+            super("other", "Other", "Another lifecycle module.", ModuleCategory.MISCELLANEOUS, false,
+                    Keybind.unbound());
         }
     }
 }

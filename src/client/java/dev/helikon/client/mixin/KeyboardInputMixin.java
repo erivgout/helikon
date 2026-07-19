@@ -17,11 +17,11 @@ import dev.helikon.client.module.movement.WaterJumpAccess;
 import dev.helikon.client.module.movement.WaterJumpContext;
 import dev.helikon.client.module.combat.WTapAccess;
 import dev.helikon.client.input.KeybindManager;
+import dev.helikon.client.gui.GameplayScreenPolicy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.KeyboardInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -59,16 +59,16 @@ abstract class KeyboardInputMixin {
         Minecraft client = Minecraft.getInstance();
         Input physicalInput = input.keyPresses;
         Screen screen = client.gui.screen();
-        boolean screenOpen = screen != null;
+        boolean screenOpen = GameplayScreenPolicy.blocksAutomation(screen);
         input.keyPresses = MovementModuleAccess.applyMovement(
                 input.keyPresses,
                 screenOpen,
                 MovementModuleAccess.isAutoSneakKeyDown(HELIKON_INPUT)
         );
-        boolean ordinaryInventoryScreen = screen instanceof InventoryScreen;
-        Input inventoryPhysicalInput = ordinaryInventoryScreen ? physicalInventoryInput(client) : physicalInput;
+        boolean liveGameplayScreen = screen != null && GameplayScreenPolicy.allowsAutomation(screen);
+        Input inventoryPhysicalInput = liveGameplayScreen ? physicalInventoryInput(client) : physicalInput;
         input.keyPresses = InventoryWalkAccess.apply(input.keyPresses, inventoryPhysicalInput,
-                ordinaryInventoryScreen, hasFocusedWidget(screen));
+                liveGameplayScreen, hasFocusedWidget(screen));
         var initialVector = MovementModuleAccess.movementVector(input.keyPresses);
         boolean openBelow = client.player != null
                 && client.player.level().getBlockState(client.player.blockPosition().below()).canBeReplaced();
@@ -105,7 +105,7 @@ abstract class KeyboardInputMixin {
         ((ClientInputAccessor) input).helikon$setMoveVector(new Vec2(vector.x(), vector.y()));
     }
 
-    /** Uses physical configured keyboard bindings only while the player's vanilla inventory is open. */
+    /** Uses physical configured keyboard bindings while an allowed live-world GUI is open. */
     private static Input physicalInventoryInput(Minecraft client) {
         return new Input(
                 isPhysicalKeyboardKeyDown(client, client.options.keyUp),

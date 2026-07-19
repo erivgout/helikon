@@ -7,7 +7,9 @@ import com.google.gson.JsonParser;
 import dev.helikon.client.input.Keybind;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.ClickGuiTheme;
+import dev.helikon.client.gui.ClickGuiState;
 import dev.helikon.client.module.Module;
+import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.Setting;
 
@@ -281,6 +283,14 @@ public final class ConfigurationManager {
         JsonArray favorites = new JsonArray();
         clickGuiWindow.favoriteModuleIds().forEach(favorites::add);
         window.add("favorites", favorites);
+        if (clickGuiWindow.hasSavedViewState()) {
+            window.addProperty("viewMode", clickGuiWindow.viewMode().name().toLowerCase(Locale.ROOT));
+            window.addProperty("selectedCategory", clickGuiWindow.selectedCategory().name().toLowerCase(Locale.ROOT));
+            window.addProperty("searchQuery", clickGuiWindow.searchQuery());
+            window.addProperty("selectedModule", clickGuiWindow.selectedModuleId());
+            window.addProperty("listScroll", clickGuiWindow.listScroll());
+            window.addProperty("settingsScroll", clickGuiWindow.settingsScroll());
+        }
         return window;
     }
 
@@ -338,15 +348,12 @@ public final class ConfigurationManager {
         }
 
         JsonElement themeElement = window.get("theme");
-        if (themeElement == null) {
-            return;
-        }
-        if (!themeElement.isJsonPrimitive() || !themeElement.getAsJsonPrimitive().isString()) {
+        if (themeElement != null && (!themeElement.isJsonPrimitive() || !themeElement.getAsJsonPrimitive().isString())) {
             LOGGER.warning("Invalid ClickGUI theme; reset to Midnight");
-            return;
+        } else if (themeElement != null) {
+            ClickGuiTheme.find(themeElement.getAsString()).ifPresentOrElse(clickGuiWindow::setTheme,
+                    () -> LOGGER.warning("Unknown ClickGUI theme; reset to Midnight"));
         }
-        ClickGuiTheme.find(themeElement.getAsString()).ifPresentOrElse(clickGuiWindow::setTheme,
-                () -> LOGGER.warning("Unknown ClickGUI theme; reset to Midnight"));
 
         JsonElement scaleElement = window.get("interfaceScale");
         if (scaleElement != null) {
@@ -377,6 +384,30 @@ public final class ConfigurationManager {
                 }
                 clickGuiWindow.replaceFavorites(favorites);
             }
+        }
+        applyClickGuiView(window, clickGuiWindow);
+    }
+
+    private static void applyClickGuiView(JsonObject window, ClickGuiWindowState clickGuiWindow) {
+        JsonElement viewModeElement = window.get("viewMode");
+        if (viewModeElement == null) {
+            return;
+        }
+        try {
+            ClickGuiState.ViewMode viewMode = ClickGuiState.ViewMode.valueOf(
+                    getRequiredString(window, "viewMode").toUpperCase(Locale.ROOT));
+            ModuleCategory category = ModuleCategory.valueOf(
+                    getRequiredString(window, "selectedCategory").toUpperCase(Locale.ROOT));
+            String query = getRequiredString(window, "searchQuery");
+            String selectedModule = getRequiredString(window, "selectedModule");
+            double listScroll = getRequiredDouble(window, "listScroll");
+            double settingsScroll = getRequiredDouble(window, "settingsScroll");
+            if (!clickGuiWindow.setViewState(viewMode, category, query, selectedModule, listScroll, settingsScroll)) {
+                throw new IllegalArgumentException("ClickGUI view state is outside the supported range");
+            }
+        } catch (RuntimeException exception) {
+            LOGGER.warning("Invalid ClickGUI view state; reset to the default view");
+            clickGuiWindow.resetViewState();
         }
     }
 
@@ -473,6 +504,18 @@ public final class ConfigurationManager {
             throw new IllegalArgumentException("Invalid '" + property + "'");
         }
         return value.getAsString();
+    }
+
+    private static double getRequiredDouble(JsonObject object, String property) {
+        JsonElement value = object.get(property);
+        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) {
+            throw new IllegalArgumentException("Invalid '" + property + "'");
+        }
+        double parsed = value.getAsDouble();
+        if (!Double.isFinite(parsed)) {
+            throw new IllegalArgumentException("Invalid '" + property + "'");
+        }
+        return parsed;
     }
 
     private static JsonObject getRequiredObject(JsonObject object, String property) {

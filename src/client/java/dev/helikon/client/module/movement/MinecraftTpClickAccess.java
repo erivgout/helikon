@@ -29,7 +29,7 @@ public final class MinecraftTpClickAccess {
         Objects.requireNonNull(noFall, "noFall");
         Objects.requireNonNull(keys, "keys");
         Minecraft client = Minecraft.getInstance();
-        boolean screenOpen = client.gui.screen() != null;
+        boolean screenOpen = dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen());
         boolean keyDown = keys.isDown(module.keybind());
         if (!module.pollTrigger(keyDown, screenOpen)) {
             return;

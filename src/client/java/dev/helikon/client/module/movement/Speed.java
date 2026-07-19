@@ -24,17 +24,22 @@ public final class Speed extends Module {
                 ModuleCategory.MOVEMENT, false, Keybind.unbound());
         mode = addSetting(new EnumSetting<>("mode", "Mode", "Choose a conservative local motion policy.",
                 Mode.class, Mode.MULTIPLIER));
-        multiplier = addSetting(new NumberSetting("multiplier", "Multiplier", "Capped horizontal multiplier.",
-                3.0D, 1.0D, 10.0D));
+        multiplier = addSetting(new NumberSetting("multiplier", "Multiplier",
+                "Scales the player's ordinary movement speed without compounding prior boosted velocity.",
+                3.0D, 1.0D, 1_000.0D));
         acceleration = addSetting(new NumberSetting("acceleration", "Acceleration", "Local directional acceleration.",
                 0.08D, 0.0D, 0.08D));
         maximumSpeed = addSetting(new NumberSetting("maximum_speed", "Maximum speed", "Hard local horizontal speed cap.",
-                0.90D, 0.05D, 3.0D));
+                0.90D, 0.05D, 100.0D));
     }
 
-    public HorizontalVelocity adjust(HorizontalVelocity current, HorizontalVelocity desiredDirection, boolean moving) {
+    public HorizontalVelocity adjust(HorizontalVelocity current, HorizontalVelocity desiredDirection,
+                                     double ordinaryMovementSpeed, boolean moving) {
         if (current == null || desiredDirection == null) {
             throw new IllegalArgumentException("velocity inputs must not be null");
+        }
+        if (!Double.isFinite(ordinaryMovementSpeed) || ordinaryMovementSpeed < 0.0D) {
+            throw new IllegalArgumentException("ordinary movement speed must be finite and non-negative");
         }
         if (!isEnabled() || !moving) {
             return current;
@@ -46,7 +51,7 @@ public final class Speed extends Module {
             case STRAFE_ASSIST -> new HorizontalVelocity(
                     current.x() * 0.80D + direction.x() * acceleration.value() * 1.20D,
                     current.z() * 0.80D + direction.z() * acceleration.value() * 1.20D);
-            case MULTIPLIER -> direction.scale(current.speed() * multiplier.value());
+            case MULTIPLIER -> direction.scale(ordinaryMovementSpeed * multiplier.value());
         };
         return result.capped(maximumSpeed.value());
     }

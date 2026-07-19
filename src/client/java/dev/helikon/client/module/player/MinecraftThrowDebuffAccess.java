@@ -29,7 +29,7 @@ public final class MinecraftThrowDebuffAccess {
 
         ThrowDebuff.Action action = module.update(clientTick, new ThrowDebuff.Context(
                 player.getInventory().getSelectedSlot(),
-                client.gui.screen() != null,
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
                 player.isUsingItem(),
                 potionCandidates(player),
                 snapshot.targets()

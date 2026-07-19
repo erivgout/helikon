@@ -18,7 +18,7 @@ public final class MinecraftAutoSwimAccess {
         LocalPlayer player = client.player;
         Input input = player.input.keyPresses;
         AutoSwim.SprintAction action = autoSwim.update(new AutoSwim.Context(
-                client.gui.screen() != null,
+                dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen()),
                 player.isInWater(),
                 input.forward(),
                 player.isPassenger(),

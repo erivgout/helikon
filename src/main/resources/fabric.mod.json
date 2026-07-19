@@ -5,7 +5,8 @@
   "name": "Helikon",
   "description": "A local-only Fabric utility client framework.",
   "authors": [
-    "Helikon contributors"
+    "Helikon contributors",
+    "OpenAI Codex (AI-assisted contributor)"
   ],
   "contact": {
     "sources": "https://github.com/erivgout/helikon"

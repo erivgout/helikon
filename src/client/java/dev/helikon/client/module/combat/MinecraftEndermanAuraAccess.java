@@ -27,7 +27,9 @@ public final class MinecraftEndermanAuraAccess {
         Minecraft client = Minecraft.getInstance();
         LocalPlayer player = client.player;
         ClientLevel level = client.level;
-        if (player == null || level == null || client.gui.screen() != null || player.isPassenger()) {
+        if (player == null || level == null
+                || dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())
+                || player.isPassenger()) {
             module.onContextLost();
             return;
         }

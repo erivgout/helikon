@@ -19,6 +19,7 @@ class ClickGuiStateTest {
     private TestModule fullbright;
     private TestModule sprint;
     private TestModule timestamps;
+    private TestModule baritone;
 
     @BeforeEach
     void setUp() {
@@ -29,9 +30,12 @@ class ClickGuiStateTest {
                 "Keeps the player sprinting.", ModuleCategory.MOVEMENT);
         timestamps = new TestModule("chat_timestamps", "ChatTimestamps",
                 "Adds a local timestamp to chat messages.", ModuleCategory.CHAT);
+        baritone = new TestModule("baritone", "Baritone",
+                "Embedded navigation.", ModuleCategory.WORLD);
         registry.register(fullbright);
         registry.register(sprint);
         registry.register(timestamps);
+        registry.register(baritone);
     }
 
     @Test
@@ -80,6 +84,23 @@ class ClickGuiStateTest {
         assertEquals(List.of(fullbright, timestamps), state.visibleModules());
         state.selectCategory(ModuleCategory.MOVEMENT);
         assertFalse(state.isShowingFavoriteModules());
+    }
+
+    @Test
+    void baritoneSectionSelectsOnlyBaritoneAndRestoresPersistedView() {
+        ClickGuiState state = new ClickGuiState(registry);
+
+        state.selectBaritone();
+
+        assertTrue(state.isShowingBaritone());
+        assertEquals(ClickGuiState.ViewMode.BARITONE, state.viewMode());
+        assertEquals(List.of(baritone), state.visibleModules());
+        assertEquals(baritone, state.selectedModule().orElseThrow());
+
+        ClickGuiState restored = new ClickGuiState(registry);
+        restored.restore(ClickGuiState.ViewMode.BARITONE, ModuleCategory.WORLD, "", "", Set.of());
+        assertTrue(restored.isShowingBaritone());
+        assertEquals(baritone, restored.selectedModule().orElseThrow());
     }
 
     @Test

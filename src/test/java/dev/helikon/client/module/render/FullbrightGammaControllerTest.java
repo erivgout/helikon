@@ -40,11 +40,33 @@ class FullbrightGammaControllerTest {
         assertEquals(0.6, gamma.value);
     }
 
+    @Test
+    void defersApplicationUntilMinecraftOptionsAreAvailable() {
+        RecordingGamma gamma = new RecordingGamma(0.4);
+        gamma.available = false;
+        FullbrightGammaController controller = new FullbrightGammaController();
+
+        controller.reconcile(gamma, true, 1.0);
+        assertEquals(0.4, gamma.value);
+        assertFalse(controller.isApplying());
+
+        gamma.available = true;
+        controller.reconcile(gamma, true, 1.0);
+        assertEquals(1.0, gamma.value);
+        assertTrue(controller.isApplying());
+    }
+
     private static final class RecordingGamma implements FullbrightGammaController.GammaAccess {
         private double value;
+        private boolean available = true;
 
         private RecordingGamma(double value) {
             this.value = value;
+        }
+
+        @Override
+        public boolean isAvailable() {
+            return available;
         }
 
         @Override

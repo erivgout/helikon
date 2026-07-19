@@ -13,6 +13,13 @@ When porting:
    release, plus AutoWalk/AutoSneak's `KeyboardInput.tick` target and the
    `ClientInput.moveVector` accessor; these client-only hooks must remain
    narrowly scoped.
+   For embedded Baritone, also revalidate its `Minecraft.runTick`/`Gui.tick`
+   injection and screen pass-through redirect, entity/block registry renames,
+   chat/toast access, world-render invalidation, and worker shutdown. Run
+   `HelikonClientGameTest` to prove a real goal is retained while an inventory
+   screen is open and that path/goal gizmos render without crashing. Keep the
+   nested component client-only and refresh `vendor/baritone/HELIKON_PORT.md`
+   provenance when the upstream baseline changes.
 4. Revalidate AutoTool's ordinary mining-state (`MultiPlayerGameMode`), hotbar
    (`Inventory`), block-state, and `ItemStack` destroy-speed/durability APIs.
 5. Revalidate FastPlace's `Minecraft.rightClickDelay` accessor, FastBreak and

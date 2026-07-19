@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BaritoneCompatibilityTest {
     @Test
-    void detectsOnlyTheUserInstalledBaritoneModIdWithoutAnApiDependency() {
+    void detectsTheEmbeddedBaritoneFabricModId() {
         assertTrue(BaritoneCompatibility.detect(BaritoneCompatibility.MOD_ID::equals).detected());
         assertFalse(BaritoneCompatibility.detect(ignored -> false).detected());
     }

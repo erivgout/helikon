@@ -1,6 +1,7 @@
 package dev.helikon.client.render;
 
 import dev.helikon.client.friend.FriendManager;
+import dev.helikon.client.entity.MinecraftEntityClassification;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.miscellaneous.LocalCosmetics;
@@ -47,7 +48,6 @@ import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.monster.Creeper;
-import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.vehicle.minecart.MinecartTNT;
@@ -96,8 +96,7 @@ import java.util.PriorityQueue;
 public final class MinecraftWorldVisualizationRenderer {
     private static final int MAXIMUM_CACHED_BLOCKS = 512;
     private static final double NAMETAG_BASE_OFFSET = 0.35D;
-    /** Vanilla debug-gizmo spacing (0.25 at scale 0.5) at the default 0.32 text scale. */
-    private static final double NAMETAG_LINE_SPACING = 0.17D;
+    private static final int NAMETAG_LINE_GAP_PIXELS = 2;
     private static final TrajectorySimulator.Physics ARROW_PHYSICS = new TrajectorySimulator.Physics(
             0.05D, 0.99D, TrajectorySimulator.GravityOrder.AFTER_DRAG, TrajectorySimulator.UpdateTiming.AFTER_MOVE
     );
@@ -875,6 +874,8 @@ public final class MinecraftWorldVisualizationRenderer {
     private void renderBetterNametags(ClientLevel level, Player localPlayer, Frustum frustum) {
         BetterNametags.Options options = betterNametags.options();
         double maximumDistanceSquared = options.range() * options.range();
+        double lineSpacing = BetterNametagText.worldLineSpacing(
+                TextGizmo.Style.DEFAULT_SCALE, Minecraft.getInstance().font.lineHeight, NAMETAG_LINE_GAP_PIXELS);
         for (Entity entity : level.entitiesForRendering()) {
             if (!(entity instanceof Player player) || player == localPlayer || player.isInvisibleTo(localPlayer)
                     || !localPlayer.hasLineOfSight(player) || !isFrustumVisible(frustum, player)
@@ -891,7 +892,7 @@ public final class MinecraftWorldVisualizationRenderer {
                 BetterNametagText.Line line = lines.get(index);
                 Gizmos.billboardText(line.text(),
                         new Vec3(player.getX(),
-                                baseY + BetterNametagText.stackOffset(index, lines.size()) * NAMETAG_LINE_SPACING,
+                                baseY + BetterNametagText.stackOffset(index, lines.size()) * lineSpacing,
                                 player.getZ()),
                         TextGizmo.Style.forColorAndCentered(line.color()));
             }
@@ -1409,7 +1410,7 @@ public final class MinecraftWorldVisualizationRenderer {
         if (entity instanceof Player) {
             return EntityRenderFilter.EntityType.PLAYER;
         }
-        if (entity instanceof Monster) {
+        if (MinecraftEntityClassification.isHostile(entity)) {
             return EntityRenderFilter.EntityType.HOSTILE;
         }
         if (entity instanceof ItemEntity) {

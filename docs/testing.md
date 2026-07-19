@@ -108,11 +108,12 @@ AutoTool's correct-tool scoring, durability guard, ownership-aware slot restore,
 and safe no-selection behavior are covered by `AutoToolTest`.
 FastPlace's held-use gate, item filtering, safe delay floor, and invalid input
 rejection are covered by `FastPlaceTest`.
-FastBreak's held-target/filter/cooldown restoration rules, Nuker's explicit
+FastBreak's held-target/filter/cooldown restoration rules and Nuker's explicit
 whitelist, range, visibility, action cap, temporary tool ownership, and local
-rotation, plus dependency-free Baritone detection, are covered by
-`FastBreakTest`, `NukerTest`, and `BaritoneCompatibilityTest`. Their normal
-Minecraft destroy-input wiring requires the world-automation smoke checklist.
+rotation are covered by `FastBreakTest` and `NukerTest`. Embedded Baritone's
+command bridge is covered by `BaritoneCommandTest`; the Fabric client game test
+runs a real goal, opens the player inventory while it is active, captures its
+path rendering, cancels it, and checks for guarded module failures.
 AntiCactus's disabled default, non-collision preservation, vertical-movement
 preservation, and deterministic safe-axis slide are covered by
 `AntiCactusTest`. BlockSelection's bounded local distance-label and render-style
@@ -727,10 +728,13 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
    caps only to two and verify no more than two normal requests occur in a
    tick. The server remains authoritative; do not treat local prediction as a
    successful break.
-3. Start once with and once without a user-installed Baritone copy. Verify the
-   log reports only local detection status and that Helikon starts with the
-   same controls either way. It must not download Baritone, expose a remote
-   endpoint, or invoke an optional Baritone command/API.
+3. Enable **Baritone** and run `.baritone goto` toward a safe nearby coordinate.
+   Verify route/goal visuals appear, pathing continues with inventory, crafting,
+   furnace, and Helikon screens open, Pause/Resume work, and Stop or disabling
+   the module releases movement. Run a harmless local-world mining command and
+   confirm normal server-authoritative block actions. Confirm there is no
+   separate Baritone JAR in `mods`, no runtime download, and no external
+   request.
 
 ## Manual Phase K miscellaneous-control smoke test
 
@@ -852,13 +856,13 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     case-insensitively duplicate entries must become
     `friends.corrupt-<timestamp>.json`.
 14. In a world, run `.waypoint add home`, walk away, and run `.waypoint list`.
-    Verify the current-dimension entry reports distance and a compass direction
-    and appears in the small Waypoints HUD. Add manual coordinates with
-    `.waypoint add mine 10 70 -5`, use `color`, `icon`, and `toggle`, then
-    verify disabled entries are absent from the HUD but identified by `list`.
-    Rename and remove an entry, relaunch to verify persistence and backup
-    creation, then replace `waypoints.json` with malformed or duplicate data;
-    it must become `waypoints.corrupt-<timestamp>.json` and show no entries.
+    Verify the current-dimension Baritone entry reports distance and a compass
+    direction and appears in the Waypoints HUD. Add manual coordinates with
+    `.waypoint add mine 10 70 -5`, rename and remove entries, and relaunch to
+    verify Baritone persistence. Exercise `#waypoint list` and confirm its
+    user/home/death/bed entries also appear through `.waypoint list`. With a
+    pre-existing valid `waypoints.json`, verify its current-context entries
+    migrate after joining without replacing same-named Baritone entries.
 15. Create a macro with `.macro create smoke`, then append a local action, a
     delay, ordinary chat text, and a Minecraft command (without `/`). Verify
     `show` reports each action, `run` executes no more than one action per tick

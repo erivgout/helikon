@@ -57,6 +57,23 @@ class ConfigurationManagerTest {
     }
 
     @Test
+    void aStateChangeHandlerCanPersistAToggleBeforeShutdown() {
+        ModuleRegistry sourceRegistry = new ModuleRegistry();
+        ConfigurableModule source = new ConfigurableModule();
+        sourceRegistry.register(source);
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        sourceRegistry.addStateChangeHandler((module, enabled) -> manager.save(sourceRegistry));
+
+        sourceRegistry.setEnabled(source, true);
+
+        ModuleRegistry targetRegistry = new ModuleRegistry();
+        ConfigurableModule target = new ConfigurableModule();
+        targetRegistry.register(target);
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(targetRegistry));
+        assertTrue(target.isEnabled());
+    }
+
+    @Test
     void legacyFullbrightStubStateLoadsIntoTheProductionModule() throws IOException {
         ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
         Files.createDirectories(manager.configurationDirectory());

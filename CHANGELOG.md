@@ -2,6 +2,38 @@
 
 ## Unreleased
 
+## 1.2.1 - 2026-07-19
+
+- Adds a persistent **Baritone** section to the ClickGUI sidebar with
+  permissions, visualization controls, destination and mining shortcuts,
+  pause/resume/stop actions, and a field for running any Baritone command.
+- Restores current, next, and in-progress route rendering on Minecraft 26.2
+  and highlights blocks Baritone plans to break, place, or walk into.
+- Renders composite mining goals and bounded Y-level/inverted goals so mining
+  targets no longer disappear when represented as a goal set.
+- Replaces Helikon's live waypoint store with Baritone's per-world,
+  per-dimension collection and migrates existing `waypoints.json` entries.
+- Adds tests for the Baritone sidebar, generic command action, composite-goal
+  rendering, waypoint mutations/migration, and live renderable route data.
+
+## 1.2.0 - 2026-07-19
+
+- Vendors the latest stable Baritone 1.15.0 source and ports its 26.1
+  development branch to Minecraft 26.2, Java 25, Mojang mappings, and the
+  current client GUI/tick APIs.
+- Embeds Baritone into the Helikon JAR with its LGPL license, provenance, and
+  corresponding source; a separate Baritone installation is no longer needed.
+- Adds a Baritone World module with pathing permissions, `#` command control,
+  path/goal visuals, destination and mining fields, and GUI buttons for go,
+  mine, pause, resume, and stop.
+- Adds local `.baritone` status, goto, mine, and stop commands.
+- Keeps Baritone pathing active while inventory/container and Helikon screens
+  are open, and makes its worker pool shut down cleanly with Minecraft.
+- Extends the Fabric client game test to execute and render a real Baritone
+  goal, keep it alive with an inventory open, cancel it, and soak every module.
+- Defers saved Fullbright gamma restoration/application until Minecraft options
+  exist, preventing an early-startup failure while retaining the enabled state.
+
 ## 1.1.6 - 2026-07-19
 
 - Persists the ClickGUI's selected category or special section, search query,

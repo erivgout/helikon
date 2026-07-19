@@ -12,6 +12,7 @@ import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.setting.BooleanSetting;
+import dev.helikon.client.setting.ActionSetting;
 import dev.helikon.client.setting.ColorSetting;
 import dev.helikon.client.setting.ColorPickerValue;
 import dev.helikon.client.setting.EnumSetting;
@@ -416,16 +417,27 @@ public final class HelikonClickGuiScreen extends Screen {
         graphics.text(font, "Favorites", panelX + 6, favoritesY + 3,
                 favoritesSelected ? COLOR_SELECTED_TEXT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT), false);
 
+        int baritoneY = contentTop + 2 * ROW_HEIGHT;
+        boolean baritoneSelected = state.isShowingBaritone();
+        if (baritoneSelected) {
+            graphics.fill(panelX, baritoneY, panelX + SIDEBAR_WIDTH, baritoneY + ROW_HEIGHT, COLOR_ROW_SELECTED);
+        } else if (isInside(mouseX, mouseY, panelX, baritoneY, SIDEBAR_WIDTH, ROW_HEIGHT)) {
+            graphics.fill(panelX, baritoneY, panelX + SIDEBAR_WIDTH, baritoneY + ROW_HEIGHT, COLOR_ROW_HOVER);
+        }
+        graphics.text(font, "Baritone", panelX + 6, baritoneY + 3,
+                baritoneSelected ? COLOR_SELECTED_TEXT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT), false);
+
         ModuleCategory[] categories = ModuleCategory.values();
         for (int index = 0; index < categories.length; index++) {
             ModuleCategory category = categories[index];
-            int rowY = contentTop + (index + 2) * ROW_HEIGHT;
+            int rowY = contentTop + (index + 3) * ROW_HEIGHT;
             if (rowY + ROW_HEIGHT > contentBottom) {
                 break;
             }
 
             boolean selected = !state.isSearching() && !state.isShowingActiveModules()
-                    && !state.isShowingFavoriteModules() && category == state.selectedCategory();
+                    && !state.isShowingFavoriteModules() && !state.isShowingBaritone()
+                    && category == state.selectedCategory();
             if (selected) {
                 graphics.fill(panelX, rowY, panelX + SIDEBAR_WIDTH, rowY + ROW_HEIGHT, COLOR_ROW_SELECTED);
             } else if (isInside(mouseX, mouseY, panelX, rowY, SIDEBAR_WIDTH, ROW_HEIGHT)) {
@@ -441,7 +453,8 @@ public final class HelikonClickGuiScreen extends Screen {
         Component heading = state.isSearching()
                 ? Component.translatable("screen.helikon.search_results")
                 : Component.literal(state.isShowingFavoriteModules() ? "Favorites"
-                : state.isShowingActiveModules() ? "Active" : state.selectedCategory().displayName());
+                : state.isShowingActiveModules() ? "Active"
+                : state.isShowingBaritone() ? "Baritone" : state.selectedCategory().displayName());
         graphics.text(font, heading, listX + 4, panelY + HEADER_HEIGHT - 12, COLOR_TEXT_DIM, false);
 
         List<Module> visible = state.visibleModules();
@@ -543,6 +556,19 @@ public final class HelikonClickGuiScreen extends Screen {
         for (SettingRow row : settingRows(module)) {
             Setting<?> setting = row.setting();
             int rowY = settingsY(row.y());
+            if (setting instanceof ActionSetting) {
+                int buttonX = settingsX + 6;
+                int buttonWidth = SETTINGS_WIDTH - 12;
+                int color = isInside(mouseX, mouseY, buttonX, rowY + 2, buttonWidth, 10)
+                        ? COLOR_ACCENT : COLOR_OUTLINE;
+                graphics.outline(buttonX, rowY + 2, buttonWidth, 10, color);
+                graphics.centeredText(font, Component.literal(setting.name()),
+                        buttonX + buttonWidth / 2, rowY + 3, COLOR_TEXT);
+                if (isInside(mouseX, mouseY, buttonX, rowY + 2, buttonWidth, 10)) {
+                    graphics.setTooltipForNextFrame(font, Component.literal(setting.description()), mouseX, mouseY);
+                }
+                continue;
+            }
             String label = font.plainSubstrByWidth(setting.name(), SETTINGS_WIDTH - 38);
             graphics.text(font, label, textX, rowY + 3, COLOR_TEXT, false);
             drawResetButton(graphics, settingResetX(), rowY + 2, mouseX, mouseY);
@@ -666,9 +692,17 @@ public final class HelikonClickGuiScreen extends Screen {
             rebuildSettingWidgets();
             return true;
         }
+        if (isInside(mouseX, mouseY, panelX, contentTop + 2 * ROW_HEIGHT, SIDEBAR_WIDTH, ROW_HEIGHT)) {
+            state.selectBaritone();
+            searchField.setValue("");
+            listScroll = 0;
+            settingsScroll = 0;
+            rebuildSettingWidgets();
+            return true;
+        }
         ModuleCategory[] categories = ModuleCategory.values();
         for (int index = 0; index < categories.length; index++) {
-            int rowY = contentTop + (index + 2) * ROW_HEIGHT;
+            int rowY = contentTop + (index + 3) * ROW_HEIGHT;
             if (rowY + ROW_HEIGHT > contentBottom) {
                 break;
             }
@@ -763,6 +797,11 @@ public final class HelikonClickGuiScreen extends Screen {
         for (SettingRow row : settingRows(module)) {
             Setting<?> setting = row.setting();
             int rowY = settingsY(row.y());
+            if (setting instanceof ActionSetting actionSetting
+                    && isInside(mouseX, mouseY, settingsX + 6, rowY + 2, SETTINGS_WIDTH - 12, 10)) {
+                actionSetting.run();
+                return true;
+            }
             if (isInside(mouseX, mouseY, settingResetX(), rowY + 2, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE)) {
                 setting.reset();
                 rebuildSettingWidgets();

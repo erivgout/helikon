@@ -19,7 +19,8 @@ public final class ClickGuiState {
     public enum ViewMode {
         CATEGORY,
         ACTIVE,
-        FAVORITES
+        FAVORITES,
+        BARITONE
     }
 
     private final ModuleRegistry registry;
@@ -29,6 +30,7 @@ public final class ClickGuiState {
     private Module selectedModule;
     private boolean showingActiveModules;
     private boolean showingFavorites;
+    private boolean showingBaritone;
     private Set<String> favoriteModuleIds = Set.of();
 
     public ClickGuiState(ModuleRegistry registry) {
@@ -44,12 +46,14 @@ public final class ClickGuiState {
         this.selectedCategory = Objects.requireNonNull(category, "category");
         showingActiveModules = false;
         showingFavorites = false;
+        showingBaritone = false;
     }
 
     /** Shows the currently enabled modules across every category. */
     public void selectActiveModules() {
         showingActiveModules = true;
         showingFavorites = false;
+        showingBaritone = false;
         selectedModule = null;
     }
 
@@ -61,11 +65,24 @@ public final class ClickGuiState {
         this.favoriteModuleIds = Set.copyOf(Objects.requireNonNull(favoriteModuleIds, "favoriteModuleIds"));
         showingFavorites = true;
         showingActiveModules = false;
+        showingBaritone = false;
         selectedModule = null;
     }
 
     public boolean isShowingFavoriteModules() {
         return showingFavorites && !isSearching();
+    }
+
+    /** Opens the dedicated embedded-Baritone control section. */
+    public void selectBaritone() {
+        showingBaritone = true;
+        showingFavorites = false;
+        showingActiveModules = false;
+        selectedModule = registry.find("baritone").orElse(null);
+    }
+
+    public boolean isShowingBaritone() {
+        return showingBaritone && !isSearching();
     }
 
     public ViewMode viewMode() {
@@ -74,6 +91,9 @@ public final class ClickGuiState {
         }
         if (showingFavorites) {
             return ViewMode.FAVORITES;
+        }
+        if (showingBaritone) {
+            return ViewMode.BARITONE;
         }
         return ViewMode.CATEGORY;
     }
@@ -89,6 +109,7 @@ public final class ClickGuiState {
         selectedModule = null;
         showingActiveModules = false;
         showingFavorites = false;
+        showingBaritone = false;
     }
 
     public String searchQuery() {
@@ -119,6 +140,9 @@ public final class ClickGuiState {
         if (showingFavorites) {
             return registry.all().stream().filter(module -> favoriteModuleIds.contains(module.id())).toList();
         }
+        if (showingBaritone) {
+            return registry.find("baritone").stream().toList();
+        }
         return registry.all().stream()
                 .filter(module -> module.category() == selectedCategory)
                 .toList();
@@ -141,7 +165,11 @@ public final class ClickGuiState {
         this.favoriteModuleIds = Set.copyOf(Objects.requireNonNullElse(favoriteModuleIds, Set.of()));
         showingActiveModules = viewMode == ViewMode.ACTIVE;
         showingFavorites = viewMode == ViewMode.FAVORITES;
+        showingBaritone = viewMode == ViewMode.BARITONE;
         selectedModule = registry.find(selectedModuleId).filter(visibleModules()::contains).orElse(null);
+        if (showingBaritone && selectedModule == null) {
+            selectedModule = registry.find("baritone").orElse(null);
+        }
     }
 
     /**

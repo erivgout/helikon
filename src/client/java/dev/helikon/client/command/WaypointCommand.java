@@ -3,18 +3,18 @@ package dev.helikon.client.command;
 import dev.helikon.client.waypoint.Waypoint;
 import dev.helikon.client.waypoint.WaypointLocation;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
-import dev.helikon.client.waypoint.WaypointManager;
 import dev.helikon.client.waypoint.WaypointNavigation;
+import dev.helikon.client.waypoint.WaypointRepository;
 
 import java.util.List;
 import java.util.Objects;
 
-/** Local waypoint management with current-world filtering and no server traffic. */
+/** Helikon command facade over Baritone's per-world waypoint collection. */
 public final class WaypointCommand implements HelikonCommand {
-    private final WaypointManager waypoints;
+    private final WaypointRepository waypoints;
     private final WaypointLocationProvider locations;
 
-    public WaypointCommand(WaypointManager waypoints, WaypointLocationProvider locations) {
+    public WaypointCommand(WaypointRepository waypoints, WaypointLocationProvider locations) {
         this.waypoints = Objects.requireNonNull(waypoints, "waypoints");
         this.locations = Objects.requireNonNull(locations, "locations");
     }
@@ -26,12 +26,12 @@ public final class WaypointCommand implements HelikonCommand {
 
     @Override
     public String usage() {
-        return ".waypoint list|add <name> [x y z]|remove <name>|rename <from> <to>|toggle <name>|color <name> <#RRGGBB|#AARRGGBB>|icon <name> <icon|clear>";
+        return ".waypoint list|add <name> [x y z]|remove <name>|rename <from> <to>";
     }
 
     @Override
     public String description() {
-        return "Manages local waypoints for the current server/world and dimension.";
+        return "Manages Baritone waypoints for the current world and dimension.";
     }
 
     @Override
@@ -46,9 +46,6 @@ public final class WaypointCommand implements HelikonCommand {
                 case "add" -> add(arguments, feedback);
                 case "remove" -> remove(arguments, feedback);
                 case "rename" -> rename(arguments, feedback);
-                case "toggle" -> toggle(arguments, feedback);
-                case "color" -> color(arguments, feedback);
-                case "icon" -> icon(arguments, feedback);
                 default -> feedback.error("Usage: " + usage());
             }
         } catch (RuntimeException exception) {
@@ -67,21 +64,14 @@ public final class WaypointCommand implements HelikonCommand {
         }
         List<WaypointNavigation.LocatedWaypoint> visible = WaypointNavigation.visibleSorted(
                 waypoints.visible(location.context()), location);
-        List<Waypoint> hidden = waypoints.forContext(location.context()).stream()
-                .filter(waypoint -> !waypoint.enabled())
-                .toList();
-        if (visible.isEmpty() && hidden.isEmpty()) {
-            feedback.info("No local waypoints in this world and dimension.");
+        if (visible.isEmpty()) {
+            feedback.info("No Baritone waypoints in this world and dimension.");
             return;
         }
         String entries = visible.stream()
-                .map(waypoint -> waypoint.waypoint().name() + " [on, " + waypoint.distance() + "m " + waypoint.direction() + "]")
+                .map(waypoint -> waypoint.waypoint().name() + " [" + waypoint.waypoint().icon() + ", "
+                        + waypoint.distance() + "m " + waypoint.direction() + "]")
                 .collect(java.util.stream.Collectors.joining(", "));
-        if (!hidden.isEmpty()) {
-            String disabled = hidden.stream().map(Waypoint::name)
-                    .collect(java.util.stream.Collectors.joining(", "));
-            entries = entries.isEmpty() ? "Disabled: " + disabled : entries + "; Disabled: " + disabled;
-        }
         feedback.info("Waypoints: " + entries);
     }
 
@@ -103,10 +93,11 @@ public final class WaypointCommand implements HelikonCommand {
             z = parseCoordinate(arguments.get(4));
         }
         if (!waypoints.addAndSave(arguments.get(1), x, y, z, current.context())) {
-            feedback.error("A local waypoint named '" + arguments.get(1) + "' already exists here.");
+            feedback.error("A Baritone waypoint named '" + arguments.get(1) + "' already exists here.");
             return;
         }
-        feedback.info("Added local waypoint '" + Waypoint.requireName(arguments.get(1)) + "' at " + x + ", " + y + ", " + z + ".");
+        feedback.info("Added Baritone waypoint '" + Waypoint.requireName(arguments.get(1))
+                + "' at " + x + ", " + y + ", " + z + ".");
     }
 
     private void remove(List<String> arguments, CommandFeedback feedback) {
@@ -119,10 +110,10 @@ public final class WaypointCommand implements HelikonCommand {
             return;
         }
         if (!waypoints.removeAndSave(arguments.get(1), location.context())) {
-            feedback.error("No local waypoint named '" + arguments.get(1) + "' exists here.");
+            feedback.error("No Baritone waypoint named '" + arguments.get(1) + "' exists here.");
             return;
         }
-        feedback.info("Removed local waypoint '" + arguments.get(1) + "'.");
+        feedback.info("Removed Baritone waypoint '" + arguments.get(1) + "'.");
     }
 
     private void rename(List<String> arguments, CommandFeedback feedback) {
@@ -135,60 +126,10 @@ public final class WaypointCommand implements HelikonCommand {
             return;
         }
         if (!waypoints.renameAndSave(arguments.get(1), arguments.get(2), location.context())) {
-            feedback.error("No local waypoint named '" + arguments.get(1) + "' exists here.");
+            feedback.error("No Baritone waypoint named '" + arguments.get(1) + "' exists here.");
             return;
         }
-        feedback.info("Renamed local waypoint '" + arguments.get(1) + "' to '" + arguments.get(2) + "'.");
-    }
-
-    private void toggle(List<String> arguments, CommandFeedback feedback) {
-        if (arguments.size() != 2) {
-            feedback.error("Usage: .waypoint toggle <name>");
-            return;
-        }
-        WaypointLocation location = requireLocation(feedback);
-        if (location == null) {
-            return;
-        }
-        var enabled = waypoints.toggleAndSave(arguments.get(1), location.context());
-        if (enabled.isEmpty()) {
-            feedback.error("No local waypoint named '" + arguments.get(1) + "' exists here.");
-            return;
-        }
-        feedback.info((enabled.orElseThrow() ? "Enabled" : "Disabled") + " local waypoint '" + arguments.get(1) + "'.");
-    }
-
-    private void color(List<String> arguments, CommandFeedback feedback) {
-        if (arguments.size() != 3) {
-            feedback.error("Usage: .waypoint color <name> <#RRGGBB|#AARRGGBB>");
-            return;
-        }
-        WaypointLocation location = requireLocation(feedback);
-        if (location == null) {
-            return;
-        }
-        if (!waypoints.setColorAndSave(arguments.get(1), location.context(), parseColor(arguments.get(2)))) {
-            feedback.error("No local waypoint named '" + arguments.get(1) + "' exists here.");
-            return;
-        }
-        feedback.info("Updated local waypoint color for '" + arguments.get(1) + "'.");
-    }
-
-    private void icon(List<String> arguments, CommandFeedback feedback) {
-        if (arguments.size() != 3) {
-            feedback.error("Usage: .waypoint icon <name> <icon|clear>");
-            return;
-        }
-        WaypointLocation location = requireLocation(feedback);
-        if (location == null) {
-            return;
-        }
-        String icon = arguments.get(2).equalsIgnoreCase("clear") ? Waypoint.NO_ICON : arguments.get(2);
-        if (!waypoints.setIconAndSave(arguments.get(1), location.context(), icon)) {
-            feedback.error("No local waypoint named '" + arguments.get(1) + "' exists here.");
-            return;
-        }
-        feedback.info("Updated local waypoint icon for '" + arguments.get(1) + "'.");
+        feedback.info("Renamed Baritone waypoint '" + arguments.get(1) + "' to '" + arguments.get(2) + "'.");
     }
 
     private WaypointLocation requireLocation(CommandFeedback feedback) {
@@ -206,15 +147,4 @@ public final class WaypointCommand implements HelikonCommand {
         }
     }
 
-    private static int parseColor(String text) {
-        String hex = text == null ? "" : text.trim();
-        if (hex.startsWith("#")) {
-            hex = hex.substring(1);
-        }
-        if (!hex.matches("[0-9a-fA-F]{6}|[0-9a-fA-F]{8}")) {
-            throw new IllegalArgumentException("Color must be #RRGGBB or #AARRGGBB");
-        }
-        long value = Long.parseLong(hex, 16);
-        return hex.length() == 6 ? (int) (0xFF000000L | value) : (int) value;
-    }
 }

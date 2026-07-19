@@ -1,4 +1,4 @@
-# Security review — 1.0.0
+# Security review — 1.2.1
 
 ## Scope
 
@@ -27,8 +27,12 @@ Gradle, the operating system, or server plugins.
 - Debug Overlay retains only transient in-process timing/cache/event/save facts
   while explicitly enabled; it is not a telemetry, profiler-upload, or
   persistent diagnostic system.
-- The release bundle contains checksums, a resolved dependency report, source,
-  license, and local release notes for human review.
+- Baritone is built from pinned, vendored source into a distinct nested JAR.
+  Its upstream commits, Helikon port delta, LGPL license, and corresponding
+  source are included in the auditable release bundle; no runtime binary
+  download or remote module loading path exists.
+- The release bundle contains checksums, a resolved dependency report, Helikon
+  and Baritone source/licenses, and local release notes for human review.
 
 ## Residual risks and release gate
 

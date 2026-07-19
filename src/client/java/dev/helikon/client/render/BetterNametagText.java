@@ -12,6 +12,8 @@ import java.util.Objects;
  * individually colored rows: name, health, armor, then distance/held item.
  */
 public final class BetterNametagText {
+    private static final double GIZMO_TEXTURE_PIXELS_PER_WORLD_UNIT = 16.0D;
+
     public static final int COLOR_NAME = 0xFFE5EDF5;
     public static final int COLOR_FRIEND = 0xFF80CBC4;
     public static final int COLOR_HEALTH_HIGH = 0xFF81C784;
@@ -54,6 +56,23 @@ public final class BetterNametagText {
             throw new IllegalArgumentException("Invalid name-tag line index");
         }
         return lineCount - 1 - index;
+    }
+
+    /**
+     * Converts the font's pixel line height and a desired pixel gap into the
+     * world-space distance used by Minecraft's billboard-text gizmo renderer.
+     */
+    public static double worldLineSpacing(float textScale, int fontLineHeight, int gapPixels) {
+        if (!Float.isFinite(textScale) || textScale <= 0.0F) {
+            throw new IllegalArgumentException("textScale must be positive and finite");
+        }
+        if (fontLineHeight <= 0) {
+            throw new IllegalArgumentException("fontLineHeight must be positive");
+        }
+        if (gapPixels < 0) {
+            throw new IllegalArgumentException("gapPixels must not be negative");
+        }
+        return (fontLineHeight + gapPixels) * textScale / GIZMO_TEXTURE_PIXELS_PER_WORLD_UNIT;
     }
 
     static int healthColor(float fraction) {

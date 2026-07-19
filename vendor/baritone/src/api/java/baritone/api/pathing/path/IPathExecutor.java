@@ -1,0 +1,47 @@
+/*
+ * This file is part of Baritone.
+ *
+ * Baritone is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Baritone is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Baritone.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package baritone.api.pathing.path;
+
+import baritone.api.pathing.calc.IPath;
+import net.minecraft.core.BlockPos;
+
+import java.util.Set;
+
+/**
+ * @author Brady
+ * @since 10/8/2018
+ */
+public interface IPathExecutor {
+
+    IPath getPath();
+
+    int getPosition();
+
+    /**
+     * Blocks that the remaining movements expect to break. Exposed through
+     * the API so supported host renderers do not need to depend on Baritone's
+     * internal PathExecutor implementation.
+     */
+    Set<BlockPos> toBreak();
+
+    /** Blocks that the remaining movements expect to place. */
+    Set<BlockPos> toPlace();
+
+    /** Blocks that the remaining movements expect to enter or clear. */
+    Set<BlockPos> toWalkInto();
+}

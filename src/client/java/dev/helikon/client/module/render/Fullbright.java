@@ -72,9 +72,8 @@ public final class Fullbright extends Module {
 
     /** Reasserts the local Night Vision visual after a server effect update. */
     public void tick() {
-        if (isEnabled() && nightVisionMode.value()) {
-            nightVision.apply();
-            nightVisionApplied = true;
+        if (isEnabled()) {
+            reconcile();
         }
     }
 

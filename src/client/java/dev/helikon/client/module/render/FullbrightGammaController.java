@@ -13,6 +13,9 @@ public final class FullbrightGammaController {
     /** Applies or removes the gamma override for the currently selected mode. */
     public void reconcile(GammaAccess gamma, boolean gammaMode, double brightness) {
         GammaAccess nonNullGamma = Objects.requireNonNull(gamma, "gamma");
+        if (!nonNullGamma.isAvailable()) {
+            return;
+        }
         if (gammaMode) {
             if (!applying) {
                 originalGamma = nonNullGamma.gamma();
@@ -28,7 +31,7 @@ public final class FullbrightGammaController {
     /** Restores exactly the gamma value that was present before the override. */
     public void restore(GammaAccess gamma) {
         GammaAccess nonNullGamma = Objects.requireNonNull(gamma, "gamma");
-        if (!applying) {
+        if (!applying || !nonNullGamma.isAvailable()) {
             return;
         }
 
@@ -42,6 +45,10 @@ public final class FullbrightGammaController {
 
     /** Thin platform port for Minecraft's client-side gamma option. */
     public interface GammaAccess {
+        default boolean isAvailable() {
+            return true;
+        }
+
         double gamma();
 
         void setGamma(double value);

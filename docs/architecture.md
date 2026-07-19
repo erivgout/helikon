@@ -122,11 +122,15 @@ or edits world state directly; server validation and correction remain in
 control. Optional local view rotation and hotbar selection use existing client
 state only.
 
-`BaritoneCompatibility` is a pure injected-predicate detector for the optional
-user-installed `baritone` Fabric mod ID. The entrypoint supplies Fabric's local
-mod lookup and logs the status. It makes no class reference to Baritone, uses
-no reflection, download, external service, or integration call, so Helikon
-continues unchanged whether that mod is absent or present.
+Baritone is a separately licensed, source-vendored component compiled into a
+distinct nested Fabric JAR. `BaritoneAccess` is Helikon's narrow command,
+settings, status, and path-snapshot boundary; `MinecraftBaritoneAccess` owns the
+direct API calls. `BaritoneNavigation` exposes those controls as an ordinary
+World module, while `MinecraftBaritoneVisualizationRenderer` translates its
+snapshots into Minecraft 26.2 gizmos. Focused Baritone mixins keep its tick
+hooks alive when a container or Helikon screen is open. The build records the
+upstream commits and ships the LGPL license and corresponding source. It
+performs no runtime download or Helikon service request.
 
 `CactusCollisionPolicy` owns finite-box intersection and deterministic
 horizontal-slide decisions without Minecraft imports. Its narrow adapter scans
@@ -527,15 +531,17 @@ same local server/world scope (while retaining its recorded dimension); the
 chat notifier displays it immediately. Neither creates a waypoint nor writes
 coordinate data to disk.
 
-`WaypointManager` follows the same atomic local-storage rules for
-`waypoints.json`. `WaypointContext`, `WaypointLocation`, and
-`WaypointNavigation` own validation, context filtering, distance ordering, and
-compass labels without Minecraft imports. `MinecraftWaypointLocationProvider`
-is the small 26.2 adapter that derives the current server/world directory,
-dimension identifier, and block position. `WaypointHud` only renders the
-nearest enabled entries for that current context; it caches a bounded nearest
-set until the player position, context, or waypoint revision changes. It
-neither sends waypoint data nor accesses storage during rendering.
+`WaypointManager` remains a read-only migration source for the former
+`waypoints.json` format. `BaritoneWaypointRepository` adapts Baritone's
+authoritative per-world/per-dimension collection to `WaypointRepository`, which
+is shared by Helikon's commands and HUD. `WaypointContext`,
+`WaypointLocation`, and `WaypointNavigation` own validation, context filtering,
+distance ordering, and compass labels without Minecraft imports.
+`MinecraftWaypointLocationProvider` derives the current scope, dimension, and
+block position. Migration waits until Baritone has opened its world data and
+does not replace a same-named entry. `WaypointHud` renders the nearest current
+Baritone entries and caches a bounded nearest set until position, context, or
+collection revision changes.
 
 `MacroManager` is another schema-versioned local store. `MacroAction` has a
 closed validated action set, and `MacroRunner` schedules at most one action per

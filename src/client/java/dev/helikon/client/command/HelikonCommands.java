@@ -14,7 +14,7 @@ import dev.helikon.client.input.Keybind;
 import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.privatechat.PrivateMessageHistory;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
-import dev.helikon.client.waypoint.WaypointManager;
+import dev.helikon.client.waypoint.WaypointRepository;
 
 import java.util.function.Predicate;
 
@@ -33,7 +33,7 @@ public final class HelikonCommands {
             ProfileManager profiles,
             ClickGuiWindowState clickGuiWindow,
             FriendManager friends,
-            WaypointManager waypoints,
+            WaypointRepository waypoints,
             WaypointLocationProvider waypointLocations,
             MacroManager macros,
             MacroRunner macroRunner,

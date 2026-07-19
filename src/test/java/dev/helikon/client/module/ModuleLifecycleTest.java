@@ -26,6 +26,38 @@ class ModuleLifecycleTest {
     }
 
     @Test
+    void stateChangeHandlersRunOncePerActualTransition() {
+        RecordingModule module = new RecordingModule();
+        ModuleRegistry registry = new ModuleRegistry();
+        registry.register(module);
+        java.util.List<Boolean> observedStates = new java.util.ArrayList<>();
+        registry.addStateChangeHandler((changedModule, enabled) -> {
+            assertEquals(module, changedModule);
+            observedStates.add(enabled);
+        });
+
+        registry.setEnabled(module, true);
+        registry.setEnabled(module, true);
+        registry.setEnabled(module, false);
+        registry.setEnabled(module, false);
+
+        assertEquals(java.util.List.of(true, false), observedStates);
+    }
+
+    @Test
+    void failingStateChangeHandlersCannotDisableTheModule() {
+        RecordingModule module = new RecordingModule();
+        ModuleRegistry registry = new ModuleRegistry();
+        registry.register(module);
+        registry.addStateChangeHandler((changedModule, enabled) -> {
+            throw new IllegalStateException("Expected listener failure");
+        });
+
+        assertTrue(registry.setEnabled(module, true));
+        assertTrue(module.isEnabled());
+    }
+
+    @Test
     void registryDisablesAModuleAfterItsEnableCallbackFails() {
         ModuleRegistry registry = new ModuleRegistry();
         FailingModule module = new FailingModule();

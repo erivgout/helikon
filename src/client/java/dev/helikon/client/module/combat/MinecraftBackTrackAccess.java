@@ -1,6 +1,7 @@
 package dev.helikon.client.module.combat;
 
 import dev.helikon.client.friend.FriendManager;
+import dev.helikon.client.entity.MinecraftEntityClassification;
 import dev.helikon.client.mixin.ClientboundMoveEntityPacketAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -14,7 +15,6 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -160,7 +160,7 @@ public final class MinecraftBackTrackAccess {
                 continue;
             }
             boolean isPlayer = living instanceof Player;
-            boolean isHostile = living instanceof Monster;
+            boolean isHostile = MinecraftEntityClassification.isHostile(living);
             boolean friend = isPlayer && isFriend((Player) living, friends);
             double distance = Math.sqrt(player.distanceToSqr(living));
             if (module.shouldDelay(isPlayer, isHostile, friend, distance)) {

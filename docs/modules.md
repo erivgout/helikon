@@ -177,6 +177,7 @@
 
 | ID | Category | Description | Settings | Limitation |
 | --- | --- | --- | --- | --- |
+| `baritone` | Dedicated Baritone section / World | Controls the embedded Baritone pathfinder from the ClickGUI and local commands. | `allow_break`, `allow_place`, `allow_sprint`, `allow_parkour`, `allow_inventory`, `hash_commands`, `render_path`, `render_goal`, `render_actions`, `render_through_walls`, path/goal/break/place/walk-into colors, `line_width`, `destination`, `mine_blocks`, `command`, plus go/mine/pause/resume/stop/run action buttons | Disabled by default. Current, next, and in-progress paths render through Minecraft 26.2 gizmos; composite mining goals and planned break/place/walk-into blocks are bounded and visible. It continues ticking with inventory/container or Helikon screens open. Disable, panic, and shutdown cancel active processes and release owned input. Acceptance: a real `goto` goal survives an open inventory, exposes renderable path/goal data, and cancels cleanly. Tests: `BaritoneCommandTest`, `BaritoneCompatibilityTest`, `MinecraftBaritoneVisualizationRendererTest`, and `HelikonClientGameTest`. |
 | `fast_place` | World | Lowers the ordinary local item-use cooldown while Use is held. | `use_delay`, `item_filter` (`all`, `blocks`, `non_blocks`), `safe_minimum_delay` | It only lowers a cooldown Minecraft has already created for a non-empty held item, and restores an unchanged module-owned cooldown immediately on disable or panic. It never generates uses, clicks, or packets; the server still controls all interaction rate limits. |
 | `fast_break` | World | Accelerates active local block damage and lowers the next-break delay. | `break_delay`, `speed_multiplier`, `blocks` | It acts only while Attack is held over the loaded visible breakable target Minecraft is already destroying. After vanilla's first progress step it invokes the same ordinary continue-destroy path up to four additional times (`speed_multiplier` 1–5), and lowers the ordinary post-break delay. The optional block filter is validated. It does not target blocks itself or fabricate packets; servers remain authoritative and may reject early completion or restore a client-predicted block. |
 | `nuker` | World | Makes a bounded set of ordinary destroy requests for filtered loaded blocks. | `radius`, `blocks_per_tick`, `require_attack_held`, `all_blocks`, `whitelist`, `blacklist`, `tool_selection`, `minimum_tool_durability`, `line_of_sight`, `rotate`, `safety_limit` | It is disabled by default, requires held Attack by default (the requirement can be turned off), requires no screen, measures radius from the player's feet so nearby floor blocks are included, and skips locally observed unbreakable blocks. A blank whitelist means all non-air blocks. The `all_blocks` checkbox targets every breakable non-air block regardless of the whitelist (which it hides while on); the blacklist always excludes matches. Creative mode caps requests at two per tick; survival mode continues one ordinary target at a time so mining progress is retained. With line of sight on, it ray-checks only the 32 nearest eligible blocks per tick. It uses Minecraft's normal destroy path and optional existing-hotbar selection; the server can reject attempts or correct client prediction. |
@@ -333,12 +334,13 @@ friend-exclusion policy when those modules are introduced.
 ## Waypoints
 
 `.waypoint add <name>` saves the current block position; supplying `x y z`
-saves manual coordinates in the currently loaded server/world and dimension.
-`.waypoint list` orders enabled local entries by distance and reports a compass
-direction. Waypoints can be removed, renamed, toggled, recolored, or given a
-small optional icon token with local commands. The minimal Waypoints HUD shows
-up to three nearest enabled entries with distance and direction, and hides
-entries from any other server/world or dimension.
+saves manual coordinates in Baritone's current world/dimension collection.
+`.waypoint list` orders Baritone user/home/death/bed entries by distance and
+reports a compass direction. Helikon can add, remove, and rename those entries;
+the rest of Baritone's waypoint commands remain available through `#waypoint`
+or the Baritone GUI command field. The Waypoints HUD shows up to three nearest
+entries and never mixes dimensions. Legacy Helikon entries are imported once
+the Baritone world collection becomes ready.
 
 Death and logout coordinates are now separate enabled-only session snapshots;
 they deliberately do not create automatic waypoints. The first HUD indicator

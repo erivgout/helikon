@@ -2,8 +2,8 @@ package dev.helikon.client.hud;
 
 import dev.helikon.client.waypoint.WaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointLocation;
-import dev.helikon.client.waypoint.WaypointManager;
 import dev.helikon.client.waypoint.WaypointNavigation;
+import dev.helikon.client.waypoint.WaypointRepository;
 import dev.helikon.client.panic.PanicState;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.DeltaTracker;
@@ -18,7 +18,7 @@ import java.util.Objects;
 public final class WaypointHud implements HudElement {
     private static final int MAX_LINES = 3;
 
-    private final WaypointManager waypoints;
+    private final WaypointRepository waypoints;
     private final WaypointLocationProvider locations;
     private final PanicState panicState;
     private final HudLayout layout;
@@ -26,15 +26,15 @@ public final class WaypointHud implements HudElement {
     private long cachedRevision = Long.MIN_VALUE;
     private List<WaypointNavigation.LocatedWaypoint> cachedNearest = List.of();
 
-    public WaypointHud(WaypointManager waypoints, WaypointLocationProvider locations) {
+    public WaypointHud(WaypointRepository waypoints, WaypointLocationProvider locations) {
         this(waypoints, locations, new PanicState());
     }
 
-    public WaypointHud(WaypointManager waypoints, WaypointLocationProvider locations, PanicState panicState) {
+    public WaypointHud(WaypointRepository waypoints, WaypointLocationProvider locations, PanicState panicState) {
         this(waypoints, locations, panicState, new HudLayout());
     }
 
-    public WaypointHud(WaypointManager waypoints, WaypointLocationProvider locations, PanicState panicState,
+    public WaypointHud(WaypointRepository waypoints, WaypointLocationProvider locations, PanicState panicState,
                        HudLayout layout) {
         this.waypoints = Objects.requireNonNull(waypoints, "waypoints");
         this.locations = Objects.requireNonNull(locations, "locations");

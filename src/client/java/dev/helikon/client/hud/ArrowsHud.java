@@ -1,6 +1,7 @@
 package dev.helikon.client.hud;
 
 import dev.helikon.client.friend.FriendManager;
+import dev.helikon.client.entity.MinecraftEntityClassification;
 import dev.helikon.client.module.render.Arrows;
 import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.render.ArrowGeometry;
@@ -13,7 +14,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
@@ -97,7 +97,7 @@ public final class ArrowsHud implements HudElement {
         if (entity instanceof Player) {
             return EntityRenderFilter.EntityType.PLAYER;
         }
-        if (entity instanceof Monster) {
+        if (MinecraftEntityClassification.isHostile(entity)) {
             return EntityRenderFilter.EntityType.HOSTILE;
         }
         if (entity instanceof ItemEntity) {

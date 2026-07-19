@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BetterNametagTextTest {
     private static final BetterNametagText.Facts FACTS =
@@ -53,6 +55,23 @@ class BetterNametagTextTest {
         assertEquals(3, BetterNametagText.stackOffset(0, 4));
         assertEquals(0, BetterNametagText.stackOffset(3, 4));
         assertEquals(0, BetterNametagText.stackOffset(0, 1));
+    }
+
+    @Test
+    void leavesAVisibleGapBetweenEveryRenderedRow() {
+        double glyphHeight = BetterNametagText.worldLineSpacing(0.32F, 9, 0);
+        double rowSpacing = BetterNametagText.worldLineSpacing(0.32F, 9, 2);
+
+        assertEquals(0.18D, glyphHeight, 0.000_001D);
+        assertEquals(0.22D, rowSpacing, 0.000_001D);
+        assertTrue(rowSpacing > glyphHeight);
+    }
+
+    @Test
+    void rejectsInvalidLineLayoutInputs() {
+        assertThrows(IllegalArgumentException.class, () -> BetterNametagText.worldLineSpacing(0.0F, 9, 2));
+        assertThrows(IllegalArgumentException.class, () -> BetterNametagText.worldLineSpacing(0.32F, 0, 2));
+        assertThrows(IllegalArgumentException.class, () -> BetterNametagText.worldLineSpacing(0.32F, 9, -1));
     }
 
     @Test

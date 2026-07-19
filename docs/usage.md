@@ -83,10 +83,9 @@ sent to the server:
 | `.profile import <file> <name>` / `.profile export <name> <file>` | Imports from `imports/` or exports to `exports/` below the Helikon config directory. |
 | `.friend list\|add\|remove <player>` | Lists or changes local player-name friends. |
 | `.friend color <player> <#RRGGBB\|#AARRGGBB>` | Sets the local friend render color. |
-| `.waypoint list` | Lists local waypoints for the current world and dimension by distance. |
-| `.waypoint add <name> [x y z]` | Saves the current location or supplied coordinates locally. |
-| `.waypoint remove <name>` / `.waypoint rename <from> <to>` | Deletes or renames a local waypoint here. |
-| `.waypoint toggle\|color\|icon <name> ...` | Changes a waypoint's local visibility, color, or optional icon token. |
+| `.waypoint list` | Lists Baritone waypoints for the current world and dimension by distance. |
+| `.waypoint add <name> [x y z]` | Saves the current location or supplied coordinates to Baritone's current-world collection. |
+| `.waypoint remove <name>` / `.waypoint rename <from> <to>` | Deletes or renames a Baritone waypoint here. |
 | `.macro list` / `.macro create <name> [global\|server]` | Lists or creates a local macro. |
 | `.macro add <name> <local\|chat\|command\|delay> <text\|ticks>` | Adds one explicit, bounded macro action. |
 | `.macro show\|clear\|scope\|delete <name> ...` | Inspects or changes a stored local macro. |
@@ -95,9 +94,19 @@ sent to the server:
 | `.reply <message>` / `.reply history [player]` | Sends one validated normal server reply or views the same local history. Prefix a literal `history` reply with `--`. |
 | `.chat search <text>` / `.chat copy <newest-index>` / `.chat history [count]` | Searches, explicitly copies, or lists bounded local BetterChat display history while BetterChat is enabled. |
 | `.history search <text>` / `.history copy\|player\|reopen <newest-index>` / `.history list [count]` | Searches or lists ChatHistory entries, copies a retained message/player name, or reopens a sent line as an unsent local draft. |
+| `.baritone status` | Shows whether the embedded pathfinder is enabled, pathing, paused, or idle and describes its goal. |
+| `.baritone goto <x> <y> <z>` / `.baritone mine <block...>` | Enables Baritone and runs a destination or mining command locally. Other Baritone commands can follow the same prefix. |
+| `.baritone stop` | Cancels all active Baritone processes and releases movement input. |
 | `.panic` | Disables modules, hides custom HUD for this session, and closes Helikon GUI screens. |
 | `.panic bind <key>` / `.panic unbind` | Configures or clears the local persisted panic keyboard/mouse bind. |
 | `.panic status` / `.panic restorehud` | Shows the bind or restores HUD visibility without re-enabling modules. |
+
+The dedicated **Baritone** sidebar section contains pathing permissions,
+path/goal/break/place/walk-into visualization controls, destination and mine
+shortcuts, pause/resume/stop, and a generic command field for the complete
+Baritone command surface. If `# commands` is enabled, Baritone's normal local
+`#` prefix is also accepted. Do not install a second standalone Baritone JAR
+beside Helikon.
 
 ## Keybinds
 
@@ -120,7 +129,8 @@ recovery:
 - `global.json` — module state, settings, ClickGUI window and theme.
 - `hud.json` — HUD layout.
 - `friends.json` — local friend names and colors.
-- `waypoints.json` — local waypoints scoped per server/world and dimension.
+- `waypoints.json` — legacy Helikon waypoint input retained for one-way
+  migration into Baritone; live waypoint writes use Baritone's world data.
 - `macros.json` — explicit local macros (no scripting or code execution).
 - `panic.json` — the optional panic keybind.
 - `chat-history/` — opt-in ChatHistory logs (hashed per-server filenames,

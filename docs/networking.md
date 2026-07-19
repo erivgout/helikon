@@ -85,8 +85,10 @@ default, requires an explicit whitelist plus held Attack, scans only loaded
 blocks within Minecraft's existing interaction range, and caps itself at two
 calls to Minecraft's normal `startDestroyBlock` path per tick. Neither builds,
 modifies, or replays a packet; a server decides whether each ordinary destroy
-attempt succeeds and can correct client prediction. Baritone compatibility is
-only a local Fabric mod-ID check and sends nothing.
+attempt succeeds and can correct client prediction. Embedded Baritone computes
+routes locally and adds no external network request; its ordinary movement,
+mining, placement, and inventory actions travel only over Minecraft's existing
+connection to the selected server, which remains authoritative.
 
 AutoEat only selects an existing local hotbar slot and holds Minecraft's
 ordinary local Use binding. It never directly invokes, repeats, or fabricates

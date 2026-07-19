@@ -3,7 +3,7 @@ package dev.helikon.client.integration;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-/** Detects a user-installed Baritone without loading, bundling, or invoking its classes. */
+/** Confirms that Fabric Loader discovered Helikon's embedded Baritone mod. */
 public final class BaritoneCompatibility {
     public static final String MOD_ID = "baritone";
 
@@ -21,7 +21,7 @@ public final class BaritoneCompatibility {
     public static Status detect(Predicate<String> installedMod) {
         boolean detected = Objects.requireNonNull(installedMod, "installedMod").test(MOD_ID);
         return new Status(detected, detected
-                ? "User-installed Baritone detected; Helikon keeps its integration optional and inactive."
-                : "Baritone is not installed; Helikon needs no optional integration.");
+                ? "Embedded Baritone loaded; Helikon pathfinding integration is available."
+                : "Embedded Baritone was not discovered; pathfinding controls are unavailable.");
     }
 }

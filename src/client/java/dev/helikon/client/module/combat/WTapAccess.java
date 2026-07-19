@@ -1,12 +1,12 @@
 package dev.helikon.client.module.combat;
 
 import dev.helikon.client.combat.CombatEntityType;
+import dev.helikon.client.entity.MinecraftEntityClassification;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.module.movement.MovementInput;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.entity.player.Player;
 
@@ -68,7 +68,7 @@ public final class WTapAccess {
         if (entity instanceof Player) {
             return CombatEntityType.PLAYER;
         }
-        if (entity instanceof Monster) {
+        if (MinecraftEntityClassification.isHostile(entity)) {
             return CombatEntityType.HOSTILE;
         }
         return CombatEntityType.PASSIVE;

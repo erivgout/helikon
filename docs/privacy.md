@@ -77,8 +77,10 @@ FastBreak retains only an in-progress client cooldown value so it can restore
 an unchanged value on disable. Nuker retains only the current small loaded
 target list and a temporary hotbar-slot ownership record; neither writes block
 positions, block IDs, tool choices, or break history to disk or transmits them.
-Baritone compatibility checks one local installed-mod ID and retains no mod
-metadata or cross-mod state.
+Embedded Baritone stores its settings and bounded world/path caches locally in
+the game directory. Routes, goals, block selections, and inventory observations
+are not sent to Helikon or any external service. Its gameplay actions use only
+Minecraft's existing connection to the selected server.
 
 Advanced movement keeps only transient local input, velocity, camera, ability,
 and Elytra status needed for the current session. Freecam's temporary camera

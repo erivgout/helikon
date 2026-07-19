@@ -18,6 +18,10 @@ branding, or configuration formats from that or any other project.
 - **Player automation** — AutoEat, AutoTool, AutoArmor, AutoTotem, AutoFish,
   AutoEject, AutoPotion, AutoReconnect, InventoryManager, ChestSteal,
   BuilderAssist, Nuker.
+- **World navigation** — an embedded, source-vendored Baritone 1.15.0 port
+  with its own persistent ClickGUI section, full command field, visible
+  path/goal/block-action rendering, Baritone-backed waypoints, mining,
+  exploration, following, farming, and building commands.
 - **Chat** — BetterChat, ChatFilter, ChatMute, ChatColor, ChatTimestamps,
   ChatHistory, ChatSpammer, ChatPrefix/Suffix, MentionNotifier, AutoReply,
   Announcer, AntiSpam, PrivateMessageHelper, LocalTranslator.
@@ -45,7 +49,8 @@ editor, keybind, and dot-command reference.
 1. Install [Fabric Loader](https://fabricmc.net/use/) 0.19.3 or newer for
    Minecraft Java Edition 26.2.
 2. Place the Fabric API JAR and the built `helikon-<version>.jar` into your
-   `.minecraft/mods` folder.
+   `.minecraft/mods` folder. Do not install a second standalone Baritone JAR;
+   Helikon already embeds it.
 3. Launch the Fabric profile. Press **Right Shift** in game to open the
    ClickGUI, or type `.help` in chat for the local command list.
 
@@ -74,14 +79,16 @@ See [privacy.md](docs/privacy.md) and [networking.md](docs/networking.md).
 .\gradlew.bat check releaseBundle  # tests, checks, and auditable release zip
 ```
 
-The release bundle in `build/releases` contains the JAR, sources, SHA-256
-checksums, and the resolved dependency report. See
+The build automatically compiles the separately licensed source under
+`vendor/baritone`; it does not download a Baritone binary. The release bundle
+in `build/releases` contains the JAR, Helikon and Baritone sources and licenses,
+SHA-256 checksums, and the resolved dependency report. See
 [release.md](docs/release.md) for the release gate and
 [security-review.md](docs/security-review.md) for its security review scope.
 
 ## Status
 
-`1.1.6` is the current stable release. The automated test suite, style and
+`1.2.1` is the current stable release. The automated test suite, style and
 client-only architecture checks, and Fabric client game tests pass. The
 additional live-client smoke checklists in [testing.md](docs/testing.md) remain
 recommended for real-world testing on a disposable profile.
@@ -100,4 +107,7 @@ roadmap and policies live in [PLAN.md](PLAN.md) and [RULES.md](RULES.md).
 
 ## License
 
-Helikon is released under the [MIT License](LICENSE).
+Helikon's original code is released under the [MIT License](LICENSE). The
+embedded Baritone component is separately licensed under LGPL-3.0; its
+license, provenance, and port notes are in
+[`vendor/baritone/HELIKON_PORT.md`](vendor/baritone/HELIKON_PORT.md).

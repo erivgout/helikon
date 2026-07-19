@@ -113,7 +113,7 @@ files become `friends.corrupt-<timestamp>.json`. Nothing in this store is sent
 to Minecraft servers or an external service. Case-insensitive duplicate names
 are invalid persisted data and recover through the same corrupt-file path.
 
-Waypoints live in schema-versioned `waypoints.json`. Every entry has a
+Legacy Helikon waypoints live in schema-versioned `waypoints.json`. Every entry has a
 validated name, coordinates, local `server:` or `world:` scope, dimension,
 ARGB color, optional icon token, enabled state, and creation timestamp. Names
 only need to be unique case-insensitively within the same scope and dimension,
@@ -122,6 +122,10 @@ so `Home` can exist separately in the Overworld and Nether. Writes use
 `waypoints.corrupt-<timestamp>.json`. Waypoints are never synchronized or sent
 to a Minecraft server. Command mutations roll back in memory if their atomic
 save fails, so a failed add or edit is never later persisted unexpectedly.
+At runtime, Baritone's per-world/per-dimension waypoint collection is the
+authoritative store. Once that collection is ready, valid legacy entries are
+imported without replacing same-named Baritone entries. New Helikon waypoint
+commands and the Waypoints HUD read and write that Baritone collection.
 
 Macros live in schema-versioned `macros.json`. A macro has a safe local name,
 an optional normalized multiplayer-server restriction, and up to 64 explicit

@@ -6,6 +6,7 @@ import dev.helikon.client.command.ChatHistoryCommand;
 import dev.helikon.client.command.CommandDispatcher;
 import dev.helikon.client.command.HelikonCommands;
 import dev.helikon.client.command.BetterChatCommand;
+import dev.helikon.client.command.BaritoneCommand;
 import dev.helikon.client.command.MinecraftChatInputReopener;
 import dev.helikon.client.command.ScheduledChatInputReopener;
 import dev.helikon.client.command.MinecraftTextClipboard;
@@ -43,6 +44,7 @@ import dev.helikon.client.event.RenderEvent;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.friend.FriendToggleGesture;
 import dev.helikon.client.integration.BaritoneCompatibility;
+import dev.helikon.client.integration.MinecraftBaritoneAccess;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
 import dev.helikon.client.gui.GameplayScreenPolicy;
@@ -273,6 +275,7 @@ import dev.helikon.client.module.chat.LocalTranslator;
 import dev.helikon.client.module.world.FastPlace;
 import dev.helikon.client.module.world.FastBreak;
 import dev.helikon.client.module.world.BuilderAssist;
+import dev.helikon.client.module.world.BaritoneNavigation;
 import dev.helikon.client.module.world.AntiCactus;
 import dev.helikon.client.module.world.AntiCactusAccess;
 import dev.helikon.client.module.world.BlockSelection;
@@ -355,9 +358,11 @@ import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.privatechat.PrivateMessageHistory;
 import dev.helikon.client.privatechat.PrivateMessageRecognizer;
 import dev.helikon.client.render.MinecraftWorldVisualizationRenderer;
+import dev.helikon.client.render.MinecraftBaritoneVisualizationRenderer;
 import dev.helikon.client.render.LocalCapeRenderer;
 import dev.helikon.client.render.MinecraftXRayRendererInvalidator;
 import dev.helikon.client.waypoint.MinecraftWaypointLocationProvider;
+import dev.helikon.client.waypoint.BaritoneWaypointRepository;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
 import dev.helikon.client.waypoint.WaypointManager;
 import net.fabricmc.api.ClientModInitializer;
@@ -451,8 +456,10 @@ public final class HelikonClient implements ClientModInitializer {
     private final PanicConfigurationManager panicConfiguration = new PanicConfigurationManager(
             FabricLoader.getInstance().getConfigDir().resolve(MOD_ID), HelikonKeybinds::isGuiKey
     );
-    private final WaypointManager waypoints = new WaypointManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
     private final WaypointLocationProvider waypointLocations = new MinecraftWaypointLocationProvider();
+    private final WaypointManager legacyWaypoints = new WaypointManager(
+            FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
+    private final BaritoneWaypointRepository waypoints = new BaritoneWaypointRepository(waypointLocations);
     private final MacroManager macros = new MacroManager(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID));
     private final ChatHistoryManager chatHistory = new ChatHistoryManager(
             FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
@@ -483,6 +490,8 @@ public final class HelikonClient implements ClientModInitializer {
     private ServerData lastConnectedServer;
     private boolean reconnectAttemptInFlight;
     private boolean autoLeaveDisconnectInFlight;
+    private boolean moduleStateSavePending;
+    private boolean waypointMigrationPending;
 
     /** The live registry, exposed only for client gametests; null before client init. */
     public static ModuleRegistry activeModuleRegistry() {
@@ -695,6 +704,7 @@ public final class HelikonClient implements ClientModInitializer {
         Nuker nuker = new Nuker();
         ChestSteal chestSteal = new ChestSteal();
         BuilderAssist builderAssist = new BuilderAssist();
+        BaritoneNavigation baritoneNavigation = new BaritoneNavigation(new MinecraftBaritoneAccess());
         AirPlace airPlace = new AirPlace();
         AntiCactus antiCactus = new AntiCactus();
         BlockSelection blockSelection = new BlockSelection();
@@ -883,6 +893,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(nuker);
         modules.register(chestSteal);
         modules.register(builderAssist);
+        modules.register(baritoneNavigation);
         modules.register(airPlace);
         modules.register(antiCactus);
         modules.register(blockSelection);
@@ -1290,6 +1301,7 @@ public final class HelikonClient implements ClientModInitializer {
             modules.enableDefaultModules();
         }
         applyStartupProfile();
+        modules.addStateChangeHandler((module, enabled) -> moduleStateSavePending = true);
         hudConfiguration.load(hudLayout);
         try {
             friends.load();
@@ -1297,9 +1309,9 @@ public final class HelikonClient implements ClientModInitializer {
             LOGGER.log(Level.WARNING, "Unable to load friends; continuing with an empty local friend list", exception);
         }
         try {
-            waypoints.load();
+            legacyWaypoints.load();
         } catch (ConfigurationException exception) {
-            LOGGER.log(Level.WARNING, "Unable to load waypoints; continuing with an empty local waypoint list", exception);
+            LOGGER.log(Level.WARNING, "Unable to read legacy Helikon waypoints for Baritone migration", exception);
         }
         try {
             macros.load();
@@ -1322,6 +1334,7 @@ public final class HelikonClient implements ClientModInitializer {
         commands.register(new ChatHistoryCommand(chatHistoryModule, chatHistory, new MinecraftTextClipboard(),
                 new ScheduledChatInputReopener(new MinecraftChatInputReopener(), pendingScreenAction::set)));
         commands.register(new dev.helikon.client.command.TacoCommand());
+        commands.register(new BaritoneCommand(modules, baritoneNavigation));
         ChatCommands.register(commands, notifier);
         OutgoingChatFormatter outgoingChat = new OutgoingChatFormatter(chatPrefix, chatSuffix, fancyChat,
                 () -> macroServerContext.currentServerAddress().orElse(null),
@@ -1380,10 +1393,12 @@ public final class HelikonClient implements ClientModInitializer {
             AnnouncerAccess.enqueue(AnnouncementTrigger.JOIN, "joined the world");
             chatHistory.switchScope(chatHistoryModule, currentChatHistoryScope());
             applyProfileForConnection(client);
+            waypointMigrationPending = true;
             events.post(new WorldEvent(WorldEvent.Phase.JOIN, serverAddress(lastConnectedServer)));
             modules.runGuarded(autoReconnect, "connect", autoReconnect::onConnected);
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            waypointMigrationPending = false;
             waypointLocations.currentLocation().ifPresent(coordinateTracker::observe);
             modules.runGuarded(logoutCoordinates, "record", () -> logoutCoordinates.record(coordinateTracker)
                     .ifPresent(entry -> notifier.info(entry.displayText())));
@@ -1493,6 +1508,18 @@ public final class HelikonClient implements ClientModInitializer {
             events.post(new ClientTickEvent(ClientTickEvent.Phase.POST));
             BetterChatDisplayAccess.tickSmoothScroll();
             worldVisuals.tick(client);
+            baritoneNavigation.tick();
+            // Minecraft 26.2 wraps the entire client tick in its per-tick
+            // gizmo collector. Submit Baritone's live route here so those
+            // gizmos are drained and transferred to the following frame.
+            MinecraftBaritoneVisualizationRenderer.render(baritoneNavigation);
+            if (waypointMigrationPending && waypoints.isReadyForCurrentWorld()) {
+                int migratedWaypoints = waypoints.migrateCurrent(legacyWaypoints.list());
+                waypointMigrationPending = false;
+                if (migratedWaypoints > 0) {
+                    LOGGER.info("Migrated " + migratedWaypoints + " legacy Helikon waypoint(s) into Baritone.");
+                }
+            }
             debugOverlayHud.tick();
 
             boolean anyScreenOpen = screenWasOpenAtTickStart || client.gui.screen() != null;
@@ -1510,6 +1537,7 @@ public final class HelikonClient implements ClientModInitializer {
                     INPUT_READER,
                     anyScreenOpen || panicTriggered
             );
+            savePendingModuleState();
             toggleFriendOnMiddleClick(client, oneClickFriends);
             tickMacro(client);
 
@@ -1518,7 +1546,10 @@ public final class HelikonClient implements ClientModInitializer {
                 screenAction.run();
             }
         });
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> saveConfigurations());
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+            baritoneNavigation.shutdown();
+            saveConfigurations();
+        });
 
         BaritoneCompatibility.Status baritoneStatus = BaritoneCompatibility.detect(
                 modId -> FabricLoader.getInstance().isModLoaded(modId));
@@ -2236,11 +2267,6 @@ public final class HelikonClient implements ClientModInitializer {
             LOGGER.log(Level.WARNING, "Unable to save friends while stopping", exception);
         }
         try {
-            waypoints.save();
-        } catch (ConfigurationException exception) {
-            LOGGER.log(Level.WARNING, "Unable to save waypoints while stopping", exception);
-        }
-        try {
             macros.save();
         } catch (ConfigurationException exception) {
             LOGGER.log(Level.WARNING, "Unable to save macros while stopping", exception);
@@ -2254,6 +2280,23 @@ public final class HelikonClient implements ClientModInitializer {
             panicConfiguration.save(panicKeybinds);
         } catch (ConfigurationException exception) {
             LOGGER.log(Level.WARNING, "Unable to save panic keybind while stopping", exception);
+        }
+    }
+
+    /**
+     * Persists toggles on the next client tick instead of waiting for shutdown.
+     * Multiple transitions in one tick (such as panic or safety shutdown) are
+     * intentionally collapsed into a single atomic configuration write.
+     */
+    private void savePendingModuleState() {
+        if (!moduleStateSavePending) {
+            return;
+        }
+        moduleStateSavePending = false;
+        try {
+            configuration.save(modules, clickGuiWindow);
+        } catch (ConfigurationException exception) {
+            LOGGER.log(Level.WARNING, "Unable to autosave Helikon module state", exception);
         }
     }
 

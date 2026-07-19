@@ -49,7 +49,13 @@ though a server's anti-cheat may flag or reject it.
 - Use client entrypoints only and declare the Fabric mod environment as `client`.
 - Do not register server commands, change dedicated-server startup, require a server installation, or require a Helikon server plugin.
 - The mod must remain useful offline, aside from normal Minecraft multiplayer connectivity.
-- Support optional compatibility with third-party mods only when those mods are already installed locally by the user. Do not bundle or download them.
+- Do not download third-party mods at runtime. A specifically approved,
+  source-vendored component may be bundled when its license permits
+  redistribution, its exact provenance and local modifications are recorded,
+  its corresponding source and license ship with every binary release, and it
+  remains inside the client-only/no-backend boundary. Baritone is the sole
+  currently approved bundled component. Other optional compatibility mods must
+  already be installed locally by the user.
 
 ## 4. Backend, networking, and privacy rules
 

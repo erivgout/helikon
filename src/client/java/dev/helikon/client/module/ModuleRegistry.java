@@ -24,6 +24,7 @@ public final class ModuleRegistry {
     private final Map<String, Module> modules = new LinkedHashMap<>();
     private final Map<String, Long> activationOrders = new LinkedHashMap<>();
     private final List<ModuleFailureHandler> failureHandlers = new ArrayList<>();
+    private final List<ModuleStateChangeHandler> stateChangeHandlers = new ArrayList<>();
     private final Set<String> activeFailureEpisodes = ConcurrentHashMap.newKeySet();
     private long nextActivationOrder;
     private volatile ModuleTimingMetrics timingMetrics;
@@ -67,11 +68,13 @@ public final class ModuleRegistry {
             } else {
                 module.disable();
             }
-            return module.isEnabled() == shouldEnable;
         } catch (RuntimeException exception) {
             isolateFailure(module, operation, exception);
+            notifyStateChange(module, wasEnabled);
             return false;
         }
+        notifyStateChange(module, wasEnabled);
+        return module.isEnabled() == shouldEnable;
     }
 
     public boolean toggle(Module module) {
@@ -143,6 +146,11 @@ public final class ModuleRegistry {
         failureHandlers.add(Objects.requireNonNull(handler, "handler"));
     }
 
+    /** Observes successful state transitions so callers can persist them without polling every module. */
+    public void addStateChangeHandler(ModuleStateChangeHandler handler) {
+        stateChangeHandlers.add(Objects.requireNonNull(handler, "handler"));
+    }
+
     /** Installs optional local diagnostics; measurement remains inactive until its module enables recording. */
     public void setTimingMetrics(ModuleTimingMetrics timingMetrics) {
         this.timingMetrics = Objects.requireNonNull(timingMetrics, "timingMetrics");
@@ -182,5 +190,23 @@ public final class ModuleRegistry {
                 }
             }
         }
+    }
+
+    private void notifyStateChange(Module module, boolean previousState) {
+        if (module.isEnabled() == previousState) {
+            return;
+        }
+        for (ModuleStateChangeHandler handler : List.copyOf(stateChangeHandlers)) {
+            try {
+                handler.onStateChanged(module, module.isEnabled());
+            } catch (RuntimeException exception) {
+                LOGGER.log(Level.WARNING, "Module state-change handler threw an exception", exception);
+            }
+        }
+    }
+
+    @FunctionalInterface
+    public interface ModuleStateChangeHandler {
+        void onStateChanged(Module module, boolean enabled);
     }
 }

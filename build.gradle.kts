@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.bundling.Zip
+import org.gradle.api.tasks.Exec
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import groovy.json.JsonSlurper
 import java.security.MessageDigest
@@ -14,6 +15,37 @@ group = property("maven_group") as String
 
 base {
     archivesName.set(property("archive_base_name") as String)
+}
+
+val embeddedBaritoneVersion = "1.15.0-helikon.26.2.0"
+val embeddedBaritoneDirectory = layout.projectDirectory.dir("vendor/baritone")
+val embeddedBaritoneJar = embeddedBaritoneDirectory.file(
+    "fabric/build/libs/baritone-fabric-$embeddedBaritoneVersion.jar"
+)
+val java25Launcher = javaToolchains.launcherFor {
+    languageVersion.set(JavaLanguageVersion.of(25))
+}
+val buildEmbeddedBaritone = tasks.register<Exec>("buildEmbeddedBaritone") {
+    group = "build"
+    description = "Builds the separately licensed Baritone component embedded in Helikon."
+    workingDir(embeddedBaritoneDirectory)
+    val wrapper = if (System.getProperty("os.name").lowercase().contains("windows")) {
+        "gradlew.bat"
+    } else {
+        "./gradlew"
+    }
+    commandLine(wrapper, ":fabric:remapJar", "--console=plain")
+    environment("JAVA_HOME", java25Launcher.map { it.metadata.installationPath.asFile.absolutePath }.get())
+    inputs.files(fileTree(embeddedBaritoneDirectory) {
+        exclude("**/.gradle/**", "**/build/**")
+    })
+    outputs.file(embeddedBaritoneJar)
+}
+
+repositories {
+    flatDir {
+        dirs(embeddedBaritoneDirectory.dir("fabric/build/libs"))
+    }
 }
 
 sourceSets.create("gametest")
@@ -46,6 +78,8 @@ dependencies {
     minecraft("com.mojang:minecraft:${property("minecraft_version")}")
     implementation("net.fabricmc:fabric-loader:${property("loader_version")}")
     implementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_api_version")}")
+    add("clientImplementation", "baritone:baritone-fabric:$embeddedBaritoneVersion")
+    add("include", "baritone:baritone-fabric:$embeddedBaritoneVersion")
 
     testImplementation("org.junit.jupiter:junit-jupiter:${property("junit_version")}")
     testImplementation("com.google.code.gson:gson:${property("gson_version")}")
@@ -71,6 +105,14 @@ tasks.processResources {
     }
 }
 
+tasks.named("compileClientJava") {
+    dependsOn(buildEmbeddedBaritone)
+}
+
+tasks.matching { it.name == "processIncludeJars" }.configureEach {
+    dependsOn(buildEmbeddedBaritone)
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.release.set(25)
 }
@@ -85,9 +127,14 @@ tasks.test {
 }
 
 tasks.jar {
+    dependsOn(buildEmbeddedBaritone)
     from("LICENSE") {
         rename { "${it}_${project.name}" }
     }
+    from("vendor/baritone/LICENSE") {
+        rename { "LICENSE_baritone" }
+    }
+    from("vendor/baritone/HELIKON_PORT.md")
 }
 
 val helikonReports = layout.buildDirectory.dir("reports/helikon")
@@ -157,6 +204,7 @@ val verifyClientOnlyArchitecture = tasks.register("verifyClientOnlyArchitecture"
 val generateDependencyReport = tasks.register("generateDependencyReport") {
     group = "reporting"
     description = "Writes the resolved client runtime dependency artifact list."
+    dependsOn(buildEmbeddedBaritone)
     inputs.files(clientRuntimeClasspath)
     inputs.property("releaseVersion", provider { project.version.toString() })
     outputs.file(dependencyReport)
@@ -208,6 +256,19 @@ tasks.register<Zip>("releaseBundle") {
     from(checksumFile) { into("reports") }
     from(dependencyReport) { into("reports") }
     from("LICENSE", "README.md", "CHANGELOG.md")
+    from("vendor/baritone/LICENSE") {
+        into("licenses/baritone")
+    }
+    from("vendor/baritone/LICENSE-Part-2.jpg") {
+        into("licenses/baritone")
+    }
+    from("vendor/baritone/HELIKON_PORT.md") {
+        into("licenses/baritone")
+    }
+    from("vendor/baritone") {
+        into("source/baritone")
+        exclude("**/.gradle/**", "**/build/**", ".idea/**")
+    }
     from("docs/security-review.md") { into("docs") }
     from("docs/release.md") { into("docs") }
 }

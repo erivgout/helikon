@@ -1,6 +1,6 @@
 # Release process
 
-The current version is `1.1.6`. Tagged `v*` commits are built and published by
+The current version is `1.2.1`. Tagged `v*` commits are built and published by
 the GitHub release workflow after its checks pass.
 
 ## Build the bundle
@@ -10,7 +10,8 @@ the GitHub release workflow after its checks pass.
 ```
 
 The resulting archive in `build/releases/` contains the distributable JAR(s),
-sources, `LICENSE`, `README`, `CHANGELOG`, SHA-256 checksums, and the resolved
+Helikon and Baritone corresponding source, both projects' licenses and
+provenance notes, `README`, `CHANGELOG`, SHA-256 checksums, and the resolved
 client runtime dependency report. Verify the checksum sidecar before sharing a
 binary.
 

@@ -26,7 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /** Local, schema-versioned waypoint store with atomic writes and recovery. */
-public final class WaypointManager {
+public final class WaypointManager implements WaypointRepository {
     public static final int SCHEMA_VERSION = 1;
     private static final int MAX_WAYPOINTS = 512;
     private static final Logger LOGGER = Logger.getLogger(WaypointManager.class.getName());

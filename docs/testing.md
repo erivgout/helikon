@@ -682,6 +682,18 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     enabled low-health or dangerous-fall condition. Disable each condition in
     turn to verify it cannot leave, and verify it never leaves a local world or
     causes **AutoReconnect** to rejoin after its intentional leave.
+    On a private or explicitly permitted server with a cooperating second
+    player, give the local player ordinary allowed blocks and enable **Domain
+    Expansion**. Verify Manual and Automatic Proximity select only an eligible
+    non-friend survival target, keep both players inside one padded bounded
+    arena, prioritize lower/escape-side walls, reuse existing solid terrain,
+    confirm normal placements before advancing, close the roof, and restore the
+    original slot/rotation after completion or cancellation. Repeat with
+    insufficient blocks, an unloaded boundary, missing support, a rejected
+    placement, a moving/escaping target, a local player beside the planned
+    wall, and Manual Final Seal. Confirm no block intersects either player,
+    retries/cooldowns stay bounded, the plan/HUD states are distinct, and every
+    result remains subject to normal server placement reach and authority.
     Verify **TargetHUD** shows only local crosshair/attack facts and
     **ReachDisplay** reports only a measured Helikon attack request distance.
     Finally toggle **AntiBot** options with a test player/list state and verify

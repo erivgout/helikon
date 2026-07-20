@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 1.3.0 - 2026-07-20
+
+- Adds **Domain Expansion**, a client-side Combat module that constructs one
+  bounded rectangular arena around the local player and a nearby enemy using
+  ordinary server-authoritative block placements. It includes manual and
+  proximity activation, friend/game-mode filtering, padded dimension limits,
+  escape-aware wall ordering, roof/floor plans, terrain reuse, placement
+  confirmation and bounded retries, allowed-block inventory policy, reversible
+  slot/rotation ownership, early target recalculation, optional self exits,
+  themed plan rendering, and a completion HUD.
+- Adds deterministic Domain Expansion checks for adjacent, separated, and
+  diagonal players; existing terrain; missing support; insufficient resources;
+  player escape and hitbox safety; friend filtering and proximity cooldown;
+  manual cancellation; rejected placements; slot restoration; and dimension
+  limits.
 - Adds a default-on **Waypoints** Render module with Lunar-inspired projected
   name/distance panels, colored initials, and thin vertical world beams. It is
   independent from HUD Settings, keeps labels visible when their distant

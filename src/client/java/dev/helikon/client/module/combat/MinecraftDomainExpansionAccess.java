@@ -21,6 +21,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.FallingBlock;
@@ -28,6 +29,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -150,7 +152,7 @@ public final class MinecraftDomainExpansionAccess {
         }
         Optional<BlockHitResult> hit = placementHit(client, blockPos(position));
         if (hit.isEmpty() || client.player.getEyePosition().distanceTo(hit.get().getLocation())
-                > client.player.blockInteractionRange()) {
+                > client.player.blockInteractionRange() || !visible(client, hit.get())) {
             return false;
         }
         int slot = candidate.inventorySlot();
@@ -419,6 +421,17 @@ public final class MinecraftDomainExpansionAccess {
         return new Rotation(yaw, Math.max(-90.0F, Math.min(90.0F, pitch)));
     }
 
+    private static boolean visible(Minecraft client, BlockHitResult placement) {
+        BlockHitResult hit = client.level.clip(new ClipContext(
+                client.player.getEyePosition(),
+                placement.getLocation(),
+                ClipContext.Block.OUTLINE,
+                ClipContext.Fluid.NONE,
+                client.player
+        ));
+        return hit.getType() == HitResult.Type.BLOCK && hit.getBlockPos().equals(placement.getBlockPos());
+    }
+
     private static boolean loaded(Minecraft client, BlockPos position) {
         return client.level != null && client.level.isInsideBuildHeight(position.getY())
                 && client.level.hasChunk(position.getX() >> 4, position.getZ() >> 4);
@@ -486,7 +499,8 @@ public final class MinecraftDomainExpansionAccess {
         @Override
         public boolean reachable(DomainPosition position) {
             return placementHit(client, blockPos(position))
-                    .map(hit -> local.getEyePosition().distanceTo(hit.getLocation()) <= local.blockInteractionRange())
+                    .map(hit -> local.getEyePosition().distanceTo(hit.getLocation()) <= local.blockInteractionRange()
+                            && visible(client, hit))
                     .orElse(false);
         }
 

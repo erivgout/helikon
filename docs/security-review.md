@@ -1,4 +1,4 @@
-# Security review — 1.2.1
+# Security review — 1.3.0
 
 ## Scope
 
@@ -24,6 +24,11 @@ Gradle, the operating system, or server plugins.
   crashing unrelated modules.
 - No module constructs malformed packets, bypasses anti-cheat, downloads
   assets, executes arbitrary code, opens an external socket, or emits telemetry.
+- Domain Expansion uses loaded client observations, full-block and hitbox
+  checks, ordinary inventory/container interactions, and Minecraft's normal
+  block-use path. Placement reach, support, visibility, acceptance, and world
+  updates remain server-authoritative; retries and activation attempts are
+  bounded.
 - Debug Overlay retains only transient in-process timing/cache/event/save facts
   while explicitly enabled; it is not a telemetry, profiler-upload, or
   persistent diagnostic system.

@@ -14,4 +14,16 @@ class RadarMapColorTest {
         assertNotEquals(RadarMapColor.forBlock("minecraft:stone", -10),
                 RadarMapColor.forBlock("minecraft:stone", 10));
     }
+
+    @Test
+    void nativeMapColorsGainOpaqueElevationAndSlopeRelief() {
+        int flat = RadarMapColor.forMapColor(0xFF5E9E43, 0, 0);
+        int uphill = RadarMapColor.forMapColor(0xFF5E9E43, 4, 2);
+        int downhill = RadarMapColor.forMapColor(0xFF5E9E43, -4, -2);
+
+        assertEquals(0xFF000000, flat & 0xFF000000);
+        assertNotEquals(flat, uphill);
+        assertNotEquals(flat, downhill);
+        assertNotEquals(uphill, downhill);
+    }
 }

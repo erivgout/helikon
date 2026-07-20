@@ -309,7 +309,8 @@ public final class MinecraftCombatAccess {
         }
         boolean attacked = false;
         for (CombatTarget target : targets) {
-            attacked |= attack(client, snapshot.entities().get(target.id()), target, tracker);
+            attacked |= attack(client, snapshot.entities().get(target.id()), target, tracker,
+                    killAura.hitThroughWalls());
         }
         return attacked;
     }
@@ -538,7 +539,13 @@ public final class MinecraftCombatAccess {
     }
 
     private static boolean attack(Minecraft client, LivingEntity entity, CombatTarget target, CombatTargetTracker tracker) {
-        if (entity == null || entity.isRemoved() || !entity.isAlive() || !client.player.hasLineOfSight(entity)) {
+        return attack(client, entity, target, tracker, false);
+    }
+
+    private static boolean attack(Minecraft client, LivingEntity entity, CombatTarget target,
+                                  CombatTargetTracker tracker, boolean allowWithoutLineOfSight) {
+        if (entity == null || entity.isRemoved() || !entity.isAlive()
+                || (!allowWithoutLineOfSight && !client.player.hasLineOfSight(entity))) {
             return false;
         }
         client.gameMode.attack(client.player, entity);

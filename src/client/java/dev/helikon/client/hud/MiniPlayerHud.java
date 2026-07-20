@@ -44,15 +44,12 @@ public final class MiniPlayerHud implements HudElement {
         if (client.player == null) {
             return;
         }
-        HudBounds rawBounds = MiniPlayerLayout.bounds();
         HudElementPlacement placement = layout.element(HudElementId.MINI_PLAYER);
-        HudPresentation.Frame frame = HudPresentation.beginTransparentFrame(
-                graphics, placement, rawBounds.width(), rawBounds.height());
+        HudBounds bounds = MiniPlayerLayout.contentBounds(placement, graphics.guiWidth(), graphics.guiHeight());
 
         EntityRenderState state = client.getEntityRenderDispatcher().extractEntity(client.player,
                 deltaTracker.getGameTimeDeltaPartialTick(false));
         if (!(state instanceof LivingEntityRenderState livingState)) {
-            HudPresentation.endFrame(graphics);
             return;
         }
         if (!module.armorEnabled() && state instanceof HumanoidRenderState humanoidState) {
@@ -67,9 +64,9 @@ public final class MiniPlayerHud implements HudElement {
                 .rotateY((float) Math.toRadians(module.rotation()));
         Quaternionf cameraOrientation = new Quaternionf().rotateX(CAMERA_PITCH_RADIANS);
         Vector3f offset = new Vector3f(0.0F, state.boundingBoxHeight / 2.0F, 0.0F);
-        graphics.entity(state, MiniPlayerLayout.entitySize(module.scale()), offset, orientation, cameraOrientation,
-                frame.contentX(), frame.contentY(), rawBounds.width(), rawBounds.height());
-        HudPresentation.endFrame(graphics);
+        graphics.entity(state, MiniPlayerLayout.entitySize(module.scale()) * placement.scale(),
+                offset, orientation, cameraOrientation,
+                bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y() + bounds.height());
     }
 
     private static void normalizeEntityScale(LivingEntityRenderState state) {

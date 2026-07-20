@@ -136,6 +136,20 @@ class CombatPolicyTest {
     }
 
     @Test
+    void killAuraCanOptionallySelectTargetsWithoutLineOfSight() {
+        CombatTarget blocked = target("blocked", CombatEntityType.HOSTILE, false, false, false,
+                2.0D, 1.0D, 10.0D);
+        KillAura normal = enabled(new KillAura());
+        assertTrue(normal.nextAttacks(0L, List.of(blocked), true).isEmpty());
+        assertFalse(normal.hitThroughWalls());
+
+        KillAura throughWalls = enabled(new KillAura());
+        booleanSetting(throughWalls, "hit_through_walls").set(true);
+        assertEquals(List.of(blocked), throughWalls.nextAttacks(0L, List.of(blocked), true));
+        assertTrue(throughWalls.hitThroughWalls());
+    }
+
+    @Test
     void autoClickerFiresOnScheduleAndHonorsHoldScreenAndFriendGates() {
         // Fixed jitter source so the interval is deterministic (min==max keeps it exact regardless).
         AutoClicker clicker = enabled(new AutoClicker(new java.util.Random(1L)));

@@ -47,18 +47,30 @@ class HudEditorStateTest {
     }
 
     @Test
-    void dragSnapsToEdgesAndCenter() {
+    void dragSnapsToGridAndEdges() {
         HudLayout layout = new HudLayout();
         HudEditorState state = new HudEditorState(layout);
         HudBounds bounds = new HudBounds(4, 4, 20, 20);
 
         assertTrue(state.beginDrag(5, 5, bounds));
         state.dragTo(6, 6, 100, 80, bounds);
-        assertEquals(0, layout.activeModulesX());
-        assertEquals(0, layout.activeModulesY());
+        assertEquals(8, layout.activeModulesX());
+        assertEquals(8, layout.activeModulesY());
 
         state.dragTo(41, 31, 100, 80, new HudBounds(0, 0, 20, 20));
         assertEquals(40, layout.activeModulesX());
-        assertEquals(30, layout.activeModulesY());
+        assertEquals(32, layout.activeModulesY());
+    }
+
+    @Test
+    void dragKeepsActiveModulesBelowToolbar() {
+        HudLayout layout = new HudLayout();
+        HudEditorState state = new HudEditorState(layout);
+        HudBounds bounds = new HudBounds(4, 4, 20, 20);
+
+        assertTrue(state.beginDrag(5, 5, bounds));
+        state.dragTo(5, 5, 100, 80, 22, bounds);
+
+        assertEquals(22, layout.activeModulesY());
     }
 }

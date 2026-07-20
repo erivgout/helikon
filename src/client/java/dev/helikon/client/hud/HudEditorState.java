@@ -7,7 +7,6 @@ import java.util.Objects;
  * pointer offsets so the screen only needs to provide input and dimensions.
  */
 public final class HudEditorState {
-    public static final int SNAP_DISTANCE = 8;
     private final HudLayout layout;
 
     private boolean dragging;
@@ -37,6 +36,12 @@ public final class HudEditorState {
 
     /** Moves the dragged element while keeping its full footprint on screen. */
     public boolean dragTo(int mouseX, int mouseY, int viewportWidth, int viewportHeight, HudBounds bounds) {
+        return dragTo(mouseX, mouseY, viewportWidth, viewportHeight, 0, bounds);
+    }
+
+    /** Moves the dragged element on the editor grid while reserving a top toolbar strip. */
+    public boolean dragTo(int mouseX, int mouseY, int viewportWidth, int viewportHeight,
+                          int minimumY, HudBounds bounds) {
         Objects.requireNonNull(bounds, "bounds");
         if (!dragging) {
             return false;
@@ -47,8 +52,9 @@ public final class HudEditorState {
 
         int maximumX = Math.max(0, viewportWidth - bounds.width());
         int maximumY = Math.max(0, viewportHeight - bounds.height());
-        int x = snap(Math.clamp(mouseX - dragOffsetX, 0, maximumX), maximumX, viewportWidth, bounds.width());
-        int y = snap(Math.clamp(mouseY - dragOffsetY, 0, maximumY), maximumY, viewportHeight, bounds.height());
+        int safeMinimumY = Math.min(Math.max(0, minimumY), maximumY);
+        int x = HudEditorGrid.snap(mouseX - dragOffsetX, 0, maximumX);
+        int y = HudEditorGrid.snap(mouseY - dragOffsetY, safeMinimumY, maximumY);
         return layout.setActiveModulesPosition(x, y);
     }
 
@@ -69,16 +75,5 @@ public final class HudEditorState {
 
     public void endDrag() {
         dragging = false;
-    }
-
-    private static int snap(int value, int maximum, int viewportSize, int elementSize) {
-        if (value <= SNAP_DISTANCE) {
-            return 0;
-        }
-        if (maximum - value <= SNAP_DISTANCE) {
-            return maximum;
-        }
-        int centered = Math.max(0, (viewportSize - elementSize) / 2);
-        return Math.abs(value - centered) <= SNAP_DISTANCE ? centered : value;
     }
 }

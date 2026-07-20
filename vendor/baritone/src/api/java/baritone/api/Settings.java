@@ -398,9 +398,13 @@ public final class Settings {
     public final Setting<Integer> rightClickSpeed = new Setting<>(4);
 
     /**
-     * How many degrees to randomize the yaw every tick. Set to 0 to disable
+     * How many degrees to randomize the yaw every tick. Set to 0 to disable.
+     *
+     * <p>The Helikon port defaults this legacy randomization off. A non-zero
+     * value is applied to client-visible block-interaction rotations and makes
+     * the camera shake while Baritone is mining.
      */
-    public final Setting<Double> randomLooking113 = new Setting<>(2d);
+    public final Setting<Double> randomLooking113 = new Setting<>(0d);
 
     /**
      * Block reach distance

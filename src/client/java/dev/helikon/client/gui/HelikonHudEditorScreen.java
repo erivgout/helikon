@@ -4,6 +4,7 @@ import dev.helikon.client.HelikonClient;
 import dev.helikon.client.config.ConfigurationException;
 import dev.helikon.client.config.HudConfigurationManager;
 import dev.helikon.client.hud.HudBounds;
+import dev.helikon.client.hud.HudEditorGrid;
 import dev.helikon.client.hud.HudEditorState;
 import dev.helikon.client.hud.HudElementId;
 import dev.helikon.client.hud.HudLayout;
@@ -22,10 +23,10 @@ import java.util.logging.Level;
  * {@link HelikonHudSettingsScreen}, reached through the header button.
  */
 public final class HelikonHudEditorScreen extends Screen {
-    private static final int HINT_BAR_BOTTOM = 40;
-    private static final int SETTINGS_BUTTON_WIDTH = 88;
+    private static final int TOOLBAR_BOTTOM = 22;
+    private static final int SETTINGS_BUTTON_WIDTH = 76;
     private static final int SETTINGS_BUTTON_HEIGHT = 14;
-    private static final int SETTINGS_BUTTON_Y = 13;
+    private static final int SETTINGS_BUTTON_Y = 4;
 
     private final Screen parent;
     private final ModuleRegistry modules;
@@ -33,7 +34,7 @@ public final class HelikonHudEditorScreen extends Screen {
     private final HudConfigurationManager configuration;
     private final HudEditorState state;
     private HudPreviewRenderer previews;
-    private HudElementId selectedElement = HudElementId.WAYPOINTS;
+    private HudElementId selectedElement = HudElementId.LIVE_COORDINATES;
     private HudElementId draggedElement;
     private int elementDragOffsetX;
     private int elementDragOffsetY;
@@ -57,6 +58,7 @@ public final class HelikonHudEditorScreen extends Screen {
         super.init();
         previews = new HudPreviewRenderer(font, modules, layout);
         state.clampToViewport(width, height, previews.activeModulesBounds());
+        keepElementsBelowToolbar();
     }
 
     @Override
@@ -72,13 +74,14 @@ public final class HelikonHudEditorScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         graphics.fill(0, 0, width, height, HudPreviewRenderer.COLOR_SCRIM);
+        drawGrid(graphics);
         previews.drawActiveModules(graphics);
         for (HudElementId element : HudElementId.values()) {
-            if (layout.element(element).enabled() || element == selectedElement) {
+            if (previews.activeElement(element) || element == selectedElement) {
                 previews.drawElement(graphics, element, width, height, element == selectedElement);
             }
         }
-        drawHintBar(graphics);
+        drawToolbar(graphics);
         super.extractRenderState(graphics, mouseX, mouseY, delta);
     }
 
@@ -101,7 +104,7 @@ public final class HelikonHudEditorScreen extends Screen {
         HudElementId[] elements = HudElementId.values();
         for (int index = elements.length - 1; index >= 0; index--) {
             HudElementId element = elements[index];
-            if (!layout.element(element).enabled()) {
+            if (!(previews.activeElement(element) || element == selectedElement)) {
                 continue;
             }
             HudBounds bounds = previews.elementBounds(element, width, height);
@@ -122,13 +125,17 @@ public final class HelikonHudEditorScreen extends Screen {
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
         if (event.button() == 0 && draggedElement != null) {
             HudBounds bounds = previews.elementBounds(draggedElement, width, height);
-            int x = Math.clamp((int) event.x() - elementDragOffsetX, 0, Math.max(0, width - bounds.width()));
-            int y = Math.clamp((int) event.y() - elementDragOffsetY, 0, Math.max(0, height - bounds.height()));
+            int maximumX = Math.max(0, width - bounds.width());
+            int maximumY = Math.max(TOOLBAR_BOTTOM, height - bounds.height());
+            int x = HudEditorGrid.snap((int) event.x() - elementDragOffsetX, 0, maximumX);
+            int y = HudEditorGrid.snap((int) event.y() - elementDragOffsetY,
+                    Math.min(TOOLBAR_BOTTOM, maximumY), maximumY);
             layout.element(draggedElement).setAbsolutePosition(x, y);
             return true;
         }
         if (event.button() == 0
-                && state.dragTo((int) event.x(), (int) event.y(), width, height, previews.activeModulesBounds())) {
+                && state.dragTo((int) event.x(), (int) event.y(), width, height,
+                TOOLBAR_BOTTOM, previews.activeModulesBounds())) {
             return true;
         }
         return super.mouseDragged(event, dragX, dragY);
@@ -171,12 +178,14 @@ public final class HelikonHudEditorScreen extends Screen {
         selectedElement = Objects.requireNonNull(element, "element");
     }
 
-    private void drawHintBar(GuiGraphicsExtractor graphics) {
-        graphics.fill(8, 8, width - 8, HINT_BAR_BOTTOM, HudPreviewRenderer.COLOR_PANEL);
-        graphics.outline(8, 8, width - 16, HINT_BAR_BOTTOM - 8, HudPreviewRenderer.COLOR_OUTLINE);
-        graphics.text(font, title, 14, 14, HudPreviewRenderer.COLOR_ACCENT, true);
-        graphics.text(font, Component.translatable("screen.helikon.hud_editor.instructions"), 14, 25,
-                HudPreviewRenderer.COLOR_TEXT_DIM, false);
+    private void drawToolbar(GuiGraphicsExtractor graphics) {
+        graphics.fill(0, 0, width, TOOLBAR_BOTTOM, HudPreviewRenderer.COLOR_PANEL);
+        graphics.fill(0, TOOLBAR_BOTTOM - 1, width, TOOLBAR_BOTTOM, HudPreviewRenderer.COLOR_OUTLINE);
+        graphics.text(font, "HUD Editor", 7, 7, HudPreviewRenderer.COLOR_ACCENT, true);
+        String selected = "Selected: " + HudPreviewRenderer.elementName(selectedElement);
+        if (width - SETTINGS_BUTTON_WIDTH > 210) {
+            graphics.text(font, selected, 82, 7, HudPreviewRenderer.COLOR_TEXT_DIM, false);
+        }
         Component label = Component.translatable("screen.helikon.hud_editor.settings_button");
         int buttonX = settingsButtonX();
         graphics.outline(buttonX, SETTINGS_BUTTON_Y, SETTINGS_BUTTON_WIDTH, SETTINGS_BUTTON_HEIGHT,
@@ -187,6 +196,31 @@ public final class HelikonHudEditorScreen extends Screen {
     }
 
     private int settingsButtonX() {
-        return width - 14 - SETTINGS_BUTTON_WIDTH;
+        return width - 7 - SETTINGS_BUTTON_WIDTH;
+    }
+
+    private void drawGrid(GuiGraphicsExtractor graphics) {
+        for (int x = 0; x < width; x += HudEditorGrid.SIZE) {
+            graphics.fill(x, TOOLBAR_BOTTOM, x + 1, height, HudPreviewRenderer.COLOR_GRID);
+        }
+        for (int y = TOOLBAR_BOTTOM; y < height; y += HudEditorGrid.SIZE) {
+            graphics.fill(0, y, width, y + 1, HudPreviewRenderer.COLOR_GRID);
+        }
+    }
+
+    private void keepElementsBelowToolbar() {
+        HudBounds activeBounds = previews.activeModulesBounds();
+        if (activeBounds.y() < TOOLBAR_BOTTOM) {
+            layout.setActiveModulesPosition(activeBounds.x(), TOOLBAR_BOTTOM);
+        }
+        for (HudElementId element : HudElementId.values()) {
+            if (element.positionLocked() || !(previews.activeElement(element) || element == selectedElement)) {
+                continue;
+            }
+            HudBounds bounds = previews.elementBounds(element, width, height);
+            if (bounds.y() < TOOLBAR_BOTTOM) {
+                layout.element(element).setAbsolutePosition(bounds.x(), TOOLBAR_BOTTOM);
+            }
+        }
     }
 }

@@ -130,7 +130,10 @@ World module, while `MinecraftBaritoneVisualizationRenderer` translates its
 snapshots into Minecraft 26.2 gizmos. Focused Baritone mixins keep its tick
 hooks alive when a container or Helikon screen is open. The build records the
 upstream commits and ships the LGPL license and corresponding source. It
-performs no runtime download or Helikon service request.
+performs no runtime download or Helikon service request. The embedded port
+defaults Baritone's legacy `randomLooking113` yaw offset to zero so forced
+client-visible block-interaction aim remains stable while mining; the ordinary
+Baritone setting remains available as an explicit opt-in.
 
 `CactusCollisionPolicy` owns finite-box intersection and deterministic
 horizontal-slide decisions without Minecraft imports. Its narrow adapter scans
@@ -534,14 +537,12 @@ coordinate data to disk.
 `WaypointManager` remains a read-only migration source for the former
 `waypoints.json` format. `BaritoneWaypointRepository` adapts Baritone's
 authoritative per-world/per-dimension collection to `WaypointRepository`, which
-is shared by Helikon's commands and HUD. `WaypointContext`,
+is shared by Helikon's commands and world renderer. `WaypointContext`,
 `WaypointLocation`, and `WaypointNavigation` own validation, context filtering,
 distance ordering, and compass labels without Minecraft imports.
 `MinecraftWaypointLocationProvider` derives the current scope, dimension, and
 block position. Migration waits until Baritone has opened its world data and
-does not replace a same-named entry. `WaypointHud` renders the nearest current
-Baritone entries and caches a bounded nearest set until position, context, or
-collection revision changes.
+does not replace a same-named entry.
 
 `MacroManager` is another schema-versioned local store. `MacroAction` has a
 closed validated action set, and `MacroRunner` schedules at most one action per
@@ -627,8 +628,11 @@ the player's aim, and the same block clipping. It launches from the eye position
 and never creates a projectile entity or packet; the server stays authoritative
 over any real shot. TrueSight deliberately leaves vanilla entity render state
 untouched and uses bounded transparent local boxes only when entities are
-invisible to the local player. `RadarProjection` is also Minecraft-free; `RadarHud` projects currently
-loaded local entities onto a bounded fixed-position HUD surface.
+invisible to the local player. `RadarProjection` is also Minecraft-free;
+`RadarHud` projects currently loaded local entities onto a bounded HUD surface,
+samples loaded surface blocks through Minecraft's native map-color API, caches
+terrain samples, and layers relief, compass, player heading, and type/altitude
+entity markers over that terrain.
 
 XRay has a deliberately narrow compiled-geometry path. `XRayRenderState` is
 an immutable Minecraft-free snapshot, published by `XRayRenderAccess`; its
@@ -750,11 +754,23 @@ local player's `FoodData.getSaturationLevel()` through the narrow 26.2 adapter
 layer and formats only a bounded display string. It neither modifies hunger nor
 requests any server information; panic hides it with the other custom HUD.
 
-`BetterNametags` uses the supported world Gizmo phase to add one local
-billboard for each frustum-visible nearby player. `BetterNametagText` composes
+`BetterNametags` uses the supported world Gizmo phase to add bounded billboard
+rows for each frustum-visible nearby player. `BetterNametagText` composes
 the configured facts without Minecraft imports; the adapter only reads already
 rendered player state and local friend storage, so it cannot expose unloaded
 entities or alter vanilla/server name tags.
+
+The independent `Waypoints` Render module owns marker visibility, labels,
+beams, depth behavior, scale, width, and result cap. `MinecraftWaypointRenderer`
+uses the supported Gizmo phase for the world-space beams of cached,
+current-dimension saved waypoints. `WaypointLabelsHud` projects each matching
+label into bounded GUI space with a dark panel and colored initial, which avoids
+Minecraft culling a distant ground-anchored text primitive. It intentionally has
+no `HudElementId` or draggable HUD layout entry, so visibility and presentation
+remain controlled only by the Render module rather than HUD Settings.
+`WaypointMarkerPresentation` keeps the label, distance-scale, and elevated
+beam-anchor policy Minecraft-free; neither adapter can load terrain or disclose
+waypoints absent from the local Baritone repository.
 
 ## Stabilization and release boundaries
 

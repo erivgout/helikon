@@ -30,6 +30,16 @@ public final class RadarProjection {
         return new Point(projectedX, projectedY, visible);
     }
 
+    /** Eight-way compass heading using Minecraft's yaw convention (zero points south). */
+    public static String heading(double playerYawDegrees) {
+        if (!Double.isFinite(playerYawDegrees)) {
+            throw new IllegalArgumentException("Player yaw must be finite");
+        }
+        String[] headings = {"S", "SW", "W", "NW", "N", "NE", "E", "SE"};
+        int index = Math.floorMod((int) Math.round(playerYawDegrees / 45.0D), headings.length);
+        return headings[index];
+    }
+
     public enum Shape {
         CIRCLE,
         SQUARE

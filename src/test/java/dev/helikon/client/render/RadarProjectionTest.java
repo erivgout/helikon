@@ -28,4 +28,13 @@ class RadarProjectionTest {
         assertEquals(0.0D, point.x(), 0.000001D);
         assertEquals(-20.0D, point.y(), 0.000001D);
     }
+
+    @Test
+    void convertsMinecraftYawToEightWayHeadings() {
+        assertEquals("S", RadarProjection.heading(0.0D));
+        assertEquals("W", RadarProjection.heading(90.0D));
+        assertEquals("N", RadarProjection.heading(180.0D));
+        assertEquals("E", RadarProjection.heading(-90.0D));
+        assertEquals("SE", RadarProjection.heading(-45.0D));
+    }
 }

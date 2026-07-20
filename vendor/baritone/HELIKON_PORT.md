@@ -17,6 +17,14 @@ the mapping and platform port. Helikon carries the small 26.2 delta directly
 in this directory so the complete corresponding source remains available and
 reviewable beside the distributed binary.
 
+## Local behavior changes
+
+- `randomLooking113` defaults to `0` instead of the upstream `2` degrees.
+  The upstream value applies a fresh random yaw offset every tick and visibly
+  shakes the camera when block interaction requires client-side aim. The
+  setting remains configurable for users who intentionally want randomized
+  rotation.
+
 ## License boundary
 
 Baritone is licensed separately under LGPL-3.0-or-later. Its original

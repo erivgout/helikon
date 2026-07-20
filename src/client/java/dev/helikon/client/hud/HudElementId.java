@@ -2,8 +2,10 @@ package dev.helikon.client.hud;
 
 /** Stable local IDs and safe initial anchors for registered HUD renderers. */
 public enum HudElementId {
-    WAYPOINTS(Anchor.TOP_LEFT, 5, 50),
     COORDINATES(Anchor.BOTTOM_LEFT, 5, 5),
+    LIVE_COORDINATES(Anchor.BOTTOM_LEFT, 5, 31),
+    KEYSTROKES(Anchor.BOTTOM_LEFT, 5, 70),
+    TIME(Anchor.TOP_RIGHT, 5, 161),
     SATURATION(Anchor.BOTTOM_LEFT, 5, 5),
     ELYTRA(Anchor.TOP_LEFT, 5, 222),
     TARGET(Anchor.TOP_LEFT, 5, 260),

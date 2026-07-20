@@ -33,7 +33,19 @@ public final class RadarMapColor {
             int hash = id.hashCode();
             color = 0xFF000000 | (0x505050 + (hash & 0x2F2F2F));
         }
-        double shade = Math.clamp(1.0D + heightDifference * 0.018D, 0.68D, 1.25D);
+        return shade(color, Math.clamp(1.0D + heightDifference * 0.018D, 0.68D, 1.25D));
+    }
+
+    /**
+     * Applies map relief to Minecraft's native block map color. Relative height
+     * gives broad elevation context while slope makes neighboring terrain legible.
+     */
+    public static int forMapColor(int mapColor, int heightDifference, int slopeDifference) {
+        double factor = 1.0D + heightDifference * 0.006D + slopeDifference * 0.075D;
+        return shade(mapColor, Math.clamp(factor, 0.62D, 1.32D));
+    }
+
+    private static int shade(int color, double shade) {
         int red = (int) Math.round(Math.min(255.0D, ((color >>> 16) & 0xFF) * shade));
         int green = (int) Math.round(Math.min(255.0D, ((color >>> 8) & 0xFF) * shade));
         int blue = (int) Math.round(Math.min(255.0D, (color & 0xFF) * shade));

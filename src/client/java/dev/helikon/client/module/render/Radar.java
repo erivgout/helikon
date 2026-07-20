@@ -25,6 +25,10 @@ public final class Radar extends Module {
     private final ColorSetting backgroundColor;
     private final ColorSetting entityColor;
     private final ColorSetting friendColor;
+    private final ColorSetting hostileColor;
+    private final ColorSetting passiveColor;
+    private final ColorSetting itemColor;
+    private final ColorSetting projectileColor;
 
     public Radar() {
         super("radar", "Radar", "Draws a compact local overhead entity radar HUD.",
@@ -49,6 +53,14 @@ public final class Radar extends Module {
                 0xFFE8A33D));
         friendColor = addSetting(new ColorSetting("friend_color", "Friend color", "ARGB local friend point color.",
                 0xFF61D17B));
+        hostileColor = addSetting(new ColorSetting("hostile_color", "Hostile color", "ARGB hostile marker color.",
+                0xFFFF5B5B));
+        passiveColor = addSetting(new ColorSetting("passive_color", "Passive color", "ARGB passive marker color.",
+                0xFFFFD166));
+        itemColor = addSetting(new ColorSetting("item_color", "Item color", "ARGB dropped-item marker color.",
+                0xFF55DDEE));
+        projectileColor = addSetting(new ColorSetting("projectile_color", "Projectile color",
+                "ARGB projectile marker color.", 0xFFC77DFF));
     }
 
     public boolean shouldRender(EntityRenderFilter.EntityType type, boolean friend, boolean localPlayer,
@@ -73,5 +85,16 @@ public final class Radar extends Module {
 
     public int backgroundColor() { return backgroundColor.value(); }
 
-    public int color(boolean friend) { return friend ? friendColor.value() : entityColor.value(); }
+    public int color(EntityRenderFilter.EntityType type, boolean friend) {
+        if (friend) {
+            return friendColor.value();
+        }
+        return switch (type) {
+            case HOSTILE -> hostileColor.value();
+            case PASSIVE -> passiveColor.value();
+            case ITEM -> itemColor.value();
+            case PROJECTILE -> projectileColor.value();
+            case PLAYER, OTHER -> entityColor.value();
+        };
+    }
 }

@@ -30,6 +30,13 @@ public final class BetterNametags extends Module {
         return new Options(health.value(), distance.value(), armor.value(), heldItem.value(), friendStatus.value(), range.value());
     }
 
+    /** Whether Helikon will draw a complete replacement for this vanilla player label. */
+    public boolean replacesVanillaName(boolean remotePlayer, boolean visible, boolean lineOfSight,
+                                       double distanceSquared) {
+        return isEnabled() && remotePlayer && visible && lineOfSight && Double.isFinite(distanceSquared)
+                && distanceSquared >= 0.0D && distanceSquared <= range.value() * range.value();
+    }
+
     public record Options(boolean health, boolean distance, boolean armor, boolean heldItem, boolean friendStatus, double range) {
     }
 }

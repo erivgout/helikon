@@ -34,6 +34,7 @@ import dev.helikon.client.event.ChatEvent;
 import dev.helikon.client.event.ChunkEvent;
 import dev.helikon.client.event.EventBus;
 import dev.helikon.client.event.InteractionEvent;
+import dev.helikon.client.event.InputEvent;
 import dev.helikon.client.event.ScreenEvent;
 import dev.helikon.client.event.ScreenTransitionTracker;
 import dev.helikon.client.event.WorldEvent;
@@ -55,6 +56,7 @@ import dev.helikon.client.gui.HelikonAutoReconnectScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
 import dev.helikon.client.hud.ArrowsHud;
 import dev.helikon.client.hud.BetterCrosshairHud;
+import dev.helikon.client.hud.ClickRateTracker;
 import dev.helikon.client.hud.CoordinateHud;
 import dev.helikon.client.hud.ClientTpsEstimate;
 import dev.helikon.client.hud.DebugOverlayHud;
@@ -63,13 +65,16 @@ import dev.helikon.client.hud.DurabilityWarningsHud;
 import dev.helikon.client.hud.ElytraHud;
 import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.hud.InventoryPreviewHud;
+import dev.helikon.client.hud.KeystrokesHud;
+import dev.helikon.client.hud.LiveCoordinatesHud;
 import dev.helikon.client.hud.MiniPlayerHud;
 import dev.helikon.client.hud.PlanTelemetryHud;
 import dev.helikon.client.hud.RadarHud;
 import dev.helikon.client.hud.ReachDisplayHud;
 import dev.helikon.client.hud.SaturationHud;
 import dev.helikon.client.hud.TargetHud;
-import dev.helikon.client.hud.WaypointHud;
+import dev.helikon.client.hud.TimeHud;
+import dev.helikon.client.hud.WaypointLabelsHud;
 import dev.helikon.client.input.HelikonKeybinds;
 import dev.helikon.client.input.KeybindManager;
 import dev.helikon.client.input.PanicKeybindManager;
@@ -321,6 +326,7 @@ import dev.helikon.client.module.render.Arrows;
 import dev.helikon.client.module.render.BetterCrosshair;
 import dev.helikon.client.module.render.BetterNametags;
 import dev.helikon.client.module.render.Health;
+import dev.helikon.client.module.render.Keystrokes;
 import dev.helikon.client.module.render.Dinnerbone;
 import dev.helikon.client.module.render.BlockEsp;
 import dev.helikon.client.module.render.Breadcrumbs;
@@ -347,10 +353,13 @@ import dev.helikon.client.module.render.RainbowEnchant;
 import dev.helikon.client.module.render.RemoteView;
 import dev.helikon.client.module.render.RemoteViewAccess;
 import dev.helikon.client.module.render.SaturationDisplay;
+import dev.helikon.client.module.render.Coordinates;
+import dev.helikon.client.module.render.Time;
 import dev.helikon.client.module.render.StorageEsp;
 import dev.helikon.client.module.render.Trajectories;
 import dev.helikon.client.module.render.Tracers;
 import dev.helikon.client.module.render.TrueSight;
+import dev.helikon.client.module.render.Waypoints;
 import dev.helikon.client.module.render.XRay;
 import dev.helikon.client.notification.ChatNotifier;
 import dev.helikon.client.panic.PanicController;
@@ -361,6 +370,7 @@ import dev.helikon.client.render.MinecraftWorldVisualizationRenderer;
 import dev.helikon.client.render.MinecraftBaritoneVisualizationRenderer;
 import dev.helikon.client.render.LocalCapeRenderer;
 import dev.helikon.client.render.MinecraftXRayRendererInvalidator;
+import dev.helikon.client.render.MinecraftWaypointRenderer;
 import dev.helikon.client.waypoint.MinecraftWaypointLocationProvider;
 import dev.helikon.client.waypoint.BaritoneWaypointRepository;
 import dev.helikon.client.waypoint.WaypointLocationProvider;
@@ -553,6 +563,7 @@ public final class HelikonClient implements ClientModInitializer {
         ProjectileWarning projectileWarning = new ProjectileWarning();
         ProjectilePreview projectilePreview = new ProjectilePreview();
         TrueSight trueSight = new TrueSight();
+        Waypoints waypointMarkers = new Waypoints();
         Radar radar = new Radar();
         SaturationDisplay saturationDisplay = new SaturationDisplay();
         StorageEsp storageEsp = new StorageEsp();
@@ -568,6 +579,9 @@ public final class HelikonClient implements ClientModInitializer {
         Arrows arrows = new Arrows();
         Explosions explosions = new Explosions();
         Health health = new Health();
+        Keystrokes keystrokes = new Keystrokes();
+        Coordinates coordinates = new Coordinates();
+        Time time = new Time();
         modules.register(antiBlind);
         modules.register(antiDebuff);
         modules.register(cameraDistance);
@@ -602,6 +616,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(projectileWarning);
         modules.register(projectilePreview);
         modules.register(trueSight);
+        modules.register(waypointMarkers);
         modules.register(radar);
         modules.register(saturationDisplay);
         modules.register(storageEsp);
@@ -617,6 +632,9 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(arrows);
         modules.register(explosions);
         modules.register(health);
+        modules.register(keystrokes);
+        modules.register(coordinates);
+        modules.register(time);
         NameProtectTextAccess.install(nameProtect);
         AntiDebuffAccess.install(antiDebuff);
         CameraModuleAccess.install(cameraDistance);
@@ -625,6 +643,7 @@ public final class HelikonClient implements ClientModInitializer {
         RenderModuleAccess.installNoHurtcam(noHurtcam);
         RenderModuleAccess.installNoShieldOverlay(noShieldOverlay);
         RenderModuleAccess.installZoom(zoom);
+        RenderModuleAccess.installBetterNametags(betterNametags);
         RenderModuleAccess.install(antiBlind, noFireOverlay, betterCrosshair, antiTotemAnimation, dinnerbone,
                 rainbowEnchant, noWeather, hudLayout, panicState);
         dev.helikon.client.module.render.RainbowUiAccess.install(rainbowUi);
@@ -785,6 +804,11 @@ public final class HelikonClient implements ClientModInitializer {
         MinecraftTpAuraAccess.install(tpAura);
         WTap wtap = new WTap();
         AutoAnchor autoAnchor = new AutoAnchor();
+        dev.helikon.client.module.combat.DomainExpansion domainExpansion =
+                new dev.helikon.client.module.combat.DomainExpansion();
+        dev.helikon.client.module.combat.MinecraftDomainExpansionAccess domainExpansionAccess =
+                new dev.helikon.client.module.combat.MinecraftDomainExpansionAccess(
+                        domainExpansion, friends, notifier::info);
         CrystalAura crystalAura = new CrystalAura();
         AntiFireball antiFireball = new AntiFireball();
         GojosInfinity gojosInfinity = new GojosInfinity();
@@ -961,6 +985,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(tpAura);
         modules.register(wtap);
         modules.register(autoAnchor);
+        modules.register(domainExpansion);
         modules.register(crystalAura);
         modules.register(antiFireball);
         modules.register(gojosInfinity);
@@ -1023,6 +1048,8 @@ public final class HelikonClient implements ClientModInitializer {
                 projectilePreview, trueSight, storageEsp, openWaterEsp, mobSpawnEsp, newChunks,
                 damageIndicators, breadcrumbs, builderAssist, blockSelection, bowAimAssist, localCosmetics, explosions
         );
+        dev.helikon.client.render.MinecraftDomainExpansionRenderer domainExpansionRenderer =
+                new dev.helikon.client.render.MinecraftDomainExpansionRenderer(domainExpansion, clickGuiWindow);
         events.subscribe(ChunkEvent.class, event -> modules.runGuarded(newChunks, "chunk-event",
                 () -> newChunks.observe(
                         event.phase() == ChunkEvent.Phase.LOAD
@@ -1031,6 +1058,20 @@ public final class HelikonClient implements ClientModInitializer {
                         event.chunkX(), event.chunkZ(), System.currentTimeMillis())));
         events.subscribe(WorldEvent.class,
                 event -> modules.runGuarded(newChunks, "world-change", newChunks::clear));
+        events.subscribe(InputEvent.class, event -> {
+            if (event.kind() != InputEvent.Kind.MOUSE_BUTTON || event.action() != InputEvent.Action.PRESS
+                    || Minecraft.getInstance().gui.screen() != null) {
+                return;
+            }
+            ClickRateTracker.Button button = switch (event.code()) {
+                case GLFW.GLFW_MOUSE_BUTTON_LEFT -> ClickRateTracker.Button.LEFT;
+                case GLFW.GLFW_MOUSE_BUTTON_RIGHT -> ClickRateTracker.Button.RIGHT;
+                default -> null;
+            };
+            if (button != null) {
+                modules.runGuarded(keystrokes, "click-rate", () -> keystrokes.recordClick(button, System.nanoTime()));
+            }
+        });
         DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,
                 events, configuration, panicState, hudLayout);
         ClientTpsEstimate tpsEstimate = new ClientTpsEstimate();
@@ -1169,6 +1210,11 @@ public final class HelikonClient implements ClientModInitializer {
                         () -> MinecraftThrowDebuffAccess.tick(clientTick, throwDebuff, combatSnapshot.get()));
                 modules.runGuarded(targetHud, "tick", () -> MinecraftCombatAccess.observeTarget(targetHud,
                         combatSnapshot.get(), combatTracker));
+                modules.runGuarded(domainExpansion, "tick", () -> {
+                    if (domainExpansionAccess.tick(clientTick)) {
+                        modules.setEnabled(domainExpansion, false);
+                    }
+                });
                 modules.runGuarded(autoRespawn, "tick", () -> MinecraftAutoRespawnAccess.tick(clientTick, autoRespawn));
                 modules.runGuarded(autoPotion, "tick", () -> MinecraftCombatAccess.tickAutoPotion(clientTick, autoPotion));
                 modules.runGuarded(autoPearl, "tick", () -> MinecraftCombatAccess.tickAutoPearl(clientTick, autoPearl,
@@ -1456,10 +1502,10 @@ public final class HelikonClient implements ClientModInitializer {
         });
 
         HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);
+        MinecraftWaypointRenderer waypointRenderer = new MinecraftWaypointRenderer(
+                waypointMarkers, waypoints, waypointLocations, panicState);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "active_modules"),
                 new ActiveModulesHud(modules, hudLayout, panicState, clickGuiWindow::reducedAnimations));
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "waypoints"),
-                new WaypointHud(waypoints, waypointLocations, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "better_crosshair"),
                 new BetterCrosshairHud(betterCrosshair, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "health"),
@@ -1478,6 +1524,8 @@ public final class HelikonClient implements ClientModInitializer {
                 new TargetHud(targetHud, combatTracker, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "reach_display"),
                 new ReachDisplayHud(reachDisplay, combatTracker, panicState, hudLayout));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "domain_expansion"),
+                new dev.helikon.client.hud.DomainExpansionHud(domainExpansion, panicState, clickGuiWindow));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "inventory_preview"),
                 new InventoryPreviewHud(inventoryPreview, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "durability_warnings"),
@@ -1485,6 +1533,14 @@ public final class HelikonClient implements ClientModInitializer {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "coordinates"),
                 new CoordinateHud(deathCoordinates, logoutCoordinates, coordinateTracker, waypointLocations, panicState,
                         hudLayout));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "live_coordinates"),
+                new LiveCoordinatesHud(coordinates, panicState, hudLayout));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "keystrokes"),
+                new KeystrokesHud(keystrokes, panicState, hudLayout));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "time"),
+                new TimeHud(time, panicState, hudLayout));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "waypoint_labels"),
+                new WaypointLabelsHud(waypointMarkers, waypoints, waypointLocations, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "debug_overlay"),
                 debugOverlayHud);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "plan_telemetry"),
@@ -1494,6 +1550,8 @@ public final class HelikonClient implements ClientModInitializer {
         LevelRenderEvents.BEFORE_GIZMOS.register(context -> {
             ClientEventAccess.postRender(RenderEvent.Kind.WORLD, 0.0D, "");
             worldVisuals.render(context);
+            modules.runGuarded(domainExpansion, "render", domainExpansionRenderer::render);
+            waypointRenderer.render();
         });
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             tpsEstimate.observeTick(System.nanoTime());
@@ -1533,6 +1591,8 @@ public final class HelikonClient implements ClientModInitializer {
             // Module keybinds count as released while any screen is open so
             // typing into text fields can never trigger them. A panic press
             // also suppresses this tick so a shared key cannot re-enable one.
+            domainExpansionAccess.pollActivationKey(
+                    domainExpansion.keybind().isBound() && INPUT_READER.isDown(domainExpansion.keybind()));
             keybinds.tick(
                     INPUT_READER,
                     anyScreenOpen || panicTriggered

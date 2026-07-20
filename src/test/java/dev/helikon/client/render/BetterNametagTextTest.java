@@ -17,9 +17,10 @@ class BetterNametagTextTest {
     void stacksOnlyTheEnabledLocalFactsAsRows() {
         assertEquals(List.of(
                 new BetterNametagText.Line("Alex [Friend]", BetterNametagText.COLOR_FRIEND),
-                new BetterNametagText.Line("♥ 18.0/20.0", BetterNametagText.COLOR_HEALTH_HIGH),
+                new BetterNametagText.Line("18/20", BetterNametagText.COLOR_HEALTH_HIGH),
                 new BetterNametagText.Line("Armor 12", BetterNametagText.COLOR_ARMOR),
-                new BetterNametagText.Line("4.3m • diamond_sword", BetterNametagText.COLOR_DETAIL)
+                new BetterNametagText.Line("Diamond Sword", BetterNametagText.COLOR_ITEM),
+                new BetterNametagText.Line("4.3m", BetterNametagText.COLOR_DISTANCE)
         ), BetterNametagText.lines(FACTS, new BetterNametags.Options(true, true, true, true, true, 64.0D), true));
         assertEquals(List.of(new BetterNametagText.Line("Alex", BetterNametagText.COLOR_NAME)),
                 BetterNametagText.lines(FACTS, new BetterNametags.Options(false, false, false, false, false, 64.0D), true));
@@ -37,7 +38,7 @@ class BetterNametagTextTest {
         BetterNametagText.Facts unarmed = new BetterNametagText.Facts("Alex", 18.0F, 20.0F, 0, 4.25D, "minecraft:air");
         assertEquals(List.of(
                 new BetterNametagText.Line("Alex", BetterNametagText.COLOR_NAME),
-                new BetterNametagText.Line("4.3m", BetterNametagText.COLOR_DETAIL)
+                new BetterNametagText.Line("4.3m", BetterNametagText.COLOR_DISTANCE)
         ), BetterNametagText.lines(unarmed, new BetterNametags.Options(false, true, true, true, false, 64.0D), false));
     }
 
@@ -46,7 +47,7 @@ class BetterNametagTextTest {
         BetterNametagText.Facts modded = new BetterNametagText.Facts("Alex", 18.0F, 20.0F, 0, 4.25D, "examplemod:wrench");
         assertEquals(List.of(
                 new BetterNametagText.Line("Alex", BetterNametagText.COLOR_NAME),
-                new BetterNametagText.Line("examplemod:wrench", BetterNametagText.COLOR_DETAIL)
+                new BetterNametagText.Line("examplemod:wrench", BetterNametagText.COLOR_ITEM)
         ), BetterNametagText.lines(modded, new BetterNametags.Options(false, false, false, true, false, 64.0D), false));
     }
 
@@ -62,9 +63,15 @@ class BetterNametagTextTest {
         double glyphHeight = BetterNametagText.worldLineSpacing(0.32F, 9, 0);
         double rowSpacing = BetterNametagText.worldLineSpacing(0.32F, 9, 2);
 
-        assertEquals(0.18D, glyphHeight, 0.000_001D);
-        assertEquals(0.22D, rowSpacing, 0.000_001D);
+        assertEquals(0.288D, glyphHeight, 0.000_001D);
+        assertEquals(0.352D, rowSpacing, 0.000_001D);
         assertTrue(rowSpacing > glyphHeight);
+    }
+
+    @Test
+    void omitsPointZeroButKeepsRealFractionalHealth() {
+        assertEquals("20/20", BetterNametagText.formatHealth(20.0F, 20.0F));
+        assertEquals("19.5/20", BetterNametagText.formatHealth(19.5F, 20.0F));
     }
 
     @Test

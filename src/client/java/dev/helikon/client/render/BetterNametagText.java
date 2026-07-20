@@ -9,18 +9,19 @@ import java.util.Objects;
 
 /**
  * Minecraft-free composition of bounded local name-tag facts as stacked,
- * individually colored rows: name, health, armor, then distance/held item.
+ * individually colored rows: name, health, armor, held item, then distance.
  */
 public final class BetterNametagText {
-    private static final double GIZMO_TEXTURE_PIXELS_PER_WORLD_UNIT = 16.0D;
+    private static final double GIZMO_TEXTURE_PIXELS_PER_WORLD_UNIT = 10.0D;
 
     public static final int COLOR_NAME = 0xFFE5EDF5;
     public static final int COLOR_FRIEND = 0xFF80CBC4;
     public static final int COLOR_HEALTH_HIGH = 0xFF81C784;
     public static final int COLOR_HEALTH_MEDIUM = 0xFFFFD54F;
     public static final int COLOR_HEALTH_LOW = 0xFFE57373;
-    public static final int COLOR_ARMOR = 0xFFB0BEC5;
-    public static final int COLOR_DETAIL = 0xFF9AA1AB;
+    public static final int COLOR_ARMOR = 0xFF64B5F6;
+    public static final int COLOR_DISTANCE = 0xFFB0BEC5;
+    public static final int COLOR_ITEM = 0xFFFFB74D;
 
     private static final String VANILLA_NAMESPACE = "minecraft:";
     private static final String EMPTY_HAND_ID = "minecraft:air";
@@ -32,20 +33,25 @@ public final class BetterNametagText {
     public static List<Line> lines(Facts facts, BetterNametags.Options options, boolean friend) {
         Objects.requireNonNull(facts, "facts");
         Objects.requireNonNull(options, "options");
-        List<Line> lines = new ArrayList<>(4);
+        List<Line> lines = new ArrayList<>(5);
         boolean markedFriend = options.friendStatus() && friend;
         lines.add(new Line(markedFriend ? facts.name() + " [Friend]" : facts.name(),
                 markedFriend ? COLOR_FRIEND : COLOR_NAME));
         if (options.health()) {
-            lines.add(new Line(String.format(Locale.ROOT, "♥ %.1f/%.1f", facts.health(), facts.maximumHealth()),
+            lines.add(new Line(formatHealth(facts.health(), facts.maximumHealth()),
                     healthColor(facts.health() / facts.maximumHealth())));
         }
         if (options.armor() && facts.armor() > 0) {
             lines.add(new Line("Armor " + facts.armor(), COLOR_ARMOR));
         }
-        String detail = detailLine(facts, options);
-        if (!detail.isEmpty()) {
-            lines.add(new Line(detail, COLOR_DETAIL));
+        if (options.heldItem()) {
+            String item = displayItem(facts.heldItemId());
+            if (!item.isEmpty()) {
+                lines.add(new Line(item, COLOR_ITEM));
+            }
+        }
+        if (options.distance()) {
+            lines.add(new Line(String.format(Locale.ROOT, "%.1fm", facts.distance()), COLOR_DISTANCE));
         }
         return lines;
     }
@@ -82,29 +88,37 @@ public final class BetterNametagText {
         return fraction >= 1.0F / 3.0F ? COLOR_HEALTH_MEDIUM : COLOR_HEALTH_LOW;
     }
 
-    private static String detailLine(Facts facts, BetterNametags.Options options) {
-        StringBuilder text = new StringBuilder();
-        if (options.distance()) {
-            text.append(String.format(Locale.ROOT, "%.1fm", facts.distance()));
-        }
-        if (options.heldItem()) {
-            String item = displayItem(facts.heldItemId());
-            if (!item.isEmpty()) {
-                if (!text.isEmpty()) {
-                    text.append(" • ");
-                }
-                text.append(item);
-            }
-        }
-        return text.toString();
+    static String formatHealth(float health, float maximumHealth) {
+        return formatNumber(health) + "/" + formatNumber(maximumHealth);
     }
 
-    /** Hides the empty hand and drops the vanilla namespace for readability. */
+    private static String formatNumber(float value) {
+        int rounded = Math.round(value);
+        return Math.abs(value - rounded) < 0.05F
+                ? Integer.toString(rounded)
+                : String.format(Locale.ROOT, "%.1f", value);
+    }
+
+    /** Hides the empty hand, drops the vanilla namespace, and title-cases item IDs. */
     private static String displayItem(String heldItemId) {
         if (heldItemId.isEmpty() || heldItemId.equals(EMPTY_HAND_ID)) {
             return "";
         }
-        return heldItemId.startsWith(VANILLA_NAMESPACE) ? heldItemId.substring(VANILLA_NAMESPACE.length()) : heldItemId;
+        if (!heldItemId.startsWith(VANILLA_NAMESPACE)) {
+            return heldItemId;
+        }
+        String[] words = heldItemId.substring(VANILLA_NAMESPACE.length()).split("_");
+        StringBuilder result = new StringBuilder();
+        for (String word : words) {
+            if (word.isEmpty()) {
+                continue;
+            }
+            if (!result.isEmpty()) {
+                result.append(' ');
+            }
+            result.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return result.toString();
     }
 
     /** One rendered name-tag row and its ARGB text color. */

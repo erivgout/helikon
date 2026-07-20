@@ -1,6 +1,8 @@
 package dev.helikon.client.render;
 
 import org.junit.jupiter.api.Test;
+import dev.helikon.client.hud.HudElementId;
+import dev.helikon.client.hud.HudElementPlacement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,5 +19,16 @@ class MiniPlayerLayoutTest {
     @Test
     void rejectsUnsupportedScale() {
         assertThrows(IllegalArgumentException.class, () -> MiniPlayerLayout.entitySize(0.49D));
+    }
+
+    @Test
+    void resolvesMovedAbsoluteContentBoundsForPipRendering() {
+        HudElementPlacement placement = new HudElementPlacement(HudElementId.MINI_PLAYER);
+        placement.setAbsolutePosition(120, 90);
+        placement.setPadding(4);
+        placement.setScale(1.5F);
+
+        assertEquals(new dev.helikon.client.hud.HudBounds(126, 96, 105, 120),
+                MiniPlayerLayout.contentBounds(placement, 400, 300));
     }
 }

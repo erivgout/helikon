@@ -10,10 +10,10 @@ class HudElementPlacementTest {
     @Test
     void defaultsPreserveBottomLeftAndTopLeftAnchors() {
         HudElementPlacement saturation = new HudElementPlacement(HudElementId.SATURATION);
-        HudElementPlacement waypoints = new HudElementPlacement(HudElementId.WAYPOINTS);
+        HudElementPlacement radar = new HudElementPlacement(HudElementId.RADAR);
 
         assertEquals(new HudBounds(5, 215, 40, 20), saturation.bounds(100, 240, 40, 20));
-        assertEquals(new HudBounds(5, 50, 40, 20), waypoints.bounds(100, 240, 40, 20));
+        assertEquals(new HudBounds(5, 120, 40, 20), radar.bounds(100, 240, 40, 20));
     }
 
     @Test

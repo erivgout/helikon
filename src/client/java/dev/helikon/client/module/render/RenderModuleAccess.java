@@ -5,8 +5,11 @@ import dev.helikon.client.hud.HudElementId;
 import dev.helikon.client.hud.HudLayout;
 import dev.helikon.client.panic.PanicState;
 import net.minecraft.core.Holder;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.Objects;
 
@@ -24,6 +27,7 @@ public final class RenderModuleAccess {
     private static volatile RainbowEnchant rainbowEnchant;
     private static volatile NoWeather noWeather;
     private static volatile Zoom zoom;
+    private static volatile BetterNametags betterNametags;
     private static volatile HudLayout hudLayout;
     private static volatile PanicState panicState;
 
@@ -144,6 +148,23 @@ public final class RenderModuleAccess {
 
     public static void installZoom(Zoom module) {
         zoom = Objects.requireNonNull(module, "module");
+    }
+
+    public static void installBetterNametags(BetterNametags module) {
+        betterNametags = Objects.requireNonNull(module, "module");
+    }
+
+    /** Suppresses vanilla only when Better Nametags will render its replacement label. */
+    public static boolean hideVanillaNametag(Entity entity) {
+        BetterNametags module = betterNametags;
+        Minecraft client = Minecraft.getInstance();
+        Player localPlayer = client.player;
+        boolean remotePlayer = entity instanceof Player && entity != localPlayer;
+        boolean visible = localPlayer != null && !entity.isInvisibleTo(localPlayer);
+        boolean lineOfSight = localPlayer != null && localPlayer.hasLineOfSight(entity);
+        double distanceSquared = localPlayer == null ? Double.POSITIVE_INFINITY
+                : entity.position().distanceToSqr(localPlayer.position());
+        return module != null && module.replacesVanillaName(remotePlayer, visible, lineOfSight, distanceSquared);
     }
 
     public static float zoomedFov(float vanillaFov) {

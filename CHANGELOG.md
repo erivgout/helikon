@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Adds a default-on **Waypoints** Render module with Lunar-inspired projected
+  name/distance panels, colored initials, and thin vertical world beams. It is
+  independent from HUD Settings, keeps labels visible when their distant
+  ground position is outside the camera projection, enlarges distant labels
+  while keeping nearby labels compact, and does not change saved Baritone
+  waypoint data.
+- Upgrades Radar's optional minimap with native terrain colors, relief shading,
+  compass/player heading, type colors, and entity altitude indicators.
+- Adds a default-off **Hit through walls** KillAura setting. It removes the
+  local line-of-sight gate only; server combat validation remains authoritative.
+- Tightens BetterNametags row spacing while retaining compact whole-number
+  health text and the duplicate vanilla-label suppression.
+- Prevents Baritone's camera from shaking while it actively mines a block by
+  disabling its legacy two-degree random yaw offset by default; users can
+  still opt into the offset with Baritone's `randomLooking113` setting.
+
 ## 1.2.1 - 2026-07-19
 
 - Adds a persistent **Baritone** section to the ClickGUI sidebar with

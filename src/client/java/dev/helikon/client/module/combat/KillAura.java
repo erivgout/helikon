@@ -12,7 +12,7 @@ import dev.helikon.client.setting.NumberSetting;
 import java.util.List;
 import java.util.Optional;
 
-/** Selects one visible local target and requests one ordinary Minecraft attack at a bounded cadence. */
+/** Selects one locally observed target and requests one ordinary Minecraft attack at a bounded cadence. */
 public final class KillAura extends Module {
     public enum TargetMode {
         SINGLE,
@@ -24,6 +24,7 @@ public final class KillAura extends Module {
     private final BooleanSetting hostiles;
     private final BooleanSetting passive;
     private final BooleanSetting excludeFriends;
+    private final BooleanSetting hitThroughWalls;
     private final NumberSetting range;
     private final NumberSetting fieldOfView;
     private final NumberSetting delayTicks;
@@ -42,6 +43,8 @@ public final class KillAura extends Module {
         passive = addSetting(new BooleanSetting("passive", "Passive", "Allow passive mobs.", false));
         excludeFriends = addSetting(new BooleanSetting("exclude_friends", "Exclude friends",
                 "Never target locally listed friends.", true));
+        hitThroughWalls = addSetting(new BooleanSetting("hit_through_walls", "Hit through walls",
+                "Allow locally loaded targets without line of sight; servers may reject the attack.", false));
         range = addSetting(new NumberSetting("range", "Range", "Maximum local target distance.", 3.0D, 1.0D, 6.0D));
         fieldOfView = addSetting(new NumberSetting("field_of_view", "Field of view", "Maximum target view angle.",
                 90.0D, 5.0D, 180.0D));
@@ -106,9 +109,12 @@ public final class KillAura extends Module {
     }
 
     private CombatTargetFilter.Options targetOptions() {
-        // Requiring this locally observed line-of-sight fact prevents attacks through solid blocks.
         return new CombatTargetFilter.Options(players.value(), hostiles.value(), passive.value(), excludeFriends.value(),
-                true, range.value(), fieldOfView.value(), true);
+                true, range.value(), fieldOfView.value(), !hitThroughWalls.value());
+    }
+
+    public boolean hitThroughWalls() {
+        return hitThroughWalls.value();
     }
 
     @Override

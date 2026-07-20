@@ -19,6 +19,8 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.MapColor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +29,11 @@ import java.util.Objects;
 /** Thin HUD adapter for Radar's Minecraft-free projection and local entity filters. */
 public final class RadarHud implements HudElement {
     private static final int RADIUS = 38;
-    private static final int MAP_CELL_SIZE = 2;
-    private static final long MAP_REFRESH_TICKS = 5L;
-    private static final int PLAYER_COLOR = 0xFFFFFFFF;
+    private static final int MAP_CELL_SIZE = 1;
+    private static final long MAP_REFRESH_TICKS = 10L;
+    private static final int PLAYER_COLOR = 0xFF4FC3F7;
+    private static final int PLAYER_OUTLINE_COLOR = 0xFFF4F7FA;
+    private static final int MAP_GUIDE_COLOR = 0x502A313B;
 
     private final Radar module;
     private final FriendManager friends;
@@ -75,11 +79,13 @@ public final class RadarHud implements HudElement {
             mapCells = List.of();
             mapRefreshBucket = Long.MIN_VALUE;
         }
+        drawMapGuides(graphics, client, localBounds, centerX, centerY, placement);
         EntityRenderFilter.Options options = module.options();
         int rendered = 0;
         for (Entity entity : client.level.entitiesForRendering()) {
             boolean friend = isFriend(entity);
-            if (!EntityRenderFilter.shouldRender(options, entityType(entity), friend, entity == client.player,
+            EntityRenderFilter.EntityType type = entityType(entity);
+            if (!EntityRenderFilter.shouldRender(options, type, friend, entity == client.player,
                     entity.position().distanceToSqr(client.player.position()))) {
                 continue;
             }
@@ -91,12 +97,12 @@ public final class RadarHud implements HudElement {
             }
             int x = centerX + (int) Math.round(point.x());
             int y = centerY - (int) Math.round(point.y());
-            graphics.fill(x - 1, y - 1, x + 2, y + 2, module.color(friend));
+            drawEntityMarker(graphics, x, y, module.color(type, friend), entity.getY() - client.player.getY());
             if (++rendered >= module.maximumEntities()) {
                 break;
             }
         }
-        graphics.fill(centerX - 1, centerY - 1, centerX + 2, centerY + 2, PLAYER_COLOR);
+        drawPlayerMarker(graphics, centerX, centerY, client.player.getYRot(), module.rotate());
         HudPresentation.endFrame(graphics);
     }
 
@@ -128,6 +134,7 @@ public final class RadarHud implements HudElement {
         double sine = Math.sin(radians);
         int playerY = client.player.getBlockY();
         for (int screenY = -RADIUS; screenY < RADIUS; screenY += MAP_CELL_SIZE) {
+            int previousHeight = Integer.MIN_VALUE;
             for (int screenX = -RADIUS; screenX < RADIUS; screenX += MAP_CELL_SIZE) {
                 double sampleX = screenX + MAP_CELL_SIZE * 0.5D;
                 double sampleY = screenY + MAP_CELL_SIZE * 0.5D;
@@ -148,11 +155,64 @@ public final class RadarHud implements HudElement {
                 if (!client.level.isLoaded(position)) {
                     continue;
                 }
-                String blockId = BuiltInRegistries.BLOCK.getKey(client.level.getBlockState(position).getBlock()).toString();
-                cells.add(new MapCell(screenX, screenY, RadarMapColor.forBlock(blockId, surfaceY - playerY)));
+                BlockState state = client.level.getBlockState(position);
+                MapColor mapColor = state.getMapColor(client.level, position);
+                String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+                int baseColor = mapColor == MapColor.NONE
+                        ? RadarMapColor.forBlock(blockId, 0)
+                        : mapColor.calculateARGBColor(MapColor.Brightness.NORMAL);
+                int slope = previousHeight == Integer.MIN_VALUE ? 0 : surfaceY - previousHeight;
+                int color = RadarMapColor.forMapColor(baseColor, surfaceY - playerY, slope);
+                cells.add(new MapCell(screenX, screenY, color));
+                previousHeight = surfaceY;
             }
         }
         return List.copyOf(cells);
+    }
+
+    private void drawMapGuides(GuiGraphicsExtractor graphics, Minecraft client, HudBounds bounds,
+                               int centerX, int centerY, HudElementPlacement placement) {
+        graphics.fill(centerX, bounds.y() + 1, centerX + 1, bounds.y() + bounds.height() - 1, MAP_GUIDE_COLOR);
+        graphics.fill(bounds.x() + 1, centerY, bounds.x() + bounds.width() - 1, centerY + 1, MAP_GUIDE_COLOR);
+        int borderColor = HudPresentation.color(placement);
+        if (module.shape() == RadarProjection.Shape.SQUARE) {
+            graphics.outline(bounds.x(), bounds.y(), bounds.width(), bounds.height(), borderColor);
+        } else {
+            for (int degrees = 0; degrees < 360; degrees += 4) {
+                double radians = Math.toRadians(degrees);
+                int x = centerX + (int) Math.round(Math.cos(radians) * (RADIUS - 1));
+                int y = centerY + (int) Math.round(Math.sin(radians) * (RADIUS - 1));
+                graphics.fill(x, y, x + 1, y + 1, borderColor);
+            }
+        }
+        String heading = module.rotate() ? RadarProjection.heading(client.player.getYRot()) : "N";
+        int headingX = centerX - client.font.width(heading) / 2;
+        graphics.text(client.font, heading, headingX, bounds.y() + 2, 0xFFF4F7FA, true);
+    }
+
+    private static void drawEntityMarker(GuiGraphicsExtractor graphics, int x, int y, int color,
+                                         double heightDifference) {
+        graphics.fill(x - 2, y - 2, x + 3, y + 3, 0xC0000000);
+        graphics.fill(x - 1, y - 1, x + 2, y + 2, color);
+        if (heightDifference > 3.0D) {
+            graphics.fill(x, y - 4, x + 1, y - 3, color);
+        } else if (heightDifference < -3.0D) {
+            graphics.fill(x, y + 3, x + 1, y + 4, color);
+        }
+    }
+
+    private static void drawPlayerMarker(GuiGraphicsExtractor graphics, int centerX, int centerY,
+                                         float yawDegrees, boolean rotatingMap) {
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(centerX, centerY);
+        if (!rotatingMap) {
+            graphics.pose().rotate((float) Math.toRadians(yawDegrees));
+        }
+        graphics.fill(-1, -5, 2, 4, PLAYER_OUTLINE_COLOR);
+        graphics.fill(-3, 1, 4, 4, PLAYER_OUTLINE_COLOR);
+        graphics.fill(0, -4, 1, 3, PLAYER_COLOR);
+        graphics.fill(-2, 1, 3, 3, PLAYER_COLOR);
+        graphics.pose().popMatrix();
     }
 
     private void drawBackground(GuiGraphicsExtractor graphics, HudBounds bounds, int centerX, int centerY,

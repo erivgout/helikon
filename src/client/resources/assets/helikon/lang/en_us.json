@@ -11,6 +11,8 @@
   "screen.helikon.reset_setting": "Reset %s",
   "screen.helikon.hud_button": "HUD",
   "screen.helikon.theme_button": "Theme",
+  "screen.helikon.layout_classic": "Classic",
+  "screen.helikon.layout_panels": "Panels",
   "screen.helikon.theme_editor.title": "ClickGUI Theme",
   "screen.helikon.theme_editor.instructions": "Choose a local palette. Escape returns to the ClickGUI.",
   "screen.helikon.hud_editor.title": "Helikon HUD Editor",

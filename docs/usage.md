@@ -2,48 +2,57 @@
 
 ## ClickGUI
 
-Press **Right Shift** in game to open the ClickGUI.
+Press **Right Shift** in game to open the ClickGUI. Each module category is
+its own floating panel with an icon header and accent underline, and a
+floating search palette sits at the bottom of the screen.
 
-- Click a category to list its modules. **Active** at the top shows every
-  enabled utility across categories; click a row's square there to turn it
-  off. Click a module to inspect and edit its settings.
-- The search box at the top filters across module names, IDs, and
-  descriptions in every category.
-- In a module's settings panel, click **Bind** and press a key to assign a
+- **Left-click** a module row to toggle the module; enabled modules show
+  their name in the accent color.
+- **Right-click** a module row to expand its settings inline beneath the row;
+  right-click again to collapse them. Expanded modules are remembered.
+- **Middle-click** a module row to star it as a favorite; favorites show a
+  star beside their name and are collected in the dedicated **Favorites**
+  panel.
+- Drag a panel by its header to move it; **right-click** a header to collapse
+  the panel to just its header. Panel positions are clamped to the screen and
+  restored when the GUI is reopened.
+- A panel never grows taller than half the screen; longer module lists
+  scroll with the mouse wheel.
+- The search palette filters across module names, IDs, and descriptions in
+  every category; click a result to toggle that module. Drag an empty part of
+  the palette to move it.
+- In a module's expanded settings, click **Bind** and press a key to assign a
   keybind; Backspace/Delete removes the bind and Escape cancels. Held
   modifiers are captured.
-- Every setting and module has a reset control.
-- Hover the right-hand settings panel and use the mouse wheel to scroll long
-  setting groups. Editable fields remain aligned with their setting as you
-  scroll.
-- Drag the window by an empty part of its header, and drag its bottom-right
-  handle to resize. Position and size are clamped to the screen and restored
-  when it is reopened.
-- Select **Theme** in the header to choose Midnight, High Contrast, or Ocean,
-  interface scale (0.75x–1.50x), and a reduced-animation preference. Themes
-  are local; the client never downloads themes or contacts a service.
-- With no text field focused, Left/Right switches categories, Up/Down selects
-  a module row, and Enter or Space toggles the selected module.
-- Module state and settings are written to `config/helikon/global.json` when
-  the screen closes.
+- **Right-click** any setting row to reset that setting; the **Reset module**
+  row at the end of the expanded settings restores every default.
+- Select **Theme** in the search palette to choose a palette — Slate
+  (default), Helikon Gold, Midnight, High Contrast, Ocean, Emerald, Crimson,
+  or Amethyst — plus interface scale (0.75x–1.50x) and a reduced-animation
+  preference. Panel underlines, icons, sliders, and highlights recolor from
+  the chosen theme's accent. Themes are local; the client never downloads
+  themes or contacts a service. **HUD** beside it opens the HUD editor.
+- Prefer the previous single-window GUI? Click **Classic** in the search
+  palette to switch to it; its header gains a **Panels** button that switches
+  back. The choice persists across sessions.
+- Module state, settings, and the panel layout are written to
+  `config/helikon/global.json` when the screen closes.
 
 Text controls validate every supported compact setting type before changing
 the stored value: semicolons separate text/identifier lists, commas separate
 multi-enum selections, `minimum..maximum` expresses ranges, and
 `keyboard|mouse:code:toggle|hold|press_once[:modifiers]` expresses standalone
 keybind settings. Invalid input is shown in red and the last valid value is
-retained. Color rows provide alpha/red/green/blue picker tracks below the
-`#AARRGGBB` text value.
+retained.
 
-Numeric settings (whole-number and decimal) show a slider above their text
-field: drag or click the track to set a value, or point at the track and use
-the mouse wheel to increase or decrease it one step at a time. The field keeps
-showing the current value for exact typed entry, and its range is shown beside
-the setting name.
+Numeric settings show an inline slider: drag or click the track to set a
+value, or point at the track and use the mouse wheel to step it; hovering
+shows the current value. Enum settings cycle on click. Color settings show a
+swatch — click it to open alpha/red/green/blue picker tracks beneath the row.
 
 ## HUD editor
 
-Select **HUD** in the ClickGUI header. The editor is a clean drag-only canvas
+Select **HUD** in the ClickGUI search palette. The editor is a clean drag-only canvas
 with a compact toolbar and visible eight-pixel grid. Drag the Active Modules
 preview or any active element handle; every movable widget snaps to the grid,
 stays below the toolbar, and remains fully on-screen. Module-backed handles
@@ -103,7 +112,7 @@ sent to the server:
 | `.panic bind <key>` / `.panic unbind` | Configures or clears the local persisted panic keyboard/mouse bind. |
 | `.panic status` / `.panic restorehud` | Shows the bind or restores HUD visibility without re-enabling modules. |
 
-The dedicated **Baritone** sidebar section contains pathing permissions,
+The **Baritone** module in the World panel contains pathing permissions,
 path/goal/break/place/walk-into visualization controls, destination and mine
 shortcuts, pause/resume/stop, and a generic command field for the complete
 Baritone command surface. If `# commands` is enabled, Baritone's normal local

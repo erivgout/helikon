@@ -1635,7 +1635,7 @@ public final class HelikonClient implements ClientModInitializer {
 
 
     private void openClickGui() {
-        Minecraft.getInstance().setScreenAndShow(new HelikonClickGuiScreen(
+        Minecraft.getInstance().setScreenAndShow(HelikonClickGuiScreen.create(
                 modules, configuration, clickGuiWindow, hudLayout, hudConfiguration
         ));
     }
@@ -1747,6 +1747,7 @@ public final class HelikonClient implements ClientModInitializer {
 
     private static boolean isHelikonScreen(Minecraft client) {
         return client.gui.screen() instanceof HelikonClickGuiScreen
+                || client.gui.screen() instanceof dev.helikon.client.gui.HelikonClassicClickGuiScreen
                 || client.gui.screen() instanceof HelikonHudEditorScreen
                 || client.gui.screen() instanceof HelikonHudSettingsScreen
                 || client.gui.screen() instanceof HelikonThemeEditorScreen;

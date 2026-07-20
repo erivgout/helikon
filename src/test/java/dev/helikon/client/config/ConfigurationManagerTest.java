@@ -342,7 +342,7 @@ class ConfigurationManagerTest {
     }
 
     @Test
-    void invalidStoredClickGuiThemeFallsBackToMidnight() throws IOException {
+    void invalidStoredClickGuiThemeFallsBackToDefault() throws IOException {
         ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
         Files.createDirectories(manager.configurationDirectory());
         Files.writeString(manager.globalConfigurationPath(), """
@@ -356,7 +356,60 @@ class ConfigurationManagerTest {
         ClickGuiWindowState window = new ClickGuiWindowState();
         window.setTheme(ClickGuiTheme.OCEAN);
         assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(new ModuleRegistry(), window));
-        assertEquals(ClickGuiTheme.MIDNIGHT, window.theme());
+        assertEquals(ClickGuiTheme.SLATE, window.theme());
+    }
+
+    @Test
+    void clickGuiPanelLayoutRoundTripsThroughGlobalConfiguration() {
+        ModuleRegistry sourceRegistry = new ModuleRegistry();
+        sourceRegistry.register(new ConfigurableModule());
+        ClickGuiWindowState sourceWindow = new ClickGuiWindowState();
+        assertTrue(sourceWindow.setPanelPlacement("render", 24, 36, false));
+        assertTrue(sourceWindow.setPanelPlacement("search", 120, 300, true));
+        sourceWindow.setModuleExpanded("configurable", true);
+        sourceWindow.setClassicLayout(true);
+
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        manager.save(sourceRegistry, sourceWindow);
+
+        ClickGuiWindowState targetWindow = new ClickGuiWindowState();
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(sourceRegistry, targetWindow));
+        ClickGuiWindowState.PanelPlacement render = targetWindow.panelPlacement("render").orElseThrow();
+        assertEquals(24, render.x());
+        assertEquals(36, render.y());
+        assertFalse(render.collapsed());
+        assertTrue(targetWindow.panelPlacement("search").orElseThrow().collapsed());
+        assertTrue(targetWindow.isModuleExpanded("configurable"));
+        assertTrue(targetWindow.classicLayout());
+    }
+
+    @Test
+    void invalidStoredPanelPlacementsAreSkippedIndividually() throws IOException {
+        ConfigurationManager manager = new ConfigurationManager(temporaryDirectory.resolve("helikon"));
+        Files.createDirectories(manager.configurationDirectory());
+        Files.writeString(manager.globalConfigurationPath(), """
+                {
+                  "schemaVersion": 1,
+                  "modules": {},
+                  "clickGui": {
+                    "positioned": false,
+                    "panels": {
+                      "render": {"x": -5, "y": 10},
+                      "combat": {"x": 5, "y": 10, "collapsed": true}
+                    },
+                    "expandedModules": ["configurable", "Not Valid!"]
+                  }
+                }
+                """);
+
+        ClickGuiWindowState window = new ClickGuiWindowState();
+        assertEquals(ConfigurationManager.LoadResult.LOADED, manager.load(new ModuleRegistry(), window));
+        assertTrue(window.panelPlacement("render").isEmpty());
+        ClickGuiWindowState.PanelPlacement combat = window.panelPlacement("combat").orElseThrow();
+        assertEquals(5, combat.x());
+        assertTrue(combat.collapsed());
+        assertTrue(window.isModuleExpanded("configurable"));
+        assertFalse(window.isModuleExpanded("Not Valid!"));
     }
 
     private static final class ConfigurableModule extends Module {

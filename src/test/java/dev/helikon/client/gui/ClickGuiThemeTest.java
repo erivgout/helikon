@@ -15,7 +15,7 @@ class ClickGuiThemeTest {
     @Test
     void windowStateDefaultsAndUpdatesTheme() {
         ClickGuiWindowState state = new ClickGuiWindowState();
-        assertEquals(ClickGuiTheme.MIDNIGHT, state.theme());
+        assertEquals(ClickGuiTheme.SLATE, state.theme());
         state.setTheme(ClickGuiTheme.HIGH_CONTRAST);
         assertEquals(ClickGuiTheme.HIGH_CONTRAST, state.theme());
     }

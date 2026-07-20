@@ -43,7 +43,7 @@ public final class HelikonKeybinds {
                 // Never replace an open screen: keybinds must not fire while
                 // the user might be typing into another GUI's text field.
                 if (client.gui.screen() == null) {
-                    client.setScreenAndShow(new HelikonClickGuiScreen(
+                    client.setScreenAndShow(HelikonClickGuiScreen.create(
                             modules, configuration, clickGuiWindow, hudLayout, hudConfiguration
                     ));
                 }

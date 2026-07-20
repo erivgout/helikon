@@ -22,10 +22,13 @@ public final class ClickGuiWindowState {
     private boolean sized;
     private int width = DEFAULT_WIDTH;
     private int height = DEFAULT_HEIGHT;
-    private ClickGuiTheme theme = ClickGuiTheme.MIDNIGHT;
+    private ClickGuiTheme theme = ClickGuiTheme.SLATE;
     private float interfaceScale = 1.0F;
     private boolean reducedAnimations;
+    private boolean classicLayout;
     private final java.util.LinkedHashSet<String> favoriteModuleIds = new java.util.LinkedHashSet<>();
+    private final java.util.LinkedHashMap<String, PanelPlacement> panelPlacements = new java.util.LinkedHashMap<>();
+    private final java.util.LinkedHashSet<String> expandedModuleIds = new java.util.LinkedHashSet<>();
     private boolean viewStateSaved;
     private ClickGuiState.ViewMode viewMode = ClickGuiState.ViewMode.CATEGORY;
     private ModuleCategory selectedCategory = ModuleCategory.COMBAT;
@@ -112,6 +115,72 @@ public final class ClickGuiWindowState {
         }
     }
 
+    /** Saved placement for one floating ClickGUI panel, keyed by panel id. */
+    public record PanelPlacement(int x, int y, boolean collapsed) {
+    }
+
+    private static boolean isValidPanelKey(String key) {
+        return key != null && key.length() <= 32 && key.matches("[a-z][a-z0-9_]*");
+    }
+
+    public java.util.Optional<PanelPlacement> panelPlacement(String key) {
+        return java.util.Optional.ofNullable(panelPlacements.get(java.util.Objects.requireNonNull(key, "key")));
+    }
+
+    /** Stores a floating panel's placement if the key and coordinates are safe to persist. */
+    public boolean setPanelPlacement(String key, int x, int y, boolean collapsed) {
+        if (!isValidPanelKey(key) || !isValidCoordinate(x) || !isValidCoordinate(y)
+                || (panelPlacements.size() >= 64 && !panelPlacements.containsKey(key))) {
+            return false;
+        }
+        panelPlacements.put(key, new PanelPlacement(x, y, collapsed));
+        return true;
+    }
+
+    public java.util.Map<String, PanelPlacement> panelPlacements() {
+        return java.util.Map.copyOf(panelPlacements);
+    }
+
+    /** Clears saved panel placements so the next GUI open uses the default layout. */
+    public void clearPanelPlacements() {
+        panelPlacements.clear();
+    }
+
+    public boolean isModuleExpanded(String moduleId) {
+        return expandedModuleIds.contains(java.util.Objects.requireNonNull(moduleId, "moduleId"));
+    }
+
+    /** Remembers whether a module's inline settings are expanded in its panel. */
+    public void setModuleExpanded(String moduleId, boolean expanded) {
+        java.util.Objects.requireNonNull(moduleId, "moduleId");
+        if (!moduleId.matches("[a-z][a-z0-9_]*")) {
+            throw new IllegalArgumentException("Expanded module ID is invalid");
+        }
+        if (expanded) {
+            if (expandedModuleIds.size() < 512) {
+                expandedModuleIds.add(moduleId);
+            }
+        } else {
+            expandedModuleIds.remove(moduleId);
+        }
+    }
+
+    public java.util.Set<String> expandedModuleIds() {
+        return java.util.Set.copyOf(expandedModuleIds);
+    }
+
+    public void replaceExpandedModules(java.util.Collection<String> moduleIds) {
+        expandedModuleIds.clear();
+        if (moduleIds == null) {
+            return;
+        }
+        for (String moduleId : moduleIds) {
+            if (moduleId != null && moduleId.matches("[a-z][a-z0-9_]*")) {
+                setModuleExpanded(moduleId, true);
+            }
+        }
+    }
+
     public void setTheme(ClickGuiTheme theme) { this.theme = java.util.Objects.requireNonNull(theme, "theme"); }
 
     public boolean setInterfaceScale(float value) {
@@ -123,6 +192,11 @@ public final class ClickGuiWindowState {
     }
 
     public void setReducedAnimations(boolean value) { reducedAnimations = value; }
+
+    /** Whether the GUI opens as the classic single window instead of floating panels. */
+    public boolean classicLayout() { return classicLayout; }
+
+    public void setClassicLayout(boolean value) { classicLayout = value; }
 
     /** Stores the last navigated ClickGUI view so reopening resumes exactly where the user left it. */
     public boolean setViewState(ClickGuiState.ViewMode viewMode, ModuleCategory selectedCategory,
@@ -170,10 +244,13 @@ public final class ClickGuiWindowState {
     public void reset() {
         resetPosition();
         resetSize();
-        theme = ClickGuiTheme.MIDNIGHT;
+        theme = ClickGuiTheme.SLATE;
         interfaceScale = 1.0F;
         reducedAnimations = false;
+        classicLayout = false;
         favoriteModuleIds.clear();
+        panelPlacements.clear();
+        expandedModuleIds.clear();
         resetViewState();
     }
 

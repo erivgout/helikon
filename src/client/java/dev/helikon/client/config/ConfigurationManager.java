@@ -280,9 +280,22 @@ public final class ConfigurationManager {
         window.addProperty("theme", clickGuiWindow.theme().id());
         window.addProperty("interfaceScale", clickGuiWindow.interfaceScale());
         window.addProperty("reducedAnimations", clickGuiWindow.reducedAnimations());
+        window.addProperty("classicLayout", clickGuiWindow.classicLayout());
         JsonArray favorites = new JsonArray();
         clickGuiWindow.favoriteModuleIds().forEach(favorites::add);
         window.add("favorites", favorites);
+        JsonObject panels = new JsonObject();
+        clickGuiWindow.panelPlacements().forEach((key, placement) -> {
+            JsonObject panel = new JsonObject();
+            panel.addProperty("x", placement.x());
+            panel.addProperty("y", placement.y());
+            panel.addProperty("collapsed", placement.collapsed());
+            panels.add(key, panel);
+        });
+        window.add("panels", panels);
+        JsonArray expanded = new JsonArray();
+        clickGuiWindow.expandedModuleIds().forEach(expanded::add);
+        window.add("expandedModules", expanded);
         if (clickGuiWindow.hasSavedViewState()) {
             window.addProperty("viewMode", clickGuiWindow.viewMode().name().toLowerCase(Locale.ROOT));
             window.addProperty("selectedCategory", clickGuiWindow.selectedCategory().name().toLowerCase(Locale.ROOT));
@@ -349,10 +362,10 @@ public final class ConfigurationManager {
 
         JsonElement themeElement = window.get("theme");
         if (themeElement != null && (!themeElement.isJsonPrimitive() || !themeElement.getAsJsonPrimitive().isString())) {
-            LOGGER.warning("Invalid ClickGUI theme; reset to Midnight");
+            LOGGER.warning("Invalid ClickGUI theme; reset to the default theme");
         } else if (themeElement != null) {
             ClickGuiTheme.find(themeElement.getAsString()).ifPresentOrElse(clickGuiWindow::setTheme,
-                    () -> LOGGER.warning("Unknown ClickGUI theme; reset to Midnight"));
+                    () -> LOGGER.warning("Unknown ClickGUI theme; reset to the default theme"));
         }
 
         JsonElement scaleElement = window.get("interfaceScale");
@@ -371,6 +384,14 @@ public final class ConfigurationManager {
                 clickGuiWindow.setReducedAnimations(reducedAnimationsElement.getAsBoolean());
             }
         }
+        JsonElement classicLayoutElement = window.get("classicLayout");
+        if (classicLayoutElement != null) {
+            if (!classicLayoutElement.isJsonPrimitive() || !classicLayoutElement.getAsJsonPrimitive().isBoolean()) {
+                LOGGER.warning("Invalid ClickGUI layout choice; reset to floating panels");
+            } else {
+                clickGuiWindow.setClassicLayout(classicLayoutElement.getAsBoolean());
+            }
+        }
         JsonElement favoritesElement = window.get("favorites");
         if (favoritesElement != null) {
             if (!favoritesElement.isJsonArray()) {
@@ -385,7 +406,53 @@ public final class ConfigurationManager {
                 clickGuiWindow.replaceFavorites(favorites);
             }
         }
+        applyClickGuiPanels(window.get("panels"), clickGuiWindow);
+        JsonElement expandedElement = window.get("expandedModules");
+        if (expandedElement != null) {
+            if (!expandedElement.isJsonArray()) {
+                LOGGER.warning("Invalid ClickGUI expanded modules; cleared");
+            } else {
+                java.util.List<String> expanded = new java.util.ArrayList<>();
+                for (JsonElement moduleId : expandedElement.getAsJsonArray()) {
+                    if (moduleId.isJsonPrimitive() && moduleId.getAsJsonPrimitive().isString()) {
+                        expanded.add(moduleId.getAsString());
+                    }
+                }
+                clickGuiWindow.replaceExpandedModules(expanded);
+            }
+        }
         applyClickGuiView(window, clickGuiWindow);
+    }
+
+    /** Applies optional floating-panel placements; malformed entries fall back to the default layout. */
+    private static void applyClickGuiPanels(JsonElement element, ClickGuiWindowState clickGuiWindow) {
+        if (element == null) {
+            return;
+        }
+        if (!element.isJsonObject()) {
+            LOGGER.warning("Invalid ClickGUI panel layout; reset to defaults");
+            clickGuiWindow.clearPanelPlacements();
+            return;
+        }
+        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+            if (!entry.getValue().isJsonObject()) {
+                LOGGER.warning(() -> "Invalid ClickGUI panel placement for '" + entry.getKey() + "'; skipped");
+                continue;
+            }
+            try {
+                JsonObject panel = entry.getValue().getAsJsonObject();
+                int x = getRequiredInt(panel, "x");
+                int y = getRequiredInt(panel, "y");
+                JsonElement collapsedElement = panel.get("collapsed");
+                boolean collapsed = collapsedElement != null && collapsedElement.isJsonPrimitive()
+                        && collapsedElement.getAsJsonPrimitive().isBoolean() && collapsedElement.getAsBoolean();
+                if (!clickGuiWindow.setPanelPlacement(entry.getKey(), x, y, collapsed)) {
+                    throw new IllegalArgumentException("Placement outside the supported range");
+                }
+            } catch (IllegalArgumentException exception) {
+                LOGGER.warning(() -> "Invalid ClickGUI panel placement for '" + entry.getKey() + "'; skipped");
+            }
+        }
     }
 
     private static void applyClickGuiView(JsonObject window, ClickGuiWindowState clickGuiWindow) {

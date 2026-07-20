@@ -5,6 +5,12 @@ import java.util.Optional;
 
 /** Built-in, high-contrast palettes for the local ClickGUI. */
 public enum ClickGuiTheme {
+    SLATE("slate", "Slate", 0xF52A2D36, 0xFFBB92F5, 0xFF31353F, 0xFF2E313B,
+            0x14FFFFFF, 0x33BB92F5, 0xFFBB92F5, 0xFFEDEFF4, 0xFF9AA0AC, 0xFF3A3E4A,
+            0xFFFF6B6B, 0xFF565B6B),
+    HELIKON("helikon", "Helikon Gold", 0xF20F0D09, 0xFFE0A93F, 0xFF14110C, 0xFF12100B,
+            0x16FFFFFF, 0x33E0A93F, 0xFFE0A93F, 0xFFF2E9D6, 0xFF8D8672, 0xFF2B2619,
+            0xFFFF6060, 0xFF6B5B2E),
     MIDNIGHT("midnight", "Midnight", 0xF014161B, 0xFF1C2027, 0xFF181B21, 0xFF171A20,
             0x22FFFFFF, 0x33E8A33D, 0xFFE8A33D, 0xFFE6E6E6, 0xFF9AA1AB, 0xFF2A2F38,
             0xFFFF6060, 0xFF3A4150),
@@ -13,7 +19,16 @@ public enum ClickGuiTheme {
             0xFFFF5555, 0xFFFFFFFF),
     OCEAN("ocean", "Ocean", 0xF0101C2A, 0xFF14263A, 0xFF102237, 0xFF0E1D30,
             0x224CC9F0, 0x334CC9F0, 0xFF4CC9F0, 0xFFE7F6FF, 0xFF9EC8DB, 0xFF28506B,
-            0xFFFF7878, 0xFF4A819E);
+            0xFFFF7878, 0xFF4A819E),
+    EMERALD("emerald", "Emerald", 0xF20A100C, 0xFF3FBF6F, 0xFF0D140F, 0xFF0C120E,
+            0x16FFFFFF, 0x333FBF6F, 0xFF3FBF6F, 0xFFE2F2E6, 0xFF7E907F, 0xFF1C2B20,
+            0xFFFF6060, 0xFF2E6B45),
+    CRIMSON("crimson", "Crimson", 0xF2120B0B, 0xFFE05252, 0xFF170E0E, 0xFF140D0D,
+            0x16FFFFFF, 0x33E05252, 0xFFE05252, 0xFFF4E4E2, 0xFF97807C, 0xFF2E1B19,
+            0xFFFFA640, 0xFF6B2E2E),
+    AMETHYST("amethyst", "Amethyst", 0xF20E0B14, 0xFFB07CE8, 0xFF120E1A, 0xFF100D17,
+            0x16FFFFFF, 0x33B07CE8, 0xFFB07CE8, 0xFFEEE6F6, 0xFF87809A, 0xFF251C33,
+            0xFFFF6060, 0xFF54406B);
 
     private final String id;
     private final String displayName;

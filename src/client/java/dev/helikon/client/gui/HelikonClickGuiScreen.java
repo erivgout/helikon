@@ -31,6 +31,8 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.util.FormattedCharSequence;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,13 +63,15 @@ public final class HelikonClickGuiScreen extends Screen {
     private static final String SEARCH_PANEL_KEY = "search";
     private static final String FAVORITES_PANEL_KEY = "favorites";
 
+    private static final Style UI_STYLE = HelikonUiFont.STYLE;
+
     private static final int BASE_PANEL_WIDTH = 98;
     private static final int BASE_HEADER_HEIGHT = 14;
     private static final int BASE_ROW_HEIGHT = 13;
     private static final int BASE_SETTING_ROW_HEIGHT = 12;
     private static final int BASE_EDIT_ROW_HEIGHT = 16;
-    private static final int BASE_SEARCH_WIDTH = 250;
-    private static final int BASE_SEARCH_ROW_HEIGHT = 22;
+    private static final int BASE_SEARCH_WIDTH = 190;
+    private static final int BASE_SEARCH_ROW_HEIGHT = 20;
     private static final int BASE_RESULT_ROW_HEIGHT = 12;
     private static final int BASE_SLIDER_TRACK_WIDTH = 38;
     private static final int COLOR_PICKER_EXTRA = 23;
@@ -179,9 +183,10 @@ public final class HelikonClickGuiScreen extends Screen {
                 Component.translatable("screen.helikon.search_hint"));
         searchField.setBordered(false);
         searchField.setMaxLength(64);
-        searchField.setHint(Component.translatable("screen.helikon.search_hint"));
+        searchField.setHint(ui(Component.translatable("screen.helikon.search_hint")));
         searchField.setValue(searchQuery);
         searchField.setTextShadow(false);
+        searchField.addFormatter((text, index) -> FormattedCharSequence.forward(text, UI_STYLE));
         searchField.setResponder(text -> searchQuery = text);
         addRenderableWidget(searchField);
         positionSearchField(search);
@@ -374,14 +379,14 @@ public final class HelikonClickGuiScreen extends Screen {
 
         if (hintHovered) {
             graphics.setTooltipForNextFrame(font,
-                    Component.literal("Middle-click a module to star it as a favorite"), mouseX, mouseY);
+                    ui("Middle-click a module to star it as a favorite"), mouseX, mouseY);
         } else if (hoveredSetting != null && !hoveredSetting.description().isBlank()) {
             String extra = isSlider(hoveredSetting)
                     ? " (" + NumberSettingText.format(valueOf(hoveredSetting)) + ")" : "";
             graphics.setTooltipForNextFrame(font,
-                    Component.literal(hoveredSetting.description() + extra), mouseX, mouseY);
+                    ui(hoveredSetting.description() + extra), mouseX, mouseY);
         } else if (hoveredModule != null && !hoveredModule.description().isBlank()) {
-            graphics.setTooltipForNextFrame(font, Component.literal(hoveredModule.description()), mouseX, mouseY);
+            graphics.setTooltipForNextFrame(font, ui(hoveredModule.description()), mouseX, mouseY);
         }
     }
 
@@ -394,8 +399,7 @@ public final class HelikonClickGuiScreen extends Screen {
                 COLOR_ACCENT);
         int textY = panel.y + (headerHeight - 8) / 2;
         graphics.text(font, panel.icon(), panel.x + 6, textY, COLOR_ACCENT, false);
-        graphics.text(font, font.plainSubstrByWidth(panel.title(), panelWidth - 24),
-                panel.x + 17, textY, COLOR_TEXT, false);
+        graphics.text(font, uiTrim(panel.title(), panelWidth - 24), panel.x + 17, textY, COLOR_TEXT, false);
     }
 
     private void drawModuleRow(GuiGraphicsExtractor graphics, PanelView panel, Row row, int rowY, boolean hovered) {
@@ -406,7 +410,7 @@ public final class HelikonClickGuiScreen extends Screen {
         int textY = rowY + (row.height() - 8) / 2;
         boolean favorite = windowState.isFavorite(module.id());
         int nameLimit = panelWidth - 14 - (favorite ? 10 : 0);
-        graphics.text(font, font.plainSubstrByWidth(module.name(), nameLimit), panel.x + 7, textY,
+        graphics.text(font, uiTrim(module.name(), nameLimit), panel.x + 7, textY,
                 module.isEnabled() ? COLOR_ACCENT : COLOR_TEXT, false);
         if (favorite) {
             graphics.text(font, "★", panel.x + panelWidth - 12, textY, COLOR_ACCENT, false);
@@ -425,7 +429,7 @@ public final class HelikonClickGuiScreen extends Screen {
         Setting<?> setting = row.setting();
 
         switch (row.kind()) {
-            case SETTING_ACTION -> graphics.centeredText(font, setting.name(), panel.x + panelWidth / 2, textY,
+            case SETTING_ACTION -> graphics.centeredText(font, ui(setting.name()), panel.x + panelWidth / 2, textY,
                     hovered ? COLOR_ACCENT_LIGHT : COLOR_ACCENT);
             case SETTING_BOOL -> {
                 BooleanSetting booleanSetting = (BooleanSetting) setting;
@@ -457,7 +461,7 @@ public final class HelikonClickGuiScreen extends Screen {
             }
             case SETTING_ENUM -> {
                 EnumSetting<?> enumSetting = (EnumSetting<?>) setting;
-                String value = font.plainSubstrByWidth(enumSetting.valueId(), (panelWidth - 20) / 2);
+                Component value = uiTrim(enumSetting.valueId(), (panelWidth - 20) / 2);
                 int valueWidth = font.width(value);
                 drawSettingLabel(graphics, setting, labelX, textY, right - 12 - valueWidth - labelX);
                 graphics.text(font, value, right - 8 - valueWidth, textY,
@@ -472,23 +476,22 @@ public final class HelikonClickGuiScreen extends Screen {
                 String bindText = keybindAssignment.isAssigning(row.module())
                         ? keybindStatus.isBlank() ? "Press a key..." : keybindStatus
                         : "Bind: " + keyDisplayName(row.module().keybind()) + conflictWarning(row.module());
-                graphics.text(font, font.plainSubstrByWidth(bindText, panelWidth - 20), labelX, textY,
+                graphics.text(font, uiTrim(bindText, panelWidth - 20), labelX, textY,
                         keybindAssignment.isAssigning(row.module()) ? COLOR_ACCENT
                                 : hovered ? COLOR_TEXT : COLOR_TEXT_DIM, false);
             }
             case SETTING_RESET -> graphics.centeredText(font,
-                    Component.translatable("screen.helikon.reset_module"), panel.x + panelWidth / 2, textY,
+                    ui(Component.translatable("screen.helikon.reset_module")), panel.x + panelWidth / 2, textY,
                     hovered ? COLOR_ACCENT : COLOR_TEXT_DIM);
             case SETTING_LABEL -> drawSettingLabel(graphics, setting, labelX, textY, right - 12 - labelX);
-            case HINT -> graphics.text(font, font.plainSubstrByWidth("No favorites", panelWidth - 14),
+            case HINT -> graphics.text(font, uiTrim("No favorites", panelWidth - 14),
                     panel.x + 7, rowY + (row.height() - 8) / 2, COLOR_TEXT_DIM, false);
             case MODULE -> throw new IllegalStateException("Module rows render separately");
         }
     }
 
     private void drawSettingLabel(GuiGraphicsExtractor graphics, Setting<?> setting, int x, int y, int maxWidth) {
-        graphics.text(font, font.plainSubstrByWidth(setting.name(), Math.max(0, maxWidth)), x, y,
-                COLOR_SETTING_LABEL, false);
+        graphics.text(font, uiTrim(setting.name(), maxWidth), x, y, COLOR_SETTING_LABEL, false);
     }
 
     private void drawColorPicker(GuiGraphicsExtractor graphics, PanelView panel, ColorSetting setting, int top) {
@@ -544,41 +547,41 @@ public final class HelikonClickGuiScreen extends Screen {
         int hudX = hudLinkX(panel);
         int themeX = themeLinkX(panel);
         int linkY = panel.y + (searchRowHeight - 8) / 2;
-        graphics.text(font, Component.translatable("screen.helikon.layout_classic"), classicX, linkY,
-                isInside(mouseX, mouseY, classicX - 2, panel.y, font.width(classicLabel()) + 4, searchRowHeight)
+        graphics.text(font, ui(Component.translatable("screen.helikon.layout_classic")), classicX, linkY,
+                isInside(mouseX, mouseY, classicX - 2, panel.y, uiWidth(classicLabel()) + 4, searchRowHeight)
                         ? COLOR_ACCENT : COLOR_TEXT_DIM, false);
-        graphics.text(font, Component.translatable("screen.helikon.hud_button"), hudX, linkY,
-                isInside(mouseX, mouseY, hudX - 2, panel.y, font.width(hudLabel()) + 4, searchRowHeight)
+        graphics.text(font, ui(Component.translatable("screen.helikon.hud_button")), hudX, linkY,
+                isInside(mouseX, mouseY, hudX - 2, panel.y, uiWidth(hudLabel()) + 4, searchRowHeight)
                         ? COLOR_ACCENT : COLOR_TEXT_DIM, false);
-        graphics.text(font, Component.translatable("screen.helikon.theme_button"), themeX, linkY,
-                isInside(mouseX, mouseY, themeX - 2, panel.y, font.width(themeLabel()) + 4, searchRowHeight)
+        graphics.text(font, ui(Component.translatable("screen.helikon.theme_button")), themeX, linkY,
+                isInside(mouseX, mouseY, themeX - 2, panel.y, uiWidth(themeLabel()) + 4, searchRowHeight)
                         ? COLOR_ACCENT : COLOR_TEXT_DIM, false);
 
         if (!searchQuery.isBlank()) {
             int textY = panel.y + searchRowHeight + (resultRowHeight - 8) / 2 + 1;
             List<Module> results = ModuleSearch.filter(modules.all(), searchQuery);
             if (results.isEmpty()) {
-                graphics.text(font, Component.translatable("screen.helikon.no_results"),
+                graphics.text(font, ui(Component.translatable("screen.helikon.no_results")),
                         panel.x + 8, textY, COLOR_TEXT_DIM, false);
             } else {
                 int cursor = panel.x + 8;
                 int limit = right - 8;
                 String separator = " · ";
-                int separatorWidth = font.width(separator);
-                int ellipsisWidth = font.width("…");
+                int separatorWidth = uiWidth(separator);
+                int ellipsisWidth = uiWidth("…");
                 for (int index = 0; index < results.size(); index++) {
                     Module module = results.get(index);
-                    int nameWidth = font.width(module.name());
+                    int nameWidth = uiWidth(module.name());
                     if (cursor + nameWidth + (index < results.size() - 1 ? ellipsisWidth : 0) > limit) {
-                        graphics.text(font, "…", cursor, textY, COLOR_TEXT_DIM, false);
+                        graphics.text(font, ui("…"), cursor, textY, COLOR_TEXT_DIM, false);
                         break;
                     }
                     boolean hovered = isInside(mouseX, mouseY, cursor, textY - 2, nameWidth, resultRowHeight);
-                    graphics.text(font, module.name(), cursor, textY,
+                    graphics.text(font, ui(module.name()), cursor, textY,
                             module.isEnabled() ? COLOR_ACCENT : hovered ? COLOR_TEXT : COLOR_TEXT_DIM, false);
                     cursor += nameWidth;
                     if (index < results.size() - 1) {
-                        graphics.text(font, separator, cursor, textY, COLOR_TEXT_DIM, false);
+                        graphics.text(font, ui(separator), cursor, textY, COLOR_TEXT_DIM, false);
                         cursor += separatorWidth;
                     }
                 }
@@ -816,18 +819,18 @@ public final class HelikonClickGuiScreen extends Screen {
         if (button != 0) {
             return true;
         }
-        if (isInside(mouseX, mouseY, classicLinkX(panel) - 2, panel.y, font.width(classicLabel()) + 4,
+        if (isInside(mouseX, mouseY, classicLinkX(panel) - 2, panel.y, uiWidth(classicLabel()) + 4,
                 searchRowHeight)) {
             windowState.setClassicLayout(true);
             minecraft.setScreenAndShow(new HelikonClassicClickGuiScreen(
                     modules, configuration, windowState, hudLayout, hudConfiguration));
             return true;
         }
-        if (isInside(mouseX, mouseY, hudLinkX(panel) - 2, panel.y, font.width(hudLabel()) + 4, searchRowHeight)) {
+        if (isInside(mouseX, mouseY, hudLinkX(panel) - 2, panel.y, uiWidth(hudLabel()) + 4, searchRowHeight)) {
             minecraft.setScreenAndShow(new HelikonHudEditorScreen(this, modules, hudLayout, hudConfiguration));
             return true;
         }
-        if (isInside(mouseX, mouseY, themeLinkX(panel) - 2, panel.y, font.width(themeLabel()) + 4, searchRowHeight)) {
+        if (isInside(mouseX, mouseY, themeLinkX(panel) - 2, panel.y, uiWidth(themeLabel()) + 4, searchRowHeight)) {
             minecraft.setScreenAndShow(new HelikonThemeEditorScreen(this, modules, configuration, windowState));
             return true;
         }
@@ -836,11 +839,11 @@ public final class HelikonClickGuiScreen extends Screen {
             List<Module> results = ModuleSearch.filter(modules.all(), searchQuery);
             int cursor = panel.x + 8;
             int limit = panel.x + searchWidth - 8;
-            int separatorWidth = font.width(" · ");
-            int ellipsisWidth = font.width("…");
+            int separatorWidth = uiWidth(" · ");
+            int ellipsisWidth = uiWidth("…");
             for (int index = 0; index < results.size(); index++) {
                 Module module = results.get(index);
-                int nameWidth = font.width(module.name());
+                int nameWidth = uiWidth(module.name());
                 if (cursor + nameWidth + (index < results.size() - 1 ? ellipsisWidth : 0) > limit) {
                     break;
                 }
@@ -1019,6 +1022,7 @@ public final class HelikonClickGuiScreen extends Screen {
                 EditBox field = new EditBox(font, 0, 0, panelWidth - 23, 12, Component.literal(setting.name()));
                 field.setBordered(false);
                 field.setTextShadow(false);
+                field.addFormatter((text, index) -> FormattedCharSequence.forward(text, UI_STYLE));
                 field.setMaxLength(SettingText.maximumLength(setting));
                 field.setValue(SettingText.format(setting));
                 field.setResponder(text -> field.setTextColor(
@@ -1138,7 +1142,7 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private int searchFieldWidth() {
         return Math.max(40, searchWidth - 18
-                - (font.width(classicLabel()) + font.width(hudLabel()) + font.width(themeLabel()) + 32));
+                - (uiWidth(classicLabel()) + uiWidth(hudLabel()) + uiWidth(themeLabel()) + 32));
     }
 
     private String hudLabel() {
@@ -1154,15 +1158,15 @@ public final class HelikonClickGuiScreen extends Screen {
     }
 
     private int themeLinkX(PanelView panel) {
-        return panel.x + searchWidth - 8 - font.width(themeLabel());
+        return panel.x + searchWidth - 8 - uiWidth(themeLabel());
     }
 
     private int hudLinkX(PanelView panel) {
-        return themeLinkX(panel) - 10 - font.width(hudLabel());
+        return themeLinkX(panel) - 10 - uiWidth(hudLabel());
     }
 
     private int classicLinkX(PanelView panel) {
-        return hudLinkX(panel) - 10 - font.width(classicLabel());
+        return hudLinkX(panel) - 10 - uiWidth(classicLabel());
     }
 
     private int miniToggleWidth() {
@@ -1183,6 +1187,27 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private int pickerWidth() {
         return panelWidth - 21;
+    }
+
+    // ------------------------------------------------------------------
+    // UI font helpers
+    // ------------------------------------------------------------------
+
+    private static Component ui(String text) {
+        return HelikonUiFont.ui(text);
+    }
+
+    private static Component ui(Component text) {
+        return HelikonUiFont.ui(text);
+    }
+
+    private int uiWidth(String text) {
+        return HelikonUiFont.width(font, text);
+    }
+
+    /** The text styled in the UI font and truncated to fit {@code maxWidth}. */
+    private Component uiTrim(String text, int maxWidth) {
+        return HelikonUiFont.trim(font, text, maxWidth);
     }
 
     // ------------------------------------------------------------------

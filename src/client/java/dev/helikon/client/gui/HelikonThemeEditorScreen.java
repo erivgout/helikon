@@ -12,10 +12,11 @@ import net.minecraft.network.chat.Component;
 import java.util.Objects;
 import java.util.logging.Level;
 
-/** Compact local palette selector for the ClickGUI. */
+/** Compact local palette selector for the ClickGUI with a scrollable theme list. */
 public final class HelikonThemeEditorScreen extends Screen {
-    private static final int PANEL_WIDTH = 220;
-    private static final int ROW_HEIGHT = 28;
+    private static final int PANEL_WIDTH = 240;
+    private static final int ROW_HEIGHT = 24;
+    private static final int CONTROL_ROW_HEIGHT = 14;
 
     private final Screen parent;
     private final ModuleRegistry modules;
@@ -24,6 +25,8 @@ public final class HelikonThemeEditorScreen extends Screen {
 
     private int panelX;
     private int panelY;
+    private int panelHeight;
+    private double scroll;
 
     public HelikonThemeEditorScreen(Screen parent, ModuleRegistry modules, ConfigurationManager configuration,
                                    ClickGuiWindowState windowState) {
@@ -37,7 +40,8 @@ public final class HelikonThemeEditorScreen extends Screen {
     @Override
     protected void init() {
         panelX = (width - PANEL_WIDTH) / 2;
-        panelY = Math.max(12, (height - (100 + ClickGuiTheme.values().length * ROW_HEIGHT)) / 2);
+        panelY = 12;
+        panelHeight = Math.min(height - 24, headerBlockHeight() + contentHeight() + 8);
     }
 
     @Override
@@ -53,32 +57,51 @@ public final class HelikonThemeEditorScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         ClickGuiTheme selected = windowState.theme();
-        int panelHeight = 100 + ClickGuiTheme.values().length * ROW_HEIGHT;
+        scroll = clampScroll(scroll);
         graphics.fill(0, 0, width, height, 0x90000000);
         graphics.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + panelHeight, selected.panel());
         graphics.outline(panelX, panelY, PANEL_WIDTH, panelHeight, selected.outline());
-        graphics.text(font, title, panelX + 8, panelY + 8, selected.accent(), true);
-        graphics.text(font, Component.translatable("screen.helikon.theme_editor.instructions"),
-                panelX + 8, panelY + 20, selected.textDim(), false);
+        graphics.text(font, HelikonUiFont.ui(title), panelX + 8, panelY + 8, selected.accent(), false);
+        graphics.textWithWordWrap(font,
+                HelikonUiFont.ui(Component.translatable("screen.helikon.theme_editor.instructions")),
+                panelX + 8, panelY + 20, PANEL_WIDTH - 16, selected.textDim());
 
-        for (int index = 0; index < ClickGuiTheme.values().length; index++) {
-            ClickGuiTheme theme = ClickGuiTheme.values()[index];
-            int rowY = panelY + 36 + index * ROW_HEIGHT;
-            boolean active = theme == selected;
-            boolean hovered = isInside(mouseX, mouseY, panelX + 6, rowY, PANEL_WIDTH - 12, ROW_HEIGHT - 4);
-            if (active) {
-                graphics.fill(panelX + 6, rowY, panelX + PANEL_WIDTH - 6, rowY + ROW_HEIGHT - 4, theme.rowSelected());
-            } else if (hovered) {
-                graphics.fill(panelX + 6, rowY, panelX + PANEL_WIDTH - 6, rowY + ROW_HEIGHT - 4, selected.rowHover());
+        int contentTop = contentTop();
+        int contentBottom = contentBottom();
+        graphics.enableScissor(panelX, contentTop, panelX + PANEL_WIDTH, contentBottom);
+        ClickGuiTheme[] themes = ClickGuiTheme.values();
+        for (int index = 0; index < themes.length; index++) {
+            ClickGuiTheme theme = themes[index];
+            int rowY = contentTop + index * ROW_HEIGHT - (int) scroll;
+            if (rowY + ROW_HEIGHT < contentTop || rowY > contentBottom) {
+                continue;
             }
-            graphics.fill(panelX + 10, rowY + 6, panelX + 28, rowY + 18, theme.accent());
-            graphics.text(font, theme.displayName(), panelX + 34, rowY + 7, selected.text(), false);
+            boolean active = theme == selected;
+            boolean hovered = isRowHovered(mouseX, mouseY, rowY);
+            if (active) {
+                graphics.fill(panelX + 6, rowY, panelX + PANEL_WIDTH - 6, rowY + ROW_HEIGHT - 4,
+                        theme.rowSelected());
+            } else if (hovered) {
+                graphics.fill(panelX + 6, rowY, panelX + PANEL_WIDTH - 6, rowY + ROW_HEIGHT - 4,
+                        selected.rowHover());
+            }
+            graphics.fill(panelX + 10, rowY + 4, panelX + 28, rowY + ROW_HEIGHT - 8, theme.accent());
+            graphics.text(font, HelikonUiFont.ui(theme.displayName()), panelX + 34, rowY + 6,
+                    selected.text(), false);
         }
-        int controlsY = panelY + 40 + ClickGuiTheme.values().length * ROW_HEIGHT;
-        graphics.text(font, "GUI scale: " + String.format(java.util.Locale.ROOT, "%.2fx", windowState.interfaceScale())
-                + " (click to cycle)", panelX + 8, controlsY, selected.textDim(), false);
-        graphics.text(font, "Reduced animation: " + (windowState.reducedAnimations() ? "on" : "off"),
-                panelX + 8, controlsY + 14, selected.textDim(), false);
+        int controlsY = controlsTop() - (int) scroll;
+        graphics.text(font, HelikonUiFont.ui("GUI scale: "
+                        + String.format(java.util.Locale.ROOT, "%.2fx", windowState.interfaceScale())
+                        + " (click to cycle)"),
+                panelX + 8, controlsY, selected.textDim(), false);
+        graphics.text(font, HelikonUiFont.ui("Reduced animation: "
+                        + (windowState.reducedAnimations() ? "on" : "off")),
+                panelX + 8, controlsY + CONTROL_ROW_HEIGHT, selected.textDim(), false);
+        graphics.disableScissor();
+
+        ClickGuiScrollbarState.thumb(contentTop, contentBottom, contentHeight(), scroll).ifPresent(thumb ->
+                graphics.fill(panelX + PANEL_WIDTH - 3, thumb.y(), panelX + PANEL_WIDTH - 2,
+                        thumb.y() + thumb.height(), selected.accent()));
         super.extractRenderState(graphics, mouseX, mouseY, delta);
     }
 
@@ -89,20 +112,33 @@ public final class HelikonThemeEditorScreen extends Screen {
         }
         int mouseX = (int) event.x();
         int mouseY = (int) event.y();
-        for (int index = 0; index < ClickGuiTheme.values().length; index++) {
-            int rowY = panelY + 36 + index * ROW_HEIGHT;
-            if (isInside(mouseX, mouseY, panelX + 6, rowY, PANEL_WIDTH - 12, ROW_HEIGHT - 4)) {
-                windowState.setTheme(ClickGuiTheme.values()[index]);
+        ClickGuiTheme[] themes = ClickGuiTheme.values();
+        for (int index = 0; index < themes.length; index++) {
+            int rowY = contentTop() + index * ROW_HEIGHT - (int) scroll;
+            if (isRowHovered(mouseX, mouseY, rowY)) {
+                windowState.setTheme(themes[index]);
                 return true;
             }
         }
-        int controlsY = panelY + 40 + ClickGuiTheme.values().length * ROW_HEIGHT;
-        if (isInside(mouseX, mouseY, panelX + 6, controlsY - 2, PANEL_WIDTH - 12, 11)) {
+        int controlsY = controlsTop() - (int) scroll;
+        if (isControlHovered(mouseX, mouseY, controlsY)) {
             windowState.setInterfaceScale(nextScale(windowState.interfaceScale()));
             return true;
         }
-        if (isInside(mouseX, mouseY, panelX + 6, controlsY + 12, PANEL_WIDTH - 12, 11)) {
+        if (isControlHovered(mouseX, mouseY, controlsY + CONTROL_ROW_HEIGHT)) {
             windowState.setReducedAnimations(!windowState.reducedAnimations());
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+        if (super.mouseScrolled(mouseX, mouseY, horizontal, vertical)) {
+            return true;
+        }
+        if (isInside((int) mouseX, (int) mouseY, panelX, panelY, PANEL_WIDTH, panelHeight)) {
+            scroll = clampScroll(scroll - vertical * ROW_HEIGHT);
             return true;
         }
         return false;
@@ -121,6 +157,46 @@ public final class HelikonThemeEditorScreen extends Screen {
         } catch (ConfigurationException exception) {
             HelikonClient.LOGGER.log(Level.WARNING, "Unable to save ClickGUI theme while closing the theme editor", exception);
         }
+    }
+
+    private boolean isRowHovered(int mouseX, int mouseY, int rowY) {
+        return mouseY >= contentTop() && mouseY < contentBottom()
+                && isInside(mouseX, mouseY, panelX + 6, rowY, PANEL_WIDTH - 12, ROW_HEIGHT - 4);
+    }
+
+    private boolean isControlHovered(int mouseX, int mouseY, int controlY) {
+        return mouseY >= contentTop() && mouseY < contentBottom()
+                && isInside(mouseX, mouseY, panelX + 6, controlY - 2, PANEL_WIDTH - 12, CONTROL_ROW_HEIGHT - 2);
+    }
+
+    private int instructionsHeight() {
+        return font.wordWrapHeight(
+                HelikonUiFont.ui(Component.translatable("screen.helikon.theme_editor.instructions")),
+                PANEL_WIDTH - 16);
+    }
+
+    private int headerBlockHeight() {
+        return 20 + instructionsHeight() + 6;
+    }
+
+    private int contentHeight() {
+        return ClickGuiTheme.values().length * ROW_HEIGHT + 6 + 2 * CONTROL_ROW_HEIGHT;
+    }
+
+    private int contentTop() {
+        return panelY + headerBlockHeight();
+    }
+
+    private int contentBottom() {
+        return panelY + panelHeight - 6;
+    }
+
+    private int controlsTop() {
+        return contentTop() + ClickGuiTheme.values().length * ROW_HEIGHT + 6;
+    }
+
+    private double clampScroll(double value) {
+        return Math.clamp(value, 0.0D, Math.max(0, contentHeight() - (contentBottom() - contentTop())));
     }
 
     private static boolean isInside(int mouseX, int mouseY, int x, int y, int width, int height) {

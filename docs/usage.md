@@ -4,7 +4,9 @@
 
 Press **Right Shift** in game to open the ClickGUI. Each module category is
 its own floating panel with an icon header and accent underline, and a
-floating search palette sits at the bottom of the screen.
+floating search palette sits at the bottom of the screen. Both ClickGUI
+layouts and the theme editor render with a bundled smooth font (Inter,
+SIL Open Font License).
 
 - **Left-click** a module row to toggle the module; enabled modules show
   their name in the accent color.

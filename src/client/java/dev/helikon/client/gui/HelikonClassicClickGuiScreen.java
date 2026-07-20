@@ -154,7 +154,9 @@ public final class HelikonClassicClickGuiScreen extends Screen {
         searchField = new EditBox(font, searchFieldX(), panelY + 4, 110, 14,
                 Component.translatable("screen.helikon.search_hint"));
         searchField.setMaxLength(64);
-        searchField.setHint(Component.translatable("screen.helikon.search_hint"));
+        searchField.setHint(ui(Component.translatable("screen.helikon.search_hint")));
+        searchField.addFormatter((text, index) ->
+                net.minecraft.util.FormattedCharSequence.forward(text, HelikonUiFont.STYLE));
         searchField.setValue(state.searchQuery());
         searchField.setResponder(text -> {
             state.setSearchQuery(text);
@@ -382,24 +384,24 @@ public final class HelikonClassicClickGuiScreen extends Screen {
         graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, COLOR_PANEL);
         graphics.outline(panelX - 1, panelY - 1, panelWidth + 2, panelHeight + 2, COLOR_OUTLINE);
         graphics.fill(panelX, panelY, panelX + panelWidth, panelY + HEADER_HEIGHT, COLOR_HEADER);
-        graphics.text(font, title, panelX + 6, panelY + 7, COLOR_ACCENT, true);
+        graphics.text(font, ui(title), panelX + 6, panelY + 7, COLOR_ACCENT, true);
         graphics.fill(panelX + panelWidth - RESIZE_HANDLE_SIZE, panelY + panelHeight - 2,
                 panelX + panelWidth - 2, panelY + panelHeight, COLOR_TEXT_DIM);
 
         int buttonColor = isInside(mouseX, mouseY, hudButtonX(), panelY + 4, HUD_BUTTON_WIDTH, 14)
                 ? COLOR_ROW_HOVER : COLOR_OUTLINE;
         graphics.outline(hudButtonX(), panelY + 4, HUD_BUTTON_WIDTH, 14, buttonColor);
-        graphics.centeredText(font, Component.translatable("screen.helikon.hud_button"),
+        graphics.centeredText(font, ui(Component.translatable("screen.helikon.hud_button")),
                 hudButtonX() + HUD_BUTTON_WIDTH / 2, panelY + 7, COLOR_TEXT);
         int themeButtonColor = isInside(mouseX, mouseY, themeButtonX(), panelY + 4, THEME_BUTTON_WIDTH, 14)
                 ? COLOR_ROW_HOVER : COLOR_OUTLINE;
         graphics.outline(themeButtonX(), panelY + 4, THEME_BUTTON_WIDTH, 14, themeButtonColor);
-        graphics.centeredText(font, Component.translatable("screen.helikon.theme_button"),
+        graphics.centeredText(font, ui(Component.translatable("screen.helikon.theme_button")),
                 themeButtonX() + THEME_BUTTON_WIDTH / 2, panelY + 7, COLOR_TEXT);
         int layoutButtonColor = isInside(mouseX, mouseY, layoutButtonX(), panelY + 4, LAYOUT_BUTTON_WIDTH, 14)
                 ? COLOR_ROW_HOVER : COLOR_OUTLINE;
         graphics.outline(layoutButtonX(), panelY + 4, LAYOUT_BUTTON_WIDTH, 14, layoutButtonColor);
-        graphics.centeredText(font, Component.translatable("screen.helikon.layout_panels"),
+        graphics.centeredText(font, ui(Component.translatable("screen.helikon.layout_panels")),
                 layoutButtonX() + LAYOUT_BUTTON_WIDTH / 2, panelY + 7, COLOR_TEXT);
     }
 
@@ -412,7 +414,7 @@ public final class HelikonClassicClickGuiScreen extends Screen {
         } else if (isInside(mouseX, mouseY, panelX, contentTop, SIDEBAR_WIDTH, ROW_HEIGHT)) {
             graphics.fill(panelX, contentTop, panelX + SIDEBAR_WIDTH, contentTop + ROW_HEIGHT, COLOR_ROW_HOVER);
         }
-        graphics.text(font, "Active", panelX + 6, contentTop + 3,
+        graphics.text(font, ui("Active"), panelX + 6, contentTop + 3,
                 activeSelected ? COLOR_SELECTED_TEXT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT), false);
 
         int favoritesY = contentTop + ROW_HEIGHT;
@@ -422,7 +424,7 @@ public final class HelikonClassicClickGuiScreen extends Screen {
         } else if (isInside(mouseX, mouseY, panelX, favoritesY, SIDEBAR_WIDTH, ROW_HEIGHT)) {
             graphics.fill(panelX, favoritesY, panelX + SIDEBAR_WIDTH, favoritesY + ROW_HEIGHT, COLOR_ROW_HOVER);
         }
-        graphics.text(font, "Favorites", panelX + 6, favoritesY + 3,
+        graphics.text(font, ui("Favorites"), panelX + 6, favoritesY + 3,
                 favoritesSelected ? COLOR_SELECTED_TEXT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT), false);
 
         int baritoneY = contentTop + 2 * ROW_HEIGHT;
@@ -432,7 +434,7 @@ public final class HelikonClassicClickGuiScreen extends Screen {
         } else if (isInside(mouseX, mouseY, panelX, baritoneY, SIDEBAR_WIDTH, ROW_HEIGHT)) {
             graphics.fill(panelX, baritoneY, panelX + SIDEBAR_WIDTH, baritoneY + ROW_HEIGHT, COLOR_ROW_HOVER);
         }
-        graphics.text(font, "Baritone", panelX + 6, baritoneY + 3,
+        graphics.text(font, ui("Baritone"), panelX + 6, baritoneY + 3,
                 baritoneSelected ? COLOR_SELECTED_TEXT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT), false);
 
         ModuleCategory[] categories = ModuleCategory.values();
@@ -453,23 +455,16 @@ public final class HelikonClassicClickGuiScreen extends Screen {
             }
 
             int textColor = selected ? COLOR_SELECTED_TEXT : (state.isSearching() ? COLOR_TEXT_DIM : COLOR_TEXT);
-            graphics.text(font, category.displayName(), panelX + 6, rowY + 3, textColor, false);
+            graphics.text(font, ui(category.displayName()), panelX + 6, rowY + 3, textColor, false);
         }
     }
 
     private void drawModuleList(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        Component heading = state.isSearching()
-                ? Component.translatable("screen.helikon.search_results")
-                : Component.literal(state.isShowingFavoriteModules() ? "Favorites"
-                : state.isShowingActiveModules() ? "Active"
-                : state.isShowingBaritone() ? "Baritone" : state.selectedCategory().displayName());
-        graphics.text(font, heading, listX + 4, panelY + HEADER_HEIGHT - 12, COLOR_TEXT_DIM, false);
-
         List<Module> visible = state.visibleModules();
         listScroll = clampScroll(listScroll);
 
         if (visible.isEmpty()) {
-            graphics.text(font, Component.translatable("screen.helikon.no_results"),
+            graphics.text(font, ui(Component.translatable("screen.helikon.no_results")),
                     listX + 4, contentTop + 6, COLOR_TEXT_DIM, false);
             return;
         }
@@ -493,10 +488,9 @@ public final class HelikonClassicClickGuiScreen extends Screen {
                 hoveredModule = module;
             }
 
-            String name = font.plainSubstrByWidth(module.name(), listWidth - 38);
             int nameColor = selected ? COLOR_SELECTED_TEXT
                     : module.isEnabled() ? COLOR_ACCENT : COLOR_TEXT;
-            graphics.text(font, name, listX + 4, rowY + 3, nameColor, false);
+            graphics.text(font, uiTrim(module.name(), listWidth - 38), listX + 4, rowY + 3, nameColor, false);
             graphics.text(font, windowState.isFavorite(module.id()) ? "★" : "☆",
                     favoriteBoxX(), rowY + 3, selected ? COLOR_SELECTED_TEXT
                             : windowState.isFavorite(module.id()) ? COLOR_ACCENT : COLOR_TEXT_DIM, false);
@@ -506,7 +500,7 @@ public final class HelikonClassicClickGuiScreen extends Screen {
         }
         graphics.disableScissor();
         if (hoveredModule != null) {
-            graphics.setTooltipForNextFrame(font, Component.literal(hoveredModule.description()), mouseX, mouseY);
+            graphics.setTooltipForNextFrame(font, ui(hoveredModule.description()), mouseX, mouseY);
         }
 
         drawListScrollbar(graphics, visible.size());
@@ -531,7 +525,7 @@ public final class HelikonClassicClickGuiScreen extends Screen {
         graphics.enableScissor(settingsX, contentTop, panelX + panelWidth, contentBottom);
         Module module = state.selectedModule().orElse(null);
         if (module == null) {
-            graphics.textWithWordWrap(font, Component.translatable("screen.helikon.no_selection"),
+            graphics.textWithWordWrap(font, ui(Component.translatable("screen.helikon.no_selection")),
                     settingsX + 6, contentTop + 6, SETTINGS_WIDTH - 12, COLOR_TEXT_DIM);
             graphics.disableScissor();
             return;
@@ -540,12 +534,12 @@ public final class HelikonClassicClickGuiScreen extends Screen {
         settingsScroll = clampSettingsScroll(settingsScroll);
         int textX = settingsX + 6;
         int y = settingsY(contentTop + 4);
-        graphics.text(font, font.plainSubstrByWidth(module.name(), SETTINGS_WIDTH - 12), textX, y, COLOR_ACCENT, false);
+        graphics.text(font, uiTrim(module.name(), SETTINGS_WIDTH - 12), textX, y, COLOR_ACCENT, false);
         y += 10;
         String meta = module.category().displayName() + " · " + module.id();
-        graphics.text(font, font.plainSubstrByWidth(meta, SETTINGS_WIDTH - 12), textX, y, COLOR_TEXT_DIM, false);
+        graphics.text(font, uiTrim(meta, SETTINGS_WIDTH - 12), textX, y, COLOR_TEXT_DIM, false);
         y += 12;
-        graphics.textWithWordWrap(font, Component.literal(module.description()), textX, y,
+        graphics.textWithWordWrap(font, ui(module.description()), textX, y,
                 SETTINGS_WIDTH - 12, COLOR_TEXT_DIM);
 
         int moduleResetY = settingsY(settingControlsTop(module));
@@ -555,10 +549,10 @@ public final class HelikonClassicClickGuiScreen extends Screen {
         String bindText = keybindAssignment.isAssigning(module)
                 ? keybindStatus.isBlank() ? "Press a key..." : keybindStatus
                 : "Bind: " + keyDisplayName(module.keybind()) + conflictWarning(module);
-        drawWideButton(graphics, Component.literal(font.plainSubstrByWidth(bindText, SETTINGS_WIDTH - 18)), bindY, mouseX, mouseY);
+        drawWideButton(graphics, uiTrim(bindText, SETTINGS_WIDTH - 18), bindY, mouseX, mouseY);
 
         int enabledY = bindY + BIND_ROW_HEIGHT;
-        graphics.text(font, Component.translatable("screen.helikon.enabled"), textX, enabledY + 3, COLOR_TEXT, false);
+        graphics.text(font, ui(Component.translatable("screen.helikon.enabled")), textX, enabledY + 3, COLOR_TEXT, false);
         drawCheckbox(graphics, settingsCheckboxX(), enabledY + (ENABLED_ROW_HEIGHT - CHECKBOX_SIZE) / 2, module.isEnabled());
 
         for (SettingRow row : settingRows(module)) {
@@ -570,15 +564,14 @@ public final class HelikonClassicClickGuiScreen extends Screen {
                 int color = isInside(mouseX, mouseY, buttonX, rowY + 2, buttonWidth, 10)
                         ? COLOR_ACCENT : COLOR_OUTLINE;
                 graphics.outline(buttonX, rowY + 2, buttonWidth, 10, color);
-                graphics.centeredText(font, Component.literal(setting.name()),
+                graphics.centeredText(font, ui(setting.name()),
                         buttonX + buttonWidth / 2, rowY + 3, COLOR_TEXT);
                 if (isInside(mouseX, mouseY, buttonX, rowY + 2, buttonWidth, 10)) {
-                    graphics.setTooltipForNextFrame(font, Component.literal(setting.description()), mouseX, mouseY);
+                    graphics.setTooltipForNextFrame(font, ui(setting.description()), mouseX, mouseY);
                 }
                 continue;
             }
-            String label = font.plainSubstrByWidth(setting.name(), SETTINGS_WIDTH - 38);
-            graphics.text(font, label, textX, rowY + 3, COLOR_TEXT, false);
+            graphics.text(font, uiTrim(setting.name(), SETTINGS_WIDTH - 38), textX, rowY + 3, COLOR_TEXT, false);
             drawResetButton(graphics, settingResetX(), rowY + 2, mouseX, mouseY);
 
             if (setting instanceof BooleanSetting booleanSetting) {
@@ -587,8 +580,8 @@ public final class HelikonClassicClickGuiScreen extends Screen {
             } else if (isSlider(setting)) {
                 String range = "(" + NumberSettingText.format(minOf(setting))
                         + "–" + NumberSettingText.format(maxOf(setting)) + ")";
-                int rangeWidth = font.width(range);
-                graphics.text(font, range, settingResetX() - 4 - rangeWidth, rowY + 3, COLOR_TEXT_DIM, false);
+                int rangeWidth = uiWidth(range);
+                graphics.text(font, ui(range), settingResetX() - 4 - rangeWidth, rowY + 3, COLOR_TEXT_DIM, false);
                 drawSlider(graphics, setting, rowY, mouseX, mouseY);
             } else if (setting instanceof ColorSetting colorSetting) {
                 int swatchX = settingResetX() - 18;
@@ -597,14 +590,15 @@ public final class HelikonClassicClickGuiScreen extends Screen {
                 drawColorPicker(graphics, colorSetting, rowY);
             } else if (setting instanceof EnumSetting<?> enumSetting) {
                 String value = enumSetting.valueId();
-                int valueWidth = font.width(value);
-                graphics.text(font, value, settingResetX() - 4 - valueWidth, rowY + 3, COLOR_TEXT_DIM, false);
+                int valueWidth = uiWidth(value);
+                graphics.text(font, ui(value), settingResetX() - 4 - valueWidth, rowY + 3, COLOR_TEXT_DIM, false);
             }
 
             if (isInside(mouseX, mouseY, settingResetX(), rowY + 2, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE)) {
-                graphics.setTooltipForNextFrame(font, Component.translatable("screen.helikon.reset_setting", setting.name()), mouseX, mouseY);
+                graphics.setTooltipForNextFrame(font,
+                        ui(Component.translatable("screen.helikon.reset_setting", setting.name())), mouseX, mouseY);
             } else if (isInside(mouseX, mouseY, settingsX, rowY, SETTINGS_WIDTH, 10)) {
-                graphics.setTooltipForNextFrame(font, Component.literal(setting.description()), mouseX, mouseY);
+                graphics.setTooltipForNextFrame(font, ui(setting.description()), mouseX, mouseY);
             }
         }
         graphics.disableScissor();
@@ -617,14 +611,14 @@ public final class HelikonClassicClickGuiScreen extends Screen {
         int buttonWidth = SETTINGS_WIDTH - 12;
         int color = isInside(mouseX, mouseY, x, y + 2, buttonWidth, 10) ? COLOR_ROW_HOVER : COLOR_OUTLINE;
         graphics.outline(x, y + 2, buttonWidth, 10, color);
-        graphics.centeredText(font, text, x + buttonWidth / 2, y + 3, COLOR_TEXT_DIM);
+        graphics.centeredText(font, ui(text), x + buttonWidth / 2, y + 3, COLOR_TEXT_DIM);
     }
 
     private void drawResetButton(GuiGraphicsExtractor graphics, int x, int y, int mouseX, int mouseY) {
         int color = isInside(mouseX, mouseY, x, y, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE)
                 ? COLOR_ACCENT : COLOR_TEXT_DIM;
         graphics.outline(x, y, RESET_BUTTON_SIZE, RESET_BUTTON_SIZE, color);
-        graphics.centeredText(font, "R", x + RESET_BUTTON_SIZE / 2, y + 1, color);
+        graphics.centeredText(font, ui("R"), x + RESET_BUTTON_SIZE / 2, y + 1, color);
     }
 
     private void drawCheckbox(GuiGraphicsExtractor graphics, int x, int y, boolean checked) {
@@ -1023,6 +1017,8 @@ public final class HelikonClassicClickGuiScreen extends Screen {
             }
             EditBox field = new EditBox(font, settingsX + 6, settingsY(row.y()) + editorTop(setting), SETTINGS_WIDTH - 12, 14,
                     Component.literal(setting.name()));
+            field.addFormatter((text, index) ->
+                    net.minecraft.util.FormattedCharSequence.forward(text, HelikonUiFont.STYLE));
             field.setMaxLength(SettingText.maximumLength(setting));
             field.setValue(SettingText.format(setting));
             field.setResponder(text -> field.setTextColor(
@@ -1054,7 +1050,7 @@ public final class HelikonClassicClickGuiScreen extends Screen {
 
     /** The y position where module reset controls start, below the wrapped description. */
     private int settingControlsTop(Module module) {
-        int descriptionHeight = font.wordWrapHeight(Component.literal(module.description()), SETTINGS_WIDTH - 12);
+        int descriptionHeight = font.wordWrapHeight(ui(module.description()), SETTINGS_WIDTH - 12);
         return contentTop + 4 + 10 + 12 + descriptionHeight + 4;
     }
 
@@ -1274,6 +1270,22 @@ public final class HelikonClassicClickGuiScreen extends Screen {
 
     private static boolean isInside(int mouseX, int mouseY, int x, int y, int width, int height) {
         return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+    }
+
+    private static Component ui(String text) {
+        return HelikonUiFont.ui(text);
+    }
+
+    private static Component ui(Component text) {
+        return HelikonUiFont.ui(text);
+    }
+
+    private int uiWidth(String text) {
+        return HelikonUiFont.width(font, text);
+    }
+
+    private Component uiTrim(String text, int maxWidth) {
+        return HelikonUiFont.trim(font, text, maxWidth);
     }
 
     private record SettingRow(Setting<?> setting, int y, int height) {

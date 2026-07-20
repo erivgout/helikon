@@ -1,15 +1,20 @@
 # Release process
 
-The current version is `1.3.0`. Tagged `v*` commits are built and published by
+The current version is `1.3.1`. Tagged `v*` commits are built and published by
 the GitHub release workflow after its checks pass.
 
 ## Build the bundle
 
 ```powershell
+Push-Location vendor/baritone
+.\gradlew.bat :fabric:remapJar --console=plain
+Pop-Location
 .\gradlew.bat check releaseBundle
 ```
 
-The resulting archive in `build/releases/` contains the distributable JAR(s),
+On a clean checkout, build the vendored Baritone component first with its
+pinned wrapper as shown above. The resulting archive in `build/releases/`
+contains the distributable JAR(s),
 Helikon and Baritone corresponding source, both projects' licenses and
 provenance notes, `README`, `CHANGELOG`, SHA-256 checksums, and the resolved
 client runtime dependency report. Verify the checksum sidecar before sharing a

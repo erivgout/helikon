@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.3.1 - 2026-07-20
+
+- Fixes clean-checkout CI builds by compiling the embedded Baritone component
+  with its pinned wrapper before Fabric Loom resolves Helikon's client runtime.
+
 ## 1.3.0 - 2026-07-20
 
 - Adds **Domain Expansion**, a client-side Combat module that constructs one

@@ -26,6 +26,10 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Build embedded Baritone component
+        working-directory: vendor/baritone
+        run: bash ./gradlew :fabric:remapJar --console=plain
+
       - name: Run checks and package release bundle
         run: ./gradlew check releaseBundle
 
@@ -61,6 +65,10 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Build embedded Baritone component
+        working-directory: vendor/baritone
+        run: bash ./gradlew :fabric:remapJar --console=plain
 
       - name: Run client gametests under a virtual display
         run: xvfb-run -a ./gradlew runClientGameTest

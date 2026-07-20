@@ -25,8 +25,8 @@ branding, or configuration formats from that or any other project.
 - **Chat** — BetterChat, ChatFilter, ChatMute, ChatColor, ChatTimestamps,
   ChatHistory, ChatSpammer, ChatPrefix/Suffix, MentionNotifier, AutoReply,
   Announcer, AntiSpam, PrivateMessageHelper, LocalTranslator.
-- **Combat** — KillAura, TriggerBot, BowAimAssist, CriticalAssist, AutoPotion,
-  TargetHUD, ReachDisplay, AntiBot.
+- **Combat** — Domain Expansion, KillAura, TriggerBot, BowAimAssist,
+  CriticalAssist, AutoPotion, TargetHUD, ReachDisplay, AntiBot.
 - **Local systems** — ClickGUI with an Active view, themes, settings scrolling, and keyboard navigation, HUD
   editor, per-server profiles, friends, waypoints, macros, panic key, and a
   local-only debug overlay.

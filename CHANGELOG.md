@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 1.5.0 - 2026-07-20
+
+- Redesigns the ClickGUI as draggable floating category panels with icon
+  headers, accent-highlighted enabled modules, and settings expanded inline
+  beneath a module row on right-click. Middle-click stars a module into the
+  dedicated **Favorites** panel, and a floating search palette toggles
+  matching modules directly. Panels cap at half the screen height and scroll;
+  placements, collapsed panels, and expanded modules persist locally.
+- Keeps the previous single-window GUI as a selectable **Classic** layout.
+  Each layout links to the other (search palette **Classic** link, header
+  **Panels** button) and the choice persists across sessions.
+- Expands the local theme roster to eight palettes — **Slate** (new default),
+  Helikon Gold, Midnight, High Contrast, Ocean, Emerald, Crimson, and
+  Amethyst — with panel chrome, sliders, and highlights derived from each
+  theme's accent, and makes the theme editor scrollable so every palette
+  stays reachable at any GUI scale.
+- Renders both ClickGUI layouts and the theme editor with a bundled Inter
+  font (SIL Open Font License; license text ships beside the font asset).
+
 ## 1.4.1 - 2026-07-20
 
 - Prevents a render-frame crash when Baritone contains a valid waypoint with

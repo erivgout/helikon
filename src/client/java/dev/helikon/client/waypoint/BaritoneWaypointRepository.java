@@ -11,12 +11,15 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
 /**
  * Makes Baritone's per-world/per-dimension collection the single live waypoint
  * store used by Helikon commands and HUD rendering.
  */
 public final class BaritoneWaypointRepository implements WaypointRepository {
+    private static final Logger LOGGER = Logger.getLogger(BaritoneWaypointRepository.class.getName());
+
     private final WaypointLocationProvider locations;
     private final Supplier<IWaypointCollection> collections;
     private long revision;
@@ -50,7 +53,7 @@ public final class BaritoneWaypointRepository implements WaypointRepository {
             return List.of();
         }
         return collection.getAllWaypoints().stream()
-                .map(waypoint -> adapt(waypoint, context))
+                .flatMap(waypoint -> adapt(waypoint, context).stream())
                 .toList();
     }
 
@@ -178,14 +181,82 @@ public final class BaritoneWaypointRepository implements WaypointRepository {
     private static Optional<IWaypoint> findBaritone(String name, IWaypointCollection collection) {
         String normalized = Waypoint.normalizedName(name);
         return collection.getAllWaypoints().stream()
-                .filter(waypoint -> waypoint.getName().trim().toLowerCase(Locale.ROOT).equals(normalized))
+                .filter(Objects::nonNull)
+                .filter(waypoint -> externalName(waypoint).map(value ->
+                        value.toLowerCase(Locale.ROOT).equals(normalized)).orElse(false))
                 .max(Comparator.comparingLong(IWaypoint::getCreationTimestamp));
     }
 
-    private static Waypoint adapt(IWaypoint source, WaypointContext context) {
-        BetterBlockPos location = source.getLocation();
-        return new Waypoint(source.getName(), location.x, location.y, location.z, context,
-                color(source.getTag()), source.getTag().getName(), true, source.getCreationTimestamp());
+    private static Optional<Waypoint> adapt(IWaypoint source, WaypointContext context) {
+        if (source == null) {
+            LOGGER.warning("Ignoring null Baritone waypoint entry");
+            return Optional.empty();
+        }
+        try {
+            IWaypoint.Tag tag = Objects.requireNonNull(source.getTag(), "Baritone waypoint tag");
+            BetterBlockPos location = Objects.requireNonNull(source.getLocation(), "Baritone waypoint location");
+            String name = externalName(source).orElseThrow();
+            return Optional.of(new Waypoint(name, location.x, location.y, location.z, context,
+                    color(tag), tag.getName(), true, source.getCreationTimestamp()));
+        } catch (IllegalArgumentException | NullPointerException exception) {
+            LOGGER.warning(() -> "Ignoring incompatible Baritone waypoint entry: " + exception.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Baritone permits blank and otherwise unrestricted waypoint names. Helikon
+     * keeps its stricter local model, so external names receive a deterministic
+     * display-safe form at the repository boundary.
+     */
+    private static Optional<String> externalName(IWaypoint source) {
+        if (source == null || source.getTag() == null) {
+            return Optional.empty();
+        }
+        String fallback = switch (source.getTag()) {
+            case HOME -> "Home";
+            case DEATH -> "Death";
+            case BED -> "Bed";
+            case USER -> "Waypoint";
+        };
+        String input = Objects.requireNonNullElse(source.getName(), "").trim();
+        if (input.isEmpty()) {
+            return Optional.of(fallback);
+        }
+
+        StringBuilder sanitized = new StringBuilder(Math.min(input.length(), 32));
+        boolean replacement = false;
+        for (int index = 0; index < input.length() && sanitized.length() < 32; index++) {
+            char character = input.charAt(index);
+            if (isNameCharacter(character)) {
+                sanitized.append(character);
+                replacement = false;
+            } else if (!replacement) {
+                sanitized.append('_');
+                replacement = true;
+            }
+        }
+        String value = sanitized.toString().trim();
+        if (value.isEmpty()) {
+            value = fallback;
+        } else if (!isAsciiLetterOrDigit(value.charAt(0))) {
+            value = (fallback + " " + value);
+            if (value.length() > 32) {
+                value = value.substring(0, 32).trim();
+            }
+        }
+        return Optional.of(Waypoint.requireName(value));
+    }
+
+    private static boolean isNameCharacter(char character) {
+        return isAsciiLetterOrDigit(character) || character == ' '
+                || character == '_' || character == '-';
+    }
+
+    private static boolean isAsciiLetterOrDigit(char character) {
+        return character >= 'A' && character <= 'Z'
+                || character >= 'a' && character <= 'z'
+                || character >= '0' && character <= '9';
     }
 
     private static int color(IWaypoint.Tag tag) {

@@ -59,6 +59,10 @@ manual correction, disable/re-enable behavior, and world-session cleanup.
 Fabric client GameTest additionally enables SeedCracker in an integrated
 world, verifies its exact local seed, submits loaded-chunk evidence through
 the real HUD/world render path, and captures `helikon-seed-cracker-solved`.
+It also injects an unnamed HOME entry into Baritone's live collection, renders
+the Waypoints HUD for multiple frames, and captures
+`helikon-unnamed-home-waypoint`; repository tests cover blank, unsupported,
+overlong, and structurally invalid external waypoint data.
 `PlayerStateEventTrackerTest` covers lifecycle, movement, rotation, inventory
 revision, and world-absence baseline transitions without Minecraft classes.
 `SaturationHudTest` covers finite saturation formatting and invalid-fact
@@ -908,7 +912,9 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     the Waypoints Scale to its minimum, default, and maximum while viewing a
     distant marker; verify its size changes at every step. At the default
     setting, the complete projected label panel remains no taller than 5% of
-    the GUI.
+    the GUI. Add an unnamed HOME waypoint through Baritone and verify Helikon
+    displays it as `Home` without crashing; rename or remove it through
+    Helikon using that displayed name.
 15. Create a macro with `.macro create smoke`, then append a local action, a
     delay, ordinary chat text, and a Minecraft command (without `/`). Verify
     `show` reports each action, `run` executes no more than one action per tick

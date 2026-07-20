@@ -537,9 +537,14 @@ coordinate data to disk.
 `WaypointManager` remains a read-only migration source for the former
 `waypoints.json` format. `BaritoneWaypointRepository` adapts Baritone's
 authoritative per-world/per-dimension collection to `WaypointRepository`, which
-is shared by Helikon's commands and world renderer. `WaypointContext`,
-`WaypointLocation`, and `WaypointNavigation` own validation, context filtering,
-distance ordering, and compass labels without Minecraft imports.
+is shared by Helikon's commands and world renderer. Because Baritone permits
+blank and otherwise unrestricted names, the adapter gives valid external
+entries deterministic, bounded display names and uses the same names for
+lookup, rename, and removal. Structurally invalid external entries are logged
+and omitted from the current snapshot rather than failing the render frame.
+`WaypointContext`, `WaypointLocation`, and `WaypointNavigation` own validation,
+context filtering, distance ordering, and compass labels without Minecraft
+imports.
 `MinecraftWaypointLocationProvider` derives the current scope, dimension, and
 block position. Migration waits until Baritone has opened its world data and
 does not replace a same-named entry.

@@ -1,5 +1,8 @@
 package dev.helikon.gametest;
 
+import baritone.api.BaritoneAPI;
+import baritone.api.cache.IWaypoint;
+import baritone.api.utils.BetterBlockPos;
 import dev.helikon.client.HelikonClient;
 import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
@@ -42,6 +45,9 @@ public final class HelikonClientGameTest implements FabricClientGameTest {
 
             exerciseBaritone(context, modules);
             assertNoFailures(failures, "while exercising embedded Baritone");
+
+            exerciseEmptyBaritoneHomeWaypoint(context, modules);
+            assertNoFailures(failures, "while rendering an unnamed Baritone HOME waypoint");
 
             exerciseRadarMinimap(context, modules);
             assertNoFailures(failures, "while rendering the cached Radar minimap texture");
@@ -176,6 +182,36 @@ public final class HelikonClientGameTest implements FabricClientGameTest {
         }
         context.takeScreenshot("helikon-seed-cracker-solved");
         context.runOnClient(client -> modules.setEnabled(seedCracker, false));
+    }
+
+    private static void exerciseEmptyBaritoneHomeWaypoint(ClientGameTestContext context, ModuleRegistry modules) {
+        Module waypoints = modules.find("waypoints")
+                .orElseThrow(() -> new AssertionError("waypoints module is missing"));
+        context.runOnClient(client -> {
+            var world = BaritoneAPI.getProvider().getPrimaryBaritone().getWorldProvider().getCurrentWorld();
+            if (world == null || client.player == null) {
+                throw new AssertionError("Baritone waypoint GameTest requires a loaded world");
+            }
+            world.getWaypoints().addWaypoint(new baritone.api.cache.Waypoint(
+                    "", IWaypoint.Tag.HOME,
+                    new BetterBlockPos(client.player.blockPosition()), 15L));
+            modules.setEnabled(waypoints, true);
+        });
+        context.waitTicks(5);
+        context.takeScreenshot("helikon-unnamed-home-waypoint");
+        context.waitTicks(2);
+        context.runOnClient(client -> {
+            var world = BaritoneAPI.getProvider().getPrimaryBaritone().getWorldProvider().getCurrentWorld();
+            if (world != null) {
+                world.getWaypoints().getAllWaypoints().stream()
+                        .filter(waypoint -> waypoint.getTag() == IWaypoint.Tag.HOME
+                                && waypoint.getName().isEmpty()
+                                && waypoint.getCreationTimestamp() == 15L)
+                        .toList()
+                        .forEach(world.getWaypoints()::removeWaypoint);
+            }
+            modules.setEnabled(waypoints, false);
+        });
     }
 
     /** Intentional one-shot and mutually exclusive modules may disable; actual guarded failures may not occur. */

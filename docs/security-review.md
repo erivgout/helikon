@@ -1,4 +1,4 @@
-# Security review — 1.4.0
+# Security review — 1.4.1
 
 ## Scope
 
@@ -19,6 +19,10 @@ Gradle, the operating system, or server plugins.
   with backup replacement, and preserve malformed input as a recoverable
   `.corrupt-<timestamp>.json` file. Profile import paths are fixed below the
   Helikon configuration directory and use safe name tokens.
+- Baritone waypoint names are treated as external data at the repository
+  boundary. Blank or unrestricted names receive bounded display-safe forms,
+  while structurally invalid entries are isolated instead of failing HUD
+  rendering.
 - Module lifecycle and periodic adapters use `ModuleRegistry` failure isolation;
   a failing module is disabled and its normal cleanup is attempted without
   crashing unrelated modules.

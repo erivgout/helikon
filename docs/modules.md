@@ -349,6 +349,10 @@ draw each saved entry as a Lunar-inspired world marker with its colored initial,
 `name [distance]` label, and a thin vertical beam. The module defaults on,
 never mixes dimensions, and caches a bounded nearest set. Legacy Helikon
 entries are imported once the Baritone world collection becomes ready.
+Baritone permits empty and unrestricted names, so Helikon displays blank
+built-in entries as `Home`, `Death`, or `Bed`, uses `Waypoint` for a blank user
+entry, and safely bounds unsupported names. A structurally invalid external
+entry is skipped without disabling waypoint rendering.
 
 Death and logout coordinates are now separate enabled-only session snapshots;
 they deliberately do not create automatic waypoints.

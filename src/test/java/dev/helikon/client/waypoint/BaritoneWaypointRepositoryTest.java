@@ -53,6 +53,58 @@ class BaritoneWaypointRepositoryTest {
         assertEquals(2, collection.getAllWaypoints().size());
     }
 
+    @Test
+    void adaptsBlankAndUnsupportedBaritoneNamesWithoutCrashingHudSnapshots() {
+        MemoryCollection collection = new MemoryCollection();
+        collection.addWaypoint(new baritone.api.cache.Waypoint(
+                "", IWaypoint.Tag.HOME, new BetterBlockPos(4, 70, 8), 12L));
+        collection.addWaypoint(new baritone.api.cache.Waypoint(
+                ":Nether/Portal! waypoint with a very long external name",
+                IWaypoint.Tag.USER, new BetterBlockPos(9, 72, 11), 13L));
+        BaritoneWaypointRepository repository = repository(collection);
+
+        java.util.List<Waypoint> snapshot = repository.snapshotForContext(CONTEXT);
+
+        assertEquals(2, snapshot.size());
+        assertTrue(snapshot.stream().anyMatch(waypoint -> waypoint.name().equals("Home")));
+        Waypoint sanitized = snapshot.stream()
+                .filter(waypoint -> waypoint.icon().equals("user"))
+                .findFirst().orElseThrow();
+        assertTrue(sanitized.name().length() <= 32);
+        assertEquals(sanitized.name(), Waypoint.requireName(sanitized.name()));
+        assertTrue(repository.find("Home", CONTEXT).isPresent());
+        assertTrue(repository.removeAndSave("Home", CONTEXT));
+    }
+
+    @Test
+    void skipsStructurallyInvalidExternalWaypointEntries() {
+        MemoryCollection collection = new MemoryCollection();
+        collection.addWaypoint(new IWaypoint() {
+            @Override
+            public String getName() {
+                return "Broken";
+            }
+
+            @Override
+            public Tag getTag() {
+                return Tag.USER;
+            }
+
+            @Override
+            public long getCreationTimestamp() {
+                return 1L;
+            }
+
+            @Override
+            public BetterBlockPos getLocation() {
+                return null;
+            }
+        });
+        BaritoneWaypointRepository repository = repository(collection);
+
+        assertTrue(repository.snapshotForContext(CONTEXT).isEmpty());
+    }
+
     private static BaritoneWaypointRepository repository(MemoryCollection collection) {
         return new BaritoneWaypointRepository(() -> Optional.of(LOCATION), () -> collection);
     }

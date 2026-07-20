@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 1.4.1 - 2026-07-20
+
+- Prevents a render-frame crash when Baritone contains a valid waypoint with
+  a blank or Helikon-incompatible name, including unnamed HOME entries.
+- Adapts external waypoint names to deterministic, bounded display names and
+  skips malformed external entries without breaking the Waypoints HUD. The
+  same adapted name is used by Helikon's find, rename, and remove operations.
+- Adds repository regression coverage and a real Minecraft 26.2 client
+  GameTest that injects and renders an unnamed Baritone HOME waypoint.
+
 ## 1.4.0 - 2026-07-20
 
 - Adds **SeedCracker**, a client-only World module that records distinct loaded

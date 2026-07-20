@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.3.3 - 2026-07-20
+
+- Marks Baritone's vendored Gradle wrapper script executable on Unix runners,
+  allowing Helikon's root build task to invoke it after the CI prebuild.
+
 ## 1.3.2 - 2026-07-20
 
 - Restores clean Linux CI builds by including Baritone's pinned Gradle wrapper

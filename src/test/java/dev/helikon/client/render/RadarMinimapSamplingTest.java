@@ -8,9 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RadarMinimapSamplingTest {
     @Test
-    void boundsTheTerrainWorkToAtMostThreeHundredSixtyOneCells() {
-        assertEquals(361, RadarMinimapSampling.cells(38, RadarProjection.Shape.SQUARE).size());
-        assertTrue(RadarMinimapSampling.cells(38, RadarProjection.Shape.CIRCLE).size() < 361);
+    void preservesFullPixelDetailForTheCachedTexture() {
+        assertEquals(5_776, RadarMinimapSampling.cells(38, RadarProjection.Shape.SQUARE).size());
+        assertTrue(RadarMinimapSampling.cells(38, RadarProjection.Shape.CIRCLE).size() < 5_776);
     }
 
     @Test

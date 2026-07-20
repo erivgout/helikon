@@ -1,5 +1,6 @@
 package dev.helikon.client.hud;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.entity.MinecraftEntityClassification;
 import dev.helikon.client.module.render.Radar;
@@ -12,8 +13,11 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -23,13 +27,15 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 /** Thin HUD adapter for Radar's Minecraft-free projection and local entity filters. */
 public final class RadarHud implements HudElement {
     private static final int RADIUS = 38;
+    private static final int MAP_TEXTURE_SIZE = RADIUS * 2;
+    private static final Identifier MAP_TEXTURE_ID =
+            Identifier.fromNamespaceAndPath("helikon", "radar_minimap");
     private static final List<RadarMinimapSampling.Cell> CIRCLE_MAP_CELLS =
             RadarMinimapSampling.cells(RADIUS, RadarProjection.Shape.CIRCLE);
     private static final List<RadarMinimapSampling.Cell> SQUARE_MAP_CELLS =
@@ -42,7 +48,8 @@ public final class RadarHud implements HudElement {
     private final FriendManager friends;
     private final PanicState panicState;
     private final HudLayout layout;
-    private List<MapCell> mapCells = List.of();
+    private DynamicTexture mapTexture;
+    private boolean mapTextureReady;
     private long mapRefreshBucket = Long.MIN_VALUE;
     private int mapCenterX;
     private int mapCenterZ;
@@ -79,8 +86,8 @@ public final class RadarHud implements HudElement {
         if (module.minimap()) {
             drawMinimap(graphics, client, centerX, centerY);
         } else {
-            mapCells = List.of();
             mapRefreshBucket = Long.MIN_VALUE;
+            mapTextureReady = false;
         }
         drawMapGuides(graphics, client, localBounds, centerX, centerY, placement);
         EntityRenderFilter.Options options = module.options();
@@ -117,7 +124,7 @@ public final class RadarHud implements HudElement {
         if (refreshBucket != mapRefreshBucket
                 || RadarMinimapSampling.movedFarEnough(mapCenterX, mapCenterZ, playerX, playerZ)
                 || yawBucket != mapYawBucket || module.zoom() != mapZoom || module.shape() != mapShape) {
-            mapCells = sampleMinimap(client, playerX, playerZ,
+            updateMinimapTexture(client, playerX, playerZ,
                     yawBucket * RadarMinimapSampling.YAW_STEP_DEGREES);
             mapRefreshBucket = refreshBucket;
             mapCenterX = playerX;
@@ -126,17 +133,21 @@ public final class RadarHud implements HudElement {
             mapZoom = module.zoom();
             mapShape = module.shape();
         }
-        for (MapCell cell : mapCells) {
-            graphics.fill(centerX + cell.x(), centerY + cell.y(),
-                    centerX + cell.x() + RadarMinimapSampling.CELL_SIZE,
-                    centerY + cell.y() + RadarMinimapSampling.CELL_SIZE, cell.color());
+        if (mapTextureReady) {
+            graphics.blit(RenderPipelines.GUI_TEXTURED, MAP_TEXTURE_ID,
+                    centerX - RADIUS, centerY - RADIUS, 0.0F, 0.0F,
+                    MAP_TEXTURE_SIZE, MAP_TEXTURE_SIZE, MAP_TEXTURE_SIZE, MAP_TEXTURE_SIZE);
         }
     }
 
-    private List<MapCell> sampleMinimap(Minecraft client, int centerBlockX, int centerBlockZ, double yawDegrees) {
+    private void updateMinimapTexture(
+            Minecraft client, int centerBlockX, int centerBlockZ, double yawDegrees
+    ) {
+        ensureMapTexture(client);
+        NativeImage pixels = Objects.requireNonNull(mapTexture.getPixels(), "minimap texture pixels");
+        pixels.fillRect(0, 0, MAP_TEXTURE_SIZE, MAP_TEXTURE_SIZE, 0);
         List<RadarMinimapSampling.Cell> samples = module.shape() == RadarProjection.Shape.CIRCLE
                 ? CIRCLE_MAP_CELLS : SQUARE_MAP_CELLS;
-        List<MapCell> cells = new ArrayList<>(samples.size());
         double radians = Math.toRadians(yawDegrees);
         double cosine = Math.cos(radians);
         double sine = Math.sin(radians);
@@ -172,10 +183,20 @@ public final class RadarHud implements HudElement {
             }
             int slope = previousHeight == Integer.MIN_VALUE ? 0 : surfaceY - previousHeight;
             int color = RadarMapColor.forMapColor(baseColor, surfaceY - playerY, slope);
-            cells.add(new MapCell(sample.x(), sample.y(), color));
+            pixels.setPixel(sample.x() + RADIUS, sample.y() + RADIUS, color);
             previousHeight = surfaceY;
         }
-        return List.copyOf(cells);
+        mapTexture.upload();
+        mapTextureReady = true;
+    }
+
+    private void ensureMapTexture(Minecraft client) {
+        if (mapTexture != null) {
+            return;
+        }
+        mapTexture = new DynamicTexture("Helikon Radar minimap",
+                MAP_TEXTURE_SIZE, MAP_TEXTURE_SIZE, true);
+        client.getTextureManager().register(MAP_TEXTURE_ID, mapTexture);
     }
 
     private void drawMapGuides(GuiGraphicsExtractor graphics, Minecraft client, HudBounds bounds,
@@ -264,6 +285,4 @@ public final class RadarHud implements HudElement {
         return EntityRenderFilter.EntityType.OTHER;
     }
 
-    private record MapCell(int x, int y, int color) {
-    }
 }

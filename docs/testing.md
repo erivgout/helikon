@@ -566,7 +566,8 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     to verify its trajectory/TrueSight overlay is frustum-culled. Enable
     **Radar**, verify circle/square, toggle the terrain minimap on and off, then
     confirm the cached minimap no longer causes a major FPS drop while moving
-    and turning. Verify terrain refreshes within one second, along with
+    and turning while retaining one-pixel terrain detail. Verify terrain
+    refreshes within one second, along with
     rotation, zoom, local friend color, and category filters. Confirm no
     unloaded terrain or out-of-range entities appear. None of these results should be
     visible to another player or change a normal projectile/entity interaction.
@@ -881,8 +882,10 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     user/home/death/bed entries also appear through `.waypoint list`. With a
     pre-existing valid `waypoints.json`, verify its current-context entries
     migrate after joining without replacing same-named Baritone entries. Set
-    the Waypoints Scale to its maximum and view a very distant marker; verify
-    the complete projected label panel remains no taller than 5% of the GUI.
+    the Waypoints Scale to its minimum, default, and maximum while viewing a
+    distant marker; verify its size changes at every step. At the default
+    setting, the complete projected label panel remains no taller than 5% of
+    the GUI.
 15. Create a macro with `.macro create smoke`, then append a local action, a
     delay, ordinary chat text, and a Minecraft command (without `/`). Verify
     `show` reports each action, `run` executes no more than one action per tick

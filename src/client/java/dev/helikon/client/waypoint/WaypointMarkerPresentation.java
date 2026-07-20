@@ -32,15 +32,18 @@ public final class WaypointMarkerPresentation {
 
     /**
      * Caps the complete projected label panel, including its padding, to five
-     * percent of the current GUI height.
+     * percent of the current GUI height at configured scale {@code 1.0}.
      */
-    public static float screenLimitedScale(float requestedScale, int labelHeight, int screenHeight) {
-        if (!Float.isFinite(requestedScale) || requestedScale <= 0.0F
+    public static float screenLimitedScale(
+            float adaptiveScale, float configuredScale, int labelHeight, int screenHeight
+    ) {
+        if (!Float.isFinite(adaptiveScale) || adaptiveScale <= 0.0F
+                || !Float.isFinite(configuredScale) || configuredScale <= 0.0F
                 || labelHeight <= 0 || screenHeight <= 0) {
             throw new IllegalArgumentException("Waypoint label dimensions and scale must be positive");
         }
-        int maximumHeight = Math.max(1, (int) Math.floor(screenHeight * MAXIMUM_SCREEN_HEIGHT_FRACTION));
-        return Math.min(requestedScale, (float) maximumHeight / labelHeight);
+        float maximumScale = screenHeight * MAXIMUM_SCREEN_HEIGHT_FRACTION / labelHeight;
+        return configuredScale * Math.min(adaptiveScale, maximumScale);
     }
 
     /** Raises the projected label onto the visible beam instead of leaving it at distant ground level. */

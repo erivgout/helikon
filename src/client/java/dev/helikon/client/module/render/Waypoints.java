@@ -29,7 +29,7 @@ public final class Waypoints extends Module {
         maximumWaypoints = addSetting(new IntegerSetting("maximum_waypoints", "Maximum waypoints",
                 "Hard cap for nearest current-dimension world markers.", 64, 1, 128));
         scale = addSetting(new NumberSetting("scale", "Scale",
-                "Multiplier for projected destination-label size.", 1.0D, 0.5D, 2.0D));
+                "Multiplier for projected label size and its screen-relative ceiling.", 1.0D, 0.5D, 2.0D));
         lineWidth = addSetting(new NumberSetting("line_width", "Beam width",
                 "Width of waypoint beams.", 1.0D, 0.5D, 4.0D));
     }

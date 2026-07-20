@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.3.6 - 2026-07-20
+
+- Makes the Waypoints **Scale** setting visibly effective across its full range
+  by scaling the screen-relative label ceiling with the configured multiplier.
+  The default remains capped at 5% of GUI height.
+- Restores Radar minimap terrain to full one-pixel detail while replacing
+  thousands of per-frame rectangle submissions with one cached GPU-texture
+  draw. Terrain sampling and texture uploads remain cadence-bounded.
+
 ## 1.3.5 - 2026-07-20
 
 - Caps each projected waypoint-label panel at 5% of the current GUI height,

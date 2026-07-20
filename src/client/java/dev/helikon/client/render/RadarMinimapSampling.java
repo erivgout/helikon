@@ -6,7 +6,7 @@ import java.util.Objects;
 
 /** Bounded sampling and refresh policy for the optional Radar terrain minimap. */
 public final class RadarMinimapSampling {
-    public static final int CELL_SIZE = 4;
+    public static final int CELL_SIZE = 1;
     public static final long REFRESH_INTERVAL_TICKS = 20L;
     public static final int MOVEMENT_REFRESH_BLOCKS = 4;
     public static final float YAW_STEP_DEGREES = 15.0F;

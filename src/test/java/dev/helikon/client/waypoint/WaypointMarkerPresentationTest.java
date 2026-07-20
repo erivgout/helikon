@@ -32,10 +32,12 @@ class WaypointMarkerPresentationTest {
     }
 
     @Test
-    void capsTheCompleteLabelPanelAtFivePercentOfScreenHeight() {
-        assertEquals(1.0F, WaypointMarkerPresentation.screenLimitedScale(1.0F, 15, 1080), 0.0001F);
-        assertEquals(3.6F, WaypointMarkerPresentation.screenLimitedScale(4.0F, 15, 1080), 0.0001F);
-        assertEquals(0.8F, WaypointMarkerPresentation.screenLimitedScale(2.0F, 15, 240), 0.0001F);
+    void scalesTheScreenRelativeCeilingWithTheUserSetting() {
+        assertEquals(1.0F, WaypointMarkerPresentation.screenLimitedScale(1.0F, 1.0F, 15, 1080), 0.0001F);
+        assertEquals(3.6F, WaypointMarkerPresentation.screenLimitedScale(4.0F, 1.0F, 15, 1080), 0.0001F);
+        assertEquals(0.4F, WaypointMarkerPresentation.screenLimitedScale(2.0F, 0.5F, 15, 240), 0.0001F);
+        assertEquals(0.8F, WaypointMarkerPresentation.screenLimitedScale(2.0F, 1.0F, 15, 240), 0.0001F);
+        assertEquals(1.6F, WaypointMarkerPresentation.screenLimitedScale(2.0F, 2.0F, 15, 240), 0.0001F);
     }
 
     @Test

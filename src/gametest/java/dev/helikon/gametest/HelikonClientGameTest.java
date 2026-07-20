@@ -6,6 +6,7 @@ import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.render.EntityEspMode;
 import dev.helikon.client.module.world.BaritoneNavigation;
 import dev.helikon.client.render.MinecraftBaritoneVisualizationRenderer;
+import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.EnumSetting;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
@@ -41,6 +42,9 @@ public final class HelikonClientGameTest implements FabricClientGameTest {
             exerciseBaritone(context, modules);
             assertNoFailures(failures, "while exercising embedded Baritone");
 
+            exerciseRadarMinimap(context, modules);
+            assertNoFailures(failures, "while rendering the cached Radar minimap texture");
+
             context.runOnClient(client -> modules.all().forEach(module -> modules.setEnabled(module, true)));
             context.waitTicks(SOAK_TICKS);
             assertNoFailures(failures, "after enabling every module");
@@ -59,6 +63,26 @@ public final class HelikonClientGameTest implements FabricClientGameTest {
                 throw new AssertionError("Modules failed to disable cleanly: " + stillEnabled);
             }
         }
+    }
+
+    private static void exerciseRadarMinimap(ClientGameTestContext context, ModuleRegistry modules) {
+        Module radar = modules.find("radar")
+                .orElseThrow(() -> new AssertionError("radar module is missing"));
+        BooleanSetting minimap = (BooleanSetting) radar.settings().stream()
+                .filter(setting -> setting.id().equals("minimap"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("radar minimap setting is missing"));
+        context.runOnClient(client -> {
+            minimap.set(true);
+            modules.setEnabled(radar, true);
+            client.player.setYRot(client.player.getYRot() + 20.0F);
+        });
+        context.waitTicks(25);
+        context.takeScreenshot("helikon-radar-texture-minimap");
+        context.runOnClient(client -> {
+            modules.setEnabled(radar, false);
+            minimap.set(false);
+        });
     }
 
     private static void exerciseBaritone(ClientGameTestContext context, ModuleRegistry modules) {

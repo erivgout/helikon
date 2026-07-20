@@ -17,7 +17,8 @@ import java.util.Objects;
 
 /**
  * Shared preview drawing for the HUD editor and HUD settings screens: the
- * Active Modules list plus one placement handle per registered HUD element.
+ * Active Modules list plus one placement handle per registered HUD element,
+ * including disabled elements while editing.
  */
 final class HudPreviewRenderer {
     static final int COLOR_SCRIM = 0xF0101319;
@@ -95,32 +96,6 @@ final class HudPreviewRenderer {
         graphics.pose().popMatrix();
     }
 
-    /** Keeps module-backed handles off the canvas until their module is enabled or the handle is selected. */
-    boolean activeElement(HudElementId element) {
-        if (!layout.element(element).enabled()) {
-            return false;
-        }
-        return switch (element) {
-            case LIVE_COORDINATES -> enabled("coordinates");
-            case KEYSTROKES -> enabled("keystrokes");
-            case TIME -> enabled("time");
-            case SATURATION -> enabled("saturation_display");
-            case ELYTRA -> enabled("extra_elytra");
-            case TARGET -> enabled("target_hud");
-            case REACH -> enabled("reach_display");
-            case INVENTORY_PREVIEW -> enabled("inventory_preview");
-            case DURABILITY_WARNINGS -> enabled("durability_warnings");
-            case RADAR -> enabled("radar");
-            case SEED_CRACKER -> enabled("seed_cracker");
-            case MINI_PLAYER -> enabled("mini_player");
-            case DEBUG_OVERLAY -> enabled("debug_overlay");
-            case BETTER_CROSSHAIR -> enabled("better_crosshair");
-            case HEALTH -> enabled("health");
-            case COORDINATES -> enabled("death_coordinates") || enabled("logout_coordinates");
-            default -> true;
-        };
-    }
-
     static boolean isInside(int mouseX, int mouseY, int x, int y, int width, int height) {
         return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
     }
@@ -175,10 +150,6 @@ final class HudPreviewRenderer {
         }
         return new PreviewSize(font.width(elementName(element)) + placement.padding() * 2,
                 font.lineHeight + placement.padding() * 2);
-    }
-
-    private boolean enabled(String moduleId) {
-        return modules.find(moduleId).map(dev.helikon.client.module.Module::isEnabled).orElse(false);
     }
 
     private int activeModulesColor() {

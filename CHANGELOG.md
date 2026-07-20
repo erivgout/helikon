@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+## 1.5.1 - 2026-07-20
+
+- Restores Baritone selection rendering on Minecraft 26.2, including the
+  `#click` hovered-block and drag previews plus saved selection and corner
+  outlines through the supported gizmo renderer.
+- Keeps `#click` selection previews alive in the per-frame gizmo phase and
+  opens its transparent selection screen through Minecraft 26.2's supported
+  screen lifecycle instead of the obsolete direct GUI setter.
+- Makes the HUD editor's top edge match the actual gameplay viewport instead
+  of saving its 22-pixel editor-toolbar offset into HUD placements.
+- Expands the movable ClickGUI search palette into a vertically scrollable
+  module list, showing the complete module roster when the query is empty and
+  filtered results while typing. Search results can now be right-clicked to
+  expand their complete inline settings.
+- Adds a floating **Active** panel to the panel ClickGUI for reviewing and
+  disabling enabled modules, and wires both category and search scrollbars for
+  thumb dragging and track-click jumping with the mouse.
+- Makes BlockESP react immediately to accepted nearby block placements and
+  removals, and revalidates its bounded result cache every tick so stale boxes
+  cannot linger while the background cube scan continues.
+- Drives Baritone `#click` raycasts from Minecraft 26.2's supported per-frame
+  camera basis/near plane, keeping hover and drag outlines stable and aligned
+  with the actual blocks under the cursor; an in-engine client GameTest now
+  verifies the real screen, exact near-wall coordinates, mouse drag, visible
+  Gizmo pixels, and saved selection.
+- Submits Helikon world overlays during Fabric's `COLLECT_SUBMITS` phase, before
+  Minecraft drains its Gizmo collector, instead of the later pre-render phase
+  where newly added Gizmos were not visible in the current frame.
+- Shows draggable previews for every registered HUD element in the HUD editor,
+  including elements whose modules or HUD placements are currently disabled.
+- Replaces Radar's blocky local-player marker with a direction-facing,
+  outlined triangle.
+
 ## 1.5.0 - 2026-07-20
 
 - Redesigns the ClickGUI as draggable floating category panels with icon

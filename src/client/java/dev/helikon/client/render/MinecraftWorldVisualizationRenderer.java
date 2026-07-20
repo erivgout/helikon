@@ -2,6 +2,7 @@ package dev.helikon.client.render;
 
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.entity.MinecraftEntityClassification;
+import dev.helikon.client.event.BlockChangeEvent;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.combat.BowAimAssist;
 import dev.helikon.client.module.miscellaneous.LocalCosmetics;
@@ -323,7 +324,7 @@ public final class MinecraftWorldVisualizationRenderer {
         }
     }
 
-    /** Registered for Fabric's verified {@code BEFORE_GIZMOS} level-render phase. */
+    /** Registered for Fabric's verified {@code COLLECT_SUBMITS} level-render phase. */
     public void render(LevelRenderContext context) {
         Objects.requireNonNull(context, "context");
         Minecraft client = Minecraft.getInstance();
@@ -415,11 +416,24 @@ public final class MinecraftWorldVisualizationRenderer {
         return storageCache.size();
     }
 
+    /** Applies an accepted single-block client-world change directly to BlockESP's bounded cache. */
+    public void observeBlockChange(BlockChangeEvent event) {
+        Objects.requireNonNull(event, "event");
+        Minecraft client = Minecraft.getInstance();
+        if (client.level == null || client.level != observedLevel || client.player == null) {
+            return;
+        }
+        BlockEspScanCursor.Position position = new BlockEspScanCursor.Position(event.x(), event.y(), event.z());
+        blockCache.observe(position,
+                isWithinCurrentBlockRange(position, client.player) && blockEsp.shouldHighlight(event.blockId()));
+    }
+
     private void scanBlocks(ClientLevel level, Player player) {
         if (blockEsp.scanRevision() != observedBlockScanRevision) {
             observedBlockScanRevision = blockEsp.scanRevision();
             resetBlockScanner();
         }
+        blockCache.retain(position -> isCurrentBlockMatch(level, player, position));
         BlockEspScanAnchor.Update anchor = blockAnchor.update(player.getBlockX(), player.getBlockY(), player.getBlockZ(),
                 blockEsp.horizontalRange(), blockEsp.verticalRange(), blockCursor.isAtPassBoundary());
         if (anchor.changed()) {
@@ -437,6 +451,17 @@ public final class MinecraftWorldVisualizationRenderer {
             String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
             blockCache.observe(position, blockEsp.targetBlocks().contains(blockId));
         }
+    }
+
+    private boolean isCurrentBlockMatch(ClientLevel level, Player player, BlockEspScanCursor.Position position) {
+        if (!isWithinCurrentBlockRange(position, player)
+                || !level.isInsideBuildHeight(position.y())
+                || !level.hasChunk(position.x() >> 4, position.z() >> 4)) {
+            return false;
+        }
+        BlockState state = level.getBlockState(new BlockPos(position.x(), position.y(), position.z()));
+        String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+        return blockEsp.shouldHighlight(blockId);
     }
 
     private void scanStorage(ClientLevel level, Player player) {
@@ -1071,6 +1096,7 @@ public final class MinecraftWorldVisualizationRenderer {
             BlockPos blockPosition = new BlockPos(position.x(), position.y(), position.z());
             if (!level.hasChunk(position.x() >> 4, position.z() >> 4)) continue;
             String blockId = BuiltInRegistries.BLOCK.getKey(level.getBlockState(blockPosition).getBlock()).toString();
+            if (!blockEsp.shouldHighlight(blockId)) continue;
             int color = blockEsp.color(blockId);
             GizmoStyle style = GizmoStyle.strokeAndFill(color, blockEsp.lineWidth(), blockEsp.fillColor());
             Gizmos.cuboid(new AABB(blockPosition), style).setAlwaysOnTop();

@@ -2,6 +2,7 @@ package dev.helikon.client.render;
 
 import baritone.api.BaritoneAPI;
 import baritone.api.IBaritone;
+import baritone.api.Settings;
 import baritone.api.behavior.IPathingBehavior;
 import baritone.api.pathing.calc.IPath;
 import baritone.api.pathing.goals.GoalComposite;
@@ -10,9 +11,12 @@ import baritone.api.pathing.goals.GoalYLevel;
 import baritone.api.pathing.goals.Goal;
 import baritone.api.pathing.goals.GoalXZ;
 import baritone.api.pathing.path.IPathExecutor;
+import baritone.api.selection.ISelection;
 import baritone.api.utils.BetterBlockPos;
 import baritone.api.utils.interfaces.IGoalRenderPos;
+import baritone.utils.GuiClick;
 import dev.helikon.client.module.world.BaritoneNavigation;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gizmos.GizmoProperties;
 import net.minecraft.gizmos.GizmoStyle;
@@ -20,6 +24,7 @@ import net.minecraft.gizmos.Gizmos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.awt.Color;
 import java.util.List;
 import java.util.Set;
 
@@ -31,9 +36,14 @@ public final class MinecraftBaritoneVisualizationRenderer {
     private static final int MAXIMUM_PATH_SEGMENTS = 512;
     private static final int MAXIMUM_GOAL_MARKERS = 128;
     private static final int MAXIMUM_ACTION_MARKERS = 256;
+    private static final int MAXIMUM_SELECTIONS = 128;
+    private static final double SELECTION_BOX_EXPANSION = 0.005D;
     private static volatile long renderInvocations;
     private static volatile int lastSubmittedPathPositions;
     private static volatile int lastSubmittedGoalMarkers;
+    private static volatile int lastSubmittedSelections;
+    private static volatile boolean lastSubmittedClickHover;
+    private static volatile boolean lastSubmittedClickDrag;
 
     private MinecraftBaritoneVisualizationRenderer() {
     }
@@ -69,6 +79,77 @@ public final class MinecraftBaritoneVisualizationRenderer {
         }
     }
 
+    /**
+     * Submits selection and #click previews to Minecraft's per-frame gizmo
+     * collector. Interactive mouse state changes between client ticks and
+     * must not rely on the retained 20 Hz path snapshot.
+     */
+    public static void renderInteractiveState(BaritoneNavigation module) {
+        if (!module.isEnabled()) {
+            return;
+        }
+        lastSubmittedSelections = renderSelections(BaritoneAPI.getProvider().getPrimaryBaritone());
+        renderClickPreview();
+    }
+
+    private static int renderSelections(IBaritone baritone) {
+        Settings settings = BaritoneAPI.getSettings();
+        if (!settings.renderSelection.value) {
+            return 0;
+        }
+        ISelection[] selections = baritone.getSelectionManager().getSelections();
+        int count = Math.min(selections.length, MAXIMUM_SELECTIONS);
+        int selectionColor = withOpacity(settings.colorSelection.value, settings.selectionOpacity.value);
+        int positionOneColor = withOpacity(settings.colorSelectionPos1.value, settings.selectionOpacity.value);
+        int positionTwoColor = withOpacity(settings.colorSelectionPos2.value, settings.selectionOpacity.value);
+        float lineWidth = settings.selectionLineWidth.value;
+        boolean alwaysOnTop = settings.renderSelectionIgnoreDepth.value;
+
+        for (int index = 0; index < count; index++) {
+            ISelection selection = selections[index];
+            renderSelectionBox(selection.aabb().inflate(SELECTION_BOX_EXPANSION), selectionColor, lineWidth,
+                    alwaysOnTop);
+            if (settings.renderSelectionCorners.value) {
+                renderSelectionBox(new AABB(selection.pos1()).inflate(SELECTION_BOX_EXPANSION),
+                        positionOneColor, lineWidth, alwaysOnTop);
+                renderSelectionBox(new AABB(selection.pos2()).inflate(SELECTION_BOX_EXPANSION),
+                        positionTwoColor, lineWidth, alwaysOnTop);
+            }
+        }
+        return count;
+    }
+
+    private static void renderClickPreview() {
+        lastSubmittedClickHover = false;
+        lastSubmittedClickDrag = false;
+        if (!(Minecraft.getInstance().gui.screen() instanceof GuiClick click)) {
+            return;
+        }
+        click.updateHoveredBlock(Minecraft.getInstance().gameRenderer.mainCamera());
+        BlockPos hovered = click.hoveredBlock();
+        if (hovered != null) {
+            lastSubmittedClickHover = true;
+            renderSelectionBox(new AABB(hovered).inflate(0.01D), 0xFF00FFFF, 2.0F, true);
+        }
+        AABB preview = click.selectionPreviewBounds();
+        if (preview != null) {
+            lastSubmittedClickDrag = true;
+            renderSelectionBox(preview.inflate(SELECTION_BOX_EXPANSION), 0xFFFF5252, 2.0F, true);
+        }
+    }
+
+    private static void renderSelectionBox(AABB bounds, int color, float lineWidth, boolean alwaysOnTop) {
+        GizmoProperties marker = Gizmos.cuboid(bounds, GizmoStyle.stroke(color, lineWidth));
+        if (alwaysOnTop) {
+            marker.setAlwaysOnTop();
+        }
+    }
+
+    static int withOpacity(Color color, float opacity) {
+        int alpha = Math.clamp(Math.round(opacity * 255.0F), 0, 255);
+        return alpha << 24 | color.getRGB() & 0x00FFFFFF;
+    }
+
     /** Read-only live counts used by the in-engine acceptance test and diagnostics. */
     public static VisualizationState inspect() {
         IPathingBehavior behavior = BaritoneAPI.getProvider().getPrimaryBaritone().getPathingBehavior();
@@ -86,6 +167,13 @@ public final class MinecraftBaritoneVisualizationRenderer {
         return new VisualizationState(pathPositions,
                 countRenderableGoalMarkers(behavior.getGoal(), MAXIMUM_GOAL_MARKERS), actionMarkers,
                 renderInvocations, lastSubmittedPathPositions, lastSubmittedGoalMarkers);
+    }
+
+    /** Read-only state proving that the live in-game Gizmo phase submitted click/selection geometry. */
+    public static InteractiveVisualizationState inspectInteractive() {
+        return new InteractiveVisualizationState(
+                lastSubmittedSelections, lastSubmittedClickHover, lastSubmittedClickDrag
+        );
     }
 
     private static void renderPath(BaritoneNavigation module, IPathExecutor executor) {
@@ -245,6 +333,13 @@ public final class MinecraftBaritoneVisualizationRenderer {
             long renderInvocations,
             int lastSubmittedPathPositions,
             int lastSubmittedGoalMarkers
+    ) {
+    }
+
+    public record InteractiveVisualizationState(
+            int selections,
+            boolean clickHover,
+            boolean clickDrag
     ) {
     }
 }

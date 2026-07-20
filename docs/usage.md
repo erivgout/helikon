@@ -15,14 +15,18 @@ SIL Open Font License).
 - **Middle-click** a module row to star it as a favorite; favorites show a
   star beside their name and are collected in the dedicated **Favorites**
   panel.
+- The **Active** panel lists every currently enabled module. Disabling a
+  module there removes it from the panel immediately.
 - Drag a panel by its header to move it; **right-click** a header to collapse
   the panel to just its header. Panel positions are clamped to the screen and
   restored when the GUI is reopened.
 - A panel never grows taller than half the screen; longer module lists
-  scroll with the mouse wheel.
-- The search palette filters across module names, IDs, and descriptions in
-  every category; click a result to toggle that module. Drag an empty part of
-  the palette to move it.
+  scroll with the mouse wheel or by dragging the scrollbar thumb. Clicking
+  the scrollbar track jumps toward that position.
+- The search palette shows every module in a scrollable list, then filters
+  across module names, IDs, and descriptions while you type. Left-click a
+  result to toggle it, right-click to expand its settings, and middle-click
+  to favorite it. Drag its magnifying-glass handle to move the palette.
 - In a module's expanded settings, click **Bind** and press a key to assign a
   keybind; Backspace/Delete removes the bind and Escape cancels. Held
   modifiers are captured.
@@ -56,10 +60,10 @@ swatch — click it to open alpha/red/green/blue picker tracks beneath the row.
 
 Select **HUD** in the ClickGUI search palette. The editor is a clean drag-only canvas
 with a compact toolbar and visible eight-pixel grid. Drag the Active Modules
-preview or any active element handle; every movable widget snaps to the grid,
-stays below the toolbar, and remains fully on-screen. Module-backed handles
-stay hidden while their module is off unless selected through HUD settings,
-which keeps the canvas focused on the HUD that will actually render.
+preview or any registered element handle; every movable widget snaps to the
+grid and remains fully on-screen. All handles remain visible in the editor,
+even when their module or HUD placement is disabled, so the whole layout can
+be arranged without temporarily enabling modules.
 
 Presentation options live on the separate **HUD settings** screen, opened
 from the button in the editor's toolbar. Its body is scrollable and holds the Active Modules

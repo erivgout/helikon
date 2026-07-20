@@ -3,6 +3,7 @@ package dev.helikon.client.render;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /** Bounded insertion-ordered local block result cache updated by the incremental scanner. */
 public final class BlockEspCache {
@@ -32,6 +33,11 @@ public final class BlockEspCache {
 
     public void clear() {
         positions.clear();
+    }
+
+    /** Revalidates retained entries without allocating a per-tick cache snapshot. */
+    public void retain(Predicate<BlockEspScanCursor.Position> predicate) {
+        positions.removeIf(position -> !predicate.test(position));
     }
 
     /** Read-only live iteration for a single-threaded render adapter; no per-frame snapshot is allocated. */

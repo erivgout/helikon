@@ -210,7 +210,8 @@ key (`ConfigurationManagerTest`).
 2. Open the ClickGUI with Right Shift and click **HUD** in its header. Verify a
    dimmed drag-only editor opens with a header bar, a **HUD settings** button,
    the Active Modules preview (showing either enabled modules or
-   `No modules enabled`), and one labelled handle per enabled HUD element.
+   `No modules enabled`), and one labelled handle for every registered HUD
+   element, including disabled/module-inactive elements.
 3. Drag the Active Modules preview to each screen edge and verify it stays
    fully visible. Drag close to, but not exactly on, an edge and then the
    viewport centre; verify the preview snaps there. Drag several element
@@ -228,8 +229,8 @@ key (`ConfigurationManagerTest`).
    In HUD settings, cycle the **HUD element** selector through Waypoints,
    Coordinates, Saturation, Elytra, Target HUD, Reach, Inventory Preview,
    Durability warnings, Radar, MiniPlayer, Debug Overlay, and Better
-   Crosshair. Toggle one off and verify its editor handle renders grey only
-   while it is the selected element. Drag another handle to a distinct
+   Crosshair. Toggle one off and verify its editor handle remains visible and
+   renders grey. Drag another handle to a distinct
    position, close/reopen the editor, and verify both local settings persist
    and affect only that HUD element. For each selected element, cycle
    Alignment and Color, toggle Background, Text shadow, and Rainbow, and
@@ -372,12 +373,13 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     view, then use Enter and Space to toggle the selected module. Click the
     search or a number field and verify its normal keyboard editing continues
     to take priority.
-15. Enable two modules from different categories, click **Active** above the
-    category list, and verify it shows only those modules. Toggle one there and
-    verify it immediately disappears while the other remains. Select a module
-    with enough settings to exceed the right-hand panel, then hover that panel
-    and scroll: its scrollbar, rows, and editable fields must move together
-    without drawing outside the panel.
+15. Enable two modules from different categories and verify the floating
+    **Active** panel shows only those modules. Toggle one there and verify it
+    immediately disappears while the other remains. Right-click a search
+    result and verify its complete settings expand inline. Drag the thumb and
+    click the track on both a category scrollbar and the search scrollbar;
+    their rows and editable fields must move together without drawing outside
+    either panel.
 15. Select **BetterCrosshair**, enable it, and verify its custom crosshair
     replaces the vanilla one. Change its size, gap, thickness, outline, and
     `#AARRGGBB` color text field; drag each alpha/red/green/blue picker track
@@ -595,7 +597,13 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     settings, and never opens or changes a container.
     For **BlockESP**, set two configured IDs to distinct `block_colors` entries
     and verify each retained local box/tracer uses its own color; malformed
-    entries must safely retain the shared fallback color.
+    entries must safely retain the shared fallback color. Place and remove a
+    configured block inside range and verify its box appears/disappears on the
+    next client tick without waiting for the full cube scan.
+    Run `./gradlew runClientGameTest`; the Baritone click test opens the real
+    `#click` screen over a test wall, performs a mouse drag, captures hover/drag
+    and saved-selection screenshots, and requires both previews to reach the
+    supported Gizmo render phase.
 38. In a local/test world, enable **MiniPlayer** and verify the local player
     model appears in its fixed HUD panel, responds to rotation/scale/background
     settings, and armor on/off changes only the panel. Enable **DamageIndicators**

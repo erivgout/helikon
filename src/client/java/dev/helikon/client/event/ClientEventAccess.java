@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-/** Narrow client-only bridge used by verified Minecraft input and chunk lifecycle mixins. */
+/** Narrow client-only bridge used by verified Minecraft input and world lifecycle mixins. */
 public final class ClientEventAccess {
     private static final Object RESOURCE_RELOAD_LOCK = new Object();
     private static final Set<CompletableFuture<Void>> ACTIVE_RESOURCE_RELOADS =
@@ -49,6 +49,11 @@ public final class ClientEventAccess {
 
     public static void postChunk(ChunkEvent.Phase phase, int chunkX, int chunkZ) {
         post(new ChunkEvent(phase, chunkX, chunkZ));
+    }
+
+    /** Publishes one block state after Minecraft has accepted it into the current client world. */
+    public static void postBlockChange(int x, int y, int z, String blockId) {
+        post(new BlockChangeEvent(x, y, z, blockId));
     }
 
     /** Publishes a render boundary using only its local primitive metadata. */

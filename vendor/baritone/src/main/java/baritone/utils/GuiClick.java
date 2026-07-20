@@ -24,6 +24,7 @@ import baritone.api.utils.BetterBlockPos;
 import baritone.api.utils.Helper;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Camera;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -40,7 +41,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import org.joml.Vector4f;
 
 import java.awt.*;
 import java.util.Collections;
@@ -48,8 +48,6 @@ import java.util.Collections;
 import static baritone.api.command.IBaritoneChatControl.FORCE_COMMAND_PREFIX;
 
 public class GuiClick extends Screen implements Helper {
-
-    private Matrix4f projectionViewMatrix;
 
     private BlockPos clickStart;
     private BlockPos currentMouseOver;
@@ -65,24 +63,38 @@ public class GuiClick extends Screen implements Helper {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
-        double mx = mc.mouseHandler.xpos();
-        double my = mc.mouseHandler.ypos();
-
-        my = mc.getWindow().getScreenHeight() - my;
-        my *= mc.getWindow().getHeight() / (double) mc.getWindow().getScreenHeight();
-        mx *= mc.getWindow().getWidth() / (double) mc.getWindow().getScreenWidth();
-        Vec3 near = toWorld(mx, my, 0);
-        Vec3 far = toWorld(mx, my, 1); // "Use 0.945 that's what stack overflow says" - leijurv
-
-        if (near != null && far != null) {
-            Vec3 viewerPos = new Vec3(PathRenderer.posX(), PathRenderer.posY(), PathRenderer.posZ());
-            LocalPlayer player = BaritoneAPI.getProvider().getPrimaryBaritone().getPlayerContext().player();
-            HitResult result = player.level().clip(new ClipContext(near.add(viewerPos), far.add(viewerPos), ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
-            if (result != null && result.getType() == HitResult.Type.BLOCK) {
-                currentMouseOver = ((BlockHitResult) result).getBlockPos();
-            }
-        }
+        updateHoveredBlock(mc.gameRenderer.mainCamera());
         super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
+    }
+
+    /**
+     * Updates the click ray from Minecraft's current camera basis. Using the
+     * camera's own near plane avoids projection/view convention mismatches
+     * across renderer versions.
+     */
+    public void updateHoveredBlock(Camera camera) {
+        if (camera == null || !camera.isInitialized() || mc.level == null
+                || mc.getWindow().getScreenWidth() <= 0 || mc.getWindow().getScreenHeight() <= 0) {
+            currentMouseOver = null;
+            return;
+        }
+        float normalizedX = (float) (mc.mouseHandler.xpos() * 2.0D
+                / mc.getWindow().getScreenWidth() - 1.0D);
+        float normalizedY = (float) (1.0D - mc.mouseHandler.ypos() * 2.0D
+                / mc.getWindow().getScreenHeight());
+        Vec3 direction = camera.getNearPlane(camera.getFov())
+                .getPointOnPlane(normalizedX, normalizedY)
+                .normalize();
+        Vec3 start = camera.position();
+        Vec3 end = start.add(direction.scale(512.0D));
+        LocalPlayer player = BaritoneAPI.getProvider().getPrimaryBaritone().getPlayerContext().player();
+        HitResult result = player.level().clip(new ClipContext(
+                start, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
+        if (result != null && result.getType() == HitResult.Type.BLOCK) {
+            currentMouseOver = ((BlockHitResult) result).getBlockPos();
+            return;
+        }
+        currentMouseOver = null;
     }
 
     @Override
@@ -123,10 +135,6 @@ public class GuiClick extends Screen implements Helper {
     }
 
     public void onRender(PoseStack modelViewStack, Matrix4f projectionMatrix) {
-        this.projectionViewMatrix = new Matrix4f(projectionMatrix);
-        this.projectionViewMatrix.mul(modelViewStack.last().pose());
-        this.projectionViewMatrix.invert();
-
         if (currentMouseOver != null) {
             Entity e = mc.getCameraEntity();
             // drawSingleSelectionBox WHEN?
@@ -141,24 +149,30 @@ public class GuiClick extends Screen implements Helper {
         }
     }
 
-    private Vec3 toWorld(double x, double y, double z) {
-        if (this.projectionViewMatrix == null) {
-            return null;
-        }
-
-        x /= mc.getWindow().getWidth();
-        y /= mc.getWindow().getHeight();
-        x = x * 2 - 1;
-        y = y * 2 - 1;
-
-        Vector4f pos = new Vector4f((float) x, (float) y, (float) z, 1.0F);
-        projectionViewMatrix.transform(pos);
-
-        if (pos.w() == 0) {
-            return null;
-        }
-
-        pos.mul(1/pos.w());
-        return new Vec3(pos.x(), pos.y(), pos.z());
+    /**
+     * Exposes the click target to Helikon's Minecraft 26.2 gizmo renderer.
+     * Baritone's legacy direct-buffer renderer is intentionally inert on this
+     * port, so the supported renderer needs this read-only preview state.
+     */
+    public BlockPos hoveredBlock() {
+        return currentMouseOver;
     }
+
+    /**
+     * Returns the inclusive drag selection as block-aligned world bounds.
+     */
+    public AABB selectionPreviewBounds() {
+        if (clickStart == null || currentMouseOver == null || clickStart.equals(currentMouseOver)) {
+            return null;
+        }
+        return new AABB(
+                Math.min(clickStart.getX(), currentMouseOver.getX()),
+                Math.min(clickStart.getY(), currentMouseOver.getY()),
+                Math.min(clickStart.getZ(), currentMouseOver.getZ()),
+                Math.max(clickStart.getX(), currentMouseOver.getX()) + 1,
+                Math.max(clickStart.getY(), currentMouseOver.getY()) + 1,
+                Math.max(clickStart.getZ(), currentMouseOver.getZ()) + 1
+        );
+    }
+
 }

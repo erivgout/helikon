@@ -6,6 +6,7 @@ import dev.helikon.client.entity.MinecraftEntityClassification;
 import dev.helikon.client.module.render.Radar;
 import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.render.EntityRenderFilter;
+import dev.helikon.client.render.ArrowGeometry;
 import dev.helikon.client.render.RadarMapColor;
 import dev.helikon.client.render.RadarMinimapSampling;
 import dev.helikon.client.render.RadarProjection;
@@ -43,6 +44,10 @@ public final class RadarHud implements HudElement {
     private static final int PLAYER_COLOR = 0xFF4FC3F7;
     private static final int PLAYER_OUTLINE_COLOR = 0xFFF4F7FA;
     private static final int MAP_GUIDE_COLOR = 0x502A313B;
+    private static final List<ArrowGeometry.Span> PLAYER_TRIANGLE_OUTLINE =
+            ArrowGeometry.build(0.0D, 3.0D, 0.0D, 8.0D, 4.5D, 0.0D, -1.0D);
+    private static final List<ArrowGeometry.Span> PLAYER_TRIANGLE_FILL =
+            ArrowGeometry.build(0.0D, 2.0D, 0.0D, 6.0D, 2.5D, 0.0D, -1.0D);
 
     private final Radar module;
     private final FriendManager friends;
@@ -237,11 +242,17 @@ public final class RadarHud implements HudElement {
         if (!rotatingMap) {
             graphics.pose().rotate((float) Math.toRadians(yawDegrees));
         }
-        graphics.fill(-1, -5, 2, 4, PLAYER_OUTLINE_COLOR);
-        graphics.fill(-3, 1, 4, 4, PLAYER_OUTLINE_COLOR);
-        graphics.fill(0, -4, 1, 3, PLAYER_COLOR);
-        graphics.fill(-2, 1, 3, 3, PLAYER_COLOR);
+        drawTriangle(graphics, PLAYER_TRIANGLE_OUTLINE, PLAYER_OUTLINE_COLOR);
+        drawTriangle(graphics, PLAYER_TRIANGLE_FILL, PLAYER_COLOR);
         graphics.pose().popMatrix();
+    }
+
+    private static void drawTriangle(
+            GuiGraphicsExtractor graphics, List<ArrowGeometry.Span> triangle, int color
+    ) {
+        for (ArrowGeometry.Span span : triangle) {
+            graphics.fill(span.xStart(), span.y(), span.xEnd(), span.y() + 1, color);
+        }
     }
 
     private void drawBackground(GuiGraphicsExtractor graphics, HudBounds bounds, int centerX, int centerY,

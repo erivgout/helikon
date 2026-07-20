@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 
 /**
- * Drag-only HUD layout editor. Every enabled element preview can be dragged
+ * Drag-only HUD layout editor. Every registered element preview can be dragged
  * directly; presentation options live in the separate
  * {@link HelikonHudSettingsScreen}, reached through the header button.
  */
@@ -58,7 +58,6 @@ public final class HelikonHudEditorScreen extends Screen {
         super.init();
         previews = new HudPreviewRenderer(font, modules, layout);
         state.clampToViewport(width, height, previews.activeModulesBounds());
-        keepElementsBelowToolbar();
     }
 
     @Override
@@ -75,13 +74,11 @@ public final class HelikonHudEditorScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         graphics.fill(0, 0, width, height, HudPreviewRenderer.COLOR_SCRIM);
         drawGrid(graphics);
+        drawToolbar(graphics);
         previews.drawActiveModules(graphics);
         for (HudElementId element : HudElementId.values()) {
-            if (previews.activeElement(element) || element == selectedElement) {
-                previews.drawElement(graphics, element, width, height, element == selectedElement);
-            }
+            previews.drawElement(graphics, element, width, height, element == selectedElement);
         }
-        drawToolbar(graphics);
         super.extractRenderState(graphics, mouseX, mouseY, delta);
     }
 
@@ -104,9 +101,6 @@ public final class HelikonHudEditorScreen extends Screen {
         HudElementId[] elements = HudElementId.values();
         for (int index = elements.length - 1; index >= 0; index--) {
             HudElementId element = elements[index];
-            if (!(previews.activeElement(element) || element == selectedElement)) {
-                continue;
-            }
             HudBounds bounds = previews.elementBounds(element, width, height);
             if (bounds.contains(mouseX, mouseY)) {
                 selectedElement = element;
@@ -126,16 +120,15 @@ public final class HelikonHudEditorScreen extends Screen {
         if (event.button() == 0 && draggedElement != null) {
             HudBounds bounds = previews.elementBounds(draggedElement, width, height);
             int maximumX = Math.max(0, width - bounds.width());
-            int maximumY = Math.max(TOOLBAR_BOTTOM, height - bounds.height());
+            int maximumY = Math.max(0, height - bounds.height());
             int x = HudEditorGrid.snap((int) event.x() - elementDragOffsetX, 0, maximumX);
-            int y = HudEditorGrid.snap((int) event.y() - elementDragOffsetY,
-                    Math.min(TOOLBAR_BOTTOM, maximumY), maximumY);
+            int y = HudEditorGrid.snap((int) event.y() - elementDragOffsetY, 0, maximumY);
             layout.element(draggedElement).setAbsolutePosition(x, y);
             return true;
         }
         if (event.button() == 0
                 && state.dragTo((int) event.x(), (int) event.y(), width, height,
-                TOOLBAR_BOTTOM, previews.activeModulesBounds())) {
+                previews.activeModulesBounds())) {
             return true;
         }
         return super.mouseDragged(event, dragX, dragY);
@@ -201,26 +194,10 @@ public final class HelikonHudEditorScreen extends Screen {
 
     private void drawGrid(GuiGraphicsExtractor graphics) {
         for (int x = 0; x < width; x += HudEditorGrid.SIZE) {
-            graphics.fill(x, TOOLBAR_BOTTOM, x + 1, height, HudPreviewRenderer.COLOR_GRID);
+            graphics.fill(x, 0, x + 1, height, HudPreviewRenderer.COLOR_GRID);
         }
-        for (int y = TOOLBAR_BOTTOM; y < height; y += HudEditorGrid.SIZE) {
+        for (int y = 0; y < height; y += HudEditorGrid.SIZE) {
             graphics.fill(0, y, width, y + 1, HudPreviewRenderer.COLOR_GRID);
-        }
-    }
-
-    private void keepElementsBelowToolbar() {
-        HudBounds activeBounds = previews.activeModulesBounds();
-        if (activeBounds.y() < TOOLBAR_BOTTOM) {
-            layout.setActiveModulesPosition(activeBounds.x(), TOOLBAR_BOTTOM);
-        }
-        for (HudElementId element : HudElementId.values()) {
-            if (element.positionLocked() || !(previews.activeElement(element) || element == selectedElement)) {
-                continue;
-            }
-            HudBounds bounds = previews.elementBounds(element, width, height);
-            if (bounds.y() < TOOLBAR_BOTTOM) {
-                layout.element(element).setAbsolutePosition(bounds.x(), TOOLBAR_BOTTOM);
-            }
         }
     }
 }

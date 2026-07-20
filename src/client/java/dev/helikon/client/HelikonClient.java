@@ -31,6 +31,7 @@ import dev.helikon.client.config.ProfileSelection;
 import dev.helikon.client.event.ClientTickEvent;
 import dev.helikon.client.event.ClientEventAccess;
 import dev.helikon.client.event.ChatEvent;
+import dev.helikon.client.event.BlockChangeEvent;
 import dev.helikon.client.event.ChunkEvent;
 import dev.helikon.client.event.EventBus;
 import dev.helikon.client.event.InteractionEvent;
@@ -1064,6 +1065,8 @@ public final class HelikonClient implements ClientModInitializer {
                                 ? NewChunks.ChunkPhase.LOAD
                                 : NewChunks.ChunkPhase.UNLOAD,
                         event.chunkX(), event.chunkZ(), System.currentTimeMillis())));
+        events.subscribe(BlockChangeEvent.class, event -> modules.runGuarded(blockEsp, "block-change",
+                () -> worldVisuals.observeBlockChange(event)));
         events.subscribe(WorldEvent.class,
                 event -> modules.runGuarded(newChunks, "world-change", newChunks::clear));
         events.subscribe(WorldEvent.class,
@@ -1562,12 +1565,14 @@ public final class HelikonClient implements ClientModInitializer {
                 new PlanTelemetryHud(hudLayout, panicState, tpsEstimate));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "helikon_logo"),
                 new dev.helikon.client.hud.HelikonLogoHud(helikonLogo, panicState));
-        LevelRenderEvents.BEFORE_GIZMOS.register(context -> {
+        LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
             ClientEventAccess.postRender(RenderEvent.Kind.WORLD, 0.0D, "");
             worldVisuals.render(context);
             modules.runGuarded(domainExpansion, "render", domainExpansionRenderer::render);
             modules.runGuarded(seedCracker, "render", seedCrackerRenderer::render);
             waypointRenderer.render();
+            MinecraftBaritoneVisualizationRenderer.renderInteractiveState(baritoneNavigation);
+            MinecraftBaritoneVisualizationRenderer.render(baritoneNavigation);
         });
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             tpsEstimate.observeTick(System.nanoTime());
@@ -1583,10 +1588,6 @@ public final class HelikonClient implements ClientModInitializer {
             BetterChatDisplayAccess.tickSmoothScroll();
             worldVisuals.tick(client);
             baritoneNavigation.tick();
-            // Minecraft 26.2 wraps the entire client tick in its per-tick
-            // gizmo collector. Submit Baritone's live route here so those
-            // gizmos are drained and transferred to the following frame.
-            MinecraftBaritoneVisualizationRenderer.render(baritoneNavigation);
             if (waypointMigrationPending && waypoints.isReadyForCurrentWorld()) {
                 int migratedWaypoints = waypoints.migrateCurrent(legacyWaypoints.list());
                 waypointMigrationPending = false;

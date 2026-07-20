@@ -20,6 +20,7 @@ class ClientEventAccessTest {
         EventBus events = new EventBus((event, exception) -> { throw exception; });
         events.subscribe(InputEvent.class, observed::add);
         events.subscribe(ChunkEvent.class, observed::add);
+        events.subscribe(BlockChangeEvent.class, observed::add);
         events.subscribe(ResourceReloadEvent.class, observed::add);
         events.subscribe(RenderEvent.class, observed::add);
         events.subscribe(InteractionEvent.class, observed::add);
@@ -31,6 +32,7 @@ class ClientEventAccessTest {
                 new MouseButtonInfo(GLFW.GLFW_MOUSE_BUTTON_4, GLFW.GLFW_MOD_SHIFT));
         ClientEventAccess.postMouseScroll(1.25D, -2.5D);
         ClientEventAccess.postChunk(ChunkEvent.Phase.LOAD, 4, -8);
+        ClientEventAccess.postBlockChange(10, 63, -5, "minecraft:diamond_ore");
         ClientEventAccess.postResourceReload(ResourceReloadEvent.Phase.COMPLETE);
         ClientEventAccess.postRender(RenderEvent.Kind.ENTITY, 0.5D, "minecraft:zombie");
         ClientEventAccess.postInteraction(InteractionEvent.Kind.ATTACK, "minecraft:zombie");
@@ -44,11 +46,12 @@ class ClientEventAccessTest {
         assertEquals(new InputEvent(InputEvent.Kind.MOUSE_SCROLL, InputEvent.Action.SCROLL, 0, 0, 0,
                 1.25D, -2.5D), observed.get(2));
         assertEquals(new ChunkEvent(ChunkEvent.Phase.LOAD, 4, -8), observed.get(3));
-        assertEquals(new ResourceReloadEvent(ResourceReloadEvent.Phase.COMPLETE), observed.get(4));
-        assertEquals(new RenderEvent(RenderEvent.Kind.ENTITY, 0.5D, "minecraft:zombie"), observed.get(5));
-        assertEquals(new InteractionEvent(InteractionEvent.Kind.ATTACK, "minecraft:zombie"), observed.get(6));
+        assertEquals(new BlockChangeEvent(10, 63, -5, "minecraft:diamond_ore"), observed.get(4));
+        assertEquals(new ResourceReloadEvent(ResourceReloadEvent.Phase.COMPLETE), observed.get(5));
+        assertEquals(new RenderEvent(RenderEvent.Kind.ENTITY, 0.5D, "minecraft:zombie"), observed.get(6));
+        assertEquals(new InteractionEvent(InteractionEvent.Kind.ATTACK, "minecraft:zombie"), observed.get(7));
         assertEquals(new PacketObservationEvent(PacketObservationEvent.Direction.SEND,
-                "net.minecraft.network.protocol.game.ServerboundAttackPacket"), observed.get(7));
+                "net.minecraft.network.protocol.game.ServerboundAttackPacket"), observed.get(8));
     }
 
     @Test

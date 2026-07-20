@@ -13,6 +13,7 @@
     "CameraNoClipMixin",
     "ClientPacketListenerVelocityMixin",
     "ClientChunkCacheEventMixin",
+    "ClientLevelBlockChangeMixin",
     "EntityRendererChamsOutlineMixin",
     "EntityRendererBetterNametagMixin",
     "MinecraftChamsGlowMixin",

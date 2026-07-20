@@ -78,6 +78,11 @@ public final class BlockEsp extends Module {
 
     public long scanRevision() { return scanRevision; }
 
+    /** Returns whether the current enabled configuration selects an observed block ID. */
+    public boolean shouldHighlight(String blockId) {
+        return isEnabled() && targetBlocks.contains(blockId);
+    }
+
     /** Installs the thin local render-cache cleanup hook without introducing Minecraft types. */
     public void setCacheClearer(Runnable cacheClearer) {
         this.cacheClearer = Objects.requireNonNull(cacheClearer, "cacheClearer");

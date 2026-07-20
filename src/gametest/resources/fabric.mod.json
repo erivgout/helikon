@@ -11,7 +11,8 @@
       "dev.helikon.gametest.HelikonClientGameTest",
       "dev.helikon.gametest.MiniPlayerClientGameTest",
       "dev.helikon.gametest.XRayClientGameTest",
-      "dev.helikon.gametest.NoFallClientGameTest"
+      "dev.helikon.gametest.NoFallClientGameTest",
+      "dev.helikon.gametest.BaritoneClickClientGameTest"
     ]
   },
   "depends": {

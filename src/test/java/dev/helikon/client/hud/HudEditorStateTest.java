@@ -63,14 +63,14 @@ class HudEditorStateTest {
     }
 
     @Test
-    void dragKeepsActiveModulesBelowToolbar() {
+    void dragCanReachTheActualViewportTop() {
         HudLayout layout = new HudLayout();
         HudEditorState state = new HudEditorState(layout);
         HudBounds bounds = new HudBounds(4, 4, 20, 20);
 
         assertTrue(state.beginDrag(5, 5, bounds));
-        state.dragTo(5, 5, 100, 80, 22, bounds);
+        state.dragTo(1, 1, 100, 80, bounds);
 
-        assertEquals(22, layout.activeModulesY());
+        assertEquals(0, layout.activeModulesY());
     }
 }

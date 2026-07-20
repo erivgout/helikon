@@ -41,6 +41,7 @@ class BlockEspPolicyTest {
         cache.observe(second, true);
         cache.observe(third, true);
         cache.observe(second, false);
+        cache.retain(position -> position.equals(third));
 
         List<BlockEspScanCursor.Position> retained = new ArrayList<>();
         cache.positions().forEach(retained::add);

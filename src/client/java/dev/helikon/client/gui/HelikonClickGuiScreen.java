@@ -49,7 +49,7 @@ import java.util.logging.Level;
 
 /**
  * The Helikon ClickGUI: one draggable floating panel per module category
- * (plus Favorites) with an icon header, accent-highlighted enabled modules,
+ * (plus Favorites and Active) with an icon header, accent-highlighted enabled modules,
  * and inline settings expanded beneath a module row, plus a floating search
  * palette. The screen only renders and forwards input; module lifecycle
  * changes always go through {@link ModuleRegistry} and persistence through
@@ -62,6 +62,7 @@ import java.util.logging.Level;
 public final class HelikonClickGuiScreen extends Screen {
     private static final String SEARCH_PANEL_KEY = "search";
     private static final String FAVORITES_PANEL_KEY = "favorites";
+    private static final String ACTIVE_PANEL_KEY = "active";
 
     private static final Style UI_STYLE = HelikonUiFont.STYLE;
 
@@ -73,6 +74,7 @@ public final class HelikonClickGuiScreen extends Screen {
     private static final int BASE_SEARCH_WIDTH = 190;
     private static final int BASE_SEARCH_ROW_HEIGHT = 20;
     private static final int BASE_RESULT_ROW_HEIGHT = 12;
+    private static final int SEARCH_VISIBLE_RESULT_ROWS = 8;
     private static final int BASE_SLIDER_TRACK_WIDTH = 38;
     private static final int COLOR_PICKER_EXTRA = 23;
     private static final int COLOR_PICKER_CHANNEL_HEIGHT = 4;
@@ -122,6 +124,8 @@ public final class HelikonClickGuiScreen extends Screen {
     private int dragOffsetY;
     private SliderDrag activeSlider;
     private ColorDrag activeColorPicker;
+    private final ClickGuiScrollbarState activeScrollbar = new ClickGuiScrollbarState();
+    private PanelView scrollbarPanel;
 
     private int panelWidth;
     private int headerHeight;
@@ -187,7 +191,12 @@ public final class HelikonClickGuiScreen extends Screen {
         searchField.setValue(searchQuery);
         searchField.setTextShadow(false);
         searchField.addFormatter((text, index) -> FormattedCharSequence.forward(text, UI_STYLE));
-        searchField.setResponder(text -> searchQuery = text);
+        searchField.setResponder(text -> {
+            searchQuery = text;
+            panelScrolls.put(SEARCH_PANEL_KEY, 0.0D);
+            clampPanel(search);
+            positionSearchField(search);
+        });
         addRenderableWidget(searchField);
         positionSearchField(search);
 
@@ -213,10 +222,12 @@ public final class HelikonClickGuiScreen extends Screen {
 
         ModuleCategory[] categories = ModuleCategory.values();
         int fitColumns = Math.max(1, (width - 2 * SCREEN_EDGE_MARGIN + PANEL_MARGIN) / (panelWidth + PANEL_MARGIN));
-        for (int index = 0; index <= categories.length; index++) {
+        for (int index = 0; index < categories.length + 2; index++) {
             boolean favorites = index == categories.length;
-            ModuleCategory category = favorites ? null : categories[index];
-            String key = favorites ? FAVORITES_PANEL_KEY : category.name().toLowerCase(Locale.ROOT);
+            boolean active = index == categories.length + 1;
+            ModuleCategory category = favorites || active ? null : categories[index];
+            String key = favorites ? FAVORITES_PANEL_KEY
+                    : active ? ACTIVE_PANEL_KEY : category.name().toLowerCase(Locale.ROOT);
             int column = index % fitColumns;
             int cascadeRow = index / fitColumns;
             int defaultX = SCREEN_EDGE_MARGIN + column * (panelWidth + PANEL_MARGIN) + cascadeRow * 12;
@@ -379,7 +390,8 @@ public final class HelikonClickGuiScreen extends Screen {
 
         if (hintHovered) {
             graphics.setTooltipForNextFrame(font,
-                    ui("Middle-click a module to star it as a favorite"), mouseX, mouseY);
+                    ui(panel.isActive() ? "Enabled modules appear here"
+                            : "Middle-click a module to star it as a favorite"), mouseX, mouseY);
         } else if (hoveredSetting != null && !hoveredSetting.description().isBlank()) {
             String extra = isSlider(hoveredSetting)
                     ? " (" + NumberSettingText.format(valueOf(hoveredSetting)) + ")" : "";
@@ -391,7 +403,8 @@ public final class HelikonClickGuiScreen extends Screen {
     }
 
     private void drawHeader(GuiGraphicsExtractor graphics, PanelView panel, boolean roundBottom) {
-        int right = panel.x + panelWidth;
+        int panelViewWidth = panelWidthFor(panel);
+        int right = panel.x + panelViewWidth;
         int bottom = panel.y + headerHeight;
         graphics.fill(panel.x + 1, panel.y, right - 1, panel.y + 1, COLOR_HEADER);
         graphics.fill(panel.x, panel.y + 1, right, bottom - 1, COLOR_HEADER);
@@ -399,27 +412,29 @@ public final class HelikonClickGuiScreen extends Screen {
                 COLOR_ACCENT);
         int textY = panel.y + (headerHeight - 8) / 2;
         graphics.text(font, panel.icon(), panel.x + 6, textY, COLOR_ACCENT, false);
-        graphics.text(font, uiTrim(panel.title(), panelWidth - 24), panel.x + 17, textY, COLOR_TEXT, false);
+        graphics.text(font, uiTrim(panel.title(), panelViewWidth - 24), panel.x + 17, textY, COLOR_TEXT, false);
     }
 
     private void drawModuleRow(GuiGraphicsExtractor graphics, PanelView panel, Row row, int rowY, boolean hovered) {
         Module module = row.module();
+        int panelViewWidth = panelWidthFor(panel);
         if (hovered) {
-            graphics.fill(panel.x, rowY, panel.x + panelWidth, rowY + row.height(), COLOR_ROW_HOVER);
+            graphics.fill(panel.x, rowY, panel.x + panelViewWidth, rowY + row.height(), COLOR_ROW_HOVER);
         }
         int textY = rowY + (row.height() - 8) / 2;
         boolean favorite = windowState.isFavorite(module.id());
-        int nameLimit = panelWidth - 14 - (favorite ? 10 : 0);
+        int nameLimit = panelViewWidth - 14 - (favorite ? 10 : 0);
         graphics.text(font, uiTrim(module.name(), nameLimit), panel.x + 7, textY,
                 module.isEnabled() ? COLOR_ACCENT : COLOR_TEXT, false);
         if (favorite) {
-            graphics.text(font, "★", panel.x + panelWidth - 12, textY, COLOR_ACCENT, false);
+            graphics.text(font, "★", panel.x + panelViewWidth - 12, textY, COLOR_ACCENT, false);
         }
     }
 
     private void drawSettingRow(GuiGraphicsExtractor graphics, PanelView panel, Row row, int rowY,
                                 boolean hovered, int mouseX) {
-        int right = panel.x + panelWidth;
+        int panelViewWidth = panelWidthFor(panel);
+        int right = panel.x + panelViewWidth;
         graphics.fill(panel.x, rowY, right, rowY + row.height(), COLOR_SETTINGS_INSET);
         if (hovered && row.kind() != RowKind.SETTING_TEXT) {
             graphics.fill(panel.x, rowY, right, rowY + row.height(), COLOR_ROW_HOVER);
@@ -429,7 +444,8 @@ public final class HelikonClickGuiScreen extends Screen {
         Setting<?> setting = row.setting();
 
         switch (row.kind()) {
-            case SETTING_ACTION -> graphics.centeredText(font, ui(setting.name()), panel.x + panelWidth / 2, textY,
+            case SETTING_ACTION -> graphics.centeredText(font, ui(setting.name()),
+                    panel.x + panelViewWidth / 2, textY,
                     hovered ? COLOR_ACCENT_LIGHT : COLOR_ACCENT);
             case SETTING_BOOL -> {
                 BooleanSetting booleanSetting = (BooleanSetting) setting;
@@ -461,7 +477,7 @@ public final class HelikonClickGuiScreen extends Screen {
             }
             case SETTING_ENUM -> {
                 EnumSetting<?> enumSetting = (EnumSetting<?>) setting;
-                Component value = uiTrim(enumSetting.valueId(), (panelWidth - 20) / 2);
+                Component value = uiTrim(enumSetting.valueId(), (panelViewWidth - 20) / 2);
                 int valueWidth = font.width(value);
                 drawSettingLabel(graphics, setting, labelX, textY, right - 12 - valueWidth - labelX);
                 graphics.text(font, value, right - 8 - valueWidth, textY,
@@ -476,15 +492,17 @@ public final class HelikonClickGuiScreen extends Screen {
                 String bindText = keybindAssignment.isAssigning(row.module())
                         ? keybindStatus.isBlank() ? "Press a key..." : keybindStatus
                         : "Bind: " + keyDisplayName(row.module().keybind()) + conflictWarning(row.module());
-                graphics.text(font, uiTrim(bindText, panelWidth - 20), labelX, textY,
+                graphics.text(font, uiTrim(bindText, panelViewWidth - 20), labelX, textY,
                         keybindAssignment.isAssigning(row.module()) ? COLOR_ACCENT
                                 : hovered ? COLOR_TEXT : COLOR_TEXT_DIM, false);
             }
             case SETTING_RESET -> graphics.centeredText(font,
-                    ui(Component.translatable("screen.helikon.reset_module")), panel.x + panelWidth / 2, textY,
+                    ui(Component.translatable("screen.helikon.reset_module")),
+                    panel.x + panelViewWidth / 2, textY,
                     hovered ? COLOR_ACCENT : COLOR_TEXT_DIM);
             case SETTING_LABEL -> drawSettingLabel(graphics, setting, labelX, textY, right - 12 - labelX);
-            case HINT -> graphics.text(font, uiTrim("No favorites", panelWidth - 14),
+            case HINT -> graphics.text(font, uiTrim(panel.isActive() ? "No active modules" : "No favorites",
+                            panelViewWidth - 14),
                     panel.x + 7, rowY + (row.height() - 8) / 2, COLOR_TEXT_DIM, false);
             case MODULE -> throw new IllegalStateException("Module rows render separately");
         }
@@ -496,7 +514,7 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private void drawColorPicker(GuiGraphicsExtractor graphics, PanelView panel, ColorSetting setting, int top) {
         int x = pickerX(panel);
-        int width = pickerWidth();
+        int width = pickerWidth(panel);
         for (int channel = 0; channel < ColorPickerValue.CHANNEL_COUNT; channel++) {
             int y = top + 2 + channel * (COLOR_PICKER_CHANNEL_HEIGHT + 1);
             for (int segment = 0; segment < 32; segment++) {
@@ -542,6 +560,9 @@ public final class HelikonClickGuiScreen extends Screen {
         int iconY = panel.y + (searchRowHeight - 7) / 2;
         graphics.outline(iconX, iconY, 5, 5, COLOR_SETTING_LABEL);
         graphics.fill(iconX + 4, iconY + 4, iconX + 6, iconY + 6, COLOR_SETTING_LABEL);
+        if (isInside(mouseX, mouseY, panel.x, panel.y, 18, searchRowHeight)) {
+            graphics.setTooltipForNextFrame(font, ui("Drag search"), mouseX, mouseY);
+        }
 
         int classicX = classicLinkX(panel);
         int hudX = hudLinkX(panel);
@@ -557,62 +578,103 @@ public final class HelikonClickGuiScreen extends Screen {
                 isInside(mouseX, mouseY, themeX - 2, panel.y, uiWidth(themeLabel()) + 4, searchRowHeight)
                         ? COLOR_ACCENT : COLOR_TEXT_DIM, false);
 
-        if (!searchQuery.isBlank()) {
-            int textY = panel.y + searchRowHeight + (resultRowHeight - 8) / 2 + 1;
-            List<Module> results = ModuleSearch.filter(modules.all(), searchQuery);
-            if (results.isEmpty()) {
-                graphics.text(font, ui(Component.translatable("screen.helikon.no_results")),
-                        panel.x + 8, textY, COLOR_TEXT_DIM, false);
-            } else {
-                int cursor = panel.x + 8;
-                int limit = right - 8;
-                String separator = " · ";
-                int separatorWidth = uiWidth(separator);
-                int ellipsisWidth = uiWidth("…");
-                for (int index = 0; index < results.size(); index++) {
-                    Module module = results.get(index);
-                    int nameWidth = uiWidth(module.name());
-                    if (cursor + nameWidth + (index < results.size() - 1 ? ellipsisWidth : 0) > limit) {
-                        graphics.text(font, ui("…"), cursor, textY, COLOR_TEXT_DIM, false);
-                        break;
-                    }
-                    boolean hovered = isInside(mouseX, mouseY, cursor, textY - 2, nameWidth, resultRowHeight);
-                    graphics.text(font, ui(module.name()), cursor, textY,
-                            module.isEnabled() ? COLOR_ACCENT : hovered ? COLOR_TEXT : COLOR_TEXT_DIM, false);
-                    cursor += nameWidth;
-                    if (index < results.size() - 1) {
-                        graphics.text(font, ui(separator), cursor, textY, COLOR_TEXT_DIM, false);
-                        cursor += separatorWidth;
-                    }
+        List<Row> rows = searchRows();
+        int contentTop = panel.y + searchRowHeight + 1;
+        int contentHeight = contentHeight(rows);
+        int visibleHeight = visibleSearchResultsHeight(rows);
+        double scroll = searchResultScroll(contentHeight, visibleHeight);
+        if (rows.isEmpty()) {
+            int textY = contentTop + (resultRowHeight - 8) / 2;
+            graphics.text(font, ui(Component.translatable("screen.helikon.no_results")),
+                    panel.x + 8, textY, COLOR_TEXT_DIM, false);
+        } else {
+            int contentBottom = contentTop + visibleHeight;
+            boolean scrollable = contentHeight > visibleHeight;
+            if (scrollable) {
+                graphics.enableScissor(panel.x, contentTop, right, contentBottom);
+            }
+            for (Row row : rows) {
+                int rowY = contentTop + row.y() - (int) scroll;
+                if (rowY + row.height() <= contentTop || rowY >= contentBottom) {
+                    continue;
+                }
+                boolean hovered = isInside(mouseX, mouseY, panel.x, rowY, searchWidth, row.height())
+                        && mouseY >= contentTop && mouseY < contentBottom;
+                if (row.kind() == RowKind.MODULE) {
+                    drawSearchModuleRow(graphics, panel, row, rowY, hovered);
+                } else {
+                    drawSettingRow(graphics, panel, row, rowY, hovered, mouseX);
                 }
             }
+            if (scrollable) {
+                graphics.disableScissor();
+            }
         }
+        if (contentHeight > visibleHeight) {
+            graphics.fill(right - 3, contentTop, right - 2, contentTop + visibleHeight, COLOR_OUTLINE);
+            ClickGuiScrollbarState.thumb(contentTop, contentTop + visibleHeight, contentHeight, scroll)
+                    .ifPresent(thumb -> graphics.fill(right - 4, thumb.y(), right - 1,
+                            thumb.y() + thumb.height(), COLOR_ACCENT));
+        }
+    }
+
+    private void drawSearchModuleRow(
+            GuiGraphicsExtractor graphics, PanelView panel, Row row, int rowY, boolean hovered
+    ) {
+        Module module = row.module();
+        int right = panel.x + searchWidth;
+        if (hovered) {
+            graphics.fill(panel.x + 2, rowY, right - 2, rowY + row.height(), COLOR_ROW_HOVER);
+        }
+        int textY = rowY + (row.height() - 8) / 2;
+        Component category = ui(module.category().displayName());
+        int categoryWidth = font.width(category);
+        boolean favorite = windowState.isFavorite(module.id());
+        int starWidth = favorite ? 10 : 0;
+        graphics.text(font, uiTrim(module.name(), searchWidth - 22 - categoryWidth - starWidth),
+                panel.x + 8, textY,
+                module.isEnabled() ? COLOR_ACCENT : hovered ? COLOR_TEXT : COLOR_TEXT_DIM, false);
+        if (favorite) {
+            graphics.text(font, "★", right - 10 - categoryWidth - 8, textY, COLOR_ACCENT, false);
+        }
+        graphics.text(font, category, right - 8 - categoryWidth, textY, COLOR_SETTING_LABEL, false);
     }
 
     // ------------------------------------------------------------------
     // Row layout
     // ------------------------------------------------------------------
 
-    /** The modules a panel lists: its category's roster, or every starred module for Favorites. */
+    /** The modules a panel lists: its category roster, favorites, or currently enabled modules. */
     private List<Module> panelModules(PanelView panel) {
         if (panel.isFavorites()) {
             return modules.all().stream().filter(module -> windowState.isFavorite(module.id())).toList();
+        }
+        if (panel.isActive()) {
+            return modules.all().stream().filter(Module::isEnabled).toList();
         }
         return modules.all().stream().filter(module -> module.category() == panel.category).toList();
     }
 
     /** Rows for one panel with y offsets relative to the content top, before scrolling. */
     private List<Row> panelRows(PanelView panel) {
+        return rowsForModules(panelModules(panel), rowHeight, panel.isFavorites() || panel.isActive());
+    }
+
+    /** Search rows use the same expansion model while retaining the search palette's compact module height. */
+    private List<Row> searchRows() {
+        return rowsForModules(searchResults(), resultRowHeight, false);
+    }
+
+    private List<Row> rowsForModules(List<Module> listedModules, int moduleRowHeight, boolean showEmptyHint) {
         List<Row> rows = new ArrayList<>();
         int y = 0;
-        List<Module> panelModules = panelModules(panel);
-        if (panel.isFavorites() && panelModules.isEmpty()) {
-            rows.add(new Row(null, null, RowKind.HINT, 0, rowHeight));
+        if (showEmptyHint && listedModules.isEmpty()) {
+            rows.add(new Row(null, null, RowKind.HINT, 0, moduleRowHeight));
             return rows;
         }
-        for (Module module : panelModules) {
-            rows.add(new Row(module, null, RowKind.MODULE, y, rowHeight));
-            y += rowHeight;
+        for (Module module : listedModules) {
+            rows.add(new Row(module, null, RowKind.MODULE, y, moduleRowHeight));
+            y += moduleRowHeight;
             if (!windowState.isModuleExpanded(module.id())) {
                 continue;
             }
@@ -717,6 +779,10 @@ public final class HelikonClickGuiScreen extends Screen {
             return true;
         }
         double scroll = panelScroll(panel, contentHeight, visibleHeight);
+        if (button == 0 && beginScrollbarDrag(panel, mouseX, mouseY, contentTop,
+                visibleHeight, contentHeight, scroll)) {
+            return true;
+        }
         for (Row row : rows) {
             int rowY = contentTop + row.y() - (int) scroll;
             if (!isInside(mouseX, mouseY, panel.x, rowY, panelWidth, row.height())) {
@@ -735,6 +801,8 @@ public final class HelikonClickGuiScreen extends Screen {
     private void handleModuleRowClick(Module module, int button) {
         if (button == 0) {
             modules.toggle(module);
+            // Toggling can add or remove the module from the Active panel.
+            rebuildSettingWidgets();
         } else if (button == 1) {
             boolean expanded = !windowState.isModuleExpanded(module.id());
             windowState.setModuleExpanded(module.id(), expanded);
@@ -811,54 +879,76 @@ public final class HelikonClickGuiScreen extends Screen {
         if (relativeY < 0 || channel >= ColorPickerValue.CHANNEL_COUNT) {
             return;
         }
-        activeColorPicker = new ColorDrag(setting, channel, pickerX(panel), pickerWidth());
+        activeColorPicker = new ColorDrag(setting, channel, pickerX(panel), pickerWidth(panel));
         applyColorPickerDrag(mouseX);
     }
 
     private boolean handleSearchPanelClick(PanelView panel, int mouseX, int mouseY, int button) {
-        if (button != 0) {
-            return true;
-        }
-        if (isInside(mouseX, mouseY, classicLinkX(panel) - 2, panel.y, uiWidth(classicLabel()) + 4,
+        if (button == 0 && isInside(mouseX, mouseY, classicLinkX(panel) - 2, panel.y, uiWidth(classicLabel()) + 4,
                 searchRowHeight)) {
             windowState.setClassicLayout(true);
             minecraft.setScreenAndShow(new HelikonClassicClickGuiScreen(
                     modules, configuration, windowState, hudLayout, hudConfiguration));
             return true;
         }
-        if (isInside(mouseX, mouseY, hudLinkX(panel) - 2, panel.y, uiWidth(hudLabel()) + 4, searchRowHeight)) {
+        if (button == 0 && isInside(mouseX, mouseY, hudLinkX(panel) - 2, panel.y,
+                uiWidth(hudLabel()) + 4, searchRowHeight)) {
             minecraft.setScreenAndShow(new HelikonHudEditorScreen(this, modules, hudLayout, hudConfiguration));
             return true;
         }
-        if (isInside(mouseX, mouseY, themeLinkX(panel) - 2, panel.y, uiWidth(themeLabel()) + 4, searchRowHeight)) {
+        if (button == 0 && isInside(mouseX, mouseY, themeLinkX(panel) - 2, panel.y,
+                uiWidth(themeLabel()) + 4, searchRowHeight)) {
             minecraft.setScreenAndShow(new HelikonThemeEditorScreen(this, modules, configuration, windowState));
             return true;
         }
-        if (!searchQuery.isBlank() && mouseY >= panel.y + searchRowHeight) {
-            int textY = panel.y + searchRowHeight + (resultRowHeight - 8) / 2 + 1;
-            List<Module> results = ModuleSearch.filter(modules.all(), searchQuery);
-            int cursor = panel.x + 8;
-            int limit = panel.x + searchWidth - 8;
-            int separatorWidth = uiWidth(" · ");
-            int ellipsisWidth = uiWidth("…");
-            for (int index = 0; index < results.size(); index++) {
-                Module module = results.get(index);
-                int nameWidth = uiWidth(module.name());
-                if (cursor + nameWidth + (index < results.size() - 1 ? ellipsisWidth : 0) > limit) {
-                    break;
-                }
-                if (isInside(mouseX, mouseY, cursor, textY - 2, nameWidth, resultRowHeight)) {
-                    modules.toggle(module);
+        if (mouseY >= panel.y + searchRowHeight) {
+            List<Row> rows = searchRows();
+            int contentTop = panel.y + searchRowHeight + 1;
+            int contentHeight = contentHeight(rows);
+            int visibleHeight = visibleSearchResultsHeight(rows);
+            if (mouseY >= contentTop && mouseY < contentTop + visibleHeight && !rows.isEmpty()) {
+                double scroll = searchResultScroll(contentHeight, visibleHeight);
+                if (button == 0 && beginScrollbarDrag(panel, mouseX, mouseY, contentTop,
+                        visibleHeight, contentHeight, scroll)) {
                     return true;
                 }
-                cursor += nameWidth + (index < results.size() - 1 ? separatorWidth : 0);
+                for (Row row : rows) {
+                    int rowY = contentTop + row.y() - (int) scroll;
+                    if (!isInside(mouseX, mouseY, panel.x, rowY, searchWidth, row.height())) {
+                        continue;
+                    }
+                    if (row.kind() == RowKind.MODULE) {
+                        handleModuleRowClick(row.module(), button);
+                    } else {
+                        handleSettingRowClick(panel, row, rowY, mouseX, mouseY, button);
+                    }
+                    return true;
+                }
             }
             return true;
         }
-        draggedPanel = panel;
-        dragOffsetX = mouseX - panel.x;
-        dragOffsetY = mouseY - panel.y;
+        if (button == 0) {
+            draggedPanel = panel;
+            dragOffsetX = mouseX - panel.x;
+            dragOffsetY = mouseY - panel.y;
+        }
         return true;
+    }
+
+    private boolean beginScrollbarDrag(
+            PanelView panel, int mouseX, int mouseY, int trackTop, int visibleHeight,
+            int contentHeight, double scroll
+    ) {
+        int right = panel.x + panelWidthFor(panel);
+        if (contentHeight <= visibleHeight
+                || !isInside(mouseX, mouseY, right - 6, trackTop, 6, visibleHeight)) {
+            return false;
+        }
+        activeScrollbar.beginDrag(mouseY, trackTop, trackTop + visibleHeight, contentHeight, scroll)
+                .ifPresent(value -> panelScrolls.put(panel.key, value));
+        scrollbarPanel = activeScrollbar.isDragging() ? panel : null;
+        syncSettingWidgetPositions();
+        return scrollbarPanel != null;
     }
 
     @Override
@@ -868,6 +958,16 @@ public final class HelikonClickGuiScreen extends Screen {
         }
         int mouseX = (int) event.x();
         int mouseY = (int) event.y();
+        if (activeScrollbar.isDragging() && scrollbarPanel != null) {
+            List<Row> rows = rowsFor(scrollbarPanel);
+            int contentHeight = contentHeight(rows);
+            int trackTop = contentTop(scrollbarPanel);
+            int visibleHeight = visibleHeight(scrollbarPanel, rows);
+            activeScrollbar.dragTo(mouseY, trackTop, trackTop + visibleHeight, contentHeight)
+                    .ifPresent(value -> panelScrolls.put(scrollbarPanel.key, value));
+            syncSettingWidgetPositions();
+            return true;
+        }
         if (activeColorPicker != null) {
             applyColorPickerDrag(mouseX);
             return true;
@@ -892,7 +992,8 @@ public final class HelikonClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (event.button() == 0 && (draggedPanel != null || activeSlider != null || activeColorPicker != null)) {
+        if (event.button() == 0 && (draggedPanel != null || activeSlider != null
+                || activeColorPicker != null || activeScrollbar.isDragging())) {
             if (draggedPanel != null) {
                 windowState.setPanelPlacement(draggedPanel.key, Math.max(0, draggedPanel.x),
                         Math.max(0, draggedPanel.y), draggedPanel.collapsed);
@@ -900,6 +1001,8 @@ public final class HelikonClickGuiScreen extends Screen {
             draggedPanel = null;
             activeSlider = null;
             activeColorPicker = null;
+            activeScrollbar.endDrag();
+            scrollbarPanel = null;
             return true;
         }
         return super.mouseReleased(event);
@@ -912,8 +1015,19 @@ public final class HelikonClickGuiScreen extends Screen {
         }
         for (int index = panels.size() - 1; index >= 0; index--) {
             PanelView panel = panels.get(index);
-            if (panel.isSearch() || !isOverPanel(panel, (int) mouseX, (int) mouseY)) {
+            if (!isOverPanel(panel, (int) mouseX, (int) mouseY)) {
                 continue;
+            }
+            if (panel.isSearch()) {
+                List<Row> rows = searchRows();
+                int visibleHeight = visibleSearchResultsHeight(rows);
+                int contentHeight = contentHeight(rows);
+                if (contentHeight > visibleHeight) {
+                    double scroll = searchResultScroll(contentHeight, visibleHeight);
+                    panelScrolls.put(SEARCH_PANEL_KEY, Math.clamp(
+                            scroll - vertical * resultRowHeight, 0.0D, contentHeight - visibleHeight));
+                }
+                return true;
             }
             if (nudgeHoveredSlider(panel, (int) mouseX, (int) mouseY, vertical)) {
                 return true;
@@ -1011,15 +1125,16 @@ public final class HelikonClickGuiScreen extends Screen {
         textFields.values().forEach(this::removeWidget);
         textFields.clear();
         for (PanelView panel : panels) {
-            if (panel.isSearch() || panel.collapsed) {
+            if (!panel.isSearch() && panel.collapsed) {
                 continue;
             }
-            for (Row row : panelRows(panel)) {
+            for (Row row : rowsFor(panel)) {
                 if (row.kind() != RowKind.SETTING_TEXT) {
                     continue;
                 }
                 Setting<?> setting = row.setting();
-                EditBox field = new EditBox(font, 0, 0, panelWidth - 23, 12, Component.literal(setting.name()));
+                EditBox field = new EditBox(font, 0, 0, panelWidthFor(panel) - 23, 12,
+                        Component.literal(setting.name()));
                 field.setBordered(false);
                 field.setTextShadow(false);
                 field.addFormatter((text, index) -> FormattedCharSequence.forward(text, UI_STYLE));
@@ -1041,14 +1156,14 @@ public final class HelikonClickGuiScreen extends Screen {
         }
         Set<EditBox> positioned = Collections.newSetFromMap(new IdentityHashMap<>());
         for (PanelView panel : panels) {
-            if (panel.isSearch() || panel.collapsed) {
+            if (!panel.isSearch() && panel.collapsed) {
                 continue;
             }
-            int contentTop = panel.y + headerHeight;
-            List<Row> rows = panelRows(panel);
+            int contentTop = contentTop(panel);
+            List<Row> rows = rowsFor(panel);
             int contentHeight = contentHeight(rows);
-            int visibleHeight = visibleContentHeight(panel, contentHeight);
-            double scroll = panelScroll(panel, contentHeight, visibleHeight);
+            int visibleHeight = visibleHeight(panel, rows);
+            double scroll = scrollFor(panel, contentHeight, visibleHeight);
             for (Row row : rows) {
                 EditBox field = row.setting() == null ? null
                         : textFields.get(new PanelSetting(panel.key, row.setting()));
@@ -1107,6 +1222,24 @@ public final class HelikonClickGuiScreen extends Screen {
         return rows.isEmpty() ? 0 : rows.getLast().y() + rows.getLast().height();
     }
 
+    private List<Row> rowsFor(PanelView panel) {
+        return panel.isSearch() ? searchRows() : panelRows(panel);
+    }
+
+    private int contentTop(PanelView panel) {
+        return panel.y + (panel.isSearch() ? searchRowHeight + 1 : headerHeight);
+    }
+
+    private int visibleHeight(PanelView panel, List<Row> rows) {
+        return panel.isSearch() ? visibleSearchResultsHeight(rows)
+                : visibleContentHeight(panel, contentHeight(rows));
+    }
+
+    private double scrollFor(PanelView panel, int contentHeight, int visibleHeight) {
+        return panel.isSearch() ? searchResultScroll(contentHeight, visibleHeight)
+                : panelScroll(panel, contentHeight, visibleHeight);
+    }
+
     /**
      * The on-screen height available for a panel's rows, never negative. A
      * panel including its header is capped at half the screen height; the
@@ -1128,8 +1261,9 @@ public final class HelikonClickGuiScreen extends Screen {
 
     private void clampPanel(PanelView panel) {
         int panelViewWidth = panel.isSearch() ? searchWidth : panelWidth;
+        int panelViewHeight = panel.isSearch() ? searchPanelHeight() : headerHeight;
         panel.x = Math.clamp(panel.x, 0, Math.max(0, width - panelViewWidth));
-        panel.y = Math.clamp(panel.y, 0, Math.max(0, height - headerHeight));
+        panel.y = Math.clamp(panel.y, 0, Math.max(0, height - panelViewHeight));
     }
 
     private int maxPanelBottom() {
@@ -1137,7 +1271,27 @@ public final class HelikonClickGuiScreen extends Screen {
     }
 
     private int searchPanelHeight() {
-        return searchRowHeight + (searchQuery.isBlank() ? 0 : resultRowHeight + 2);
+        return searchRowHeight + visibleSearchResultsHeight(searchRows()) + 2;
+    }
+
+    private List<Module> searchResults() {
+        return searchQuery.isBlank() ? List.copyOf(modules.all()) : ModuleSearch.filter(modules.all(), searchQuery);
+    }
+
+    private int visibleSearchResultsHeight(List<Row> rows) {
+        int desiredHeight = rows.isEmpty() ? resultRowHeight
+                : Math.min(contentHeight(rows), SEARCH_VISIBLE_RESULT_ROWS * resultRowHeight);
+        int availableHeight = Math.max(resultRowHeight, height - searchRowHeight - 2);
+        return Math.min(desiredHeight, availableHeight);
+    }
+
+    private double searchResultScroll(int contentHeight, int visibleHeight) {
+        double scroll = panelScrolls.getOrDefault(SEARCH_PANEL_KEY, 0.0D);
+        double clamped = Math.clamp(scroll, 0.0D, Math.max(0, contentHeight - visibleHeight));
+        if (clamped != scroll) {
+            panelScrolls.put(SEARCH_PANEL_KEY, clamped);
+        }
+        return clamped;
     }
 
     private int searchFieldWidth() {
@@ -1178,15 +1332,19 @@ public final class HelikonClickGuiScreen extends Screen {
     }
 
     private int sliderTrackX(PanelView panel) {
-        return panel.x + panelWidth - 8 - sliderTrackWidth;
+        return panel.x + panelWidthFor(panel) - 8 - sliderTrackWidth;
     }
 
     private int pickerX(PanelView panel) {
         return panel.x + 13;
     }
 
-    private int pickerWidth() {
-        return panelWidth - 21;
+    private int pickerWidth(PanelView panel) {
+        return panelWidthFor(panel) - 21;
+    }
+
+    private int panelWidthFor(PanelView panel) {
+        return panel.isSearch() ? searchWidth : panelWidth;
     }
 
     // ------------------------------------------------------------------
@@ -1340,14 +1498,18 @@ public final class HelikonClickGuiScreen extends Screen {
             return FAVORITES_PANEL_KEY.equals(key);
         }
 
+        boolean isActive() {
+            return ACTIVE_PANEL_KEY.equals(key);
+        }
+
         String title() {
-            return category != null ? category.displayName() : "Favorites";
+            return category != null ? category.displayName() : isActive() ? "Active" : "Favorites";
         }
 
         /** A small glyph drawn in the accent color beside the header title. */
         String icon() {
             if (category == null) {
-                return "★";
+                return isActive() ? "●" : "★";
             }
             return switch (category) {
                 case COMBAT -> "⚔";

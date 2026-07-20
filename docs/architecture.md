@@ -637,7 +637,9 @@ colored silhouette (an outline material), distinct from EntityESP's box/wirefram
 modes and its static Shader color by defaulting to players and offering
 health-based coloring. BlockESP advances a bounded cube cursor on
 the client tick, checks only loaded chunks, and retains at most 512 matching
-coordinates for rendering. Breadcrumbs samples the local player into a
+coordinates for rendering. A narrow `ClientLevel.setBlock` observation updates
+nearby changed coordinates immediately, while each tick revalidates the bounded
+cache so stale matches cannot linger. Breadcrumbs samples the local player into a
 bounded session-only deque and clears it when the level instance changes.
 None of these visualizers changes entity state, block state, input, packets,
 or disk storage.
@@ -758,8 +760,8 @@ ClickGUI header, saves once when it closes, and returns to the ClickGUI.
 
 Layout and presentation are separate screens. `HelikonHudEditorScreen` is a
 drag-only canvas: it draws the Active Modules preview plus one placement
-handle per enabled element (the selected element stays visible, greyed, while
-disabled), and any of them can be dragged directly. Its
+handle for every registered element regardless of module/enabled state, and
+any unlocked handle can be dragged directly. Its
 header button opens `HelikonHudSettingsScreen`, which owns every presentation
 row (Active Modules sort/alignment/color/scale plus the per-element selector
 and its style options) and performs no dragging; Escape returns to the

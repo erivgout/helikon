@@ -97,7 +97,7 @@ public final class DomainExpansion extends Module implements KeybindInputConsume
 
         boolean reachable(DomainPosition position);
 
-        boolean intersectsPlayer(DomainPosition position);
+        boolean intersectsProtectedEntity(DomainPosition position);
     }
 
     public record Context(
@@ -167,7 +167,10 @@ public final class DomainExpansion extends Module implements KeybindInputConsume
     private final NumberSetting activationRange;
     private final IntegerSetting targetDelay;
     private final IntegerSetting activationCooldown;
-    private final BooleanSetting ignoreFriends;
+    private final BooleanSetting players;
+    private final BooleanSetting hostiles;
+    private final BooleanSetting passive;
+    private final BooleanSetting excludeFriends;
     private final EnumSetting<DomainTargetSelector.Priority> targetPriority;
     private final IntegerSetting interiorPadding;
     private final IntegerSetting interiorHeight;
@@ -237,8 +240,11 @@ public final class DomainExpansion extends Module implements KeybindInputConsume
                 "Ticks an automatic target must remain eligible.", 4, 0, 40));
         activationCooldown = addSetting(new IntegerSetting("activation_cooldown", "Activation Cooldown",
                 "Per-target cooldown after an activation.", 100, 0, 1_200));
-        ignoreFriends = addSetting(new BooleanSetting("ignore_friends", "Ignore Friends",
-                "Never select a player on the local friend list.", true));
+        players = addSetting(new BooleanSetting("players", "Players", "Allow non-friend players.", true));
+        hostiles = addSetting(new BooleanSetting("hostiles", "Hostiles", "Allow hostile mobs.", true));
+        passive = addSetting(new BooleanSetting("passive", "Passive", "Allow passive mobs.", false));
+        excludeFriends = addSetting(new BooleanSetting("exclude_friends", "Exclude friends",
+                "Never target locally listed friends.", true));
         targetPriority = addSetting(new EnumSetting<>("target_priority", "Target Priority",
                 "Choose between nearest, lowest-health, and crosshair targets.",
                 DomainTargetSelector.Priority.class, DomainTargetSelector.Priority.NEAREST));
@@ -342,7 +348,7 @@ public final class DomainExpansion extends Module implements KeybindInputConsume
             switch (state) {
                 case ARMED -> {
                     Optional<DomainTarget> selected = selector.select(context.tick(), context.targets(),
-                            activationRange.value(), targetDelay.value(), ignoreFriends.value(),
+                            activationRange.value(), targetDelay.value(), targetOptions(),
                             targetPriority.value(), true);
                     if (selected.isEmpty()) {
                         return TickResult.idle();
@@ -353,7 +359,7 @@ public final class DomainExpansion extends Module implements KeybindInputConsume
                 }
                 case ACQUIRE_TARGET -> {
                     Optional<DomainTarget> selected = selector.select(context.tick(), context.targets(),
-                            targetRange.value(), 0, ignoreFriends.value(), targetPriority.value(), false);
+                            targetRange.value(), 0, targetOptions(), targetPriority.value(), false);
                     if (selected.isEmpty()) {
                         return cancel(context.tick(), CancelReason.NO_TARGET);
                     }
@@ -620,7 +626,7 @@ public final class DomainExpansion extends Module implements KeybindInputConsume
                 placement.status = PlacementStatus.FAILED;
                 continue;
             }
-            if (context.world().intersectsPlayer(position) || !context.world().reachable(position)
+            if (context.world().intersectsProtectedEntity(position) || !context.world().reachable(position)
                     || !context.world().supported(position)) {
                 defer(placement);
                 continue;
@@ -798,6 +804,11 @@ public final class DomainExpansion extends Module implements KeybindInputConsume
     private DomainPlacementPlan createPlan(DomainPosition localFeet, DomainTarget target, DomainBounds bounds) {
         return DomainPlanGenerator.generate(bounds, localFeet, target, buildRoof.value(), buildFloor.value(),
                 leaveSelfExit.value(), closeEscapeSideFirst.value());
+    }
+
+    private DomainTargetSelector.Options targetOptions() {
+        return new DomainTargetSelector.Options(
+                players.value(), hostiles.value(), passive.value(), excludeFriends.value());
     }
 
     private static int missingBlocks(DomainPlacementPlan plan, WorldView world) {

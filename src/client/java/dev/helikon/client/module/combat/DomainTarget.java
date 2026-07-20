@@ -1,11 +1,14 @@
 package dev.helikon.client.module.combat;
 
+import dev.helikon.client.combat.CombatEntityType;
+
 import java.util.Objects;
 
 /** Minecraft-free target facts required by Domain Expansion. */
 public record DomainTarget(
         String id,
         String name,
+        CombatEntityType type,
         DomainPosition feet,
         double x,
         double z,
@@ -26,6 +29,7 @@ public record DomainTarget(
     public DomainTarget {
         id = requireText(id, "id");
         name = requireText(name, "name");
+        type = Objects.requireNonNull(type, "type");
         feet = Objects.requireNonNull(feet, "feet");
         if (!finite(x, z, distance, health, angleDegrees, velocityX, velocityZ, facingX, facingZ)
                 || distance < 0.0D || health < 0.0D || angleDegrees < 0.0D || angleDegrees > 180.0D) {

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 1.3.4 - 2026-07-20
+
+- Gives **Domain Expansion** the same target checkboxes as KillAura:
+  **Players**, **Hostiles**, **Passive**, and **Exclude friends**. Loaded living
+  mobs such as Wardens can now be selected when their category is enabled.
+- Extends placement hitbox protection to every loaded living entity so a
+  mob-targeted enclosure never deliberately places through its target or
+  nearby living entities.
+- Adds deterministic checks for player, friend, hostile, and passive target
+  filtering.
+
 ## 1.3.3 - 2026-07-20
 
 - Marks Baritone's vendored Gradle wrapper script executable on Unix runners,

@@ -684,14 +684,18 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     causes **AutoReconnect** to rejoin after its intentional leave.
     On a private or explicitly permitted server with a cooperating second
     player, give the local player ordinary allowed blocks and enable **Domain
-    Expansion**. Verify Manual and Automatic Proximity select only an eligible
-    non-friend survival target, keep both players inside one padded bounded
-    arena, prioritize lower/escape-side walls, reuse existing solid terrain,
+    Expansion**. Verify Manual and Automatic Proximity honor the KillAura-style
+    **Players**, **Hostiles**, **Passive**, and **Exclude friends** controls.
+    Repeat with a Warden and one passive mob, confirming disabled categories
+    report no target. Verify the module keeps the local player and selected
+    target inside one padded bounded arena, prioritizes lower/escape-side walls,
+    reuses existing solid terrain,
     confirm normal placements before advancing, close the roof, and restore the
     original slot/rotation after completion or cancellation. Repeat with
     insufficient blocks, an unloaded boundary, missing support, a rejected
     placement, a moving/escaping target, a local player beside the planned
     wall, and Manual Final Seal. Confirm no block intersects either player,
+    the selected mob, or another nearby living entity,
     retries/cooldowns stay bounded, the plan/HUD states are distinct, and every
     result remains subject to normal server placement reach and authority.
     Verify **TargetHUD** shows only local crosshair/attack facts and

@@ -2,6 +2,8 @@ package dev.helikon.client.module.combat;
 
 import dev.helikon.client.automation.ContainerClickSequence;
 import dev.helikon.client.automation.MinecraftContainerClicker;
+import dev.helikon.client.combat.CombatEntityType;
+import dev.helikon.client.entity.MinecraftEntityClassification;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.gui.GameplayScreenPolicy;
 import dev.helikon.client.mixin.MultiPlayerGameModeAccessor;
@@ -14,6 +16,7 @@ import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.InventoryMenu;
@@ -147,7 +150,7 @@ public final class MinecraftDomainExpansionAccess {
 
     private boolean place(Minecraft client, DomainPosition position, BlockCandidate candidate,
                           MinecraftWorldView world) {
-        if (!world.loaded(position) || !world.replaceable(position) || world.intersectsPlayer(position)) {
+        if (!world.loaded(position) || !world.replaceable(position) || world.intersectsProtectedEntity(position)) {
             return false;
         }
         Optional<BlockHitResult> hit = placementHit(client, blockPos(position));
@@ -369,23 +372,36 @@ public final class MinecraftDomainExpansionAccess {
         }
         Vec3 view = local.getViewVector(1.0F);
         List<DomainTarget> result = new ArrayList<>();
-        for (Player player : client.level.players()) {
-            if (player == local) {
+        for (Entity entity : client.level.entitiesForRendering()) {
+            if (!(entity instanceof LivingEntity living) || entity == local) {
                 continue;
             }
-            Vec3 delta = player.getEyePosition().subtract(local.getEyePosition());
+            Vec3 targetPoint = new Vec3(
+                    living.getX(),
+                    living.getY() + living.getBbHeight() * 0.5D,
+                    living.getZ());
+            Vec3 delta = targetPoint.subtract(local.getEyePosition());
             double distance = delta.length();
             double angle = distance == 0.0D ? 0.0D : Math.toDegrees(Math.acos(Math.max(-1.0D, Math.min(1.0D,
                     view.dot(delta) / distance))));
-            Vec3 velocity = player.getDeltaMovement();
-            Vec3 facing = player.getLookAngle();
-            BlockPos feet = player.blockPosition();
-            String id = player.getUUID().toString();
-            String name = player.getGameProfile().name();
-            result.add(new DomainTarget(id, name == null || name.isBlank() ? "unknown" : name,
-                    position(feet), player.getX(), player.getZ(), distance, Math.max(0.0D, player.getHealth()), angle,
-                    velocity.x, velocity.z, facing.x, facing.z, friends.contains(name), player.isAlive(),
-                    player.isSpectator(), player.isCreative(),
+            Vec3 velocity = living.getDeltaMovement();
+            Vec3 facing = living.getLookAngle();
+            BlockPos feet = living.blockPosition();
+            String id = living.getUUID().toString();
+            boolean isPlayer = living instanceof Player;
+            String playerName = isPlayer ? ((Player) living).getGameProfile().name() : "";
+            String displayName = isPlayer ? playerName : living.getDisplayName().getString();
+            CombatEntityType type = isPlayer
+                    ? CombatEntityType.PLAYER
+                    : MinecraftEntityClassification.isHostile(living)
+                    ? CombatEntityType.HOSTILE : CombatEntityType.PASSIVE;
+            boolean friend = isPlayer && playerName != null && friends.contains(playerName);
+            result.add(new DomainTarget(id,
+                    displayName == null || displayName.isBlank() ? "unknown" : displayName,
+                    type, position(feet), living.getX(), living.getZ(), distance,
+                    Math.max(0.0D, living.getHealth()), angle,
+                    velocity.x, velocity.z, facing.x, facing.z, friend, living.isAlive(),
+                    isPlayer && ((Player) living).isSpectator(), isPlayer && ((Player) living).isCreative(),
                     client.level.hasChunk(feet.getX() >> 4, feet.getZ() >> 4),
                     crosshair.getOrDefault(id, false)));
         }
@@ -505,10 +521,11 @@ public final class MinecraftDomainExpansionAccess {
         }
 
         @Override
-        public boolean intersectsPlayer(DomainPosition position) {
+        public boolean intersectsProtectedEntity(DomainPosition position) {
             AABB block = new AABB(blockPos(position));
-            for (Player player : client.level.players()) {
-                if (block.intersects(player.getBoundingBox())) {
+            for (Entity entity : client.level.entitiesForRendering()) {
+                if (entity instanceof LivingEntity living && living.isAlive()
+                        && block.intersects(living.getBoundingBox())) {
                     return true;
                 }
             }

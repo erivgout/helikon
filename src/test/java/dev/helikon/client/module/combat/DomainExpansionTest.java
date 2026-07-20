@@ -1,5 +1,6 @@
 package dev.helikon.client.module.combat;
 
+import dev.helikon.client.combat.CombatEntityType;
 import dev.helikon.client.module.ModuleCategory;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.EnumSetting;
@@ -35,6 +36,10 @@ class DomainExpansionTest {
                 "minecraft:cobblestone",
                 "*"
         ), module.allowedBlocks());
+        assertTrue(bool(module, "players").value());
+        assertTrue(bool(module, "hostiles").value());
+        assertFalse(bool(module, "passive").value());
+        assertTrue(bool(module, "exclude_friends").value());
     }
 
     @Test
@@ -78,7 +83,7 @@ class DomainExpansionTest {
     void escapeDirectionPrioritizesFrontThenAdjacentWalls() {
         DomainBounds bounds = DomainBoundsCalculator.calculate(
                 pos(0, 64, 0), pos(2, 64, 0), 1, 3, 10, 10).orElseThrow();
-        DomainTarget eastbound = new DomainTarget("target", "target", pos(2, 64, 0),
+        DomainTarget eastbound = new DomainTarget("target", "target", CombatEntityType.PLAYER, pos(2, 64, 0),
                 2.5D, 0.5D, 2.0D, 20.0D, 0.0D,
                 0.3D, 0.0D, 1.0D, 0.0D,
                 false, true, false, false, true, false);
@@ -201,14 +206,42 @@ class DomainExpansionTest {
     void automaticCooldownIsPerTarget() {
         DomainTargetSelector selector = new DomainTargetSelector();
         DomainTarget enemy = target("enemy", pos(1, 64, 0), 1.0D, false);
+        DomainTargetSelector.Options options = new DomainTargetSelector.Options(true, true, false, true);
 
-        assertTrue(selector.select(0, List.of(enemy), 4.0D, 0, true,
+        assertTrue(selector.select(0, List.of(enemy), 4.0D, 0, options,
                 DomainTargetSelector.Priority.NEAREST, true).isPresent());
         selector.coolDown(enemy.id(), 0, 10);
-        assertTrue(selector.select(9, List.of(enemy), 4.0D, 0, true,
+        assertTrue(selector.select(9, List.of(enemy), 4.0D, 0, options,
                 DomainTargetSelector.Priority.NEAREST, true).isEmpty());
-        assertTrue(selector.select(10, List.of(enemy), 4.0D, 0, true,
+        assertTrue(selector.select(10, List.of(enemy), 4.0D, 0, options,
                 DomainTargetSelector.Priority.NEAREST, true).isPresent());
+    }
+
+    @Test
+    void killAuraStyleTargetCheckboxesFilterPlayersHostilesPassiveAndFriends() {
+        DomainTargetSelector selector = new DomainTargetSelector();
+        DomainTarget player = target("player", CombatEntityType.PLAYER, false);
+        DomainTarget friend = target("friend", CombatEntityType.PLAYER, true);
+        DomainTarget hostile = target("warden", CombatEntityType.HOSTILE, false);
+        DomainTarget passive = target("cow", CombatEntityType.PASSIVE, false);
+
+        DomainTargetSelector.Options defaults = new DomainTargetSelector.Options(true, true, false, true);
+        assertEquals("player", selector.select(0, List.of(passive, friend, hostile, player),
+                6.0D, 0, defaults, DomainTargetSelector.Priority.NEAREST, false).orElseThrow().id());
+        assertTrue(selector.select(0, List.of(friend), 6.0D, 0, defaults,
+                DomainTargetSelector.Priority.NEAREST, false).isEmpty());
+        assertEquals("warden", selector.select(0, List.of(hostile), 6.0D, 0, defaults,
+                DomainTargetSelector.Priority.NEAREST, false).orElseThrow().id());
+        assertTrue(selector.select(0, List.of(passive), 6.0D, 0, defaults,
+                DomainTargetSelector.Priority.NEAREST, false).isEmpty());
+
+        DomainTargetSelector.Options passiveOnly = new DomainTargetSelector.Options(false, false, true, true);
+        assertEquals("cow", selector.select(0, List.of(player, hostile, passive),
+                6.0D, 0, passiveOnly, DomainTargetSelector.Priority.NEAREST, false).orElseThrow().id());
+
+        DomainTargetSelector.Options friendsAllowed = new DomainTargetSelector.Options(true, false, false, false);
+        assertEquals("friend", selector.select(0, List.of(friend), 6.0D, 0, friendsAllowed,
+                DomainTargetSelector.Priority.NEAREST, false).orElseThrow().id());
     }
 
     @Test
@@ -307,8 +340,15 @@ class DomainExpansionTest {
     }
 
     private static DomainTarget target(String id, DomainPosition feet, double distance, boolean friend) {
-        return new DomainTarget(id, id, feet, feet.x() + 0.5D, feet.z() + 0.5D,
+        return new DomainTarget(id, id, CombatEntityType.PLAYER, feet, feet.x() + 0.5D, feet.z() + 0.5D,
                 distance, 20.0D, 0.0D, 0.0D, 0.0D, 1.0D, 0.0D,
+                friend, true, false, false, true, false);
+    }
+
+    private static DomainTarget target(String id, CombatEntityType type, boolean friend) {
+        DomainPosition feet = pos(1, 64, 0);
+        return new DomainTarget(id, id, type, feet, feet.x() + 0.5D, feet.z() + 0.5D,
+                1.0D, 20.0D, 0.0D, 0.0D, 0.0D, 1.0D, 0.0D,
                 friend, true, false, false, true, false);
     }
 
@@ -327,7 +367,6 @@ class DomainExpansionTest {
                 .filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
     }
 
-    @SuppressWarnings("unused")
     private static BooleanSetting bool(DomainExpansion module, String id) {
         return (BooleanSetting) module.settings().stream()
                 .filter(setting -> setting.id().equals(id)).findFirst().orElseThrow();
@@ -369,7 +408,7 @@ class DomainExpansionTest {
         }
 
         @Override
-        public boolean intersectsPlayer(DomainPosition position) {
+        public boolean intersectsProtectedEntity(DomainPosition position) {
             return blocked.contains(position);
         }
     }

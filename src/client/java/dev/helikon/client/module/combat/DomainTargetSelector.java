@@ -15,6 +15,10 @@ public final class DomainTargetSelector {
         CROSSHAIR
     }
 
+    /** Matches the four target controls exposed by KillAura. */
+    public record Options(boolean players, boolean hostiles, boolean passive, boolean excludeFriends) {
+    }
+
     private final Map<String, Long> firstEligibleTick = new HashMap<>();
     private final Map<String, Long> cooldownUntilTick = new HashMap<>();
 
@@ -23,17 +27,17 @@ public final class DomainTargetSelector {
             List<DomainTarget> candidates,
             double range,
             int dwellTicks,
-            boolean ignoreFriends,
+            Options options,
             Priority priority,
             boolean useCooldown
     ) {
         if (tick < 0L || candidates == null || !Double.isFinite(range) || range < 0.0D || dwellTicks < 0
-                || priority == null) {
+                || options == null || priority == null) {
             throw new IllegalArgumentException("Domain target selection inputs are invalid");
         }
         List<DomainTarget> eligible = new ArrayList<>();
         for (DomainTarget candidate : candidates) {
-            if (!valid(candidate, range, ignoreFriends)
+            if (!valid(candidate, range, options)
                     || useCooldown && tick < cooldownUntilTick.getOrDefault(candidate.id(), Long.MIN_VALUE)) {
                 firstEligibleTick.remove(candidate.id());
                 continue;
@@ -68,9 +72,14 @@ public final class DomainTargetSelector {
         cooldownUntilTick.clear();
     }
 
-    private static boolean valid(DomainTarget target, double range, boolean ignoreFriends) {
+    private static boolean valid(DomainTarget target, double range, Options options) {
         return target.alive() && target.loaded() && !target.spectator() && !target.creative()
-                && (!ignoreFriends || !target.friend()) && target.distance() <= range;
+                && (!options.excludeFriends() || !target.friend()) && target.distance() <= range
+                && switch (target.type()) {
+                    case PLAYER -> options.players();
+                    case HOSTILE -> options.hostiles();
+                    case PASSIVE -> options.passive();
+                };
     }
 
     private static Comparator<DomainTarget> comparator(Priority priority) {

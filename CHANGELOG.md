@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.3.5 - 2026-07-20
+
+- Caps each projected waypoint-label panel at 5% of the current GUI height,
+  including its padding, after applying distance compensation and the configured
+  Scale multiplier.
+- Reduces Radar minimap terrain samples and per-frame draw calls from as many as
+  5,776 to at most 361, with one-second refresh caching plus four-block movement
+  and fifteen-degree rotation thresholds. Entity markers remain frame-smooth.
+
 ## 1.3.4 - 2026-07-20
 
 - Gives **Domain Expansion** the same target checkboxes as KillAura:

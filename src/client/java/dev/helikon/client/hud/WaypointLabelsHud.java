@@ -101,7 +101,8 @@ public final class WaypointLabelsHud implements HudElement {
         int contentWidth = iconWidth + gap + client.font.width(label);
         int width = contentWidth + PADDING * 2;
         int height = client.font.lineHeight + PADDING * 2;
-        float scale = marker.scale() * module.scale();
+        float scale = WaypointMarkerPresentation.screenLimitedScale(
+                marker.scale() * module.scale(), height, graphics.guiHeight());
         int scaledWidth = Math.max(1, Math.round(width * scale));
         int scaledHeight = Math.max(1, Math.round(height * scale));
         int centerX = (int) Math.round((projected.x + 1.0D) * 0.5D * graphics.guiWidth());

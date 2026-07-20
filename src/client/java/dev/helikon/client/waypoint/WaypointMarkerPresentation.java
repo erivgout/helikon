@@ -7,6 +7,7 @@ import java.util.Objects;
 public final class WaypointMarkerPresentation {
     private static final float MINIMUM_SCALE = 0.85F;
     private static final float MAXIMUM_SCALE = 1.8F;
+    private static final float MAXIMUM_SCREEN_HEIGHT_FRACTION = 0.05F;
     private static final int DISTANCE_COMPENSATION_START = 8;
     private static final float SCALE_PER_DISTANT_BLOCK = 0.003F;
 
@@ -27,6 +28,19 @@ public final class WaypointMarkerPresentation {
         int compensatedDistance = Math.max(0, distance - DISTANCE_COMPENSATION_START);
         return Math.clamp(MINIMUM_SCALE + compensatedDistance * SCALE_PER_DISTANT_BLOCK,
                 MINIMUM_SCALE, MAXIMUM_SCALE);
+    }
+
+    /**
+     * Caps the complete projected label panel, including its padding, to five
+     * percent of the current GUI height.
+     */
+    public static float screenLimitedScale(float requestedScale, int labelHeight, int screenHeight) {
+        if (!Float.isFinite(requestedScale) || requestedScale <= 0.0F
+                || labelHeight <= 0 || screenHeight <= 0) {
+            throw new IllegalArgumentException("Waypoint label dimensions and scale must be positive");
+        }
+        int maximumHeight = Math.max(1, (int) Math.floor(screenHeight * MAXIMUM_SCREEN_HEIGHT_FRACTION));
+        return Math.min(requestedScale, (float) maximumHeight / labelHeight);
     }
 
     /** Raises the projected label onto the visible beam instead of leaving it at distant ground level. */

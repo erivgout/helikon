@@ -565,7 +565,9 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     visible to the local player does not gain a box. Turn away from a candidate
     to verify its trajectory/TrueSight overlay is frustum-culled. Enable
     **Radar**, verify circle/square, toggle the terrain minimap on and off, then
-    verify rotation, zoom, local friend color, and category filters. Confirm no
+    confirm the cached minimap no longer causes a major FPS drop while moving
+    and turning. Verify terrain refreshes within one second, along with
+    rotation, zoom, local friend color, and category filters. Confirm no
     unloaded terrain or out-of-range entities appear. None of these results should be
     visible to another player or change a normal projectile/entity interaction.
 37. In a disposable local/test world, enable **XRay** and verify only its
@@ -878,7 +880,9 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     verify Baritone persistence. Exercise `#waypoint list` and confirm its
     user/home/death/bed entries also appear through `.waypoint list`. With a
     pre-existing valid `waypoints.json`, verify its current-context entries
-    migrate after joining without replacing same-named Baritone entries.
+    migrate after joining without replacing same-named Baritone entries. Set
+    the Waypoints Scale to its maximum and view a very distant marker; verify
+    the complete projected label panel remains no taller than 5% of the GUI.
 15. Create a macro with `.macro create smoke`, then append a local action, a
     delay, ordinary chat text, and a Minecraft command (without `/`). Verify
     `show` reports each action, `run` executes no more than one action per tick

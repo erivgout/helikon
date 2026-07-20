@@ -6,6 +6,7 @@ import dev.helikon.client.module.render.Radar;
 import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.render.EntityRenderFilter;
 import dev.helikon.client.render.RadarMapColor;
+import dev.helikon.client.render.RadarMinimapSampling;
 import dev.helikon.client.render.RadarProjection;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.DeltaTracker;
@@ -29,8 +30,10 @@ import java.util.Objects;
 /** Thin HUD adapter for Radar's Minecraft-free projection and local entity filters. */
 public final class RadarHud implements HudElement {
     private static final int RADIUS = 38;
-    private static final int MAP_CELL_SIZE = 1;
-    private static final long MAP_REFRESH_TICKS = 10L;
+    private static final List<RadarMinimapSampling.Cell> CIRCLE_MAP_CELLS =
+            RadarMinimapSampling.cells(RADIUS, RadarProjection.Shape.CIRCLE);
+    private static final List<RadarMinimapSampling.Cell> SQUARE_MAP_CELLS =
+            RadarMinimapSampling.cells(RADIUS, RadarProjection.Shape.SQUARE);
     private static final int PLAYER_COLOR = 0xFF4FC3F7;
     private static final int PLAYER_OUTLINE_COLOR = 0xFFF4F7FA;
     private static final int MAP_GUIDE_COLOR = 0x502A313B;
@@ -107,13 +110,15 @@ public final class RadarHud implements HudElement {
     }
 
     private void drawMinimap(GuiGraphicsExtractor graphics, Minecraft client, int centerX, int centerY) {
-        long refreshBucket = client.level.getGameTime() / MAP_REFRESH_TICKS;
+        long refreshBucket = RadarMinimapSampling.refreshBucket(client.level.getGameTime());
         int playerX = client.player.getBlockX();
         int playerZ = client.player.getBlockZ();
-        int yawBucket = module.rotate() ? Math.round(client.player.getYRot() / 5.0F) : 0;
-        if (refreshBucket != mapRefreshBucket || playerX != mapCenterX || playerZ != mapCenterZ
+        int yawBucket = RadarMinimapSampling.yawBucket(client.player.getYRot(), module.rotate());
+        if (refreshBucket != mapRefreshBucket
+                || RadarMinimapSampling.movedFarEnough(mapCenterX, mapCenterZ, playerX, playerZ)
                 || yawBucket != mapYawBucket || module.zoom() != mapZoom || module.shape() != mapShape) {
-            mapCells = sampleMinimap(client, playerX, playerZ, yawBucket * 5.0D);
+            mapCells = sampleMinimap(client, playerX, playerZ,
+                    yawBucket * RadarMinimapSampling.YAW_STEP_DEGREES);
             mapRefreshBucket = refreshBucket;
             mapCenterX = playerX;
             mapCenterZ = playerZ;
@@ -123,49 +128,52 @@ public final class RadarHud implements HudElement {
         }
         for (MapCell cell : mapCells) {
             graphics.fill(centerX + cell.x(), centerY + cell.y(),
-                    centerX + cell.x() + MAP_CELL_SIZE, centerY + cell.y() + MAP_CELL_SIZE, cell.color());
+                    centerX + cell.x() + RadarMinimapSampling.CELL_SIZE,
+                    centerY + cell.y() + RadarMinimapSampling.CELL_SIZE, cell.color());
         }
     }
 
     private List<MapCell> sampleMinimap(Minecraft client, int centerBlockX, int centerBlockZ, double yawDegrees) {
-        List<MapCell> cells = new ArrayList<>();
+        List<RadarMinimapSampling.Cell> samples = module.shape() == RadarProjection.Shape.CIRCLE
+                ? CIRCLE_MAP_CELLS : SQUARE_MAP_CELLS;
+        List<MapCell> cells = new ArrayList<>(samples.size());
         double radians = Math.toRadians(yawDegrees);
         double cosine = Math.cos(radians);
         double sine = Math.sin(radians);
         int playerY = client.player.getBlockY();
-        for (int screenY = -RADIUS; screenY < RADIUS; screenY += MAP_CELL_SIZE) {
-            int previousHeight = Integer.MIN_VALUE;
-            for (int screenX = -RADIUS; screenX < RADIUS; screenX += MAP_CELL_SIZE) {
-                double sampleX = screenX + MAP_CELL_SIZE * 0.5D;
-                double sampleY = screenY + MAP_CELL_SIZE * 0.5D;
-                if (module.shape() == RadarProjection.Shape.CIRCLE
-                        && sampleX * sampleX + sampleY * sampleY > RADIUS * RADIUS) {
-                    continue;
-                }
-                double projectedX = sampleX / RADIUS * module.zoom();
-                double projectedZ = -sampleY / RADIUS * module.zoom();
-                double relativeX = module.rotate()
-                        ? projectedX * cosine - projectedZ * sine : projectedX;
-                double relativeZ = module.rotate()
-                        ? projectedX * sine + projectedZ * cosine : projectedZ;
-                int worldX = (int) Math.floor(centerBlockX + relativeX);
-                int worldZ = (int) Math.floor(centerBlockZ + relativeZ);
-                int surfaceY = client.level.getHeight(Heightmap.Types.MOTION_BLOCKING, worldX, worldZ) - 1;
-                BlockPos position = new BlockPos(worldX, surfaceY, worldZ);
-                if (!client.level.isLoaded(position)) {
-                    continue;
-                }
-                BlockState state = client.level.getBlockState(position);
-                MapColor mapColor = state.getMapColor(client.level, position);
-                String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-                int baseColor = mapColor == MapColor.NONE
-                        ? RadarMapColor.forBlock(blockId, 0)
-                        : mapColor.calculateARGBColor(MapColor.Brightness.NORMAL);
-                int slope = previousHeight == Integer.MIN_VALUE ? 0 : surfaceY - previousHeight;
-                int color = RadarMapColor.forMapColor(baseColor, surfaceY - playerY, slope);
-                cells.add(new MapCell(screenX, screenY, color));
-                previousHeight = surfaceY;
+        int previousScreenY = Integer.MIN_VALUE;
+        int previousHeight = Integer.MIN_VALUE;
+        for (RadarMinimapSampling.Cell sample : samples) {
+            if (sample.y() != previousScreenY) {
+                previousScreenY = sample.y();
+                previousHeight = Integer.MIN_VALUE;
             }
+            double sampleX = sample.x() + RadarMinimapSampling.CELL_SIZE * 0.5D;
+            double sampleY = sample.y() + RadarMinimapSampling.CELL_SIZE * 0.5D;
+            double projectedX = sampleX / RADIUS * module.zoom();
+            double projectedZ = -sampleY / RADIUS * module.zoom();
+            double relativeX = module.rotate() ? projectedX * cosine - projectedZ * sine : projectedX;
+            double relativeZ = module.rotate() ? projectedX * sine + projectedZ * cosine : projectedZ;
+            int worldX = (int) Math.floor(centerBlockX + relativeX);
+            int worldZ = (int) Math.floor(centerBlockZ + relativeZ);
+            int surfaceY = client.level.getHeight(Heightmap.Types.MOTION_BLOCKING, worldX, worldZ) - 1;
+            BlockPos position = new BlockPos(worldX, surfaceY, worldZ);
+            if (!client.level.isLoaded(position)) {
+                continue;
+            }
+            BlockState state = client.level.getBlockState(position);
+            MapColor mapColor = state.getMapColor(client.level, position);
+            int baseColor;
+            if (mapColor == MapColor.NONE) {
+                String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+                baseColor = RadarMapColor.forBlock(blockId, 0);
+            } else {
+                baseColor = mapColor.calculateARGBColor(MapColor.Brightness.NORMAL);
+            }
+            int slope = previousHeight == Integer.MIN_VALUE ? 0 : surfaceY - previousHeight;
+            int color = RadarMapColor.forMapColor(baseColor, surfaceY - playerY, slope);
+            cells.add(new MapCell(sample.x(), sample.y(), color));
+            previousHeight = surfaceY;
         }
         return List.copyOf(cells);
     }

@@ -7,4 +7,5 @@ out/
 *.log
 *.jar
 !gradle/wrapper/gradle-wrapper.jar
+!vendor/baritone/gradle/wrapper/gradle-wrapper.jar
 .mcp.json

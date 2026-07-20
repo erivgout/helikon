@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.3.2 - 2026-07-20
+
+- Restores clean Linux CI builds by including Baritone's pinned Gradle wrapper
+  runtime alongside its already-vendored wrapper script and properties.
+
 ## 1.3.1 - 2026-07-20
 
 - Fixes clean-checkout CI builds by compiling the embedded Baritone component

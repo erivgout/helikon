@@ -24,6 +24,12 @@ BlockESP cache and Breadcrumb trail are bounded in-memory state only.
 BlockSelection likewise reads only the current loaded block target to draw one
 local Gizmo box and optional distance label.
 
+SeedCracker reads already-loaded low-altitude slime entities and optionally the
+seed of a locally owned integrated world. Its evidence collection, exact slime
+predicate, bounded candidate filtering, HUD, world markers, and local commands
+create no packet, chunk request, HTTP request, telemetry event, or external
+connection.
+
 Trajectories, TrueSight, and Radar likewise read only current client-side
 entity/projectile/block state to create local overlay geometry or HUD points.
 They do not request additional chunks, send coordinates, or modify packets,

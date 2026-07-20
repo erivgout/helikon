@@ -53,6 +53,13 @@ to a server or service.
 BlockSelection's current target box and optional distance label are transient
 local render facts and are not retained or transmitted.
 
+SeedCracker reads only already-loaded slime entities and, when connected to a
+locally owned integrated server, that local world's seed. Confirmed chunk
+coordinates, candidate ranges, results, and entity-deduplication data remain
+bounded current-world session memory and clear on world transitions. Only its
+ordinary module settings persist; no evidence, seed, coordinates, or results
+are written to disk or transmitted.
+
 Trajectories, TrueSight, and Radar similarly consume only already-loaded local
 world state for the active session. Their predicted paths, invisible-entity
 boxes, and radar points are never persisted or transmitted.

@@ -21,7 +21,8 @@ branding, or configuration formats from that or any other project.
 - **World navigation** — an embedded, source-vendored Baritone 1.15.0 port
   with its own persistent ClickGUI section, full command field, visible
   path/goal/block-action rendering, Baritone-backed waypoints, mining,
-  exploration, following, farming, and building commands.
+  exploration, following, farming, and building commands; plus a bounded,
+  session-local SeedCracker that analyzes already-loaded slime evidence.
 - **Chat** — BetterChat, ChatFilter, ChatMute, ChatColor, ChatTimestamps,
   ChatHistory, ChatSpammer, ChatPrefix/Suffix, MentionNotifier, AutoReply,
   Announcer, AntiSpam, PrivateMessageHelper, LocalTranslator.
@@ -88,7 +89,7 @@ SHA-256 checksums, and the resolved dependency report. See
 
 ## Status
 
-`1.3.0` is the current stable release. The automated test suite, style and
+`1.4.0` is the current stable release. The automated test suite, style and
 client-only architecture checks, and Fabric client game tests pass. The
 additional live-client smoke checklists in [testing.md](docs/testing.md) remain
 recommended for real-world testing on a disposable profile.

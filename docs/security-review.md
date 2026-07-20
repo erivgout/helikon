@@ -1,4 +1,4 @@
-# Security review — 1.3.0
+# Security review — 1.4.0
 
 ## Scope
 
@@ -29,6 +29,11 @@ Gradle, the operating system, or server plugins.
   block-use path. Placement reach, support, visibility, acceptance, and world
   updates remain server-authoritative; retries and activation attempts are
   bounded.
+- SeedCracker reads only already-loaded slime entities and the seed of a
+  locally owned integrated world. Its exact slime predicate and candidate
+  filter are local, per-tick/range/result bounded, and session-only; it sends
+  no packets, requests no chunks, writes no evidence file, and opens no
+  external connection.
 - Debug Overlay retains only transient in-process timing/cache/event/save facts
   while explicitly enabled; it is not a telemetry, profiler-upload, or
   persistent diagnostic system.
@@ -46,6 +51,10 @@ Gradle, the operating system, or server plugins.
 - Client-side decisions remain subject to server correction and server rules.
 - AntiBot and combat target data are local heuristics/observations, not trusted
   identity or server authority.
+- Multiplayer SeedCracker evidence cannot prove spawn provenance, can contain
+  false positives, constrains only the lower 48-bit structure seed, and is not
+  full 64-bit seed recovery. The UI and module documentation state those
+  limits and expose manual evidence removal.
 - Dependencies are pinned but still inherit upstream security risk. Review the
   generated dependency report and upstream advisories before a final tag.
 

@@ -5,6 +5,7 @@ import dev.helikon.client.module.Module;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.render.EntityEspMode;
 import dev.helikon.client.module.world.BaritoneNavigation;
+import dev.helikon.client.module.world.SeedCracker;
 import dev.helikon.client.render.MinecraftBaritoneVisualizationRenderer;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.EnumSetting;
@@ -44,6 +45,9 @@ public final class HelikonClientGameTest implements FabricClientGameTest {
 
             exerciseRadarMinimap(context, modules);
             assertNoFailures(failures, "while rendering the cached Radar minimap texture");
+
+            exerciseSeedCracker(context, modules);
+            assertNoFailures(failures, "while solving and rendering SeedCracker evidence");
 
             context.runOnClient(client -> modules.all().forEach(module -> modules.setEnabled(module, true)));
             context.waitTicks(SOAK_TICKS);
@@ -145,6 +149,33 @@ public final class HelikonClientGameTest implements FabricClientGameTest {
             throw new AssertionError("embedded Baritone did not cancel cleanly: " + baritone.status());
         }
         context.runOnClient(client -> modules.setEnabled(baritone, false));
+    }
+
+    private static void exerciseSeedCracker(ClientGameTestContext context, ModuleRegistry modules) {
+        SeedCracker seedCracker = (SeedCracker) modules.find("seed_cracker")
+                .orElseThrow(() -> new AssertionError("seed_cracker module is missing"));
+        context.runOnClient(client -> {
+            if (client.getSingleplayerServer() == null || client.player == null || client.level == null) {
+                throw new AssertionError("SeedCracker GameTest requires an integrated world");
+            }
+            modules.setEnabled(seedCracker, true);
+            long worldSeed = client.getSingleplayerServer().overworld().getSeed();
+            seedCracker.revealLocalWorldSeed(worldSeed);
+            if (!seedCracker.addManualObservation(
+                    client.player.getBlockX() >> 4, client.player.getBlockZ() >> 4)) {
+                throw new AssertionError("SeedCracker rejected fresh manual evidence");
+            }
+        });
+        context.waitTicks(5);
+        SeedCracker.Snapshot snapshot = seedCracker.snapshot();
+        if (snapshot.state() != SeedCracker.State.SOLVED || snapshot.fullWorldSeed() == null) {
+            throw new AssertionError("SeedCracker did not expose the integrated-world seed: " + snapshot);
+        }
+        if (snapshot.observations() != 1) {
+            throw new AssertionError("SeedCracker did not retain its rendered evidence: " + snapshot);
+        }
+        context.takeScreenshot("helikon-seed-cracker-solved");
+        context.runOnClient(client -> modules.setEnabled(seedCracker, false));
     }
 
     /** Intentional one-shot and mutually exclusive modules may disable; actual guarded failures may not occur. */

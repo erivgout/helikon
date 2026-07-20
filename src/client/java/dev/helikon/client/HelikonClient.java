@@ -571,6 +571,11 @@ public final class HelikonClient implements ClientModInitializer {
         OpenWaterEsp openWaterEsp = new OpenWaterEsp();
         MobSpawnEsp mobSpawnEsp = new MobSpawnEsp();
         NewChunks newChunks = new NewChunks();
+        dev.helikon.client.module.world.SeedCracker seedCracker =
+                new dev.helikon.client.module.world.SeedCracker();
+        seedCracker.setStatusNotifier(notifier::info);
+        dev.helikon.client.module.world.MinecraftSeedCrackerAccess seedCrackerAccess =
+                new dev.helikon.client.module.world.MinecraftSeedCrackerAccess(seedCracker);
         XRay xray = new XRay(new MinecraftXRayRendererInvalidator());
         MiniPlayer miniPlayer = new MiniPlayer();
         NameProtect nameProtect = new NameProtect();
@@ -624,6 +629,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(openWaterEsp);
         modules.register(mobSpawnEsp);
         modules.register(newChunks);
+        modules.register(seedCracker);
         modules.register(xray);
         modules.register(miniPlayer);
         modules.register(nameProtect);
@@ -1050,6 +1056,8 @@ public final class HelikonClient implements ClientModInitializer {
         );
         dev.helikon.client.render.MinecraftDomainExpansionRenderer domainExpansionRenderer =
                 new dev.helikon.client.render.MinecraftDomainExpansionRenderer(domainExpansion, clickGuiWindow);
+        dev.helikon.client.render.MinecraftSeedCrackerRenderer seedCrackerRenderer =
+                new dev.helikon.client.render.MinecraftSeedCrackerRenderer(seedCracker);
         events.subscribe(ChunkEvent.class, event -> modules.runGuarded(newChunks, "chunk-event",
                 () -> newChunks.observe(
                         event.phase() == ChunkEvent.Phase.LOAD
@@ -1058,6 +1066,8 @@ public final class HelikonClient implements ClientModInitializer {
                         event.chunkX(), event.chunkZ(), System.currentTimeMillis())));
         events.subscribe(WorldEvent.class,
                 event -> modules.runGuarded(newChunks, "world-change", newChunks::clear));
+        events.subscribe(WorldEvent.class,
+                event -> modules.runGuarded(seedCracker, "world-change", seedCracker::clearSession));
         events.subscribe(InputEvent.class, event -> {
             if (event.kind() != InputEvent.Kind.MOUSE_BUTTON || event.action() != InputEvent.Action.PRESS
                     || Minecraft.getInstance().gui.screen() != null) {
@@ -1091,6 +1101,8 @@ public final class HelikonClient implements ClientModInitializer {
                     return;
                 }
                 modules.runGuarded(fullbright, "tick", fullbright::tick);
+                modules.runGuarded(seedCracker, "tick",
+                        () -> seedCrackerAccess.tick(Minecraft.getInstance(), clientTick));
                 modules.runGuarded(derp, "fun-effects", () -> legacyFunAccess.tick(clientTick, derp, headRoll, lsd,
                         mileyCyrus, tired, headless));
                 modules.runGuarded(autoSprint, "tick", () -> tickAutoSprint(autoSprint));
@@ -1381,6 +1393,7 @@ public final class HelikonClient implements ClientModInitializer {
                 new ScheduledChatInputReopener(new MinecraftChatInputReopener(), pendingScreenAction::set)));
         commands.register(new dev.helikon.client.command.TacoCommand());
         commands.register(new BaritoneCommand(modules, baritoneNavigation));
+        commands.register(new dev.helikon.client.command.SeedCrackerCommand(seedCracker));
         ChatCommands.register(commands, notifier);
         OutgoingChatFormatter outgoingChat = new OutgoingChatFormatter(chatPrefix, chatSuffix, fancyChat,
                 () -> macroServerContext.currentServerAddress().orElse(null),
@@ -1512,6 +1525,8 @@ public final class HelikonClient implements ClientModInitializer {
                 new HealthHud(health, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "radar"),
                 new RadarHud(radar, friends, panicState, hudLayout));
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "seed_cracker"),
+                new dev.helikon.client.hud.SeedCrackerHud(seedCracker, panicState, hudLayout));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "arrows"),
                 new ArrowsHud(arrows, friends, panicState));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "saturation"),
@@ -1551,6 +1566,7 @@ public final class HelikonClient implements ClientModInitializer {
             ClientEventAccess.postRender(RenderEvent.Kind.WORLD, 0.0D, "");
             worldVisuals.render(context);
             modules.runGuarded(domainExpansion, "render", domainExpansionRenderer::render);
+            modules.runGuarded(seedCracker, "render", seedCrackerRenderer::render);
             waypointRenderer.render();
         });
         ClientTickEvents.START_CLIENT_TICK.register(client -> {

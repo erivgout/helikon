@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.4.0 - 2026-07-20
+
+- Adds **SeedCracker**, a client-only World module that records distinct loaded
+  low-altitude slime observations, filters a user-bounded lower-48-bit
+  structure-seed range with the exact Minecraft 26.2 slime-chunk predicate,
+  and reveals the exact full seed only for locally owned integrated worlds.
+- Adds a local `.seedcracker` evidence/search command, bounded world markers,
+  and a themed, draggable HUD with collection and search progress. Evidence and
+  results are session-only and no chunk requests or external network calls are
+  made.
+- Adds deterministic formula, lifecycle, evidence, bounded-search, malformed
+  input, command, HUD persistence, and integrated-client validation.
+
 ## 1.3.6 - 2026-07-20
 
 - Makes the Waypoints **Scale** setting visibly effective across its full range

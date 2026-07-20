@@ -96,6 +96,9 @@ sent to the server:
 | `.baritone status` | Shows whether the embedded pathfinder is enabled, pathing, paused, or idle and describes its goal. |
 | `.baritone goto <x> <y> <z>` / `.baritone mine <block...>` | Enables Baritone and runs a destination or mining command locally. Other Baritone commands can follow the same prefix. |
 | `.baritone stop` | Cancels all active Baritone processes and releases movement input. |
+| `.seedcracker status` / `.seedcracker candidates` | Shows session evidence, bounded-search progress, and retained lower-48-bit structure-seed candidates locally. |
+| `.seedcracker search` / `.seedcracker clear` | Starts the configured bounded search or clears all current-world session evidence/results. |
+| `.seedcracker addslime <chunkX> <chunkZ>` / `.seedcracker removeslime <chunkX> <chunkZ>` | Adds or removes manual slime-chunk evidence after the user verifies the chunk coordinates. |
 | `.panic` | Disables modules, hides custom HUD for this session, and closes Helikon GUI screens. |
 | `.panic bind <key>` / `.panic unbind` | Configures or clears the local persisted panic keyboard/mouse bind. |
 | `.panic status` / `.panic restorehud` | Shows the bind or restores HUD visibility without re-enabling modules. |

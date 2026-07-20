@@ -178,7 +178,19 @@ When porting:
     dependency report, and repeat the focused live-client smoke checks before
     packaging a release for the target version.
 
-36. Revalidate `Connection.send(Packet, ChannelFutureListener, boolean)` and the
+37. Revalidate `WorldgenRandom.seedSlimeChunk(int, int, long, long)` and
+    `Slime.checkSlimeSpawnRules` before changing SeedCracker. For Minecraft
+    26.2 the verified low-altitude predicate is
+    `seedSlimeChunk(chunkX, chunkZ, seed, 987234911L).nextInt(10) == 0`;
+    preserve the vanilla 32-bit overflow of the coordinate products and the
+    legacy random generator's 48-bit mask. Revalidate `Minecraft.isLocalServer`,
+    `getSingleplayerServer().overworld().getSeed()`, loaded entity iteration,
+    `Slime`, `Level.OVERWORLD`, and loaded-chunk checks at the adapter boundary.
+    Do not infer slime spawn provenance the server does not synchronize, request
+    chunks, add a seed-service request, or describe bounded lower-48-bit
+    filtering as full multiplayer seed recovery.
+
+38. Revalidate `Connection.send(Packet, ChannelFutureListener, boolean)` and the
     `ServerboundMovePlayerPacket` family (`Pos`, `Rot`, `PosRot`, `StatusOnly`)
     before changing Blink. `ConnectionBlinkMixin` must stay a HEAD, cancellable
     inject that only cancels a movement send Blink chooses to hold; the actual

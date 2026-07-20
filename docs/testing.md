@@ -49,6 +49,16 @@ isolation, event-catalog coverage, and malformed event-payload rejection.
 resource-reload, render, interaction, and packet-metadata bridge normalization
 without requiring a running game client. Run the live-client smoke checklist
 before release to verify the version-sensitive mixin boundaries remain active.
+`SeedSlimeMathTest` compares SeedCracker's exact Minecraft 26.2 slime predicate
+with a `java.util.Random` reference across positive, negative, and
+overflow-heavy coordinates and verifies the 48-bit structure-seed boundary.
+`SeedCrackerTest` covers defaults, lifecycle, distinct-entity confirmation,
+bounded incremental search, exact integrated-world results, malformed ranges,
+manual correction, disable/re-enable behavior, and world-session cleanup.
+`SeedCrackerCommandTest` covers every local evidence/search command. The
+Fabric client GameTest additionally enables SeedCracker in an integrated
+world, verifies its exact local seed, submits loaded-chunk evidence through
+the real HUD/world render path, and captures `helikon-seed-cracker-solved`.
 `PlayerStateEventTrackerTest` covers lifecycle, movement, rotation, inventory
 revision, and world-absence baseline transitions without Minecraft classes.
 `SaturationHudTest` covers finite saturation formatting and invalid-fact
@@ -714,20 +724,33 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
 
 ## Manual Phase F world-module smoke test
 
-1. Run `./gradlew.bat runClient` in a disposable local/test world with a cactus
+1. In a disposable singleplayer world, enable **SeedCracker**. Verify the HUD
+   reports the same full seed as `/seed`, its HUD handle can be dragged/scaled
+   in HUD Settings, and a manually added current loaded chunk renders a bounded
+   world marker. Disable, panic, leave/rejoin, and change dimensions; verify no
+   stale evidence/result or marker survives a world transition.
+2. On a private or explicitly permitted multiplayer server, set a small known
+   `Search start`/`Search count`, add four verified slime chunks with
+   `.seedcracker addslime`, and start `.seedcracker search`. Verify progress is
+   bounded by `Candidates per tick`, `.seedcracker candidates` labels results
+   as lower-48-bit structure seeds, and clearing/removing evidence is local.
+   Spawn or move a slime artificially and verify the documented provenance
+   limitation is not presented as proof. Confirm no new chunk loads, packets,
+   file, or external connection occur.
+3. Run `./gradlew.bat runClient` in a disposable local/test world with a cactus
    beside a clear walking path. With **AntiCactus** disabled, verify normal
    vanilla movement and damage behavior. Enable it and walk diagonally toward
    the cactus: verify the local player slides only along a clear horizontal
    axis instead of entering its collision box. Use a vehicle or cross an
    unloaded boundary and verify the module does not claim to alter those
    movements. If contact occurs, cactus damage remains vanilla.
-2. Enable **BlockSelection** and target ordinary nearby blocks. Verify exactly
+4. Enable **BlockSelection** and target ordinary nearby blocks. Verify exactly
    one local outline follows Minecraft's visible block target; toggle **Fill**,
    change outline color/line width, and toggle **Distance label** to verify
    each local rendering setting independently. Target air, an entity, or an
    unloaded boundary and verify no box/label appears. Disable the module and
    verify the extra rendering disappears immediately.
-3. In a permitted multiplayer check, confirm neither behavior sends a custom
+5. In a permitted multiplayer check, confirm neither behavior sends a custom
    packet, changes reach, edits a block, or becomes visible to another player.
 
 ## Manual Phase I world-automation smoke test

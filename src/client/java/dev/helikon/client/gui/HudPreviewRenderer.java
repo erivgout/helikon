@@ -111,6 +111,7 @@ final class HudPreviewRenderer {
             case INVENTORY_PREVIEW -> enabled("inventory_preview");
             case DURABILITY_WARNINGS -> enabled("durability_warnings");
             case RADAR -> enabled("radar");
+            case SEED_CRACKER -> enabled("seed_cracker");
             case MINI_PLAYER -> enabled("mini_player");
             case DEBUG_OVERLAY -> enabled("debug_overlay");
             case BETTER_CROSSHAIR -> enabled("better_crosshair");
@@ -137,6 +138,7 @@ final class HudPreviewRenderer {
             case INVENTORY_PREVIEW -> "Inventory Preview";
             case DURABILITY_WARNINGS -> "Durability warnings";
             case RADAR -> "Radar";
+            case SEED_CRACKER -> "SeedCracker";
             case MINI_PLAYER -> "Mini Player";
             case DEBUG_OVERLAY -> "Debug Overlay";
             case BETTER_CROSSHAIR -> "Better Crosshair";

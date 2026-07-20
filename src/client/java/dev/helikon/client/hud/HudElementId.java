@@ -13,6 +13,7 @@ public enum HudElementId {
     INVENTORY_PREVIEW(Anchor.BOTTOM_RIGHT, 5, 5),
     DURABILITY_WARNINGS(Anchor.TOP_LEFT, 5, 112),
     RADAR(Anchor.TOP_LEFT, 5, 120),
+    SEED_CRACKER(Anchor.TOP_RIGHT, 5, 5),
     MINI_PLAYER(Anchor.TOP_LEFT, 5, 210),
     DEBUG_OVERLAY(Anchor.TOP_LEFT, 5, 5),
     BETTER_CROSSHAIR(Anchor.CENTER, 0, 0, true, true),

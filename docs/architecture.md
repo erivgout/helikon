@@ -562,6 +562,35 @@ is screen-safe: normal screens suppress it, while Helikon screens permit it so
 the key can close the ClickGUI. Its recoverable local persistence is isolated
 in `PanicConfigurationManager`.
 
+### SeedCracker analysis boundary
+
+`SeedCracker` owns only version-independent session state: confirmed chunk
+observations, distinct-entity confirmation counts, a bounded candidate cursor,
+retained matches, and the collection/search/solved/error state machine.
+`SeedSlimeMath` implements Minecraft 26.2's verified legacy-random slime-chunk
+predicate with its intentional 32-bit coordinate overflow and lower-48-bit
+seed mask. Search work advances by the configured hard per-tick budget and
+retains only the configured result cap; it does not spawn a worker that could
+touch unsafe live Minecraft state.
+
+`MinecraftSeedCrackerAccess` is the narrow version adapter. It considers only
+already-loaded, alive `Slime` entities below Y=40 in the Overworld, checks the
+chunk is loaded, and supplies immutable UUID/chunk/tick facts to the core.
+Spawn provenance is deliberately not guessed because the multiplayer client
+cannot reliably distinguish natural slime-chunk spawns from summoned,
+spawner-created, Oozing-created, or recently moved slimes. In a locally owned
+integrated world only, the adapter can read that server's exact full seed.
+World events clear evidence, deduplication, candidates, errors, and results.
+
+`MinecraftSeedCrackerRenderer` emits one bounded loaded-chunk Gizmo prism per
+confirmed observation. `SeedCrackerHud` uses the ordinary persisted
+`HudElementPlacement` and shared text presentation path, so it is draggable,
+scaled, clamped, theme-compatible, and panic-hidden. `SeedCrackerCommand`
+provides local-only status, search, clear, candidate, and manual evidence
+correction actions through the existing intercepted dot-command dispatcher.
+No SeedCracker component requests chunks, sends a Minecraft packet, writes
+evidence to disk, or opens an external network connection.
+
 ## Rendering, GUI, and HUD
 
 `MinecraftWorldVisualizationRenderer` is the only 26.2 world-render port for

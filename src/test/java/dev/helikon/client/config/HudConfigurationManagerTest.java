@@ -125,6 +125,24 @@ class HudConfigurationManagerTest {
     }
 
     @Test
+    void seedCrackerHudPlacementIsPersistedLikeOtherModuleHudElements() {
+        HudConfigurationManager manager = new HudConfigurationManager(temporaryDirectory.resolve("helikon"));
+        HudLayout source = new HudLayout();
+        var placement = source.element(dev.helikon.client.hud.HudElementId.SEED_CRACKER);
+        placement.set(dev.helikon.client.hud.HudElementId.Anchor.BOTTOM_RIGHT, 17, 23);
+        placement.setScale(0.75F);
+        manager.save(source);
+
+        HudLayout target = new HudLayout();
+        assertEquals(HudConfigurationManager.LoadResult.LOADED, manager.load(target));
+        var restored = target.element(dev.helikon.client.hud.HudElementId.SEED_CRACKER);
+        assertEquals(dev.helikon.client.hud.HudElementId.Anchor.BOTTOM_RIGHT, restored.anchor());
+        assertEquals(17, restored.offsetX());
+        assertEquals(23, restored.offsetY());
+        assertEquals(0.75F, restored.scale());
+    }
+
+    @Test
     void malformedConfigurationIsPreservedAndRestoresDefaults() throws IOException {
         HudConfigurationManager manager = new HudConfigurationManager(temporaryDirectory.resolve("helikon"));
         Files.createDirectories(manager.hudConfigurationPath().getParent());

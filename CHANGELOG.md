@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.5.2 - 2026-07-20
+
+- Fixes HitSwap so its configured weapon is selected before Minecraft evaluates
+  held-item attack eligibility and range, then remains selected for a configurable
+  1–20 tick hold window after the latest attack before safely restoring the prior slot.
+- Adds bounded Baritone compatibility pauses for ordinary combat and AutoEat,
+  preserves existing goals while paused, and prevents Baritone inventory automation
+  from remaining active after disable or panic.
+- Makes Speed respect Baritone-owned movement and makes FastBreak accelerate both
+  manual and Baritone mining through Minecraft's ordinary destroy path while
+  restoring Baritone's original break delay when either module is disabled.
+
 - Extends Better Nametags from remote players to non-player living entities,
   with independent **Players** and **Entities** filters and mob-safe name,
   health, armor, held-item, and distance rows.

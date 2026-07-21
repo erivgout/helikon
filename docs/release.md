@@ -1,6 +1,6 @@
 # Release process
 
-The current version is `1.5.1`. Tagged `v*` commits are built and published by
+The current version is `1.5.2`. Tagged `v*` commits are built and published by
 the GitHub release workflow after its checks pass.
 
 ## Build the bundle

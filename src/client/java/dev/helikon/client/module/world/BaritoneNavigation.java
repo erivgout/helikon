@@ -25,15 +25,19 @@ public final class BaritoneNavigation extends Module {
     private final BooleanSetting renderGoal;
     private final BooleanSetting renderActions;
     private final BooleanSetting renderThroughWalls;
+    private final BooleanSetting pauseDuringCombat;
+    private final BooleanSetting pauseForAutoEat;
     private final ColorSetting pathColor;
     private final ColorSetting goalColor;
     private final ColorSetting breakColor;
     private final ColorSetting placeColor;
     private final ColorSetting walkIntoColor;
     private final NumberSetting lineWidth;
+    private final NumberSetting combatResumeDelay;
     private final StringSetting destination;
     private final StringSetting mineBlocks;
     private final StringSetting command;
+    private long lastCombatAttackTick = Long.MIN_VALUE;
 
     public BaritoneNavigation(BaritoneAccess access) {
         super("baritone", "Baritone", "Embedded pathfinding, mining, exploration, following, farming, and building.",
@@ -51,6 +55,10 @@ public final class BaritoneNavigation extends Module {
                 "Highlight blocks Baritone plans to break, place, or walk into.", true);
         renderThroughWalls = addSetting(new BooleanSetting("render_through_walls", "Render through walls",
                 "Keep route, goal, and block-action markers visible behind blocks.", true));
+        pauseDuringCombat = addSetting(new BooleanSetting("pause_during_combat", "Pause during combat",
+                "Temporarily pause Baritone after a local player or combat module attacks an entity.", true));
+        pauseForAutoEat = addSetting(new BooleanSetting("pause_for_auto_eat", "Pause for AutoEat",
+                "Temporarily pause Baritone while AutoEat owns the use key.", true));
         pathColor = addSetting(new ColorSetting("path_color", "Path color", "ARGB route color.", 0xFF4FC3F7));
         goalColor = addSetting(new ColorSetting("goal_color", "Goal color", "ARGB destination color.", 0xFFFFCA28));
         breakColor = addSetting(new ColorSetting("break_color", "Break target color",
@@ -61,6 +69,8 @@ public final class BaritoneNavigation extends Module {
                 "ARGB color for blocks Baritone plans to enter.", 0xFF40C4FF));
         lineWidth = addSetting(new NumberSetting("line_width", "Line width", "Path and goal line width.",
                 2.0D, 0.5D, 8.0D));
+        combatResumeDelay = addSetting(new NumberSetting("combat_resume_delay", "Combat resume delay",
+                "Ticks without an entity attack before Baritone resumes.", 10.0D, 0.0D, 100.0D));
         destination = addSetting(new StringSetting("destination", "Destination",
                 "Coordinates, waypoint, or block accepted by Baritone's goto command.", "0 64 0", 128, false));
         addSetting(new ActionSetting("go_to_destination", "Go to destination",
@@ -108,6 +118,42 @@ public final class BaritoneNavigation extends Module {
         synchronize();
     }
 
+    /** Records an accepted local entity attack from any source, including combat modules. */
+    public void observeCombatAttack(long tick) {
+        if (!isEnabled() || !pauseDuringCombat.value()) {
+            return;
+        }
+        lastCombatAttackTick = tick;
+        access.setCombatPaused(true);
+    }
+
+    /** Releases only Helikon's temporary combat pause after combat becomes idle. */
+    public void tickCombatPause(long tick) {
+        boolean recentAttack = lastCombatAttackTick != Long.MIN_VALUE
+                && tick >= lastCombatAttackTick
+                && tick - lastCombatAttackTick <= Math.round(combatResumeDelay.value());
+        boolean shouldPause = isEnabled() && pauseDuringCombat.value() && recentAttack;
+        access.setCombatPaused(shouldPause);
+        if (!shouldPause) {
+            lastCombatAttackTick = Long.MIN_VALUE;
+        }
+    }
+
+    /** Mirrors AutoEat's exact key-ownership lifetime into a separate temporary pause process. */
+    public void setAutoEatPaused(boolean eating) {
+        access.setAutoEatPaused(isEnabled() && pauseForAutoEat.value() && eating);
+    }
+
+    /** Keeps Baritone's private inter-block delay aligned with FastBreak while both modules are active. */
+    public void synchronizeFastBreak(boolean fastBreakEnabled, int delayTicks) {
+        access.setFastBreakDelay(isEnabled() && fastBreakEnabled, delayTicks);
+    }
+
+    /** True only while Baritone is actively supplying horizontal movement input. */
+    public boolean controlsMovement() {
+        return isEnabled() && access.isMovementForced();
+    }
+
     public boolean rendersPath() {
         return isEnabled() && renderPath.value();
     }
@@ -149,6 +195,9 @@ public final class BaritoneNavigation extends Module {
     }
 
     public void shutdown() {
+        clearCombatPause();
+        access.setAutoEatPaused(false);
+        access.setFastBreakDelay(false, 0);
         access.cancel();
         access.apply(options(false));
     }
@@ -160,8 +209,16 @@ public final class BaritoneNavigation extends Module {
 
     @Override
     protected void onDisable() {
+        clearCombatPause();
+        access.setAutoEatPaused(false);
+        access.setFastBreakDelay(false, 0);
         access.cancel();
         access.apply(options(false));
+    }
+
+    private void clearCombatPause() {
+        lastCombatAttackTick = Long.MIN_VALUE;
+        access.setCombatPaused(false);
     }
 
     private BooleanSetting booleanSetting(String id, String name, String description, boolean defaultValue) {

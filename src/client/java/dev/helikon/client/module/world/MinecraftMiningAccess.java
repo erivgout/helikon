@@ -26,29 +26,6 @@ public final class MinecraftMiningAccess {
     private MinecraftMiningAccess() {
     }
 
-    /** Lets FastBreak lower only a visible, ordinary held-attack cooldown. */
-    public static void tickFastBreak(FastBreak module) {
-        Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.level == null || client.gameMode == null
-                || dev.helikon.client.gui.GameplayScreenPolicy.blocksAutomation(client.gui.screen())
-                || !(client.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
-                || !client.level.isLoaded(hit.getBlockPos())) {
-            module.tick(false, false, "");
-            return;
-        }
-        BlockState state = client.level.getBlockState(hit.getBlockPos());
-        boolean attackHeld = client.options.keyAttack.isDown();
-        String id = blockId(state);
-        module.tick(attackHeld, !state.isAir(), id);
-        int extraSteps = module.extraDestroySteps(attackHeld, !state.isAir(), id);
-        if (state.getDestroySpeed(client.level, hit.getBlockPos()) < 0.0F || !client.gameMode.isDestroying()) {
-            return;
-        }
-        for (int step = 0; step < extraSteps && !client.level.getBlockState(hit.getBlockPos()).isAir(); step++) {
-            client.gameMode.continueDestroyBlock(hit.getBlockPos(), hit.getDirection());
-        }
-    }
-
     /** Applies Timer's optional multiplier only to Minecraft's active ordinary digging path. */
     public static void tickTimerDigging(Timer module) {
         Minecraft client = Minecraft.getInstance();

@@ -6,6 +6,7 @@ import dev.helikon.client.module.world.BaritoneNavigation;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.ActionSetting;
 import dev.helikon.client.setting.StringSetting;
+import dev.helikon.client.setting.NumberSetting;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -86,10 +87,88 @@ class BaritoneCommandTest {
         assertEquals("waypoint list", access.command);
     }
 
+    @Test
+    void combatAttacksTemporarilyPauseAndThenReleaseBaritone() {
+        FakeBaritoneAccess access = new FakeBaritoneAccess();
+        BaritoneNavigation module = new BaritoneNavigation(access);
+        ModuleRegistry modules = new ModuleRegistry();
+        modules.register(module);
+        modules.setEnabled(module, true);
+        NumberSetting delay = (NumberSetting) module.settings().stream()
+                .filter(setting -> setting.id().equals("combat_resume_delay"))
+                .findFirst()
+                .orElseThrow();
+        delay.set(3.0D);
+
+        module.observeCombatAttack(20L);
+        module.tickCombatPause(23L);
+        assertTrue(access.combatPaused);
+
+        module.tickCombatPause(24L);
+        assertFalse(access.combatPaused);
+    }
+
+    @Test
+    void disablingBaritoneReleasesItsCombatPause() {
+        FakeBaritoneAccess access = new FakeBaritoneAccess();
+        BaritoneNavigation module = new BaritoneNavigation(access);
+        ModuleRegistry modules = new ModuleRegistry();
+        modules.register(module);
+        modules.setEnabled(module, true);
+
+        module.observeCombatAttack(5L);
+        assertTrue(access.combatPaused);
+
+        modules.setEnabled(module, false);
+        assertFalse(access.combatPaused);
+    }
+
+    @Test
+    void fastBreakCompatibilityIsOwnedOnlyWhileBothModulesAreEnabled() {
+        FakeBaritoneAccess access = new FakeBaritoneAccess();
+        BaritoneNavigation module = new BaritoneNavigation(access);
+        ModuleRegistry modules = new ModuleRegistry();
+        modules.register(module);
+        modules.setEnabled(module, true);
+
+        module.synchronizeFastBreak(true, 2);
+        assertTrue(access.fastBreakEnabled);
+        assertEquals(2, access.fastBreakDelay);
+
+        modules.setEnabled(module, false);
+        assertFalse(access.fastBreakEnabled);
+    }
+
+    @Test
+    void autoEatPauseFollowsEatingAndCanBeDisabled() {
+        FakeBaritoneAccess access = new FakeBaritoneAccess();
+        BaritoneNavigation module = new BaritoneNavigation(access);
+        ModuleRegistry modules = new ModuleRegistry();
+        modules.register(module);
+        modules.setEnabled(module, true);
+
+        module.setAutoEatPaused(true);
+        assertTrue(access.autoEatPaused);
+        module.setAutoEatPaused(false);
+        assertFalse(access.autoEatPaused);
+
+        BooleanSetting setting = (BooleanSetting) module.settings().stream()
+                .filter(candidate -> candidate.id().equals("pause_for_auto_eat"))
+                .findFirst()
+                .orElseThrow();
+        setting.set(false);
+        module.setAutoEatPaused(true);
+        assertFalse(access.autoEatPaused);
+    }
+
     private static final class FakeBaritoneAccess implements BaritoneAccess {
         private Options options;
         private String command;
         private int cancelCount;
+        private boolean combatPaused;
+        private boolean autoEatPaused;
+        private boolean fastBreakEnabled;
+        private int fastBreakDelay;
 
         @Override
         public void apply(Options options) {
@@ -105,6 +184,27 @@ class BaritoneCommandTest {
         @Override
         public void cancel() {
             cancelCount++;
+        }
+
+        @Override
+        public void setCombatPaused(boolean paused) {
+            combatPaused = paused;
+        }
+
+        @Override
+        public void setAutoEatPaused(boolean paused) {
+            autoEatPaused = paused;
+        }
+
+        @Override
+        public void setFastBreakDelay(boolean enabled, int delayTicks) {
+            fastBreakEnabled = enabled;
+            fastBreakDelay = delayTicks;
+        }
+
+        @Override
+        public boolean isMovementForced() {
+            return false;
         }
 
         @Override

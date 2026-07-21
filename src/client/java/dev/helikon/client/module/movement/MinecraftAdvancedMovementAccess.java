@@ -139,19 +139,20 @@ public final class MinecraftAdvancedMovementAccess {
                 });
     }
 
-    public static void tickSpeed(Speed speed) {
+    public static void tickSpeed(Speed speed, boolean baritoneMoving) {
         Minecraft client = Minecraft.getInstance();
         if (!isInteractive(client) || client.player.isFallFlying() || client.player.onClimbable()) {
             return;
         }
         LocalPlayer player = client.player;
         Vec2 input = player.input.getMoveVector();
-        boolean moving = input.x != 0.0F || input.y != 0.0F;
         Vec3 velocity = player.getDeltaMovement();
         HorizontalVelocity current = new HorizontalVelocity(velocity.x, velocity.z);
+        boolean moving = baritoneMoving ? current.speed() > 1.0E-5D : input.x != 0.0F || input.y != 0.0F;
+        HorizontalVelocity direction = baritoneMoving ? current : desiredDirection(player, input);
         double ordinaryMovementSpeed = Math.max(0.0D, player.getAttributeValue(Attributes.MOVEMENT_SPEED));
         HorizontalVelocity adjusted = speed.adjust(
-                current, desiredDirection(player, input), ordinaryMovementSpeed, moving);
+                current, direction, ordinaryMovementSpeed, moving);
         if (!adjusted.equals(current)) {
             player.setDeltaMovement(adjusted.x(), velocity.y, adjusted.z());
         }

@@ -96,6 +96,7 @@ import java.util.PriorityQueue;
  */
 public final class MinecraftWorldVisualizationRenderer {
     private static final int MAXIMUM_CACHED_BLOCKS = 512;
+    private static final int MAXIMUM_CACHED_BLOCK_ESP_BLOCKS = 8_192;
     private static final double NAMETAG_BASE_OFFSET = 0.35D;
     private static final int NAMETAG_LINE_GAP_PIXELS = 2;
     private static final TrajectorySimulator.Physics ARROW_PHYSICS = new TrajectorySimulator.Physics(
@@ -135,7 +136,7 @@ public final class MinecraftWorldVisualizationRenderer {
     private final Explosions explosions;
     private final BlockEspScanCursor blockCursor = new BlockEspScanCursor();
     private final BlockEspScanAnchor blockAnchor = new BlockEspScanAnchor();
-    private final BlockEspCache blockCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
+    private final BlockEspCache blockCache = new BlockEspCache(MAXIMUM_CACHED_BLOCK_ESP_BLOCKS);
     private final BlockEspCache storageCache = new BlockEspCache(MAXIMUM_CACHED_BLOCKS);
     private final LinkedHashMap<OpenWaterColumn, BlockPos> openWaterSites = new LinkedHashMap<>();
     private final BlockEspScanCursor baseFinderCursor = new BlockEspScanCursor();
@@ -902,23 +903,26 @@ public final class MinecraftWorldVisualizationRenderer {
         double lineSpacing = BetterNametagText.worldLineSpacing(
                 TextGizmo.Style.DEFAULT_SCALE, Minecraft.getInstance().font.lineHeight, NAMETAG_LINE_GAP_PIXELS);
         for (Entity entity : level.entitiesForRendering()) {
-            if (!(entity instanceof Player player) || player == localPlayer || player.isInvisibleTo(localPlayer)
-                    || !localPlayer.hasLineOfSight(player) || !isFrustumVisible(frustum, player)
-                    || player.position().distanceToSqr(localPlayer.position()) > maximumDistanceSquared) {
+            if (!(entity instanceof LivingEntity living) || living == localPlayer
+                    || !betterNametags.targets(living instanceof Player) || living.isInvisibleTo(localPlayer)
+                    || !localPlayer.hasLineOfSight(living) || !isFrustumVisible(frustum, living)
+                    || living.position().distanceToSqr(localPlayer.position()) > maximumDistanceSquared) {
                 continue;
             }
-            boolean friend = isFriend(player);
-            BetterNametagText.Facts facts = new BetterNametagText.Facts(player.getGameProfile().name(), player.getHealth(),
-                    player.getMaxHealth(), player.getArmorValue(), Math.sqrt(player.position().distanceToSqr(localPlayer.position())),
-                    BuiltInRegistries.ITEM.getKey(player.getMainHandItem().getItem()).toString());
+            boolean friend = living instanceof Player player && isFriend(player);
+            String name = living instanceof Player player ? player.getGameProfile().name() : living.getName().getString();
+            BetterNametagText.Facts facts = new BetterNametagText.Facts(name, living.getHealth(),
+                    living.getMaxHealth(), living.getArmorValue(),
+                    Math.sqrt(living.position().distanceToSqr(localPlayer.position())),
+                    BuiltInRegistries.ITEM.getKey(living.getMainHandItem().getItem()).toString());
             List<BetterNametagText.Line> lines = BetterNametagText.lines(facts, options, friend);
-            double baseY = player.getY() + player.getBbHeight() + NAMETAG_BASE_OFFSET;
+            double baseY = living.getY() + living.getBbHeight() + NAMETAG_BASE_OFFSET;
             for (int index = 0; index < lines.size(); index++) {
                 BetterNametagText.Line line = lines.get(index);
                 Gizmos.billboardText(line.text(),
-                        new Vec3(player.getX(),
+                        new Vec3(living.getX(),
                                 baseY + BetterNametagText.stackOffset(index, lines.size()) * lineSpacing,
-                                player.getZ()),
+                                living.getZ()),
                         TextGizmo.Style.forColorAndCentered(line.color()));
             }
         }

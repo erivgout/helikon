@@ -2,8 +2,11 @@ package dev.helikon.client.mixin;
 
 import dev.helikon.client.event.ClientEventAccess;
 import dev.helikon.client.event.InteractionEvent;
+import dev.helikon.client.module.world.MinecraftFastBreakAccess;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -18,9 +21,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Observes completed normal local game-mode interactions; it never changes their result. */
+/** Shared hooks for normal local interactions plus FastBreak's bounded destroy multiplier. */
 @Mixin(MultiPlayerGameMode.class)
 abstract class MultiPlayerGameModeEventMixin {
+    @Inject(method = "continueDestroyBlock", at = @At("RETURN"))
+    private void helikon$applyFastBreak(BlockPos position, Direction direction,
+                                        CallbackInfoReturnable<Boolean> callback) {
+        MinecraftFastBreakAccess.afterDestroyStep((MultiPlayerGameMode) (Object) this, position, direction);
+    }
+
     @Inject(method = "attack", at = @At("RETURN"))
     private void helikon$observeAttack(Player player, Entity target, CallbackInfo callback) {
         if (player instanceof LocalPlayer) {

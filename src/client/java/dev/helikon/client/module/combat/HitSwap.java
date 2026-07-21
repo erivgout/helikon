@@ -32,8 +32,10 @@ public final class HitSwap extends Module {
     }
 
     private final IntegerSetting weaponSlot;
+    private final IntegerSetting holdTicks;
     private int priorSlot = -1;
     private int ownedSlot = -1;
+    private int restoreTicksRemaining;
 
     public HitSwap() {
         super("hit_swap", "HitSwap",
@@ -46,6 +48,14 @@ public final class HitSwap extends Module {
                 1,
                 1,
                 9
+        ));
+        holdTicks = addSetting(new IntegerSetting(
+                "hold_ticks",
+                "Hold ticks",
+                "Ticks to keep the weapon selected after the latest attack before restoring the prior slot.",
+                4,
+                1,
+                20
         ));
     }
 
@@ -66,10 +76,14 @@ public final class HitSwap extends Module {
 
         int configuredSlot = weaponSlot.value() - 1;
         if (currentSlot == configuredSlot) {
+            if (ownedSlot == configuredSlot) {
+                restoreTicksRemaining = holdTicks.value();
+            }
             return Action.none();
         }
         priorSlot = currentSlot;
         ownedSlot = configuredSlot;
+        restoreTicksRemaining = holdTicks.value();
         return new Action(ActionType.SELECT, configuredSlot);
     }
 
@@ -86,6 +100,10 @@ public final class HitSwap extends Module {
             clearOwnership();
             return Action.none();
         }
+        if (isEnabled() && restoreTicksRemaining > 0) {
+            restoreTicksRemaining--;
+            return Action.none();
+        }
 
         int restoreSlot = priorSlot;
         clearOwnership();
@@ -94,6 +112,10 @@ public final class HitSwap extends Module {
 
     public int weaponSlot() {
         return weaponSlot.value();
+    }
+
+    public int holdTicks() {
+        return holdTicks.value();
     }
 
     public void onPlayerUnavailable() {
@@ -108,6 +130,7 @@ public final class HitSwap extends Module {
     private void clearOwnership() {
         priorSlot = -1;
         ownedSlot = -1;
+        restoreTicksRemaining = 0;
     }
 
     private static void requireHotbarSlot(int slot) {

@@ -52,6 +52,7 @@
     "MouseEventMixin",
     "MultiPlayerGameModeArrowDmgMixin",
     "MinecraftEntityEspGlowMixin",
+    "MinecraftHitSwapMixin",
     "MinecraftResourceReloadEventMixin",
     "WeatherEffectRendererMixin",
     "MultiPlayerGameModeEventMixin",

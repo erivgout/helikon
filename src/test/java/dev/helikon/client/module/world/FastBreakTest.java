@@ -6,7 +6,9 @@ import dev.helikon.client.setting.StringSetting;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FastBreakTest {
     @Test
@@ -21,7 +23,10 @@ class FastBreakTest {
         stringSetting(fastBreak, "blocks").set("minecraft:stone;minecraft:deepslate");
         numberSetting(fastBreak, "break_delay").set(2.0D);
         numberSetting(fastBreak, "speed_multiplier").set(5.0D);
+        assertEquals(2, fastBreak.breakDelayTicks());
         assertEquals(FastBreak.Action.none(), fastBreak.update(true, true, "minecraft:dirt", 5));
+        assertFalse(fastBreak.appliesTo("minecraft:dirt"));
+        assertTrue(fastBreak.appliesTo("minecraft:stone"));
         assertEquals(new FastBreak.Action(true, 2), fastBreak.update(true, true, "minecraft:stone", 5));
         assertEquals(4, fastBreak.extraDestroySteps(true, true, "minecraft:stone"));
     }

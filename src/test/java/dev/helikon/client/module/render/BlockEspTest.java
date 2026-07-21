@@ -3,10 +3,18 @@ package dev.helikon.client.module.render;
 import dev.helikon.client.module.ModuleRegistry;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BlockEspTest {
+    @Test
+    void usesAHighEnoughDefaultBudgetToPopulateTheNearbyCubePromptly() {
+        BlockEsp blockEsp = new BlockEsp();
+
+        assertEquals(4_096, blockEsp.scanBudget());
+    }
+
     @Test
     void highlightsOnlyConfiguredBlocksWhileEnabled() {
         BlockEsp blockEsp = new BlockEsp();

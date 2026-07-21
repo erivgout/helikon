@@ -78,6 +78,14 @@ public final class FastBreak extends Module {
         return Math.max(0, (int) Math.round(speedMultiplier.value()) - 1);
     }
 
+    public int breakDelayTicks() {
+        return (int) Math.round(breakDelay.value());
+    }
+
+    public boolean appliesTo(String blockId) {
+        return isEnabled() && matches(blockId);
+    }
+
     private boolean matches(String blockId) {
         return blockId != null && !blockId.isBlank() && (targetBlocks.isEmpty() || targetBlocks.contains(blockId));
     }

@@ -293,6 +293,7 @@ import dev.helikon.client.module.world.AirPlace;
 import dev.helikon.client.module.world.MinecraftAirPlaceAccess;
 import dev.helikon.client.module.world.MinecraftBuilderAssistAccess;
 import dev.helikon.client.module.world.MinecraftBreakCooldownAccess;
+import dev.helikon.client.module.world.MinecraftFastBreakAccess;
 import dev.helikon.client.module.world.MinecraftMiningAccess;
 import dev.helikon.client.mixin.FishingHookAccessor;
 import dev.helikon.client.module.world.MinecraftUseCooldownAccess;
@@ -731,6 +732,7 @@ public final class HelikonClient implements ClientModInitializer {
         ChestSteal chestSteal = new ChestSteal();
         BuilderAssist builderAssist = new BuilderAssist();
         BaritoneNavigation baritoneNavigation = new BaritoneNavigation(new MinecraftBaritoneAccess());
+        MinecraftFastBreakAccess.install(fastBreak, baritoneNavigation);
         AirPlace airPlace = new AirPlace();
         AntiCactus antiCactus = new AntiCactus();
         BlockSelection blockSelection = new BlockSelection();
@@ -1085,6 +1087,11 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(keystrokes, "click-rate", () -> keystrokes.recordClick(button, System.nanoTime()));
             }
         });
+        events.subscribe(InteractionEvent.class, event -> {
+            if (event.kind() == InteractionEvent.Kind.ATTACK) {
+                baritoneNavigation.observeCombatAttack(clientTick);
+            }
+        });
         DebugOverlayHud debugOverlayHud = new DebugOverlayHud(debugOverlay, modules, timingMetrics, worldVisuals,
                 events, configuration, panicState, hudLayout);
         ClientTpsEstimate tpsEstimate = new ClientTpsEstimate();
@@ -1117,7 +1124,8 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(spider, "tick", () -> MinecraftAdvancedMovementAccess.tickSpider(spider));
                 modules.runGuarded(highJump, "tick", () -> MinecraftAdvancedMovementAccess.tickHighJump(highJump));
                 modules.runGuarded(airJump, "tick", () -> MinecraftAdvancedMovementAccess.tickAirJump(airJump));
-                modules.runGuarded(speed, "tick", () -> MinecraftAdvancedMovementAccess.tickSpeed(speed));
+                modules.runGuarded(speed, "tick",
+                        () -> MinecraftAdvancedMovementAccess.tickSpeed(speed, baritoneNavigation.controlsMovement()));
                 modules.runGuarded(bunnyHop, "tick", () -> MinecraftAdvancedMovementAccess.tickBunnyHop(bunnyHop));
                 modules.runGuarded(flight, "tick", () -> MinecraftAdvancedMovementAccess.tickFlight(flight));
                 modules.runGuarded(boatFlight, "tick", () -> MinecraftAdvancedMovementAccess.tickBoatFlight(boatFlight));
@@ -1141,6 +1149,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(tpClick, "tick", () -> MinecraftTpClickAccess.tick(tpClick, noFall, INPUT_READER));
                 modules.runGuarded(clutch, "tick", () -> MinecraftAdvancedMovementAccess.tickClutch(clutch, clientTick));
                 modules.runGuarded(autoEat, "tick", () -> tickAutoEat(autoEat));
+                baritoneNavigation.setAutoEatPaused(autoEat.isEating());
                 modules.runGuarded(autoTool, "tick", () -> tickAutoTool(autoTool));
                 modules.runGuarded(autoSwitch, "tick", () -> MinecraftAutoSwitchAccess.tick(autoSwitch));
                 modules.runGuarded(antiFire, "tick",
@@ -1168,7 +1177,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(inventoryManager, "tick", () -> tickInventoryManager(inventoryManager, clientTick));
                 modules.runGuarded(inventoryFill, "tick", () -> tickInventoryFill(inventoryFill, clientTick));
                 modules.runGuarded(fastPlace, "tick", () -> tickFastPlace(fastPlace));
-                modules.runGuarded(fastBreak, "tick", () -> MinecraftMiningAccess.tickFastBreak(fastBreak));
+                modules.runGuarded(fastBreak, "baritone-sync", MinecraftFastBreakAccess::tick);
                 modules.runGuarded(timer, "digging", () -> MinecraftMiningAccess.tickTimerDigging(timer));
                 modules.runGuarded(regen, "tick", () -> MinecraftRegenAccess.tick(clientTick, regen));
                 modules.runGuarded(nuker, "tick", () -> MinecraftMiningAccess.tickNuker(nuker));
@@ -1588,6 +1597,7 @@ public final class HelikonClient implements ClientModInitializer {
             BetterChatDisplayAccess.tickSmoothScroll();
             worldVisuals.tick(client);
             baritoneNavigation.tick();
+            baritoneNavigation.tickCombatPause(clientTick);
             if (waypointMigrationPending && waypoints.isReadyForCurrentWorld()) {
                 int migratedWaypoints = waypoints.migrateCurrent(legacyWaypoints.list());
                 waypointMigrationPending = false;

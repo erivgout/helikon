@@ -133,6 +133,11 @@ public final class AutoEat extends Module {
         return releaseUse ? new Action(-1, false, true, -1) : Action.none();
     }
 
+    /** Whether AutoEat currently owns Use and is waiting for normal item consumption to finish. */
+    public boolean isEating() {
+        return isEnabled() && useHeldByModule;
+    }
+
     @Override
     protected void onDisable() {
         if (useHeldByModule && !useKey.isPhysicallyDown()) {

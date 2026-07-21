@@ -4,6 +4,7 @@ import dev.helikon.client.mixin.MultiPlayerGameModeAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.EntityHitResult;
 
 import java.util.Objects;
 
@@ -16,6 +17,18 @@ public final class MinecraftHitSwapAccess {
 
     public static void install(HitSwap hitSwap) {
         module = Objects.requireNonNull(hitSwap, "hitSwap");
+    }
+
+    /**
+     * Selects the configured slot before {@code Minecraft.startAttack} snapshots the held item for
+     * attack eligibility, piercing-weapon, and range checks.
+     */
+    public static void beforeVanillaAttackChecks() {
+        Minecraft client = Minecraft.getInstance();
+        if (!(client.hitResult instanceof EntityHitResult) || client.player == null) {
+            return;
+        }
+        beforeAttack(client.player);
     }
 
     /** Called at the head of {@code MultiPlayerGameMode.attack}, before vanilla synchronizes the held slot. */

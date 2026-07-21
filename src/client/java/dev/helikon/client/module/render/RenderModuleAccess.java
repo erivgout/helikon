@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.Objects;
@@ -159,12 +160,13 @@ public final class RenderModuleAccess {
         BetterNametags module = betterNametags;
         Minecraft client = Minecraft.getInstance();
         Player localPlayer = client.player;
-        boolean remotePlayer = entity instanceof Player && entity != localPlayer;
+        boolean eligibleTarget = entity instanceof LivingEntity && entity != localPlayer
+                && module != null && module.targets(entity instanceof Player);
         boolean visible = localPlayer != null && !entity.isInvisibleTo(localPlayer);
         boolean lineOfSight = localPlayer != null && localPlayer.hasLineOfSight(entity);
         double distanceSquared = localPlayer == null ? Double.POSITIVE_INFINITY
                 : entity.position().distanceToSqr(localPlayer.position());
-        return module != null && module.replacesVanillaName(remotePlayer, visible, lineOfSight, distanceSquared);
+        return module != null && module.replacesVanillaName(eligibleTarget, visible, lineOfSight, distanceSquared);
     }
 
     public static float zoomedFov(float vanillaFov) {

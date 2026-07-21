@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Hides vanilla player labels only when Better Nametags draws its complete local replacement. */
+/** Hides vanilla living-entity labels only when Better Nametags draws its complete local replacement. */
 @Mixin(EntityRenderer.class)
 abstract class EntityRendererBetterNametagMixin {
     @Inject(

@@ -16,6 +16,7 @@ class HitSwapTest {
         assertEquals("hit_swap", hitSwap.id());
         assertFalse(hitSwap.defaultEnabled());
         assertEquals(1, hitSwap.weaponSlot());
+        assertEquals(4, hitSwap.holdTicks());
         assertEquals(HitSwap.Action.none(), hitSwap.beforeAttack(4, true));
     }
 
@@ -23,8 +24,11 @@ class HitSwapTest {
     void selectsConfiguredOccupiedSlotAndRestoresThePriorSlot() {
         HitSwap hitSwap = enabledModule();
         integerSetting(hitSwap, "weapon_slot").set(4);
+        integerSetting(hitSwap, "hold_ticks").set(1);
 
         assertEquals(new HitSwap.Action(HitSwap.ActionType.SELECT, 3), hitSwap.beforeAttack(7, true));
+        assertEquals(HitSwap.Action.none(), hitSwap.beforeAttack(3, true));
+        assertEquals(HitSwap.Action.none(), hitSwap.restore(3));
         assertEquals(new HitSwap.Action(HitSwap.ActionType.RESTORE, 7), hitSwap.restore(3));
         assertEquals(HitSwap.Action.none(), hitSwap.restore(7));
     }
@@ -37,6 +41,20 @@ class HitSwapTest {
         assertEquals(HitSwap.Action.none(), hitSwap.beforeAttack(0, false));
         assertEquals(HitSwap.Action.none(), hitSwap.beforeAttack(1, true));
         assertEquals(HitSwap.Action.none(), hitSwap.restore(1));
+    }
+
+    @Test
+    void holdsTheWeaponForConfiguredTicksAfterTheLatestAttack() {
+        HitSwap hitSwap = enabledModule();
+        integerSetting(hitSwap, "weapon_slot").set(2);
+        integerSetting(hitSwap, "hold_ticks").set(2);
+
+        assertEquals(new HitSwap.Action(HitSwap.ActionType.SELECT, 1), hitSwap.beforeAttack(0, true));
+        assertEquals(HitSwap.Action.none(), hitSwap.restore(1));
+        assertEquals(HitSwap.Action.none(), hitSwap.beforeAttack(1, true));
+        assertEquals(HitSwap.Action.none(), hitSwap.restore(1));
+        assertEquals(HitSwap.Action.none(), hitSwap.restore(1));
+        assertEquals(new HitSwap.Action(HitSwap.ActionType.RESTORE, 0), hitSwap.restore(1));
     }
 
     @Test

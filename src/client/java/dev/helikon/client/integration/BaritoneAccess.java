@@ -16,6 +16,13 @@ public interface BaritoneAccess {
             boolean renderPath,
             boolean renderGoal
     ) {
+        /**
+         * Baritone's inventory behavior ticks independently of active pathing. Keep it
+         * dormant whenever the Helikon module is off, including after panic.
+         */
+        public boolean inventoryAutomationEnabled() {
+            return active && allowInventory;
+        }
     }
 
     void apply(Options options);
@@ -23,6 +30,18 @@ public interface BaritoneAccess {
     boolean execute(String command);
 
     void cancel();
+
+    /** Temporarily yields Baritone's movement controls while local combat is active. */
+    void setCombatPaused(boolean paused);
+
+    /** Temporarily yields Baritone's movement controls while AutoEat owns the use key. */
+    void setAutoEatPaused(boolean paused);
+
+    /** Mirrors FastBreak's requested delay into Baritone without taking ownership when disabled. */
+    void setFastBreakDelay(boolean enabled, int delayTicks);
+
+    /** Whether Baritone is currently supplying horizontal movement input. */
+    boolean isMovementForced();
 
     boolean isPathing();
 

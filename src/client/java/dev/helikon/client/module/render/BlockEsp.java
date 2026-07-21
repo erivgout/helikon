@@ -42,7 +42,7 @@ public final class BlockEsp extends Module {
         verticalRange = addSetting(new NumberSetting("vertical_range", "Vertical range",
                 "Vertical local scan radius around the player in blocks.", 24.0D, 8.0D, 64.0D));
         scanBudget = addSetting(new NumberSetting("scan_budget", "Scan budget",
-                "Maximum local blocks checked per client tick.", 512.0D, 64.0D, 2_048.0D));
+                "Maximum local blocks checked per client tick.", 4_096.0D, 2_048.0D, 16_384.0D));
         tracers = addSetting(new BooleanSetting("tracers", "Tracers", "Draw local lines to cached matching blocks.", false));
         lineWidth = addSetting(new NumberSetting("line_width", "Line width", "Local box and line width.",
                 1.0D, 0.5D, 4.0D));

@@ -8,6 +8,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AutoEatTest {
     @Test
@@ -21,10 +22,12 @@ class AutoEatTest {
 
         AutoEat.Action begin = autoEat.tick(context(0, 10, 20.0F, candidates));
         assertEquals(new AutoEat.Action(2, true, false, -1), begin);
+        assertTrue(autoEat.isEating());
         assertEquals(true, useKey.down);
 
         AutoEat.Action finish = autoEat.tick(context(2, 20, 20.0F, candidates));
         assertEquals(new AutoEat.Action(-1, false, true, 0), finish);
+        assertFalse(autoEat.isEating());
         assertFalse(useKey.down);
     }
 

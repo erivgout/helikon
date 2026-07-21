@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Extends Better Nametags from remote players to non-player living entities,
+  with independent **Players** and **Entities** filters and mob-safe name,
+  health, armor, held-item, and distance rows.
+- Raises BlockESP's scan throughput and dedicated match-cache capacity so dense
+  target fields populate promptly without silently dropping results after 512 blocks.
+
 ## 1.5.1 - 2026-07-20
 
 - Restores Baritone selection rendering on Minecraft 26.2, including the

@@ -35,36 +35,14 @@ public final class Changelog extends Module {
 
     public List<String> notes() {
         return List.of(
-                "Helikon 1.1.5",
-                "StorageESP now detects nearby placed and removed storage on the next tick.",
-                "Scaffold places automatically without locking the selected hotbar slot.",
-                "Speed now supports a 10x multiplier with a configurable 3.0-block/tick cap.",
-                "Formatted server player names no longer crash friend-aware combat modules.",
-                "Air Place now responds correctly while Use is held.",
-                "Better Crosshair is locked to the exact viewport center.",
-                "Empty ClickGUI settings instructions now wrap inside their panel.",
-                "Speed now follows held WASD direction in midair, including with Jetpack and Air Jump.",
-                "AutoFarm now supports wart, berries, cocoa, stacked plants, melons, and pumpkins.",
-                "Infinity now repels nearby threats with ordinary client-side attacks.",
-                "Enderman Aura uses gravity-aware arrow prediction and wider side escapes.",
-                "Air Jump now supports bounded repeat jumps while Space is held.",
-                "TP-Aura now orbits targets and returns only when explicitly configured.",
-                "Zoom now applies its configured camera FOV and guards zero-FOV frames.",
-                "Fixed Nuker All Blocks selection; held Attack remains the default.",
-                "Fixed detached Freecam horizontal look and mouse rotation shaking.",
-                "Clipped empty ClickGUI settings text inside its panel.",
-                "TpClick now coordinates its fall reset with NoFall before teleporting.",
-                "Raised Timer to 5x and made FastBreak accelerate active mining.",
-                "Added the missing bounded Regen fast-heal attempt.",
-                "KillAura now attacks without moving your camera or head.",
-                "Fixed selected ClickGUI labels and favorite controls blending into their rows.",
-                "Extended Reach to 9 blocks for attacks, mining, and placement.",
-                "Added a BetterCrosshair frame toggle; the square border now defaults off.",
-                "Fixed the Minecraft 26.2 camera mixin startup crash.",
-                "Completed the permitted legacy issue backlog.",
-                "Added Enderman Aura and bounded anime/JJK combat.",
-                "Added interface, chat, world, player, and render utilities.",
-                "All automation is off by default; servers remain authoritative."
+                "Helikon 1.6.0",
+                "Radar can now save already-loaded discovered terrain in a persistent local atlas.",
+                "Press M to open a full-screen north-up map with pan, zoom, recenter, and saved waypoints.",
+                "Map data is isolated by singleplayer world or server and by dimension.",
+                "Versioned atomic region files include backups, corruption recovery, bounded caches, and a quota.",
+                "The new Update Checker can report newer stable GitHub releases with a local toast and chat link.",
+                "Update Checker is opt-in, makes one bounded GitHub request per enabled session, and never installs code.",
+                "No discovered terrain, coordinates, waypoints, credentials, or gameplay data leaves the client."
         );
     }
 }

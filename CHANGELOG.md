@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.6.0 - 2026-07-22
+
 - Adds an opt-in GitHub release checker that makes one bounded request per
   enabled client session and locally reports newer stable releases without
   downloading or installing anything.

@@ -6,6 +6,40 @@ The current milestone is a client-only Fabric mod. `fabric.mod.json` declares
 only `dev.helikon.client.HelikonClient` as a `client` entrypoint; the project has
 no server entrypoint and requires no server plugin.
 
+## Persistent discovered map
+
+Radar's compact HUD minimap remains a render-local `NativeImage`. Persistent
+discovery is a separate tick-bound pipeline under `dev.helikon.client.map`:
+
+1. `MapDiscoveryController` accepts existing chunk/block/world lifecycle facts,
+   confirms the current `WaypointContext`, and samples at most one still-loaded
+   chunk per client tick.
+2. `MinecraftMapChunkSampler` is the only adapter that reads `ClientLevel`,
+   `LevelChunk`, heightmaps, block states, and native map colors. It emits an
+   immutable 16x16 ARGB `MapChunkSnapshot`; no Minecraft object crosses the
+   thread boundary.
+3. `MapTileStore` owns one daemon storage worker, a bounded update queue, and a
+   64-region LRU. It merges snapshots into 256x256 one-pixel-per-block regions,
+   publishes immutable snapshots for rendering, and performs every file read,
+   compression, backup, and write off the render/client tick path.
+4. `HelikonMapScreen` requests visible snapshots asynchronously. A missing tile
+   draws as undiscovered for that frame. `MapTextureCache` uploads only changed
+   revisions and releases its bounded 64 dynamic textures on eviction, screen
+   removal, resource reload, context loss, panic, or shutdown.
+
+Map paths use full SHA-256 tokens of the existing waypoint world/server scope
+and dimension, plus self-validating `context.json` metadata. Region files are
+schema-versioned bounded GZIP streams with coordinate, pixel-count, and CRC
+validation. Writes use same-directory temporary files, backups, and atomic
+replacement. Malformed primaries are preserved before a valid backup is used;
+newer schemas remain untouched and pause capture.
+
+The global map quota includes primary, backup, metadata, and preserved corrupt
+files. Quota exhaustion and I/O errors pause recording without deleting existing
+discoveries or blocking gameplay. World changes flush the old context before
+the worker opens the next; client shutdown waits at most five seconds for a
+final flush.
+
 ## Modules
 
 `Module` owns immutable metadata, a stable lowercase ID, settings, a local

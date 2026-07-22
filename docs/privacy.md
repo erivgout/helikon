@@ -60,9 +60,17 @@ bounded current-world session memory and clear on world transitions. Only its
 ordinary module settings persist; no evidence, seed, coordinates, or results
 are written to disk or transmitted.
 
-Trajectories, TrueSight, and Radar similarly consume only already-loaded local
-world state for the active session. Their predicted paths, invisible-entity
-boxes, and radar points are never persisted or transmitted.
+Trajectories and TrueSight consume only already-loaded local world state for the
+active session; their predicted paths and invisible-entity boxes are never
+persisted or transmitted. Radar points are likewise session-only. If the user
+enables Radar's **Minimap** and **Save discovered map**, Helikon stores local
+terrain colors and block coordinates under `config/helikon/maps/v1`, separated
+by hashed world/server and dimension directories with validated local context
+metadata. These files never contain entities, inventories, chat, account data,
+or server seeds, and no map pixel, coordinate, context, or waypoint is ever
+transmitted. Disabling map recording stops new capture without deleting existing
+discoveries; reaching the configured quota pauses capture rather than evicting
+user data.
 
 XRay's compiled-geometry snapshot and StorageESP's bounded block-position
 cache are in-memory-only local render state. They are not stored, transmitted,

@@ -32,8 +32,13 @@ connection.
 
 Trajectories, TrueSight, and Radar likewise read only current client-side
 entity/projectile/block state to create local overlay geometry or HUD points.
-They do not request additional chunks, send coordinates, or modify packets,
-entity state, projectile movement, or normal server interactions.
+Radar's optional discovered-map recorder copies colors only from chunks already
+present as `FULL` in the local client cache, at a bounded one-chunk-per-tick
+rate, then writes local files under `config/helikon/maps/v1`. Opening or panning
+the full-screen map reads only those files and current-dimension local Baritone
+waypoints. None of these paths requests additional chunks, sends coordinates or
+waypoints, creates an HTTP/WebSocket connection, or modifies packets, entity
+state, projectile movement, or normal server interactions.
 
 XRay filters and rebuilds only already-loaded local chunk geometry. StorageESP
 snapshots block entities already present in nearby loaded chunks each tick.

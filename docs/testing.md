@@ -163,7 +163,11 @@ scan order, cache eviction, and Breadcrumb sampling/age bounds are covered by
 `EntityRenderFilterTest`, `BlockEspPolicyTest`, and `BreadcrumbTrailTest`.
 Trajectory drag/gravity ordering, collision stopping, radar projection/clipping,
 and ARGB transparency are covered by `TrajectorySimulatorTest`,
-`RadarProjectionTest`, and `RenderColorTest`.
+`RadarProjectionTest`, and `RenderColorTest`. Persistent-map context hashing,
+negative coordinate math, bounded region encoding/recovery, asynchronous store
+quota and context behavior, capture queue bounds, viewport projection, and
+waypoint layout are covered by the tests under `dev.helikon.client.map`;
+`RadarTest` covers the recording settings and visibility defaults.
 XRay target filtering, opacity validation, reversible renderer-invalidation
 decisions, and StorageESP target-family/enabled-state decisions are covered by
 `XRayRenderStateTest`, `XRayTest`, `StorageEspTargetsTest`, and
@@ -583,10 +587,25 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     **Radar**, verify circle/square, toggle the terrain minimap on and off, then
     confirm the cached minimap no longer causes a major FPS drop while moving
     and turning while retaining one-pixel terrain detail. Verify terrain
-    refreshes within one second, along with
-    rotation, zoom, local friend color, and category filters. Confirm no
-    unloaded terrain or out-of-range entities appear. None of these results should be
-    visible to another player or change a normal projectile/entity interaction.
+    refreshes within one second, along with rotation, zoom, local friend color,
+    and category filters. Enable **Save discovered map**, walk until the starting
+    chunks unload, press **M**, and confirm both loaded areas remain visible with
+    only genuinely loaded connecting terrain. Drag/WASD/arrow pan, wheel zoom,
+    and R recenter must preserve north-up coordinates across negative and
+    positive positions. Add current-dimension Baritone USER/HOME/BED/DEATH
+    waypoints and confirm their markers appear, including over undiscovered
+    terrain. Restart, switch Overworld/Nether/End, join two disposable servers,
+    and use a separate singleplayer save; each world/server and dimension must
+    reopen only its own atlas and waypoints. In the Nether, confirm the bounded
+    last-seen player layer is useful rather than a uniform roof. Corrupt a copied
+    test region with a valid backup and verify preservation/recovery; exercise a
+    copied newer-schema context and the 64 MiB quota without changing primary
+    data. Disable recording, trigger panic, disconnect, and change dimension
+    while the map is open; capture must stop or the screen close without deleting
+    tiles or leaking textures. Confirm no unloaded terrain or out-of-range
+    entities appear, render extraction performs no disk wait, no file is written
+    every tick, and none of these results is visible to another player or changes
+    a normal projectile/entity interaction.
 37. In a disposable local/test world, enable **XRay** and verify only its
     configured locally loaded block models remain visible after the geometry
     rebuild; change the block list and opacity, wait for the local rebuild, and

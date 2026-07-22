@@ -264,6 +264,7 @@ Module IDs are lowercase and stable; display names are not used as identifiers.
 | `too_many_hax` | Miscellaneous | Prevents known movement, aura, and packet-buffer incompatibilities. | none | It retains the most recently enabled module in each documented conflict group and disables the older active conflicts. For example, enabling TP-Aura while KillAura is active keeps TP-Aura and turns off KillAura. |
 | `book_hack` | Miscellaneous | Adds Ctrl+Shift+V bulk clipboard pagination to writable books. | none | Import is capped at vanilla's 100 pages and 1,024 characters per page; it never emits oversized or malformed book data. |
 | `changelog` | Miscellaneous | Opens Helikon's bundled release notes in a local screen. | none | This is a one-shot local interface action and performs no network request. |
+| `update_checker` | Miscellaneous | Checks Helikon's public GitHub releases and reports a newer stable version. | none | Disabled by default. After explicit enable it makes one bounded unauthenticated `api.github.com` request per client session, shows a local toast/chat link only when the public release version is newer, and never downloads or installs anything. Disable/panic cancels an in-flight lookup and suppresses its result. |
 | `server_cleanup` | Miscellaneous | Sorts the local saved server list and removes exact duplicate addresses. | none | This is an explicit one-shot local file change; the first entry for a duplicate address is retained. |
 
 ## ClickGUI

@@ -10,6 +10,16 @@ off-by-default local persistence mode; it is never collected or transmitted.
 Future optional integrations require explicit user action and must be documented
 in [networking.md](networking.md).
 
+Update Checker is the only current optional public-service integration and is
+disabled by default. If the user enables it, one bounded unauthenticated HTTPS
+request per client session asks `api.github.com` for this repository's latest
+stable release. The request identifies only the installed Helikon version in
+its User-Agent; GitHub also receives the connecting IP as it does for any HTTPS
+request. Helikon sends no Minecraft token, account, server, mod-list, setting,
+coordinate, waypoint, chat, hardware, or local-path data. It stores no response
+history and never downloads or installs a release. Disable or panic cancels the
+lookup and suppresses its result.
+
 PrivateMessageHelper keeps only a bounded, session-memory view of outgoing
 `.pm` text for local command history. It never persists that text, transmits it
 to a Helikon service, or attempts to recognize private messages from arbitrary

@@ -17,11 +17,14 @@ A Fabric client-gametest tier runs a real 26.2 client in-engine:
 .\gradlew.bat runClientGameTest
 ```
 
-It creates a singleplayer world, enables every registered module at once,
+It creates a singleplayer world, enables every non-network module at once,
 soaks them through real tick/render traffic, cycles EntityESP through all
 four modes, verifies no module was auto-disabled by the failure handler,
 captures screenshots under `build/run/clientGameTest/screenshots/`, and
-verifies a clean disable and world close. The gametest mod
+verifies a clean disable and world close. The opt-in Update Checker is excluded
+so automated tests never contact a live third-party service; its lifecycle and
+response policy use fake-transport unit tests plus the explicit manual check.
+The gametest mod
 (`helikon_gametest`, `src/gametest/`) is a separate dev-only mod and is never
 included in release JARs. CI runs it under a virtual display.
 
@@ -958,6 +961,24 @@ manual. Run `./gradlew.bat runClient` using Java 25, then:
     verify it does not fire. Use `.panic restorehud`, relaunch to verify the
     key persists in `panic.json`, and replace that file with invalid JSON to
     verify `panic.corrupt-<timestamp>.json` recovery and an unbound fallback.
+
+## Manual Update Checker smoke test
+
+1. Start offline with **Update Checker** disabled and verify no GitHub request,
+   update toast, or update chat line occurs. Enable it in Miscellaneous while
+   still offline and confirm Helikon remains usable without a false notice or
+   repeated retry loop.
+2. Against a disposable/fake response or a release newer than the installed
+   build, enable **Update Checker** and verify exactly one request reaches
+   `api.github.com`, then one local toast and chat line show the tag and the
+   `github.com/erivgout/helikon/releases/` page. Equal/older, 404, malformed,
+   oversized, non-GitHub URL, 403/rate-limit, and timeout responses must not
+   claim an update.
+3. Disable the module or invoke panic while a delayed request is pending and
+   verify its result is ignored. Re-enable to permit one fresh check. Confirm
+   no JAR is downloaded, no browser opens automatically, no response cache is
+   written, and packet capture contains no Minecraft token, account, server,
+   mod-list, setting, coordinate, waypoint, chat, hardware, or local-path data.
 
 ## Bootstrap smoke test
 

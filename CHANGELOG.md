@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Adds an opt-in GitHub release checker that makes one bounded request per
+  enabled client session and locally reports newer stable releases without
+  downloading or installing anything.
+- Adds a persistent per-world/server and per-dimension discovered-terrain atlas
+  with a full-screen waypoint map.
+
 ## 1.5.2 - 2026-07-20
 
 - Fixes HitSwap so its configured weapon is selected before Minecraft evaluates

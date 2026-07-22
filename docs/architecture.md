@@ -40,6 +40,23 @@ discoveries or blocking gameplay. World changes flush the old context before
 the worker opens the next; client shutdown waits at most five seconds for a
 final flush.
 
+## Optional GitHub release integration
+
+`UpdateChecker` is a disabled-by-default Miscellaneous module that supplies the
+explicit enabled state required for the only external integration. Its module
+class contains no HTTP code. `UpdateCheckController` observes that state on the
+client thread, starts no more than one lookup per enable/session, publishes a
+completed result through `MinecraftUpdateNotifier`, and cancels pending work on
+disable or shutdown.
+
+All HTTP types are confined to `dev.helikon.client.integration.network`.
+`GitHubReleaseChecker` hard-codes and validates the HTTPS `api.github.com`
+release endpoint, sends no credential, rejects redirects and untrusted result
+URLs, caps the JSON response at 64 KiB, and applies connect/request timeouts.
+`ReleaseVersion` and response policy remain Minecraft-free and unit-tested.
+Failures leave the client functional and produce no false update notice; the
+integration never downloads or loads code.
+
 ## Modules
 
 `Module` owns immutable metadata, a stable lowercase ID, settings, a local

@@ -48,6 +48,8 @@ import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.friend.FriendToggleGesture;
 import dev.helikon.client.integration.BaritoneCompatibility;
 import dev.helikon.client.integration.MinecraftBaritoneAccess;
+import dev.helikon.client.integration.network.GitHubReleaseChecker;
+import dev.helikon.client.integration.network.UpdateCheckController;
 import dev.helikon.client.gui.ClickGuiWindowState;
 import dev.helikon.client.gui.HelikonClickGuiScreen;
 import dev.helikon.client.gui.GameplayScreenPolicy;
@@ -227,6 +229,7 @@ import dev.helikon.client.module.miscellaneous.MinecraftWindChargeAccess;
 import dev.helikon.client.module.miscellaneous.OneClickFriends;
 import dev.helikon.client.module.miscellaneous.SkinBlinker;
 import dev.helikon.client.module.miscellaneous.Twerk;
+import dev.helikon.client.module.miscellaneous.UpdateChecker;
 import dev.helikon.client.module.miscellaneous.WindCharge;
 import dev.helikon.client.module.player.AutoTool;
 import dev.helikon.client.module.player.AutoSwitch;
@@ -368,6 +371,7 @@ import dev.helikon.client.module.render.TrueSight;
 import dev.helikon.client.module.render.Waypoints;
 import dev.helikon.client.module.render.XRay;
 import dev.helikon.client.notification.ChatNotifier;
+import dev.helikon.client.notification.MinecraftUpdateNotifier;
 import dev.helikon.client.panic.PanicController;
 import dev.helikon.client.panic.PanicState;
 import dev.helikon.client.privatechat.PrivateMessageHistory;
@@ -854,6 +858,12 @@ public final class HelikonClient implements ClientModInitializer {
                 new dev.helikon.client.module.miscellaneous.BookHack();
         dev.helikon.client.module.miscellaneous.Changelog changelog =
                 new dev.helikon.client.module.miscellaneous.Changelog();
+        UpdateChecker updateChecker = new UpdateChecker();
+        String installedVersion = FabricLoader.getInstance().getModContainer(MOD_ID)
+                .map(container -> container.getMetadata().getVersion().getFriendlyString())
+                .orElse("0.0.0");
+        UpdateCheckController updateChecks = new UpdateCheckController(
+                updateChecker, new GitHubReleaseChecker(), installedVersion, new MinecraftUpdateNotifier(notifier));
         dev.helikon.client.module.miscellaneous.ServerCleanUp serverCleanUp =
                 new dev.helikon.client.module.miscellaneous.ServerCleanUp();
         OneClickFriends oneClickFriends = new OneClickFriends();
@@ -1022,6 +1032,7 @@ public final class HelikonClient implements ClientModInitializer {
         modules.register(annoy);
         modules.register(bookHack);
         modules.register(changelog);
+        modules.register(updateChecker);
         modules.register(serverCleanUp);
         dev.helikon.client.module.miscellaneous.BookHackAccess.install(bookHack);
         modules.register(oneClickFriends);
@@ -1240,6 +1251,7 @@ public final class HelikonClient implements ClientModInitializer {
                 modules.runGuarded(changelog, "tick",
                         () -> dev.helikon.client.module.miscellaneous.MinecraftInterfaceActions.tickChangelog(
                                 changelog, modules));
+                modules.runGuarded(updateChecker, "tick", updateChecks::tick);
                 modules.runGuarded(serverCleanUp, "tick",
                         () -> dev.helikon.client.module.miscellaneous.MinecraftInterfaceActions.tickServerCleanup(
                                 serverCleanUp, modules));
@@ -1657,6 +1669,7 @@ public final class HelikonClient implements ClientModInitializer {
         });
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
             baritoneNavigation.shutdown();
+            updateChecks.close();
             if (client.gui.screen() instanceof HelikonMapScreen mapScreen) {
                 mapScreen.onResourceReload();
             }

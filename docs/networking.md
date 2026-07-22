@@ -2,9 +2,32 @@
 
 ## Current bootstrap
 
-Helikon makes no HTTP, WebSocket, telemetry, analytics, update-check, account,
-or backend requests. It only uses Minecraft's normal connection when the player
-joins a server.
+Helikon has no HTTP request enabled by default and makes no WebSocket,
+telemetry, analytics, account, or backend request. It uses Minecraft's normal
+connection when the player joins a server. The only optional public-service
+integration is the explicit **Update Checker** described below.
+
+## Optional GitHub release check
+
+| Contract | Value |
+|---|---|
+| Integration ID | `github_release_check` |
+| Display name | GitHub release checker |
+| Enabled state | Controlled by the `update_checker` Miscellaneous module; disabled by default |
+| Allowed host | `api.github.com` over HTTPS only |
+| Trigger | Once per client session after the user explicitly enables the module; toggling it off and on requests a fresh check |
+| Request | `GET /repos/erivgout/helikon/releases/latest`, GitHub's versioned JSON media type, an 8-second request timeout, and a 64 KiB response cap |
+| Sent data | A User-Agent containing the installed Helikon version. GitHub necessarily sees the connecting IP and ordinary HTTPS metadata. No Minecraft token, account/session data, server address, mod list, settings, coordinates, waypoint, chat, path, or hardware identifier is sent. |
+| Received data | Latest stable release tag and its public GitHub release-page URL |
+| Storage | Only the normal local module enabled state is persisted. Responses, timestamps, IP data, and failure details are not written to Helikon configuration. |
+| User result | If the stable tag is newer than the installed semantic version, a local toast and chat line identify the version and public release page. Equal, older, missing, malformed, rate-limited, offline, and timed-out results do not claim an update. |
+| Disable behavior | Disable the module or use panic. An in-flight lookup is cancelled, late results are ignored, and no further request starts. |
+| Local fallback | Helikon remains fully usable offline; bundled changelog and version metadata remain local. The checker never downloads or installs a JAR. |
+
+Networking classes for this integration live only under
+`dev.helikon.client.integration.network`. The Gradle architecture check rejects
+HTTP-client tokens elsewhere so modules and core systems cannot acquire an
+undeclared network path.
 
 When the user explicitly runs a configured macro, its `chat` and `command`
 actions use that same normal Minecraft server connection. Macro definitions,

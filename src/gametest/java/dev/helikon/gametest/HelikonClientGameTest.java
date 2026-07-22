@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * In-engine smoke test: every registered module must survive real client
+ * In-engine smoke test: every non-network module must survive real client
  * tick/render traffic without tripping the failure handler, and EntityESP must
  * cycle all four modes cleanly. A module that throws anywhere in its guarded
  * paths is auto-disabled by ModuleRegistry, which this test detects by name.
@@ -55,9 +55,13 @@ public final class HelikonClientGameTest implements FabricClientGameTest {
             exerciseSeedCracker(context, modules);
             assertNoFailures(failures, "while solving and rendering SeedCracker evidence");
 
-            context.runOnClient(client -> modules.all().forEach(module -> modules.setEnabled(module, true)));
+            context.runOnClient(client -> modules.all().stream()
+                    // External integrations use deterministic unit/fake-transport and explicit manual tests;
+                    // the in-engine suite must never contact a live third-party service.
+                    .filter(module -> !module.id().equals("update_checker"))
+                    .forEach(module -> modules.setEnabled(module, true)));
             context.waitTicks(SOAK_TICKS);
-            assertNoFailures(failures, "after enabling every module");
+            assertNoFailures(failures, "after enabling every non-network module");
             context.takeScreenshot("helikon-all-modules-enabled");
 
             cycleEntityEspModes(context, modules);

@@ -10,9 +10,9 @@ Gradle, the operating system, or server plugins.
 
 - `fabric.mod.json` declares a client entrypoint only; there is no Helikon
   server component.
-- `verifyClientOnlyArchitecture` runs under Gradle `check` and rejects common
-  external-network API tokens in Java source while checking the client-only
-  descriptor.
+- `verifyClientOnlyArchitecture` runs under Gradle `check`, verifies the
+  client-only descriptor, and rejects common external-network API tokens
+  outside the declared `integration.network` package.
 - `verifySourceStyle` rejects Java tabs and trailing whitespace so review diffs
   remain readable.
 - Local JSON stores validate their schemas/values, write through temporary files
@@ -27,7 +27,9 @@ Gradle, the operating system, or server plugins.
   a failing module is disabled and its normal cleanup is attempted without
   crashing unrelated modules.
 - No module constructs malformed packets, bypasses anti-cheat, downloads
-  assets, executes arbitrary code, opens an external socket, or emits telemetry.
+  assets, executes arbitrary code, or emits telemetry. Update Checker is the
+  sole optional external request: it is disabled by default, host/size/time
+  bounded, unauthenticated, and cannot download or load code.
 - Domain Expansion uses loaded client observations, full-block and hitbox
   checks, ordinary inventory/container interactions, and Minecraft's normal
   block-use path. Placement reach, support, visibility, acceptance, and world
@@ -63,4 +65,5 @@ Gradle, the operating system, or server plugins.
   generated dependency report and upstream advisories before a final tag.
 
 Publish only from a reviewed, signed/tagged source commit after the full Gradle
-check, release bundle, manual smoke, performance, and no-internet checks pass.
+check, release bundle, manual smoke, performance, default-disabled/offline, and
+opt-in integration checks pass.

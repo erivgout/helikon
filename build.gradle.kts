@@ -168,16 +168,20 @@ val verifySourceStyle = tasks.register("verifySourceStyle") {
     }
 }
 
-/** Enforces the client-only/no-Helikon-networking boundary without adding a remote analysis service. */
+/** Confines optional networking to its declared integration package and preserves the client-only descriptor. */
 val verifyClientOnlyArchitecture = tasks.register("verifyClientOnlyArchitecture") {
     group = "verification"
-    description = "Checks for a client-only descriptor and forbidden external-network APIs in source."
+    description = "Checks the client-only descriptor and rejects network APIs outside integration.network."
     val sourceFiles = fileTree("src") { include("**/*.java") }
     inputs.files(sourceFiles)
     inputs.file("src/main/resources/fabric.mod.json")
     doLast {
         val forbiddenTokens = listOf("java.net.", "HttpClient", "WebSocket", "URLConnection", "OkHttp")
+        val networkIntegrationPath = "/dev/helikon/client/integration/network/"
         val violations = sourceFiles.files.sortedBy { it.invariantSeparatorsPath }.flatMap { source ->
+            if (networkIntegrationPath in source.invariantSeparatorsPath) {
+                return@flatMap emptyList()
+            }
             source.readLines().mapIndexedNotNull { index, line ->
                 forbiddenTokens.firstOrNull(line::contains)?.let { token ->
                     "${source.invariantSeparatorsPath}:${index + 1}: forbidden external-network token '$token'"

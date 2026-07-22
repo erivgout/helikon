@@ -24,8 +24,9 @@ binary.
 
 1. Confirm the full test suite, `verifySourceStyle`, and
    `verifyClientOnlyArchitecture` pass.
-2. Complete the manual smoke and no-internet checks in `testing.md`, including
-   world transitions, panic, malformed configuration, and one-hour runtime.
+2. Complete the manual smoke, default-disabled/offline, and opt-in integration
+   checks in `testing.md`, including world transitions, panic, malformed
+   configuration, and one-hour runtime.
 3. Complete the profiling procedure in `performance.md` and review the
    generated dependency report against current advisories.
 4. Review `security-review.md`, README/module limitations, and the source/JAR

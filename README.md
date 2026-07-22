@@ -30,7 +30,7 @@ branding, or configuration formats from that or any other project.
   CriticalAssist, AutoPotion, TargetHUD, ReachDisplay, AntiBot.
 - **Local systems** — ClickGUI with an Active view, themes, settings scrolling, and keyboard navigation, HUD
   editor, per-server profiles, friends, waypoints, macros, panic key, and a
-  local-only debug overlay.
+  local-only debug overlay, plus an optional GitHub release checker.
 
 Every module is honest about server authority: client-side effects are local,
 nothing sends malformed packets, and there are no anti-cheat bypass presets.
@@ -68,7 +68,9 @@ result.
   history) is stored locally under `.minecraft/config/helikon/`.
 - No Helikon-operated backend, telemetry, analytics, account service, remote
   feature flags, or cloud synchronization exists.
-- The current release performs no external network requests at all.
+- **Update Checker** is the only optional external integration. It is disabled
+  by default; when enabled, it makes one bounded request per client session to
+  Helikon's public GitHub release API and never downloads or installs code.
 
 See [privacy.md](docs/privacy.md) and [networking.md](docs/networking.md).
 

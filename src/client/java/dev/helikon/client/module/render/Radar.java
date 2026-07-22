@@ -8,12 +8,15 @@ import dev.helikon.client.render.RadarProjection;
 import dev.helikon.client.setting.BooleanSetting;
 import dev.helikon.client.setting.ColorSetting;
 import dev.helikon.client.setting.EnumSetting;
+import dev.helikon.client.setting.IntegerSetting;
 import dev.helikon.client.setting.NumberSetting;
 
 /** Configures a compact local entity radar HUD. */
 public final class Radar extends Module {
     private final EnumSetting<RadarProjection.Shape> shape;
     private final BooleanSetting minimap;
+    private final BooleanSetting saveDiscoveredMap;
+    private final IntegerSetting mapStorageLimitMb;
     private final BooleanSetting rotate;
     private final NumberSetting zoom;
     private final BooleanSetting players;
@@ -37,6 +40,11 @@ public final class Radar extends Module {
                 RadarProjection.Shape.class, RadarProjection.Shape.CIRCLE));
         minimap = addSetting(new BooleanSetting("minimap", "Minimap",
                 "Draw nearby surface terrain beneath the radar entity points.", false));
+        saveDiscoveredMap = addSetting(new BooleanSetting("save_discovered_map", "Save discovered map",
+                "Keep loaded minimap terrain locally for the full-screen map.", true, minimap::value));
+        mapStorageLimitMb = addSetting(new IntegerSetting("map_storage_limit_mb", "Map storage limit",
+                "Maximum local map storage across worlds, servers, dimensions, backups, and recovered files (MiB).",
+                512, 64, 4096, () -> minimap.value() && saveDiscoveredMap.value()));
         rotate = addSetting(new BooleanSetting("rotate", "Rotate", "Rotate local radar points with player yaw.", true));
         zoom = addSetting(new NumberSetting("zoom", "Zoom", "Horizontal local radar range in blocks.",
                 64.0D, 8.0D, 192.0D));
@@ -76,6 +84,10 @@ public final class Radar extends Module {
     public RadarProjection.Shape shape() { return shape.value(); }
 
     public boolean minimap() { return minimap.value(); }
+
+    public boolean saveDiscoveredMap() { return saveDiscoveredMap.value(); }
+
+    public int mapStorageLimitMb() { return mapStorageLimitMb.value(); }
 
     public boolean rotate() { return rotate.value(); }
 

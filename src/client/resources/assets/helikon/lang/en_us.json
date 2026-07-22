@@ -1,6 +1,7 @@
 {
   "key.category.helikon.general": "Helikon",
   "key.helikon.open_gui": "Open Helikon GUI",
+  "key.helikon.open_map": "Open discovered map",
   "screen.helikon.title": "Helikon",
   "screen.helikon.search_hint": "Search...",
   "screen.helikon.search_results": "Search results",
@@ -20,5 +21,6 @@
   "screen.helikon.hud_editor.active_modules": "Active modules",
   "screen.helikon.hud_editor.settings_button": "HUD settings",
   "screen.helikon.hud_settings.title": "Helikon HUD Settings",
-  "screen.helikon.hud_settings.instructions": "Click a row to change it. Escape returns to the HUD editor."
+  "screen.helikon.hud_settings.instructions": "Click a row to change it. Escape returns to the HUD editor.",
+  "screen.helikon.map.title": "Helikon Map"
 }

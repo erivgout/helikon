@@ -11,6 +11,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class KeybindTest {
     @Test
+    void reservesShellScreenDefaultsBeforeMappingsAreRegistered() {
+        assertTrue(HelikonKeybinds.isGuiKey(new Keybind(GLFW.GLFW_KEY_RIGHT_SHIFT, Keybind.Activation.TOGGLE)));
+        assertTrue(HelikonKeybinds.isGuiKey(new Keybind(GLFW.GLFW_KEY_M, Keybind.Activation.TOGGLE)));
+        assertFalse(HelikonKeybinds.isGuiKey(new Keybind(GLFW.GLFW_KEY_R, Keybind.Activation.TOGGLE)));
+    }
+
+    @Test
     void unboundKeybindIsValidAndNotBound() {
         assertFalse(Keybind.unbound().isBound());
         assertTrue(Keybind.isValidKeyCode(Keybind.UNBOUND_KEY));

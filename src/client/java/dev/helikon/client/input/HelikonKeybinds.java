@@ -17,6 +17,7 @@ import org.lwjgl.glfw.GLFW;
 /** Registers non-module key mappings used by the Helikon shell. */
 public final class HelikonKeybinds {
     private static KeyMapping openGui;
+    private static KeyMapping openMap;
 
     private HelikonKeybinds() {
     }
@@ -26,8 +27,10 @@ public final class HelikonKeybinds {
             ConfigurationManager configuration,
             ClickGuiWindowState clickGuiWindow,
             HudLayout hudLayout,
-            HudConfigurationManager hudConfiguration
+            HudConfigurationManager hudConfiguration,
+            Runnable openMapAction
     ) {
+        java.util.Objects.requireNonNull(openMapAction, "openMapAction");
         KeyMapping.Category category = KeyMapping.Category.register(
                 Identifier.fromNamespaceAndPath(HelikonClient.MOD_ID, "general")
         );
@@ -35,6 +38,12 @@ public final class HelikonKeybinds {
                 "key.helikon.open_gui",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_RIGHT_SHIFT,
+                category
+        ));
+        openMap = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+                "key.helikon.open_map",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_M,
                 category
         ));
 
@@ -48,6 +57,11 @@ public final class HelikonKeybinds {
                     ));
                 }
             }
+            while (openMap.consumeClick()) {
+                if (client.gui.screen() == null) {
+                    openMapAction.run();
+                }
+            }
         });
     }
 
@@ -57,10 +71,15 @@ public final class HelikonKeybinds {
      * suppresses module keybinds), so every bind assignment path rejects it.
      */
     public static boolean isGuiKey(Keybind keybind) {
-        if (openGui == null || !keybind.isBound()) {
+        if (!keybind.isBound()) {
             return false;
         }
+        if (keybind.isKeyboard()
+                && (keybind.keyCode() == GLFW.GLFW_KEY_RIGHT_SHIFT || keybind.keyCode() == GLFW.GLFW_KEY_M)) {
+            return true;
+        }
         InputConstants.Type type = keybind.isKeyboard() ? InputConstants.Type.KEYSYM : InputConstants.Type.MOUSE;
-        return openGui.matches(type.getOrCreate(keybind.keyCode()));
+        return openGui != null && openGui.matches(type.getOrCreate(keybind.keyCode()))
+                || openMap != null && openMap.matches(type.getOrCreate(keybind.keyCode()));
     }
 }

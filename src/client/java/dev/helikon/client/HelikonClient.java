@@ -43,6 +43,7 @@ import dev.helikon.client.event.PlayerStateEventTracker;
 import dev.helikon.client.event.PlayerStateSnapshot;
 import dev.helikon.client.event.PlayerLifecycleEvent;
 import dev.helikon.client.event.RenderEvent;
+import dev.helikon.client.event.ResourceReloadEvent;
 import dev.helikon.client.friend.FriendManager;
 import dev.helikon.client.friend.FriendToggleGesture;
 import dev.helikon.client.integration.BaritoneCompatibility;
@@ -54,6 +55,7 @@ import dev.helikon.client.gui.HelikonHudEditorScreen;
 import dev.helikon.client.gui.HelikonHudSettingsScreen;
 import dev.helikon.client.gui.HelikonThemeEditorScreen;
 import dev.helikon.client.gui.HelikonAutoReconnectScreen;
+import dev.helikon.client.gui.HelikonMapScreen;
 import dev.helikon.client.hud.ActiveModulesHud;
 import dev.helikon.client.hud.ArrowsHud;
 import dev.helikon.client.hud.BetterCrosshairHud;
@@ -85,6 +87,8 @@ import dev.helikon.client.macro.MacroRunner;
 import dev.helikon.client.macro.MacroServerContextProvider;
 import dev.helikon.client.macro.MinecraftMacroActionExecutor;
 import dev.helikon.client.macro.MinecraftMacroServerContextProvider;
+import dev.helikon.client.map.MapDiscoveryController;
+import dev.helikon.client.map.MapTileStore;
 import dev.helikon.client.module.ModuleRegistry;
 import dev.helikon.client.module.ModuleTimingMetrics;
 import dev.helikon.client.module.combat.AntiBot;
@@ -427,6 +431,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.time.Duration;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -504,6 +509,9 @@ public final class HelikonClient implements ClientModInitializer {
     private boolean autoLeaveDisconnectInFlight;
     private boolean moduleStateSavePending;
     private boolean waypointMigrationPending;
+    private Radar mapRadar;
+    private MapTileStore mapTiles;
+    private MapDiscoveryController mapDiscovery;
 
     /** The live registry, exposed only for client gametests; null before client init. */
     public static ModuleRegistry activeModuleRegistry() {
@@ -567,6 +575,10 @@ public final class HelikonClient implements ClientModInitializer {
         TrueSight trueSight = new TrueSight();
         Waypoints waypointMarkers = new Waypoints();
         Radar radar = new Radar();
+        mapRadar = radar;
+        mapTiles = new MapTileStore(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID)
+                .resolve("maps").resolve("v1"), radar::mapStorageLimitMb);
+        mapDiscovery = new MapDiscoveryController(radar, waypointLocations, mapTiles);
         SaturationDisplay saturationDisplay = new SaturationDisplay();
         StorageEsp storageEsp = new StorageEsp();
         RemoteView remoteView = new RemoteView();
@@ -1066,13 +1078,22 @@ public final class HelikonClient implements ClientModInitializer {
                         event.phase() == ChunkEvent.Phase.LOAD
                                 ? NewChunks.ChunkPhase.LOAD
                                 : NewChunks.ChunkPhase.UNLOAD,
-                        event.chunkX(), event.chunkZ(), System.currentTimeMillis())));
+                         event.chunkX(), event.chunkZ(), System.currentTimeMillis())));
+        events.subscribe(ChunkEvent.class, mapDiscovery::observeChunk);
         events.subscribe(BlockChangeEvent.class, event -> modules.runGuarded(blockEsp, "block-change",
                 () -> worldVisuals.observeBlockChange(event)));
+        events.subscribe(BlockChangeEvent.class, mapDiscovery::observeBlockChange);
         events.subscribe(WorldEvent.class,
                 event -> modules.runGuarded(newChunks, "world-change", newChunks::clear));
         events.subscribe(WorldEvent.class,
                 event -> modules.runGuarded(seedCracker, "world-change", seedCracker::clearSession));
+        events.subscribe(WorldEvent.class, event -> mapDiscovery.onWorldChange());
+        events.subscribe(ResourceReloadEvent.class, event -> {
+            if (event.phase() == ResourceReloadEvent.Phase.COMPLETE
+                    && Minecraft.getInstance().gui.screen() instanceof HelikonMapScreen mapScreen) {
+                mapScreen.onResourceReload();
+            }
+        });
         events.subscribe(InputEvent.class, event -> {
             if (event.kind() != InputEvent.Kind.MOUSE_BUTTON || event.action() != InputEvent.Action.PRESS
                     || Minecraft.getInstance().gui.screen() != null) {
@@ -1526,7 +1547,7 @@ public final class HelikonClient implements ClientModInitializer {
             }
         });
 
-        HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration);
+        HelikonKeybinds.register(modules, configuration, clickGuiWindow, hudLayout, hudConfiguration, this::openMap);
         MinecraftWaypointRenderer waypointRenderer = new MinecraftWaypointRenderer(
                 waypointMarkers, waypoints, waypointLocations, panicState);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(MOD_ID, "active_modules"),
@@ -1605,6 +1626,7 @@ public final class HelikonClient implements ClientModInitializer {
                     LOGGER.info("Migrated " + migratedWaypoints + " legacy Helikon waypoint(s) into Baritone.");
                 }
             }
+            mapDiscovery.tick();
             debugOverlayHud.tick();
 
             boolean anyScreenOpen = screenWasOpenAtTickStart || client.gui.screen() != null;
@@ -1635,6 +1657,12 @@ public final class HelikonClient implements ClientModInitializer {
         });
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
             baritoneNavigation.shutdown();
+            if (client.gui.screen() instanceof HelikonMapScreen mapScreen) {
+                mapScreen.onResourceReload();
+            }
+            if (!mapTiles.closeAndFlush(Duration.ofSeconds(5))) {
+                LOGGER.warning("Timed out while flushing persistent map data during client shutdown");
+            }
             saveConfigurations();
         });
 
@@ -1649,6 +1677,16 @@ public final class HelikonClient implements ClientModInitializer {
         Minecraft.getInstance().setScreenAndShow(HelikonClickGuiScreen.create(
                 modules, configuration, clickGuiWindow, hudLayout, hudConfiguration
         ));
+    }
+
+    private void openMap() {
+        var location = waypointLocations.currentLocation().orElse(null);
+        if (location == null || mapTiles == null || mapRadar == null) {
+            notifier.error("The discovered map is available only in a loaded world or server.");
+            return;
+        }
+        Minecraft.getInstance().setScreenAndShow(new HelikonMapScreen(
+                mapTiles, waypoints, waypointLocations, mapRadar, location));
     }
 
     /** Publishes screen changes at a tick boundary without retaining a Minecraft screen object in the event layer. */
@@ -1761,7 +1799,8 @@ public final class HelikonClient implements ClientModInitializer {
                 || client.gui.screen() instanceof dev.helikon.client.gui.HelikonClassicClickGuiScreen
                 || client.gui.screen() instanceof HelikonHudEditorScreen
                 || client.gui.screen() instanceof HelikonHudSettingsScreen
-                || client.gui.screen() instanceof HelikonThemeEditorScreen;
+                || client.gui.screen() instanceof HelikonThemeEditorScreen
+                || client.gui.screen() instanceof HelikonMapScreen;
     }
 
     private void toggleFriendOnMiddleClick(Minecraft client, OneClickFriends oneClickFriends) {

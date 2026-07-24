@@ -10,20 +10,32 @@ import net.minecraft.client.Minecraft;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /** Bounded client-thread coordinator for loaded terrain discovery. */
 public final class MapDiscoveryController {
+    public static final int CAPTURES_PER_TICK = 4;
+    public static final int RESEED_INTERVAL_TICKS = 40;
+    public static final int MAXIMUM_TRACKED_CAPTURED_CHUNKS = 16384;
+
     private final Radar radar;
     private final WaypointLocationProvider locations;
     private final MapTileStore store;
     private final MinecraftMapChunkSampler sampler;
     private final MapCaptureQueue queue = new MapCaptureQueue();
+    private final Set<ChunkCoordinate> capturedChunks = new LinkedHashSet<>();
 
     private WaypointContext context;
     private boolean captureWasActive;
+    private boolean hasPrioritizedPlayerChunk;
+    private int prioritizedPlayerChunkX;
+    private int prioritizedPlayerChunkZ;
     private int observedStorageLimitMb = -1;
+    private int ticksUntilReseed;
 
     public MapDiscoveryController(Radar radar, WaypointLocationProvider locations, MapTileStore store) {
         this(radar, locations, store, new MinecraftMapChunkSampler());
@@ -53,12 +65,14 @@ public final class MapDiscoveryController {
 
     public void onWorldChange() {
         queue.clear();
+        capturedChunks.clear();
         context = null;
         captureWasActive = false;
+        hasPrioritizedPlayerChunk = false;
         store.flush();
     }
 
-    /** Samples no more than one still-loaded queued chunk. */
+    /** Samples a bounded batch of still-loaded queued chunks. */
     public void tick() {
         WaypointLocation location = locations.currentLocation().orElse(null);
         int storageLimitMb = radar.mapStorageLimitMb();
@@ -73,6 +87,7 @@ public final class MapDiscoveryController {
                 queue.clear();
             }
             captureWasActive = false;
+            hasPrioritizedPlayerChunk = false;
             context = location == null ? null : location.context();
             return;
         }
@@ -80,34 +95,90 @@ public final class MapDiscoveryController {
         WaypointContext current = location.context();
         if (!current.equals(context) || !captureWasActive) {
             queue.clear();
+            capturedChunks.clear();
             context = current;
             captureWasActive = true;
+            hasPrioritizedPlayerChunk = false;
+            ticksUntilReseed = RESEED_INTERVAL_TICKS;
             store.activate(current);
             seedLoadedChunks(location);
         }
 
-        MapCaptureQueue.Entry entry = queue.peek().orElse(null);
-        if (entry == null || !store.canAcceptUpdate()) {
+        prioritizePlayerChunk(location);
+        reseedIfDue(location);
+        captureQueuedChunks(current);
+    }
+
+    /**
+     * Loaded chunks past the queue bound are dropped at seed time, so the seed
+     * sweep repeats until every chunk that stays loaded has been captured once.
+     */
+    private void reseedIfDue(WaypointLocation location) {
+        if (--ticksUntilReseed > 0) {
             return;
         }
-        if (!entry.context().equals(current)) {
-            queue.remove(entry);
-            return;
+        ticksUntilReseed = RESEED_INTERVAL_TICKS;
+        if (queue.size() < MapCaptureQueue.MAXIMUM_PENDING_CHUNKS) {
+            seedLoadedChunks(location);
         }
-        Minecraft client = Minecraft.getInstance();
-        if (client.level == null || !client.level.hasChunk(entry.chunkX(), entry.chunkZ())) {
-            queue.remove(entry);
-            return;
-        }
-        sampler.sample(current, entry.chunkX(), entry.chunkZ()).ifPresent(snapshot -> {
-            if (store.submit(snapshot)) {
-                queue.remove(entry);
+    }
+
+    private void captureQueuedChunks(WaypointContext current) {
+        for (int attempt = 0; attempt < CAPTURES_PER_TICK; attempt++) {
+            MapCaptureQueue.Entry entry = queue.peek().orElse(null);
+            if (entry == null || !store.canAcceptUpdate()) {
+                return;
             }
-        });
+            if (!entry.context().equals(current)) {
+                queue.remove(entry);
+                continue;
+            }
+            Minecraft client = Minecraft.getInstance();
+            if (client.level == null || !client.level.hasChunk(entry.chunkX(), entry.chunkZ())) {
+                queue.remove(entry);
+                continue;
+            }
+            MapChunkSnapshot snapshot = sampler.sample(current, entry.chunkX(), entry.chunkZ()).orElse(null);
+            if (snapshot == null) {
+                // A chunk that reports loaded but cannot sample must never pin
+                // the queue head; a later reseed re-offers it if it comes back.
+                queue.remove(entry);
+                continue;
+            }
+            if (!store.submit(snapshot)) {
+                return;
+            }
+            queue.remove(entry);
+            markCaptured(entry.chunkX(), entry.chunkZ());
+        }
+    }
+
+    private void markCaptured(int chunkX, int chunkZ) {
+        ChunkCoordinate coordinate = new ChunkCoordinate(chunkX, chunkZ);
+        capturedChunks.remove(coordinate);
+        capturedChunks.add(coordinate);
+        if (capturedChunks.size() > MAXIMUM_TRACKED_CAPTURED_CHUNKS) {
+            Iterator<ChunkCoordinate> iterator = capturedChunks.iterator();
+            iterator.next();
+            iterator.remove();
+        }
     }
 
     public int pendingChunks() {
         return queue.size();
+    }
+
+    private void prioritizePlayerChunk(WaypointLocation location) {
+        int chunkX = location.x() >> 4;
+        int chunkZ = location.z() >> 4;
+        if (hasPrioritizedPlayerChunk
+                && chunkX == prioritizedPlayerChunkX && chunkZ == prioritizedPlayerChunkZ) {
+            return;
+        }
+        queue.prioritize(location.context(), chunkX, chunkZ);
+        prioritizedPlayerChunkX = chunkX;
+        prioritizedPlayerChunkZ = chunkZ;
+        hasPrioritizedPlayerChunk = true;
     }
 
     private void seedLoadedChunks(WaypointLocation location) {
@@ -121,8 +192,9 @@ public final class MapDiscoveryController {
         List<ChunkCoordinate> loaded = new ArrayList<>();
         for (int chunkZ = centerChunkZ - radius; chunkZ <= centerChunkZ + radius; chunkZ++) {
             for (int chunkX = centerChunkX - radius; chunkX <= centerChunkX + radius; chunkX++) {
-                if (client.level.hasChunk(chunkX, chunkZ)) {
-                    loaded.add(new ChunkCoordinate(chunkX, chunkZ));
+                ChunkCoordinate coordinate = new ChunkCoordinate(chunkX, chunkZ);
+                if (!capturedChunks.contains(coordinate) && client.level.hasChunk(chunkX, chunkZ)) {
+                    loaded.add(coordinate);
                 }
             }
         }

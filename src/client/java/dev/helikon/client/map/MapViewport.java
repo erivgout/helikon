@@ -90,6 +90,23 @@ public final class MapViewport {
                 centerZ + (screenY - height * 0.5D) / pixelsPerBlock);
     }
 
+    /**
+     * Projects a region using shared world-space edges. Adjacent regions then
+     * share the exact same integer screen edge even at fractional zoom levels.
+     */
+    public ScreenRectangle regionScreenRectangle(int regionX, int regionZ, int width, int height) {
+        double worldX = (double) regionX * MapRegion.SIZE;
+        double worldZ = (double) regionZ * MapRegion.SIZE;
+        ScreenPoint topLeft = worldToScreen(worldX, worldZ, width, height);
+        ScreenPoint bottomRight = worldToScreen(
+                worldX + MapRegion.SIZE, worldZ + MapRegion.SIZE, width, height);
+        int left = (int) Math.floor(topLeft.x());
+        int top = (int) Math.floor(topLeft.y());
+        int right = Math.max(left + 1, (int) Math.floor(bottomRight.x()));
+        int bottom = Math.max(top + 1, (int) Math.floor(bottomRight.y()));
+        return new ScreenRectangle(left, top, right - left, bottom - top);
+    }
+
     public List<RegionCoordinate> visibleRegions(int width, int height) {
         requireViewport(width, height);
         WorldPoint topLeft = screenToWorld(0.0D, 0.0D, width, height);
@@ -135,10 +152,12 @@ public final class MapViewport {
     public record ScreenPoint(double x, double y) {
     }
 
+    public record ScreenRectangle(int x, int y, int width, int height) {
+    }
+
     public record WorldPoint(double x, double z) {
     }
 
     public record RegionCoordinate(int x, int z) {
     }
 }
-

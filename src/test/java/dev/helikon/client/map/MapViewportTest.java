@@ -38,5 +38,15 @@ class MapViewportTest {
         assertTrue(viewport.visibleRegions(100_000, 100_000).size()
                 <= MapViewport.MAXIMUM_VISIBLE_REGIONS);
     }
-}
 
+    @Test
+    void adjacentRegionsShareTheirProjectedEdgeAtFractionalZoom() {
+        MapViewport viewport = new MapViewport(0.0D, 0.0D, 0.33D);
+        MapViewport.ScreenRectangle first = viewport.regionScreenRectangle(0, 0, 800, 600);
+        MapViewport.ScreenRectangle east = viewport.regionScreenRectangle(1, 0, 800, 600);
+        MapViewport.ScreenRectangle south = viewport.regionScreenRectangle(0, 1, 800, 600);
+
+        assertEquals(first.x() + first.width(), east.x());
+        assertEquals(first.y() + first.height(), south.y());
+    }
+}

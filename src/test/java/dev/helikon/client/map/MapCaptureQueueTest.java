@@ -33,5 +33,30 @@ class MapCaptureQueueTest {
         queue.clear();
         assertEquals(0, queue.size());
     }
-}
 
+    @Test
+    void prioritizesThePlayerChunkEvenWhenTheQueueIsFull() {
+        MapCaptureQueue queue = new MapCaptureQueue();
+        for (int index = 0; index < MapCaptureQueue.MAXIMUM_PENDING_CHUNKS; index++) {
+            assertTrue(queue.offer(CONTEXT, index, 0));
+        }
+
+        queue.prioritize(CONTEXT, 9999, -2);
+
+        assertEquals(MapCaptureQueue.MAXIMUM_PENDING_CHUNKS, queue.size());
+        assertEquals(new MapCaptureQueue.Entry(CONTEXT, 9999, -2), queue.peek().orElseThrow());
+    }
+
+    @Test
+    void movesAnExistingEntryToTheFrontWithoutGrowingTheQueue() {
+        MapCaptureQueue queue = new MapCaptureQueue();
+        assertTrue(queue.offer(CONTEXT, 1, 0));
+        assertTrue(queue.offer(CONTEXT, 2, 0));
+        assertTrue(queue.offer(CONTEXT, 3, 0));
+
+        queue.prioritize(CONTEXT, 3, 0);
+
+        assertEquals(3, queue.size());
+        assertEquals(3, queue.peek().orElseThrow().chunkX());
+    }
+}

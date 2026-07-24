@@ -5,7 +5,6 @@ import dev.helikon.client.waypoint.WaypointContext;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 /** Bounded Minecraft-free waypoint projection for the full-screen map. */
@@ -34,9 +33,8 @@ public final class MapMarkerLayout {
             }
             boolean hovered = distanceSquared(point.x(), point.y(), mouseX, mouseY)
                     <= HOVER_RADIUS * HOVER_RADIUS;
-            String icon = waypoint.icon().equals("death") ? "X"
-                    : waypoint.name().substring(0, 1).toUpperCase(Locale.ROOT);
-            markers.add(new Marker(waypoint.name(), icon, point.x(), point.y(), waypoint.color() | 0xFF000000,
+            markers.add(new Marker(waypoint.name(), waypoint.icon().equals("death"), point.x(), point.y(),
+                    waypoint.color() | 0xFF000000,
                     hovered || viewport.pixelsPerBlock() >= 1.0D, hovered));
         }
         return List.copyOf(markers);
@@ -48,12 +46,10 @@ public final class MapMarkerLayout {
         return deltaX * deltaX + deltaY * deltaY;
     }
 
-    public record Marker(String name, String icon, double screenX, double screenY, int color,
+    public record Marker(String name, boolean death, double screenX, double screenY, int color,
                          boolean labelVisible, boolean hovered) {
         public Marker {
             name = Objects.requireNonNull(name, "name");
-            icon = Objects.requireNonNull(icon, "icon");
         }
     }
 }
-

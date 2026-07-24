@@ -25,6 +25,25 @@ public final class MapCaptureQueue {
         return pending.add(entry);
     }
 
+    /**
+     * Moves a chunk to the front of the capture queue. If the queue is full,
+     * the newest tail entry is discarded to make room; a dropped chunk that is
+     * still loaded is re-offered by the next discovery reseed sweep.
+     */
+    public void prioritize(WaypointContext context, int chunkX, int chunkZ) {
+        Entry entry = new Entry(context, chunkX, chunkZ);
+        Set<Entry> reordered = new LinkedHashSet<>();
+        reordered.add(entry);
+        for (Entry existing : pending) {
+            if (reordered.size() >= MAXIMUM_PENDING_CHUNKS) {
+                break;
+            }
+            reordered.add(existing);
+        }
+        pending.clear();
+        pending.addAll(reordered);
+    }
+
     public Optional<Entry> peek() {
         Iterator<Entry> iterator = pending.iterator();
         return iterator.hasNext() ? Optional.of(iterator.next()) : Optional.empty();
@@ -48,4 +67,3 @@ public final class MapCaptureQueue {
         }
     }
 }
-

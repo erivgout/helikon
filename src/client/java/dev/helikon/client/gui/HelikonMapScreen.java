@@ -190,14 +190,12 @@ public final class HelikonMapScreen extends Screen {
             }
             renderedRegions++;
             Identifier texture = textures.texture(context, snapshot);
-            MapViewport.ScreenPoint topLeft = viewport.worldToScreen(
-                    (double) region.x() * MapRegion.SIZE, (double) region.z() * MapRegion.SIZE, width, height);
-            int size = Math.max(1, (int) Math.round(MapRegion.SIZE * viewport.pixelsPerBlock()));
-            int x = (int) Math.floor(topLeft.x());
-            int y = (int) Math.floor(topLeft.y());
+            MapViewport.ScreenRectangle rectangle =
+                    viewport.regionScreenRectangle(region.x(), region.z(), width, height);
             RenderPipeline pipeline = RenderPipelines.GUI_TEXTURED;
-            graphics.blit(pipeline, texture, x, y, 0.0F, 0.0F,
-                    size, size, MapRegion.SIZE, MapRegion.SIZE);
+            graphics.blit(pipeline, texture, rectangle.x(), rectangle.y(), 0.0F, 0.0F,
+                    rectangle.width(), rectangle.height(), MapRegion.SIZE, MapRegion.SIZE,
+                    MapRegion.SIZE, MapRegion.SIZE);
         }
     }
 
@@ -228,10 +226,7 @@ public final class HelikonMapScreen extends Screen {
         for (MapMarkerLayout.Marker marker : markers) {
             int x = (int) Math.round(marker.screenX());
             int y = (int) Math.round(marker.screenY());
-            graphics.fill(x - 3, y - 3, x + 4, y + 4, 0xD0000000);
-            graphics.outline(x - 3, y - 3, 7, 7, marker.color());
-            graphics.text(font, marker.icon(), x - font.width(marker.icon()) / 2,
-                    y - font.lineHeight / 2 + 1, marker.color(), true);
+            drawWaypointMarker(graphics, marker, x, y);
             if (marker.labelVisible()) {
                 int labelX = x + 6;
                 int labelY = y - font.lineHeight / 2;
@@ -241,6 +236,32 @@ public final class HelikonMapScreen extends Screen {
                 graphics.text(font, marker.name(), labelX + 3, labelY, TEXT_COLOR, true);
             }
         }
+    }
+
+    private static void drawWaypointMarker(GuiGraphicsExtractor graphics,
+                                           MapMarkerLayout.Marker marker, int x, int y) {
+        if (marker.death()) {
+            graphics.fill(x - 4, y - 4, x - 2, y - 2, 0xE0000000);
+            graphics.fill(x + 2, y - 4, x + 4, y - 2, 0xE0000000);
+            graphics.fill(x - 2, y - 2, x + 2, y + 2, 0xE0000000);
+            graphics.fill(x - 4, y + 2, x - 2, y + 4, 0xE0000000);
+            graphics.fill(x + 2, y + 2, x + 4, y + 4, 0xE0000000);
+            graphics.fill(x - 3, y - 3, x - 1, y - 1, marker.color());
+            graphics.fill(x + 1, y - 3, x + 3, y - 1, marker.color());
+            graphics.fill(x - 1, y - 1, x + 1, y + 1, marker.color());
+            graphics.fill(x - 3, y + 1, x - 1, y + 3, marker.color());
+            graphics.fill(x + 1, y + 1, x + 3, y + 3, marker.color());
+            return;
+        }
+
+        // Compact pixel-art map pin: dark outline, waypoint color, white center, and a pointed tip.
+        graphics.fill(x - 2, y - 6, x + 3, y - 5, 0xE0000000);
+        graphics.fill(x - 4, y - 5, x + 5, y, 0xE0000000);
+        graphics.fill(x - 3, y - 4, x + 4, y - 1, marker.color());
+        graphics.fill(x - 1, y - 3, x + 2, y - 1, TEXT_COLOR);
+        graphics.fill(x - 2, y, x + 3, y + 1, 0xE0000000);
+        graphics.fill(x - 1, y + 1, x + 2, y + 2, 0xE0000000);
+        graphics.fill(x, y + 2, x + 1, y + 4, 0xE0000000);
     }
 
     private void drawPlayer(GuiGraphicsExtractor graphics) {

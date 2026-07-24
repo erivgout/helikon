@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.6.1 - 2026-07-23
+
+- Fixes full-screen map region rendering at zoom levels other than 1x by
+  scaling each region texture into a shared-edge screen rectangle so adjacent
+  regions stay seamless at fractional zoom.
+- Backfills already-loaded terrain while standing still: chunk discovery now
+  re-seeds loaded-but-uncaptured chunks every two seconds, captures up to four
+  chunks per tick, remembers captured chunks so sweeps stay cheap, and never
+  lets an unsampleable chunk pin the capture queue.
+- Redraws full-screen map waypoint markers as compact pixel-art pins with a
+  distinct death-marker shape.
+
 ## 1.6.0 - 2026-07-22
 
 - Adds an opt-in GitHub release checker that makes one bounded request per

@@ -1,4 +1,4 @@
-# Security review — 1.6.0
+# Security review — 1.6.1
 
 ## Scope
 

@@ -91,7 +91,7 @@ SHA-256 checksums, and the resolved dependency report. See
 
 ## Status
 
-`1.6.0` is the current stable release. The automated test suite, style and
+`1.6.1` is the current stable release. The automated test suite, style and
 client-only architecture checks, and Fabric client game tests pass. The
 additional live-client smoke checklists in [testing.md](docs/testing.md) remain
 recommended for real-world testing on a disposable profile.
